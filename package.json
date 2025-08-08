@@ -37,8 +37,10 @@
   },
   "author": "oLane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "oLane addressable p2p node used to host tools, data or anything else your heart can dream of.",
   "devDependencies": {
+    "@olane/o-config": "file:./packages/o-config",
+    "@olane/o-protocol": "file:./packages/o-protocol",
     "@babel/core": "^7.27.4",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.23.9",
@@ -68,9 +70,11 @@
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },
+  "peerDependencies": {
+    "@olane/o-config": "^0.1.0",
+    "@olane/o-protocol": "^0.1.0"
+  },
   "dependencies": {
-    "@olane/o-config": "npm:@olane-labs/o-config@^1.0.6",
-    "@olane/o-protocol": "npm:@olane-labs/o-protocol@^1.0.5",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",

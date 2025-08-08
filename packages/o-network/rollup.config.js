@@ -11,7 +11,7 @@ module.exports = [
       dir: 'dist',
       format: 'cjs',
       sourcemap: true,
-      exports: 'named'
+      exports: 'named',
     },
     external: [
       // External dependencies that should not be bundled
@@ -56,31 +56,31 @@ module.exports = [
       'timers',
       'tty',
       'vm',
-      'worker_threads'
+      'worker_threads',
     ],
     plugins: [
       nodeResolve({
-        preferBuiltins: true
+        preferBuiltins: true,
       }),
       commonjs({
-        include: /node_modules/
+        include: /node_modules/,
       }),
       json(),
       typescript({
         tsconfig: './tsconfig.json',
         declaration: true,
         declarationDir: './dist',
-        sourceMap: true
-      })
-    ]
+        sourceMap: true,
+      }),
+    ],
   },
   // TypeScript declaration files bundle
   {
     input: 'dist/index.d.ts',
     output: {
       file: 'dist/index.d.ts',
-      format: 'es'
+      format: 'es',
     },
-    plugins: [dts()]
-  }
-]; 
+    plugins: [dts()],
+  },
+];

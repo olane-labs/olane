@@ -1,7 +1,7 @@
 {
   "name": "@olane/o-network",
   "version": "0.1.0",
-  "type": "commonjs",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "browser": "dist/index.js",
@@ -43,12 +43,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/olane-labs/o-network.git"
+    "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "oLane Inc.",
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-core": "file:../..",
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-tool-registry": "file:../o-tool-registry",
+    "@olane/o-tools-common": "file:../o-tools-common",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
@@ -82,13 +88,15 @@
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },
+  "peerDependencies": {
+    "@olane/o-core": "^0.1.0",
+    "@olane/o-config": "^0.1.0",
+    "@olane/o-protocol": "^0.1.0",
+    "@olane/o-tool": "^0.1.0",
+    "@olane/o-tool-registry": "^0.1.0",
+    "@olane/o-tools-common": "^0.1.0"
+  },
   "dependencies": {
-    "@olane/o-config": "npm:@olane-labs/o-config@^1.0.6",
-    "@olane/o-core": "npm:@olane-labs/o-core@^1.0.28",
-    "@olane/o-protocol": "npm:@olane-labs/o-protocol@^1.0.5",
-    "@olane/o-tool": "npm:@olane-labs/o-tool@^1.0.9",
-    "@olane/o-tool-registry": "npm:@olane-labs/o-tool-registry@^1.0.10",
-    "@olane/o-tools-common": "npm:@olane-labs/o-tools-common@^1.0.6",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",

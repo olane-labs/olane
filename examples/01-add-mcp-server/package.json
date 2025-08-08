@@ -38,6 +38,9 @@
   "license": "ISC",
   "description": "oLane Component Template",
   "devDependencies": {
+    "@olane/o-core": "file:../..",
+    "@olane/o-config": "file:../../packages/o-config",
+    "@olane/o-network": "file:../../packages/o-network",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",

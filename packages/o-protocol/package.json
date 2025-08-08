@@ -1,0 +1,73 @@
+{
+  "name": "@olane/o-protocol",
+  "version": "1.0.4",
+  "description": "oLane Protocol specification and protocol schema",
+  "license": "MIT",
+  "author": "oLane Inc. (https://olane.com)",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "browser": "dist/index.js",
+  "node": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "browser": "./dist/index.js",
+      "node": "./dist/index.js",
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.{md,mdx}",
+        "options": {
+          "proseWrap": "preserve"
+        }
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olane-labs/o-protocol.git"
+  },
+  "scripts": {
+    "check": "npm run check:schema && npm run check:docs",
+    "check:schema": "npm run check:schema:ts && npm run check:schema:json",
+    "check:schema:ts": "tsc",
+    "check:schema:json": "for f in schema/*/schema.ts; do typescript-json-schema --defaultNumberType integer --required --skipLibCheck \"$f\" \"*\" | cat | cmp \"${f%ts}json\" - || exit 1; done",
+    "check:docs": "npm run check:docs:format && npm run check:docs:links",
+    "check:docs:format": "prettier --check \"**/*.{md,mdx}\"",
+    "check:docs:links": "cd docs && mintlify broken-links",
+    "generate:json": "for f in schema/*/schema.ts; do typescript-json-schema --defaultNumberType integer --required --skipLibCheck \"$f\" \"*\" -o \"${f%ts}json\"; done",
+    "format": "prettier --write \"**/*.{md,mdx}\"",
+    "serve:docs": "cd docs && mintlify dev",
+    "build": "rm -rf dist && mkdir dist && touch dist/schema.ts && webpack --config webpack.config.js && tsc"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "babel-loader": "^10.0.0",
+    "glob": "^11.0.0",
+    "mintlify": "^4.0.468",
+    "prettier": "^3.4.2",
+    "ts-loader": "^9.5.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "typescript-json-schema": "^0.65.1",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "resolutions": {
+    "fast-json-patch": "^3.1.1"
+  }
+}

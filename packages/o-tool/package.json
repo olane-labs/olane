@@ -39,6 +39,9 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-core": "file:../..",
+    "@olane/o-config": "file:../../packages/o-config",
+    "@olane/o-protocol": "file:../../packages/o-protocol",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
@@ -66,10 +69,12 @@
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },
+  "peerDependencies": {
+    "@olane/o-core": "^0.1.0",
+    "@olane/o-config": "^0.1.0",
+    "@olane/o-protocol": "^0.1.0"
+  },
   "dependencies": {
-    "@olane/o-core": "npm:@olane-labs/o-core@^1.0.20",
-    "@olane/o-config": "npm:@olane-labs/o-config@^1.0.6",
-    "@olane/o-protocol": "npm:@olane-labs/o-protocol@^1.0.5",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   }

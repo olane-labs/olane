@@ -39,6 +39,11 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-core": "file:../..",
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-tools-common": "file:../o-tools-common",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
@@ -66,16 +71,18 @@
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },
+  "peerDependencies": {
+    "@olane/o-core": "^0.1.0",
+    "@olane/o-config": "^0.1.0",
+    "@olane/o-protocol": "^0.1.0",
+    "@olane/o-tool": "^0.1.0",
+    "@olane/o-tools-common": "^0.1.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
     "@huggingface/transformers": "^3.5.2",
     "@langchain/community": "^0.3.47",
     "@langchain/core": "^0.3.61",
-    "@olane/o-config": "npm:@olane-labs/o-config@^1.0.6",
-    "@olane/o-core": "npm:@olane-labs/o-core@^1.0.20",
-    "@olane/o-protocol": "npm:@olane-labs/o-protocol@^1.0.5",
-    "@olane/o-tool": "npm:@olane-labs/o-tool@^1.0.9",
-    "@olane/o-tools-common": "npm:@olane-labs/o-tools-common@^1.0.6",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "langchain": "^0.3.29"
