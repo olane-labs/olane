@@ -40,8 +40,8 @@
   "description": "oLane Core",
   "devDependencies": {
     "@olane/o-core": "file:../..",
-    "@olane/o-config": "file:../../packages/o-config",
-    "@olane/o-protocol": "file:../../packages/o-protocol",
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-protocol": "file:../o-protocol",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",

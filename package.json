@@ -35,9 +35,9 @@
     "type": "git",
     "url": "git+https://github.com/olane-labs/o-core.git"
   },
-  "author": "oLane Inc.",
+  "author": "Olane Inc.",
   "license": "ISC",
-  "description": "oLane addressable p2p node used to host tools, data or anything else your heart can dream of.",
+  "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
   "devDependencies": {
     "@olane/o-config": "file:./packages/o-config",
     "@olane/o-protocol": "file:./packages/o-protocol",

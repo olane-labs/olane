@@ -24,10 +24,9 @@
   ],
   "scripts": {
     "test": "jest",
-    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "start": "DEBUG=o-protocol:* npx tsx src/index.ts",
     "build": "tsc",
-    "start:prod": "node dist/index.js",
-    "prepublishOnly": "npm run build",
+    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../../packages/o-tool && npm run build --prefix ../../packages/o-tools-common && npm run build --prefix ../../packages/o-tool-registry && npm run build:local --prefix ../../packages/o-network",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
@@ -40,7 +39,11 @@
   "devDependencies": {
     "@olane/o-core": "file:../..",
     "@olane/o-config": "file:../../packages/o-config",
+    "@olane/o-protocol": "file:../../packages/o-protocol",
     "@olane/o-network": "file:../../packages/o-network",
+    "@olane/o-tool": "file:../../packages/o-tool",
+    "@olane/o-tool-registry": "file:../../packages/o-tool-registry",
+    "@olane/o-tools-common": "file:../../packages/o-tools-common",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",

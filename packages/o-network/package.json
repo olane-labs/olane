@@ -7,9 +7,6 @@
   "browser": "dist/index.js",
   "node": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "o-network": "dist/index.js"
-  },
   "exports": {
     ".": {
       "require": "./dist/index.js",
