@@ -1,248 +1,199 @@
-# 🌊 O-Core: The Future of Distributed AI is Here
+<p align="center">
+  <img src="/docs/assets/logo-white.png" width="120" alt="Olane Logo">
+</p>
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-[![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://badge.fury.io/js/%40olane%2Fo-core)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+## Olane — Superintelligent network infrastructure
 
-> **Imagine AI agents that think, plan, and collaborate across a peer-to-peer network—without central servers, without vendor lock-in, without limits.**
+*Try Self-hosted Version:* 
+Open-sourced with MIT license *maintained by olane labs and the OSS community* 
 
-O-Core is the foundation for building **decentralized AI networks** where LLM agents operate as autonomous peers, discovering and collaborating with each other to solve complex problems.
+**Request Hosted Version:**
+[Join waitlist](https://olane.com)
 
-## 🚀 Why O-Core Will Change Everything
+**Benefits of running everything on a personal and private superintelligent network**
 
-### 🌐 **True Decentralization**
-- **No Single Point of Failure**: Your AI network runs across distributed nodes
-- **Peer Discovery**: Nodes automatically find and connect to each other via libp2p
-- **Network Resilience**: If one node goes down, others seamlessly take over
+- Infrastructure *that **thinks***
+- Infrastructure *that **self-improves***
+- Infrastructure *that **communicates with anything**
+(Humans, AI agents, protocols like HTTP, TCP, A2A, MCP, APIs, Tools, etc.)*
+- Infrastructure *that's **owned by you** and is **device & system agnostic***
+- Infrastructure *that’s **zero trust, quantum-encrypted, with continuous MFA enabled***
 
-### 🧠 **Intelligent Agent Orchestration**
-- **AI Planning Engine**: Agents autonomously plan multi-step tasks
-- **Context-Aware Routing**: Smart request routing based on capabilities
-- **Self-Organizing Networks**: Nodes discover optimal collaboration patterns
+## Olane Overview
 
-### ⚡ **Production-Ready Architecture**
-- **Built on libp2p**: Battle-tested P2P networking foundation
-- **TypeScript First**: Type-safe development with excellent IDE support
-- **Metrics & Monitoring**: Built-in Prometheus metrics for observability
+**Olane** is a peer-to-peer, secure, hierarchical AI network designed to organize data, resources, tools, and intelligent processes.
 
----
+Within an olane network, AI agents can perform long-running tasks using sensitive tooling inside a dedicated, private, and secure sandboxed environment.
 
-## 🎯 Core Features
+**Key Concepts**
 
-### 🤖 **Autonomous AI Agents**
-```typescript
-// Agents that think and plan autonomously
-const plan = new oPlan(node, {
-  intent: "Analyze user behavior and suggest optimizations",
-  caller: new oAddress('o://analytics-agent'),
-  currentNode: node
-});
+1. **o:// o-protocol**
+    
+    The `o://` protocol enables seamless communication and coordination across agents, tools, and networks.
+    
+2. **o-networks**
+    
+    Olane networks (`o-network`) transform every tool, data point, or intelligent action into a resolvable [o-address](https://github.com/olane-labs/o-protocol-private) — for example:
+    
+    `o://my-o-network/mcp/send email to client`
 
-const result = await plan.execute();
-// Agent automatically discovers tools, plans steps, and executes
-```
+    More on [olane hierarchical organization](/docs/NETWORK_HIERARCHY.md) and why it is the [future of AI infrastructure](/docs/FUTURE_AI_INFRA.md).
+    
+3. **Interconnected Intelligence**
+    
+    o-addresses can be shared across networks, enabling secure, intelligent communication and knowledge sharing between organizations or agents:
+    
+    `o://share "o://my-network/mcp/send email" with my company's o-network`
+    
+![simple o-network diagram](/docs/assets/simple-network.png)
 
-### 🕸️ **P2P Network Discovery**
-```typescript
-// Nodes automatically discover and connect to peers
-const hostNode = new oHostNode({
-  address: new oAddress('o://my-ai-node'),
-  leader: null,  // Becomes a bootstrap node
-  parent: null
-});
+## **Get started**
 
-await hostNode.start();
-// Now part of the global AI network!
-```
+Building on olane is easy, this section will quickly teach you how to:
 
-### 🎛️ **Flexible Node Types**
-- **Host Nodes**: Full P2P nodes accessible via TCP/IP
-- **Virtual Nodes**: Lightweight in-memory nodes for local processing
-- **Hybrid Networks**: Mix node types for optimal performance
+1. [Create your own network](#create-a-network)
+2. [Use your own network](#use-your-network)
+    1. Build and Personalize
+    2. Monitor and Track
+3. [Connect with other networks](#learning)
+    1. Access knowledge skills
+    2. Share knowledge skills
+    3. Communicate across bridges
+4. Checkout out our [start building](/docs/START_BUILDING.md) page for more advanced topics and use cases
 
-### 🔍 **Intelligent Tool Discovery**
-```typescript
-// Agents find the right tools across the network
-const response = await node.use(new oAddress('o://vector-store'), {
-  method: 'search',
-  params: { query: 'user preferences' }
-});
-```
+## **INSTALL 🎉**
 
----
+**Create your intelligent network 🌐**
 
-## 🌟 Real-World Applications
-
-### 🏢 **Enterprise AI Mesh**
-Deploy AI capabilities across your infrastructure where each service becomes an intelligent agent:
-- Customer service bots that collaborate with analytics agents
-- Content generation that works with fact-checking services
-- Automated workflows that span multiple departments
-
-### 🏠 **Personal AI Networks**
-Build your own private AI ecosystem:
-- Home automation agents that learn your preferences
-- Personal assistants that coordinate across devices
-- Local-first AI that never leaves your network
-
-### 🌍 **Community AI Commons**
-Participate in shared intelligence networks:
-- Researchers sharing specialized AI models
-- Open-source AI tools that anyone can contribute to
-- Collaborative problem-solving at scale
-
----
-
-## 🚀 Quick Start
-
-### Installation
-```bash
-npm install @olane/o-core
-```
-
-### Create Your First AI Node
-```typescript
-import { oHostNode, oAddress } from '@olane/o-core';
-
-// Create a P2P AI node
-const node = new oHostNode({
-  address: new oAddress('o://my-ai-agent'),
-  parent: null,
-  leader: null
-});
-
-// Start the node
-await node.start();
-console.log('🌊 AI node online:', node.p2pNode.getMultiaddrs());
-
-// The node is now part of the global AI network!
-```
-
-### Make Your First AI Plan
-```typescript
-import { oPlan } from '@olane/o-core';
-
-const plan = new oPlan(node, {
-  intent: "Find weather information and suggest activities",
-  caller: new oAddress('o://weather-assistant'),
-  currentNode: node
-});
-
-const result = await plan.execute();
-console.log('🎯 AI Plan Result:', result);
-```
-
----
-
-## 🏗️ Architecture Deep Dive
-
-### 🔗 **Peer-to-Peer Foundation**
-Built on **libp2p**, the same networking stack that powers IPFS and Ethereum 2.0:
-- **Content addressing** for deterministic routing
-- **NAT traversal** for real-world connectivity  
-- **Pluggable transports** (TCP, WebRTC, WebSockets)
-
-### 🧠 **AI Planning Layer**
-Smart agents that can:
-- **Analyze intent** and break down complex requests
-- **Discover tools** across the network automatically
-- **Execute multi-step plans** with error recovery
-- **Learn from interactions** via vector storage
-
-### 🎛️ **Flexible Deployment**
-- **Docker-ready** with Kubernetes charts
-- **Cloud-agnostic** - runs anywhere
-- **Resource-aware** scaling and discovery
-
----
-
-## 🛠️ Advanced Usage
-
-### Custom Agent Prompts
-```typescript
-const customPrompt = (intent: string, context: string, history: string) => `
-You are a specialized financial analysis agent.
-Task: ${intent}
-Available context: ${context}
-Previous actions: ${history}
-Focus on accuracy and compliance.
-`;
-
-const plan = new oPlan(node, {
-  intent: "Analyze Q3 revenue trends",
-  promptFunction: customPrompt,
-  currentNode: node
-});
-```
-
-### Network Metrics & Monitoring
-```typescript
-// Built-in Prometheus metrics
-const metrics = node.p2pNode.metrics;
-console.log('Active connections:', metrics.getConnectionCount());
-console.log('Tool execution success rate:', node.successCount / (node.successCount + node.errorCount));
-```
-
----
-
-## 🤝 Join the Revolution
-
-### 🌟 **For Developers**
-- **Contribute tools** to the global AI network
-- **Build specialized agents** for your domain
-- **Extend the protocol** with new capabilities
-
-### 🏢 **For Enterprises**
-- **Deploy private AI networks** with zero vendor lock-in
-- **Scale AI horizontally** across your infrastructure
-- **Maintain data sovereignty** while leveraging collective intelligence
-
-### 🎓 **For Researchers**
-- **Experiment with distributed AI** at scale
-- **Share models and tools** with the community
-- **Study emergent behaviors** in AI networks
-
----
-
-## 📖 Documentation & Resources
-
-- **[API Documentation](https://olane-labs.github.io/o-core)**
-- **[Architecture Guide](./docs/ARCHITECTURE.md)**
-- **[Deployment Examples](./examples/)**
-- **[Contributing Guidelines](./CONTRIBUTING.md)**
-
----
-
-## 🎯 Roadmap
-
-- **Q1 2024**: WebRTC support for browser nodes
-- **Q2 2024**: Built-in model serving capabilities  
-- **Q3 2024**: Advanced consensus mechanisms
-- **Q4 2024**: Cross-network protocol bridges
-
----
-
-## 💫 The Future is Distributed
-
-O-Core isn't just another AI framework—it's the foundation for an **Internet of Intelligence** where AI agents collaborate as naturally as humans do, but at the speed of light and the scale of the internet.
-
-**Ready to build the future?** 
+Follow these steps to create and start your olane network called `my-network`. 
 
 ```bash
-npm install @olane/o-core
+# install the cli tool
+# clone the cli repo
+git clone git@github.com:olane-labs/o-cli.git
+cd o-cli
+npm install
+npm run build
+chmod +x dist/index.js
+npm install -g .
+
+# create your first network
+olane create -p 4444 my-network
+
+# start your network
+olane start -d my-network
 ```
 
-**Join our community:**
-- 🐦 [Twitter/X](https://twitter.com/olane_labs)
-- 💬 [Discord](https://discord.gg/olane)
-- 📧 [Newsletter](https://olane.com/newsletter)
+*About your intelligent network:*
+*Every network comes out of the box with [tools](https://github.com/olane-labs/o-network-private/blob/main) 
+
+>Network needs Node.js v20+ to run [update node.js tutorial](/docs/UPDATE_NODEJS.md)
+
+> Congrats!! 
+Here’s what you just unlocked
+Play Video
+> 
+
+## RUN 🏃
+
+**Use your intelligent network**
+
+1. Join your network ➕
+```bash
+# join the network
+olane join my-network
+```
+2. Talk to your network via "intent" (resolution) 🗣️
+
+```bash
+# a secure network connection is created
+# Add new functionality like an MCP server
+> Add linear to my network
+.....Searching for linear context
+.....OAuth access is required, continue to login? (You will need browser access)
+.....Confirmed login success, creating a new node at location "o://my-network/mcp/linear"
+.....44 New skills discovered through this node!
+.....Intent success. Result: Network node added! Knowledge captured at o://plan/12345678910
+.....Your network "my-network" will now analyze linear to understand more about it and how you use it.
+
+# Assess your network's understanding of the data and tooling it contains
+> Who am I?
+.....Searching "my-network" for context
+.....Analyzing "my-network" context
+.....Summarizing
+.....You are a software engineer with a passion for anime. Your daily routine revolves around a mixture of client projects.... 
+
+# Assign jobs to your network (*coming soon)
+> Update me on the S&P 500 through Warren Buffet's perspective every morning 
+when the markets open
+
+-----teach your network with policies----
+
+> Policy creation intent: "Whenever someone tries to join my network, ask me first"
+....Confirmed, I will make sure to follow this policy (undo?)
+> Policy creation intent: "When trying to send a message to someone, first check my contact list for their phone number"
+> "Whenever I chat with Dillon, use slack and use the appropriate slack thread"
+...Thinking, can you confirm which Dillon? (Dillon Morgan or Dillon Johnson)
+```
+
+**When running your intelligent network:**
+- Your network self-heals and learns to become deterministic & stateful (read advance mode)
+- Add policies to your network to customize (read policy to learn more)
+- Pro tip: Visualize your network with the [cli tool](/docs/CLI.md)
+
+> Magic moments we personally love 
+running on olane
+Play video
+> 
+
+## **NETWORK TO NETWORK 🛜**
+
+**Connect to other intelligent networks 🧠**
+
+1. Collaboration leads to super intelligence (think hive mind / AI-social network)
+2. Simple share anything via “o-addresses” (think AI-telepathy)
+
+```bash
+# request to join network
+# olane request to join public-intelligent-network
+olane connect o://my-network --to=o://olane
+....Connected!
+....Discovered 232 skills, do you want to remember these?[y/n]
+....Your network shares 31 o-addresses, would you like to collaborate with olane to help with intents involving these addresses in the future?
+
+# network requests accepted
+# Request or contribute knowledge to connected networks
+# Share my knowledge of how to connect to MCPs
+# Share my compute resources for projects that align with my personal beliefs
+# Request knowledge for creating 3D DNA structures
+
+# Collaborate with networks to solve challenging problems
+> Create a non-hardware product that solves one key aspect of world hunger for 
+under $10
+```
+
+**When communicating with other intelligent networks:**
+- Your networks are building shared intelligence
+- How to register with olane to enable human readable network name
+- If you want to connect directly to another network that is not verified with olane, simply share the transport with the other network [What is a transport](url)
+
+> Does this feel like ASI to you?
+We think so
+Play video
+> 
+
+> **P2P Network Connection**: to connect directly to another network via the p2p functionality, simply share the network leader node transport with your intended collaborator. To learn more, read about [direct networking](/docs/DIRECT_NETWORKING.md)
+
+## Enjoy growing your AI network ❤️
 
 ---
 
-<div align="center">
+**Stay connected**
 
-**Made with 🌊 by the oLane Team**
+1. **Shoutout Feed!**
+2. Join our private olane groupchat
+3. Subscribe to ASI newsletter & podcast
+4. Follow the olane story
+5. Join the team
+6. Share olane with your friends (we greatly appreciate it!)
 
-*Democratizing AI, one node at a time.*
-
-</div>
