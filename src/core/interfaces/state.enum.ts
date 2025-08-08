@@ -1,0 +1,7 @@
+export enum NodeState {
+  STARTING = 'STARTING',
+  RUNNING = 'RUNNING',
+  STOPPING = 'STOPPING',
+  STOPPED = 'STOPPED',
+  ERROR = 'ERROR',
+}

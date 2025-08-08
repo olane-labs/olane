@@ -1,0 +1,296 @@
+#!/usr/bin/env osascript -l JavaScript
+
+// Apple Notes JXA Script
+// Provides comprehensive interface to Apple Notes application
+
+function run(argv) {
+    const command = argv[0];
+    const args = argv.slice(1);
+    
+    try {
+        switch (command) {
+            case 'get_notes':
+                return getNotes(args);
+            case 'create_note':
+                return createNote(args);
+            case 'update_note':
+                return updateNote(args);
+            case 'delete_note':
+                return deleteNote(args);
+            case 'get_folders':
+                return getFolders(args);
+            case 'create_folder':
+                return createFolder(args);
+            default:
+                return JSON.stringify({
+                    success: false,
+                    error: `Unknown command: ${command}`
+                });
+        }
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: error.toString()
+        });
+    }
+}
+
+function getNotes(args) {
+    const Notes = Application('Notes');
+    const notes = [];
+    
+    try {
+        // Get all notes from all accounts
+        const allNotes = Notes.notes();
+        
+        for (let i = 0; i < allNotes.length; i++) {
+            const note = allNotes[i];
+            const noteData = {
+                id: note.id(),
+                name: note.name(),
+                body: note.body(),
+                creationDate: note.creationDate() ? note.creationDate().toISOString() : null,
+                modificationDate: note.modificationDate() ? note.modificationDate().toISOString() : null,
+                container: note.container() ? note.container().name() : null,
+                account: note.container() && note.container().account() ? note.container().account().name() : null
+            };
+            notes.push(noteData);
+        }
+        
+        return JSON.stringify({
+            success: true,
+            data: notes
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to get notes: ${error.toString()}`
+        });
+    }
+}
+
+function createNote(args) {
+    if (args.length < 2) {
+        return JSON.stringify({
+            success: false,
+            error: 'create_note requires title and body parameters'
+        });
+    }
+    
+    const title = args[0];
+    const body = args[1];
+    const folderName = args[2] || null;
+    
+    try {
+        const Notes = Application('Notes');
+        
+        // Find the target folder if specified
+        let targetFolder = null;
+        if (folderName) {
+            const folders = Notes.folders();
+            for (let i = 0; i < folders.length; i++) {
+                if (folders[i].name() === folderName) {
+                    targetFolder = folders[i];
+                    break;
+                }
+            }
+        }
+        
+        // Create the note
+        let newNote;
+        if (targetFolder) {
+            newNote = targetFolder.notes.push({
+                name: title,
+                body: body
+            });
+        } else {
+            // Create in default location (first available folder)
+            const folders = Notes.folders();
+            if (folders.length > 0) {
+                newNote = folders[0].notes.push({
+                    name: title,
+                    body: body
+                });
+            } else {
+                throw new Error('No folders available to create note');
+            }
+        }
+        
+        return JSON.stringify({
+            success: true,
+            data: {
+                id: newNote.id(),
+                name: newNote.name(),
+                body: newNote.body(),
+                creationDate: newNote.creationDate() ? newNote.creationDate().toISOString() : null,
+                modificationDate: newNote.modificationDate() ? newNote.modificationDate().toISOString() : null
+            }
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to create note: ${error.toString()}`
+        });
+    }
+}
+
+function updateNote(args) {
+    if (args.length < 3) {
+        return JSON.stringify({
+            success: false,
+            error: 'update_note requires id, title, and body parameters'
+        });
+    }
+    
+    const noteId = args[0];
+    const title = args[1];
+    const body = args[2];
+    
+    try {
+        const Notes = Application('Notes');
+        const allNotes = Notes.notes();
+        
+        // Find the note by ID
+        let targetNote = null;
+        for (let i = 0; i < allNotes.length; i++) {
+            if (allNotes[i].id() === noteId) {
+                targetNote = allNotes[i];
+                break;
+            }
+        }
+        
+        if (!targetNote) {
+            return JSON.stringify({
+                success: false,
+                error: `Note with ID ${noteId} not found`
+            });
+        }
+        
+        // Update the note
+        targetNote.name = title;
+        targetNote.body = body;
+        
+        return JSON.stringify({
+            success: true,
+            data: {
+                id: targetNote.id(),
+                name: targetNote.name(),
+                body: targetNote.body(),
+                modificationDate: targetNote.modificationDate() ? targetNote.modificationDate().toISOString() : null
+            }
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to update note: ${error.toString()}`
+        });
+    }
+}
+
+function deleteNote(args) {
+    if (args.length < 1) {
+        return JSON.stringify({
+            success: false,
+            error: 'delete_note requires id parameter'
+        });
+    }
+    
+    const noteId = args[0];
+    
+    try {
+        const Notes = Application('Notes');
+        const allNotes = Notes.notes();
+        
+        // Find the note by ID
+        let targetNote = null;
+        for (let i = 0; i < allNotes.length; i++) {
+            if (allNotes[i].id() === noteId) {
+                targetNote = allNotes[i];
+                break;
+            }
+        }
+        
+        if (!targetNote) {
+            return JSON.stringify({
+                success: false,
+                error: `Note with ID ${noteId} not found`
+            });
+        }
+        
+        // Delete the note
+        targetNote.delete();
+        
+        return JSON.stringify({
+            success: true,
+            message: `Note with ID ${noteId} deleted successfully`
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to delete note: ${error.toString()}`
+        });
+    }
+}
+
+function getFolders(args) {
+    try {
+        const Notes = Application('Notes');
+        const folders = [];
+        const allFolders = Notes.folders();
+        
+        for (let i = 0; i < allFolders.length; i++) {
+            const folder = allFolders[i];
+            const folderData = {
+                name: folder.name(),
+                id: folder.id(),
+                account: folder.account() ? folder.account().name() : null,
+                noteCount: folder.notes().length
+            };
+            folders.push(folderData);
+        }
+        
+        return JSON.stringify({
+            success: true,
+            data: folders
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to get folders: ${error.toString()}`
+        });
+    }
+}
+
+function createFolder(args) {
+    if (args.length < 1) {
+        return JSON.stringify({
+            success: false,
+            error: 'create_folder requires name parameter'
+        });
+    }
+    
+    const folderName = args[0];
+    
+    try {
+        const Notes = Application('Notes');
+        
+        // Create the folder
+        const newFolder = Notes.folders.push({
+            name: folderName
+        });
+        
+        return JSON.stringify({
+            success: true,
+            data: {
+                name: newFolder.name(),
+                id: newFolder.id(),
+                noteCount: 0
+            }
+        });
+    } catch (error) {
+        return JSON.stringify({
+            success: false,
+            error: `Failed to create folder: ${error.toString()}`
+        });
+    }
+} 

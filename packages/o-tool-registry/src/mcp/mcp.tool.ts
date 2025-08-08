@@ -1,0 +1,93 @@
+import { oTool, oToolConfig } from '@olane/o-tool';
+import { oAddress, oDependency, oRequest, oVirtualNode } from '@olane/o-core';
+import { oParameter } from '@olane/o-protocol';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { v4 as uuidv4 } from 'uuid';
+
+export class McpTool extends oTool(oVirtualNode) {
+  private mcpClient: Client;
+
+  constructor(config: oToolConfig & { address: oAddress; mcpClient: Client }) {
+    super({
+      ...config,
+      address: config.address,
+      description:
+        config.description ||
+        'Tool for wrapping MCP servers to be used as tools in the network',
+    });
+    this.mcpClient = config.mcpClient;
+    this.setupTools(this.mcpClient).catch((err) => {
+      this.logger.error('Error setting up MCP tools: ', err);
+    });
+  }
+  // _tool_ functions are dynamically added to the tool based on the MCP server's methods
+
+  async setupTools(mcpClient: Client): Promise<void> {
+    this.logger.debug('Setting up MCP tools');
+    const tools = await mcpClient.listTools();
+    this.logger.debug('MCP tools: ', tools);
+    tools.tools.forEach((tool) => {
+      this.logger.debug('Setting up MCP server tool: ' + tool.name);
+      this.methods[tool.name] = {
+        name: tool.name,
+        description: tool.description || '',
+        parameters: tool.inputSchema as any,
+        dependencies: [],
+      };
+      this[`_tool_${tool.name}`] = async (request: oRequest) => {
+        this.logger.debug('Calling MCP tool: ' + tool.name, request);
+        const params = request.params;
+        const result = await this.mcpClient.callTool({
+          name: tool.name,
+          arguments: params,
+        });
+        return result.content;
+      };
+    });
+    await this.startChildren();
+  }
+
+  // let's customize the index functionality to ensure we capture MCP insights
+  async index() {
+    const result = await super.index();
+    // add each mcp tool to the vector store
+    const tools = await this.mcpClient.listTools();
+    await Promise.all(
+      tools.tools.map((tool) => {
+        return this.use(new oAddress('o://vector-store'), {
+          method: 'add_documents',
+          params: {
+            documents: [
+              {
+                pageContent: tool.description,
+                metadata: {
+                  address: this.address?.toString() + '/' + tool.name,
+                  id: uuidv4(),
+                },
+              },
+            ],
+          },
+        });
+      }),
+    ).catch((err) => {
+      this.logger.error('Error adding MCP tools to vector store: ', err);
+    });
+    return result;
+  }
+
+  async whoami(): Promise<any> {
+    // do nothing
+    const tools = await this.mcpClient.listTools();
+    console.log('mcp+tools: ', tools);
+    return {
+      tools: tools.tools.map((tool) => {
+        return {
+          name: tool.name,
+          description: tool.description,
+          title: tool.title,
+          inputSchema: tool.inputSchema,
+        };
+      }),
+    };
+  }
+}
