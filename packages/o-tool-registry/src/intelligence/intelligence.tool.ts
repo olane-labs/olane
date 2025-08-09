@@ -16,6 +16,18 @@ export class IntelligenceTool extends oTool(oVirtualNode) {
       description:
         config.description ||
         'Tool to help route LLM requests to the best intelligence tool',
+      dependencies: [
+        {
+          address: 'o://setup',
+          parameters: [
+            {
+              name: 'intelligence',
+              type: 'string',
+              description: 'The intelligence tool to use',
+            },
+          ],
+        },
+      ],
     });
     this.addChildNode(
       new AnthropicIntelligenceTool({
@@ -49,6 +61,12 @@ export class IntelligenceTool extends oTool(oVirtualNode) {
 
   async chooseIntelligence(request: oRequest): Promise<ToolResult> {
     // let's use preference to choose the best intelligence tool
+    const setup = await this.use(new oAddress('o://setup'), {
+      method: 'completion',
+      params: {
+        prompt: 'Choose the best intelligence tool',
+      },
+    });
     return {
       choice: 'o://anthropic',
     };
