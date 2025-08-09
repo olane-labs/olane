@@ -52,28 +52,12 @@ export abstract class oNode extends oCoreNode {
     );
 
     const pc = new oAgentPlan({
-      intent: `You have already found the tool to resolve the user's intent. Review the method information and generate the tool use configuration for the request to use the tool with user intent: ${handshake.params.intent}`,
+      intent: `You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
       currentNode: this,
       caller: this.address,
       context: new oPlanContext([
-        `[Tool Use ConfigurationInstructions Begin]
-        1. Method options are listed in the [Method Options Begin] section.
-        2. Method metadata context is listed in the [Method Metadata Begin] section.
-        3. Review the method information and select the best method to resolve the user's intent.
-        4. Return the method and parameters in JSON format.
-        5. Do not include any other text other than the JSON response.
-        [Tool Use Configuration Instructions End]`,
         `[Method Metadata Begin]\n${JSON.stringify(this.methods)}\n[Method Metadata End]`,
         `[Method Options Begin]\n${this.myTools().join(', ')}\n[Method Options End]`,
-        `
-        Tool Use Configuration Output Format:
-        {
-          "task": {
-            "address": string,
-            "payload": { "method": string, "params": any }
-          },
-          "type": "task",
-        }`,
       ]),
     });
     const result = await pc.execute();
@@ -192,11 +176,16 @@ export abstract class oNode extends oCoreNode {
    */
   async _tool_intent(request: oRequest): Promise<any> {
     this.logger.debug('Intent resolution called: ', request.params);
-    const { intent, userInput } = request.params;
+    const { intent, context } = request.params;
     const pc = new oAgentPlan({
       intent: intent as string,
       currentNode: this,
       caller: this.address,
+      context: context
+        ? new oPlanContext([
+            `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
+          ])
+        : undefined,
     });
     const response = await pc.execute();
     return {

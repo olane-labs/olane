@@ -22,7 +22,6 @@
     "resolveJsonModule": true,
     "declarationMap": true,
     "allowImportingTsExtensions": false,
-    "composite": true,
     "paths": {
       "*": ["node_modules/*"]
     }

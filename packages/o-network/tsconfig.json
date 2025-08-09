@@ -21,7 +21,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declarationMap": true,
-    "composite": true,
     "paths": {
       "*": ["node_modules/*"]
     }

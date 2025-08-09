@@ -4,9 +4,7 @@ import { StorageTool } from './storage';
 import { VaultTool } from './vault/vault.tool';
 import { SearchTool } from './search/search.tool';
 import { SetupTool } from './setup/setup.tool';
-import { MemoryPlanStorageTool } from './plan/memory-plan-storage.tool';
 import { DiskPlanStorageTool } from './plan/disk-plan-storage.tool';
-import { HumanTool } from './agent/human-agent.tool';
 
 export const initCommonTools = (oNode: oNode) => {
   const params = {
@@ -37,10 +35,6 @@ export const initCommonTools = (oNode: oNode) => {
     new DiskPlanStorageTool({
       name: 'plan',
       address: new oAddress('o://plan'),
-      ...params,
-    }),
-    new HumanTool({
-      name: 'human',
       ...params,
     }),
   ];

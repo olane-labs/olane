@@ -1,16 +1,11 @@
 import { oTool, ToolResult, ToolUtils } from '@olane/o-tool';
-import {
-  oAddress,
-  oRequest,
-  oResponse,
-  oVirtualNode,
-  StorageResolver,
-} from '@olane/o-core';
+import { oAddress, oRequest, oResponse, oVirtualNode } from '@olane/o-core';
+import { GetDataResponse } from '../interfaces/get-data.response';
 
 export abstract class StorageProviderTool extends oTool(oVirtualNode) {
   abstract _tool_put(request: oRequest): Promise<ToolResult>;
 
-  abstract _tool_get(request: oRequest): Promise<ToolResult>;
+  abstract _tool_get(request: oRequest): Promise<GetDataResponse>;
 
   abstract _tool_delete(request: oRequest): Promise<ToolResult>;
 

@@ -6,3 +6,4 @@ export * from './put.tool';
 export * from './get.tool';
 export * from './delete.tool';
 export * from './has.tool';
+export * from './interfaces';

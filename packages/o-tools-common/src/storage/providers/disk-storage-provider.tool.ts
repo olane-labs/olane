@@ -4,6 +4,7 @@ import { DEFAULT_CONFIG_PATH, oAddress, oRequest } from '@olane/o-core';
 import fs from 'fs/promises';
 import path from 'path';
 import { STORAGE_PARAMS } from '../methods/storage.methods';
+import { GetDataResponse } from '../interfaces/get-data.response';
 
 // Extend the config interface to include storage directory
 interface DiskStorageConfig extends oToolConfig {
@@ -87,30 +88,15 @@ export class DiskStorageProvider extends StorageProviderTool {
    * @param key The key to retrieve
    * @returns The stored data or null if not found
    */
-  async _tool_get(request: oRequest): Promise<ToolResult> {
+  async _tool_get(request: oRequest): Promise<GetDataResponse> {
     const { key } = request.params;
-    try {
-      const filePath = this.getFilePath(key as string);
 
-      const fileContent = await fs.readFile(filePath, 'utf8');
-      const data = JSON.parse(fileContent);
+    const filePath = this.getFilePath(key as string);
 
-      return data.value;
-    } catch (error) {
-      const nodeError = error as NodeError;
-      if (nodeError.code === 'ENOENT') {
-        // File doesn't exist
-        return {
-          success: true,
-          data: null,
-        };
-      }
+    const fileContent = await fs.readFile(filePath, 'utf8');
+    const data = JSON.parse(fileContent);
 
-      return {
-        success: false,
-        error: `Failed to retrieve data: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      };
-    }
+    return data.value;
   }
 
   /**

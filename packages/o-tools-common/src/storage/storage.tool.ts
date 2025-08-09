@@ -3,6 +3,7 @@ import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { DiskStorageProvider } from './providers/disk-storage-provider.tool';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool';
 import { StorageProviderTool } from './providers/storage-provider.tool';
+import { GetDataResponse } from './interfaces/get-data.response';
 
 export class StorageTool extends StorageProviderTool {
   constructor(config: oToolConfig) {
@@ -32,7 +33,7 @@ export class StorageTool extends StorageProviderTool {
     throw new Error('Not implemented');
   }
 
-  async _tool_get(request: oRequest): Promise<ToolResult> {
+  async _tool_get(request: oRequest): Promise<GetDataResponse> {
     throw new Error('Not implemented');
   }
 

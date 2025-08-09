@@ -28,7 +28,7 @@ export const initRegistryTools = (oNode: oNode) => {
       ...params,
     }),
     new McpBridgeTool({
-      name: 'mcp-bridge',
+      name: 'mcp',
       ...params,
     }),
   ];

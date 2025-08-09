@@ -59,17 +59,54 @@ export class IntelligenceTool extends oTool(oVirtualNode) {
     );
   }
 
-  async chooseIntelligence(request: oRequest): Promise<ToolResult> {
-    // let's use preference to choose the best intelligence tool
-    const setup = await this.use(new oAddress('o://setup'), {
-      method: 'completion',
+  async requestMissingData(): Promise<ToolResult> {
+    // if the anthropic key is not in the vault, ask the human
+    this.logger.info('Anthropic API key not found in vault, asking human');
+    const humanResponse = await this.use(new oAddress('o://human'), {
+      method: 'question',
       params: {
-        prompt: 'Choose the best intelligence tool',
+        question: 'Enter the anthropic api key',
+      },
+    });
+
+    // process the human response
+    const { answer } = humanResponse.result.data as { answer: string };
+    this.logger.info('Human answer: ', answer);
+
+    await this.use(new oAddress('o://memory'), {
+      method: 'put',
+      params: {
+        key: 'anthropic-api-key',
+        value: answer,
       },
     });
     return {
       choice: 'o://anthropic',
+      apiKey: answer,
     };
+  }
+
+  async chooseIntelligence(request: oRequest): Promise<ToolResult> {
+    // check to see if anthropic key is in vault
+    const response = await this.use(new oAddress('o://memory'), {
+      method: 'get',
+      params: {
+        key: 'anthropic-api-key',
+      },
+    });
+    // if the anthropic key is in the vault, use it
+    if (response.result.data) {
+      const { value } = response.result.data as { value: string };
+      if (value) {
+        return {
+          choice: 'o://anthropic',
+          apiKey: value,
+        };
+      }
+    }
+
+    const result = await this.requestMissingData();
+    return result;
   }
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
@@ -80,8 +117,7 @@ export class IntelligenceTool extends oTool(oVirtualNode) {
       method: 'completion',
       params: {
         model: 'claude-opus-4-20250514',
-        apiKey:
-          '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',
+        apiKey: intelligence.apiKey,
         messages: [
           {
             role: 'user',

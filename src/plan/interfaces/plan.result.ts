@@ -7,8 +7,9 @@ export interface oPlanResult {
   }[];
   queries?: oQueryConfig[];
   tasks?: oTaskConfig[];
+  handshake?: oTaskConfig;
   result?: any;
   reasoning?: string;
   error?: any;
-  type: 'result' | 'task' | 'search' | 'multiple_step' | 'error';
+  type: 'result' | 'task' | 'search' | 'multiple_step' | 'error' | 'handshake';
 }

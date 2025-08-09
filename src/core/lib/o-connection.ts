@@ -66,18 +66,18 @@ export class oConnection {
     });
   }
 
-  async start() {
-    this.logger.debug('Starting handshake, address: ' + this.address.value);
-    const params = this.createRequest(oProtocolMethods.ROUTE, {
-      address: this.address.value,
-      payload: {
-        method: oProtocolMethods.HANDSHAKE,
-        params: {},
-      },
-    });
-    const request = new oRequest(params);
-    return this.transmit(request);
-  }
+  // async start() {
+  //   this.logger.debug('Starting handshake, address: ' + this.address.value);
+  //   const params = this.createRequest(oProtocolMethods.ROUTE, {
+  //     address: this.address.value,
+  //     payload: {
+  //       method: oProtocolMethods.HANDSHAKE,
+  //       params: {},
+  //     },
+  //   });
+  //   const request = new oRequest(params);
+  //   return this.transmit(request);
+  // }
 
   async transmit(request: oRequest): Promise<oResponse> {
     const stream = await this.p2pConnection.newStream(

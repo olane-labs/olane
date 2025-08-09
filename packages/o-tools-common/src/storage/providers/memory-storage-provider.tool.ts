@@ -2,6 +2,7 @@ import { ToolResult } from '@olane/o-tool';
 import { StorageProviderTool } from './storage-provider.tool';
 import { CoreConfig, oAddress, oRequest } from '@olane/o-core';
 import { STORAGE_PARAMS } from '../methods/storage.methods';
+import { GetDataResponse } from '../interfaces/get-data.response';
 
 export class MemoryStorageProvider extends StorageProviderTool {
   private storage: Map<string, string>;
@@ -32,12 +33,16 @@ export class MemoryStorageProvider extends StorageProviderTool {
    * @param key The key to retrieve
    * @returns The stored data or null if not found
    */
-  async _tool_get(request: oRequest): Promise<ToolResult> {
+  async _tool_get(request: oRequest): Promise<GetDataResponse> {
     const { key } = request.params;
     const value = this.storage.get(key as string);
+    if (!value) {
+      return {
+        value: null,
+      };
+    }
     return {
-      success: true,
-      data: value,
+      value: value,
     };
   }
 

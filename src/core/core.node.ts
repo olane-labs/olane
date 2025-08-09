@@ -195,6 +195,7 @@ export abstract class oCoreNode {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
     );
+    this.logger.debug('Using address: ', targetAddress.toString());
 
     const connection = await this.connect(nextHopAddress, targetAddress);
 

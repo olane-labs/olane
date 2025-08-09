@@ -72,7 +72,7 @@ export class oAgentPlan extends oPlan {
       });
       const result = await searchPlan.execute();
       this.sequence.push(searchPlan);
-      this.logger.debug('Search result: ', result);
+      this.logger.debug('Search result: ', result.result);
       results.push(result.result);
     }
     return results.flat();
@@ -151,7 +151,7 @@ export class oAgentPlan extends oPlan {
 
       const json = matches[0];
 
-      this.logger.debug('[AGENT PLsAN] Analysis result: ', json);
+      this.logger.debug('[AGENT PLAN] Analysis result: ', json);
 
       // process the result and react
       const planResult = JSON.parse(json) as oPlanResult;
@@ -163,7 +163,11 @@ export class oAgentPlan extends oPlan {
       const resultType = planResult.type;
 
       // if there is an answer, return it
-      if (resultType === 'result' || resultType === 'error') {
+      if (
+        resultType === 'result' ||
+        resultType === 'error' ||
+        resultType === 'handshake'
+      ) {
         return planResult;
       }
       // if there are intents, handle them
@@ -194,6 +198,12 @@ export class oAgentPlan extends oPlan {
           // add the context data
           this.contextIdHash[searchResult.metadata.id] = true;
           searchResultContext += `Tool Address: ${searchResult.metadata.address}\nTool Data: ${searchResult.pageContent}\n\n`;
+        }
+
+        searchResultContext += `[Search Results End]`;
+
+        if (filteredSearchResults.length > 0) {
+          this.config.context?.add(searchResultContext);
         }
       }
 
