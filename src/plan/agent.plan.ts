@@ -139,28 +139,17 @@ export class oAgentPlan extends oPlan {
 
       // search or resolve the intent with tool usage
       const plan = new oPlan(planConfig);
-      const result = await plan.execute();
+      const response = await plan.execute();
 
       // all plans are wrappers of AI around current state
-      const { message } = result as any;
-      const matches = message.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/);
-      if (!matches || matches.length === 0) {
-        // AI failed to return a valid JSON object
-        throw new Error('AI failed to return a valid JSON object');
-      }
-
-      const json = matches[0];
-
-      this.logger.debug('[AGENT PLAN] Analysis result: ', json);
-
-      // process the result and react
-      const planResult = JSON.parse(json) as oPlanResult;
+      const planResult = response as oPlanResult;
+      const { error, result, type } = planResult;
 
       // update the sequence to reflect state change
       this.sequence.push(plan);
 
       // handle the various result types
-      const resultType = planResult.type;
+      const resultType = type;
 
       // if there is an answer, return it
       if (

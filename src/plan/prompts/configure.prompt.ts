@@ -1,82 +1,67 @@
+import { CUSTOM_AGENT_PROMPT } from './custom.prompt';
+
 export const CONFIGURE_PROMPT = (
   intent: string,
   context: string,
   agentHistory: string,
-) => `
-You are a helpful assistant that configures a tool to resolve the user's intent.
+) =>
+  CUSTOM_AGENT_PROMPT(
+    intent,
+    context,
+    agentHistory,
+    `
+  Every Step Instructions:
+1. Review the provided user intent and context
+2. If you can complete the user intent, return the answer using the "Return Instructions" steps
+3. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
+3. Review the current step number and perform the instructions associated with that step.
+4. Start with step 1
 
-You resolve user intents by "cycling" through the following steps:
-1. Evaluate the intent
-2. Search for tools and context
-3. Use Search Results
-4. Use tools
-5. Review the results
+Step 1 - Evaluate the intent
+1. A complex step means there are multiple actions required to complete the user's intent
+2. If the intent is not-complex, continue to step 2
+3. If the intent is complex, break it up into a list of simple concise intents. Stop here and follow the "Return Instructions" steps
 
-General Information:
-- You have access to tools that are interconnected through a p2p network.
-- You have access to a knowledge vector database tool that can provide information about tools and general knowledge.
-- Network addresses are used to access tools.
-- Other networks may be accessible through the network address resolution system.
-- Context from searching across networks is added to the "Additional Context" section.
-- The state of solving the user's intent is logged in the "Agent State" section.
-- You retain information about the user through the vector database of knowledge.
+Step 2 - Handshake
+1. If this is not a handshake request, continue to step 3
+2. Method options are listed in the [Method Options Begin] section.
+3. Method metadata context is listed in the [Method Metadata Begin] section.
+4. Review the method information and select the best method to resolve the user's intent.
+5. If you have enough information to complete the handshake, follow the "Return Instructions" steps to return the "handshake results" do not return "Use Tool Results".
+6. Continue to step 3
 
-Steps:
-1. Review the agent history to avoid repeating the same configuration.
-2. If the history, context, and user input do not contain enough information to configure the tool, return an error.
-3. Choose the best method to resolve the user's input.
-4. Review the parameter requirements of the method.
-5. Configure the parameters using the user's intent and context provided.
-4. Do not explain the reasoning process, just return the output.
+  `,
+    `
+These are the types of cycle results: "Answer Results", "Handshake Results", "Error Results".
 
-Rules:
-1. Do not include \`\`\`json or \`\`\` in your output.
+All Return Step Instructions:
+1. Determine what type of results we have
+2. Output the respective results using the matching output type.
+3. Generate a reasoning statement for why this result was returned.
+4. Do not include \`\`\`json or \`\`\` in your output.
 
-Example:
-User Input: "Send a message to Emma that dinner is ready"
-Context:
-Address is o://messaging/send
-Method options: send, send_message, list_messages, get_message
-"send" method parameters:
-  "to": string,
-  "message": string,
-"send_message" method parameters:
-  "to": string,
-  "message": string,
-"list_messages" method parameters:
-  "limit": number,
-  "offset": number,
-"get_message" method parameters:
-  "message_id": string,
-
-Output:
+Handshake Results:
 {
-  "task": {
-    "address": "o://messaging/send",
-    "payload": { "method": "send", "params": { "to": "Emma", "message": "Dinner is ready" } }
+  "handshake": {
+    "address": string,
+    "payload": { "method": string, "params": any }
   },
-  "type": "task",
+  "type": "handshake",
 }
 
-Error Output Format:
+Answer Results:
 {
-  "error": {
-    "message": string,
-    "solution": string,
-    "explanation": string,
-  },
+  "result": string,
+  "reasoning": string,
+  "type": "result",
+}
+
+Error Results:
+{
+  "error": string,
+  "reasoning": string,
   "type": "error",
 }
 
-[User Intent Begin]
-${intent}
-[User Intent End]
-
-[Additional Context Begin]
-${context}
-[Additional Context End]
-
-[Previous Cycle Results Begin]
-${agentHistory}
-[Previous Cycle Results End]
-`;
+    `,
+  );

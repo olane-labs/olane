@@ -27,6 +27,7 @@ import { oToolErrorCodes } from '../error/enums/codes.error';
 import { oAgentPlan } from '../plan/agent.plan';
 import { oPlanContext } from '../plan/plan.context';
 import { oPlanResult } from '../plan/interfaces/plan.result';
+import { oConfigurePlan } from '../plan/configure/configure.plan';
 
 const started = false;
 
@@ -51,8 +52,8 @@ export abstract class oNode extends oCoreNode {
       handshake.params.intent,
     );
 
-    const pc = new oAgentPlan({
-      intent: `You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
+    const pc = new oConfigurePlan({
+      intent: `This is a handshake request. You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
       currentNode: this,
       caller: this.address,
       context: new oPlanContext([
@@ -62,17 +63,12 @@ export abstract class oNode extends oCoreNode {
     });
     const result = await pc.execute();
     this.logger.debug('Handshake result: ', result);
-    const message = result.result;
     if (result.error) {
       return result;
     }
 
-    const json = JSON.parse(message);
-    return {
-      ...json.task,
-      methodMetadata: this.methods,
-      methods: this.myTools(),
-    };
+    this.logger.debug('Handshake json: ', result.handshake);
+    return result;
   }
 
   abstract configureTransports(): any[];
@@ -146,10 +142,15 @@ export abstract class oNode extends oCoreNode {
     if (isMethodMatch) {
       this.logger.debug('Method match found, forwarding to self...');
       const extractedMethod = this.extractMethod(destinationAddress);
-      return this.use(this.address, {
+      const response = await this.use(this.address, {
         method: payload.method || extractedMethod,
         params: payload.params,
       });
+      if (response.result.error) {
+        const error: oToolError = response.result.error as oToolError;
+        throw new oToolError(error.code, error.message);
+      }
+      return response.result.data;
     }
 
     const targetStream = await this.p2pNode.dialProtocol(

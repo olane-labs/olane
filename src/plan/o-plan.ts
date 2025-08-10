@@ -124,6 +124,26 @@ export class oPlan {
     this.cid = await this.toCID();
   }
 
+  extractResultFromAI(message: string): oPlanResult {
+    this.logger.debug('Extracting result from AI: ', message);
+    // handle 4 levels of nested JSON
+    const matches = message.match(
+      /\{(?:[^{}]*|\{(?:[^{}]*|\{(?:[^{}]*|\{(?:[^{}]*|\{[^{}]*\})*\})*\})*\})*\}/,
+    );
+    if (!matches || matches.length === 0) {
+      // AI failed to return a valid JSON object
+      throw new Error('AI failed to return a valid JSON object');
+    }
+
+    const json = matches[0];
+
+    this.logger.debug('[AGENT PLAN] Analysis result: ', json);
+
+    // process the result and react
+    const planResult = JSON.parse(json) as oPlanResult;
+    return planResult;
+  }
+
   async run(): Promise<oPlanResult> {
     this.logger.debug('Running plan...');
 
@@ -131,20 +151,12 @@ export class oPlan {
     this.logger.debug('Agent history: ', this.agentHistory);
     let prompt: string | null = null;
     if (this.config.promptFunction) {
+      this.logger.debug('Using prompt function: ', this.config.promptFunction);
       prompt = this.config.promptFunction(
         this.config.intent,
         ctxt,
         this.agentHistory,
       );
-    } else if (this.node.config.promptAddress) {
-      this.logger.debug(
-        'Using prompt address: ',
-        this.node.config.promptAddress,
-      );
-      const response = await this.node.use(this.node.config.promptAddress, {});
-      this.logger.debug('Prompt address response: ', response);
-      prompt = response.result.data as string;
-      this.logger.debug('Prompt to use: ', prompt);
     } else {
       prompt = AGENT_PROMPT(this.config.intent, ctxt, this.agentHistory);
     }
@@ -157,7 +169,10 @@ export class oPlan {
       },
     });
 
-    return response.result.data as oPlanResult;
+    const data = response.result.data as any;
+    const message = data.message;
+    const planResult = this.extractResultFromAI(message);
+    return planResult;
   }
 
   async execute(): Promise<oPlanResult> {

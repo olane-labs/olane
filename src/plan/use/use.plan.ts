@@ -43,20 +43,22 @@ export class oUsePlan extends oPlan {
       },
     });
 
-    const data: any = handshakeResponse.result.data;
-    this.logger.debug('Handshake response: ', data);
-    if (data.error) {
-      return data;
+    this.logger.debug('Handshake response: ', handshakeResponse);
+    const data = handshakeResponse.result.data as any;
+    this.logger.debug('Handshake data: ', data);
+    const { handshake, error }: any = data;
+    if (error) {
+      return error;
     }
-    if (!data.payload) {
+    if (!handshake) {
       throw new oToolError(
         oToolErrorCodes.TOOL_ERROR,
         'Failed to configure the tool use',
       );
     }
     const response = await this.node.use(this.config.receiver, {
-      method: data.payload?.method,
-      params: data.payload?.params,
+      method: handshake.payload?.method,
+      params: handshake.payload?.params,
     });
     this.logger.debug('Use response: ', response);
     // check for error
@@ -64,8 +66,8 @@ export class oUsePlan extends oPlan {
       return {
         error: {
           ...response.result.error,
-          methodMetadata: data.methodMetadata,
-          methods: data.methods,
+          // methodMetadata: data.methodMetadata,
+          // methods: data.methods,
         },
         type: 'error',
       };
