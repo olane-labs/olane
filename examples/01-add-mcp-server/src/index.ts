@@ -6,7 +6,6 @@ dotenv.config();
 
 (async () => {
   const network = new oNetwork({
-    // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),
     nodes: [
       {
         type: NodeType.LEADER,

@@ -5,26 +5,51 @@ import { oPlan } from '../o-plan';
 
 export class oSearchPlan extends oPlan {
   private query: string;
-  constructor(config: oPlanConfig & { query: string }) {
+  private external: boolean;
+  constructor(config: oPlanConfig & { query: string; external: boolean }) {
     super(config);
     this.query = config.query;
+    this.external = config.external;
   }
 
-  async run(): Promise<oPlanResult> {
+  /**
+   * Search external providers.
+   */
+  private async externalSearch(): Promise<oPlanResult> {
+    return {
+      result: [],
+      type: 'result',
+    };
+    // const response = await this.node.use(new oAddress('o://search'), {
+    //   method: 'vector',
+    //   params: {
+    //     query: this.query,
+    //   },
+    // });
+    // return response.result.data;
+  }
+
+  /**
+   * Search internal providers such as the local vector store, local database, etc.
+   */
+  private async internalSearch(): Promise<oPlanResult> {
     const response = await this.node.use(new oAddress('o://search'), {
       method: 'vector',
       params: {
         query: this.query,
       },
     });
-
-    // if no results, perhaps we should check other networks we know about
-    // TODO: check other networks we know about (i.e internet 1.0, sonar, trusted other nets)
-    // additionalContext[query] = response.result.data;
-
     return {
       result: response.result.data,
       type: 'result',
     };
+  }
+
+  async run(): Promise<oPlanResult> {
+    const result = this.external
+      ? await this.externalSearch()
+      : await this.internalSearch();
+
+    return result;
   }
 }

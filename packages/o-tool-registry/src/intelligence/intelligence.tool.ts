@@ -116,7 +116,7 @@ export class IntelligenceTool extends oTool(oVirtualNode) {
     const response = await this.use(new oAddress(intelligence.choice), {
       method: 'completion',
       params: {
-        model: 'claude-opus-4-20250514',
+        model: 'claude-opus-4-1-20250805',
         apiKey: intelligence.apiKey,
         messages: [
           {

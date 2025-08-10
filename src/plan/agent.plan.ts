@@ -4,7 +4,6 @@ import { oPlanConfig } from './interfaces/plan-config.interface';
 import { oPlan } from './o-plan';
 import { oUsePlan } from './use/use.plan';
 import { oSearchPlan } from './search/search.plan';
-import { oPlanContext } from './plan.context';
 import { oQueryConfig } from './interfaces/query.config';
 import { oErrorPlan } from './error/error.plan';
 
@@ -68,7 +67,8 @@ export class oAgentPlan extends oPlan {
       const searchPlan = new oSearchPlan({
         ...config,
         intent: `Searching for context to help with the user intent`,
-        query: query.query,
+        query: query?.query,
+        external: query?.provider === 'external',
       });
       const result = await searchPlan.execute();
       this.sequence.push(searchPlan);
@@ -92,32 +92,27 @@ export class oAgentPlan extends oPlan {
   /**
    * The analysis of the intent results in a list of steps and queries to complete the intent.
    */
-  // async handleMultipleStep(
-  //   output: oPlanResult,
-  //   config: oPlanConfig,
-  //   node: oCoreNode,
-  // ): Promise<oPlanResult> {
-  //   this.logger.debug('Handling analysis...', output);
-  //   let pastContext = config.context;
-  //   const results: any[] = [];
-  //   for (const intent of output?.intents || []) {
-  //     const response: oPlanResult = await this.start();
-  //     if (!response.result) {
-  //       throw new Error('No result found for intent: ' + intent.intent);
-  //     }
-  //     this.logger.debug(
-  //       'Handled multiple step intent: ',
-  //       intent.intent,
-  //       response,
-  //     );
-  //     pastContext?.addAll(response.result);
-  //     results.push(response.result);
-  //   }
-  //   return {
-  //     result: results,
-  //     type: 'multiple_step',
-  //   };
-  // }
+  async handleMultipleStep(output: oPlanResult): Promise<oPlanResult> {
+    this.logger.debug('Handling analysis...', output);
+    const results: any[] = [];
+    for (const intent of output?.intents || []) {
+      const subPlan = new oAgentPlan({
+        ...this.config,
+        intent: intent.intent,
+      });
+      const response = await subPlan.execute();
+      this.logger.debug(
+        'Handled multiple step intent: ',
+        intent.intent,
+        response,
+      );
+      results.push(JSON.stringify(response));
+    }
+    return {
+      result: results,
+      type: 'multiple_step',
+    };
+  }
 
   async loop(): Promise<oPlanResult> {
     if (!this.node) {
@@ -126,7 +121,10 @@ export class oAgentPlan extends oPlan {
 
     let iterations = 0;
     while (iterations++ < this.MAX_ITERATIONS) {
-      this.logger.debug('Plan context: ', this.config.context);
+      this.logger.debug(
+        'Plan context size: ',
+        this.config.context?.toString()?.length,
+      );
 
       // setup the plan config
       const planConfig: oPlanConfig = {
@@ -161,9 +159,9 @@ export class oAgentPlan extends oPlan {
       }
       // if there are intents, handle them
       if (resultType === 'multiple_step') {
-        this.logger.error('Multiple step not implemented');
-        throw new Error('Multiple step not implemented');
-        // return this.handleMultipleStep(planResult, planConfig, this.node);
+        this.logger.debug('Handling multiple step...', planResult);
+        const multipleStepResult = await this.handleMultipleStep(planResult);
+        this.config.context?.add(JSON.stringify(multipleStepResult));
       }
 
       // handle search case
