@@ -20,15 +20,15 @@ import { oDependency } from './o-dependency';
 import { UseOptions } from './interfaces/use-options.interface';
 
 export abstract class oCoreNode {
-  public p2pNode: Libp2p;
+  public p2pNode!: Libp2p;
   public logger: Logger;
   public networkConfig: Libp2pConfig;
   public address: oAddress;
   public readonly staticAddress: oAddress;
-  public peerId: PeerId;
+  public peerId!: PeerId;
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
-  public connectionManager: oConnectionManager;
+  public connectionManager!: oConnectionManager;
   public leaders: Multiaddr[] = [];
   public addressResolution: oAddressResolution;
   public readonly description: string;
@@ -145,7 +145,7 @@ export abstract class oCoreNode {
       if (searchResults.length > 0) {
         // the root was found, let's add the rest of the path to the address
         const remainderPaths = result.paths.split('/').slice(1);
-        let resolvedAddress =
+        const resolvedAddress =
           searchResults[0].address +
           (remainderPaths.length > 0 ? '/' + remainderPaths.join('/') : ''); // TODO: we need to handle this better
         result = new oAddress(resolvedAddress, result.transports);
@@ -230,7 +230,7 @@ export abstract class oCoreNode {
         'Successfully advertised absolute address',
         providePromise,
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(
         'Failed to advertise absolute address (this is normal for isolated nodes):',
         error.message,
@@ -253,7 +253,7 @@ export abstract class oCoreNode {
       );
       await Promise.race([providePromise, timeoutPromise]);
       this.logger.debug('Successfully advertised static address');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(
         'Failed to advertise static address (this is normal for isolated nodes):',
         error.message,

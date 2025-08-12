@@ -39,7 +39,7 @@ export class McpBridgeTool extends oTool(oVirtualNode) {
           this.childNodes.length +
           ' tools',
       };
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(
         'Error when trying to add MCP server (' +
           mcpServerUrl +
@@ -92,7 +92,7 @@ export class McpBridgeTool extends oTool(oVirtualNode) {
           this.childNodes.length +
           ' tools',
       };
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(
         'Error when trying to add MCP server (' +
           mcpServerUrl +

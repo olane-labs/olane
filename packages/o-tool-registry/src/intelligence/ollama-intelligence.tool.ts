@@ -172,7 +172,8 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OllamaChatResponse = await response.json();
+      const result: OllamaChatResponse =
+        (await response.json()) as OllamaChatResponse;
       return {
         message: result.message.content,
         model: result.model,
@@ -180,7 +181,7 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         eval_count: result.eval_count,
         eval_duration: result.eval_duration,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to complete chat: ${(error as Error).message}`,
@@ -235,7 +236,8 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OllamaGenerateResponse = await response.json();
+      const result: OllamaGenerateResponse =
+        (await response.json()) as OllamaGenerateResponse;
 
       return {
         success: true,
@@ -246,7 +248,7 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         eval_count: result.eval_count,
         eval_duration: result.eval_duration,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
@@ -277,13 +279,14 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OllamaListResponse = await response.json();
+      const result: OllamaListResponse =
+        (await response.json()) as OllamaListResponse;
 
       return {
         success: true,
         models: result.models,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to list models: ${(error as Error).message}`,
@@ -351,7 +354,7 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         message: `Model ${model} pulled successfully`,
         details: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to pull model: ${(error as Error).message}`,
@@ -399,7 +402,7 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         success: true,
         message: `Model ${model} deleted successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to delete model: ${(error as Error).message}`,
@@ -436,13 +439,13 @@ export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as any;
 
       return {
         success: true,
         model_info: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to get model info: ${(error as Error).message}`,

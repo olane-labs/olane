@@ -16,7 +16,7 @@ export class oNetwork {
   private nodes: oNode[] = []; // clones of node for scale
   public rootLeader: oLeaderNode | null = null; // the root leader node
   private logger: Logger;
-  public status: NetworkStatus;
+  public status!: NetworkStatus;
   private config: NetworkConfigInterface;
   private roundRobinIndex: number = 0;
   private inFlightRequests: any[] = [];

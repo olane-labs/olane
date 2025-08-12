@@ -36,6 +36,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
       if (!method) {
         throw new Error('method parameter is required');
       }
+      // @ts-ignore
       if (!this[`_tool_${method}`]) {
         throw new Error(`Tool ${method} is not implemented`);
       }
@@ -222,12 +223,14 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
       if (!func) {
         throw new Error(`Tool ${tool} not found`);
       }
+      // @ts-ignore
       return this[func]();
     }
 
     async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
       const method = request.method as string;
       this.logger.debug('Calling tool: ' + method);
+      // @ts-ignore
       return this[`_tool_${method}`]({ ...request.toJSON(), stream });
     }
 

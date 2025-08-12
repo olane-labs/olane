@@ -113,9 +113,9 @@ interface GeminiListModelsResponse {
 }
 
 export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
-  private apiKey: string;
-  private baseUrl: string;
-  private defaultModel: string;
+  private apiKey!: string;
+  private baseUrl!: string;
+  private defaultModel!: string;
 
   constructor(config: oToolConfig) {
     super({
@@ -186,7 +186,8 @@ export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: GeminiChatResponse = await response.json();
+      const result: GeminiChatResponse =
+        (await response.json()) as GeminiChatResponse;
 
       if (!result.candidates || result.candidates.length === 0) {
         return {
@@ -203,7 +204,7 @@ export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
         finish_reason: result.candidates[0].finishReason,
         safety_ratings: result.candidates[0].safetyRatings,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to complete chat: ${(error as Error).message}`,
@@ -271,7 +272,8 @@ export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: GeminiGenerateResponse = await response.json();
+      const result: GeminiGenerateResponse =
+        (await response.json()) as GeminiGenerateResponse;
 
       if (!result.candidates || result.candidates.length === 0) {
         return {
@@ -326,7 +328,8 @@ export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: GeminiListModelsResponse = await response.json();
+      const result: GeminiListModelsResponse =
+        (await response.json()) as GeminiListModelsResponse;
 
       return {
         success: true,
@@ -373,7 +376,7 @@ export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as any;
 
       return {
         success: true,

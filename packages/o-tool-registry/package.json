@@ -1,18 +1,10 @@
 {
   "name": "@olane/o-tool-registry",
-  "version": "1.0.9",
-  "type": "module",
+  "version": "0.1.1",
   "main": "dist/index.js",
-  "module": "dist/index.js",
-  "browser": "dist/index.js",
-  "node": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "browser": "./dist/index.js",
-      "node": "./dist/index.js",
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
@@ -39,17 +31,18 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
-    "@olane/o-core": "file:../..",
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-protocol": "file:../o-protocol",
-    "@olane/o-tool": "file:../o-tool",
-    "@olane/o-tools-common": "file:../o-tools-common",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-tools-common": "file:../o-tools-common",
+    "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
@@ -66,23 +59,23 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
+    "typescript": "5.4.5",
     "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.2"
   },
   "peerDependencies": {
-    "@olane/o-core": "^0.1.0",
-    "@olane/o-config": "^0.1.0",
-    "@olane/o-protocol": "^0.1.0",
-    "@olane/o-tool": "^0.1.0",
-    "@olane/o-tools-common": "^0.1.0"
+    "@olane/o-config": "^0.1.1",
+    "@olane/o-core": "^0.1.1",
+    "@olane/o-protocol": "^0.1.1",
+    "@olane/o-tool": "^0.1.1",
+    "@olane/o-tools-common": "^0.1.1"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.13.0",
     "@huggingface/transformers": "^3.5.2",
     "@langchain/community": "^0.3.47",
     "@langchain/core": "^0.3.61",
+    "@modelcontextprotocol/sdk": "^1.13.0",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "langchain": "^0.3.29"

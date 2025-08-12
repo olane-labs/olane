@@ -156,7 +156,7 @@ export class OAuthTool extends oHostNodeTool {
         );
       }
 
-      const tokens: OAuthTokens = await response.json();
+      const tokens: OAuthTokens = (await response.json()) as OAuthTokens;
 
       // Store tokens
       this.tokenStore.set(`${serviceName}_tokens`, tokens);
@@ -174,7 +174,7 @@ export class OAuthTool extends oHostNodeTool {
           scope: tokens.scope,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Token exchange failed for service ${serviceName}:`,
         error,
@@ -219,7 +219,7 @@ export class OAuthTool extends oHostNodeTool {
         );
       }
 
-      const tokens: OAuthTokens = await response.json();
+      const tokens: OAuthTokens = (await response.json()) as OAuthTokens;
 
       // Update stored tokens
       const existingTokens = this.tokenStore.get(`${serviceName}_tokens`);
@@ -245,7 +245,7 @@ export class OAuthTool extends oHostNodeTool {
           scope: tokens.scope,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Token refresh failed for service ${serviceName}:`,
         error,
@@ -286,14 +286,14 @@ export class OAuthTool extends oHostNodeTool {
         );
       }
 
-      const userInfo: OAuthUserInfo = await response.json();
+      const userInfo: OAuthUserInfo = (await response.json()) as OAuthUserInfo;
 
       return {
         success: true,
         serviceName,
         userInfo,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `User info request failed for service ${serviceName}:`,
         error,
@@ -336,7 +336,7 @@ export class OAuthTool extends oHostNodeTool {
         status: response.status,
         statusText: response.statusText,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Token validation failed for service ${serviceName}:`,
         error,
@@ -419,7 +419,7 @@ export class OAuthTool extends oHostNodeTool {
         status: response.status,
         statusText: response.statusText,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Token revocation failed for service ${serviceName}:`,
         error,

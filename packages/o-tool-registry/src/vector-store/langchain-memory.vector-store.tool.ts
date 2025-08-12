@@ -6,7 +6,7 @@ import { EmbeddingsInterface } from '@langchain/core/embeddings';
 import { Document, DocumentInput } from '@langchain/core/documents';
 
 export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
-  private vectorStore: MemoryVectorStore;
+  private vectorStore!: MemoryVectorStore;
 
   constructor(config: oToolConfig) {
     super({

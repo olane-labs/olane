@@ -1,20 +1,13 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
   "main": "dist/index.js",
-  "module": "dist/index.js",
-  "browser": "dist/index.js",
-  "node": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "browser": "./dist/index.js",
-      "node": "./dist/index.js",
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
@@ -47,13 +40,14 @@
     "generate:json": "for f in schema/*/schema.ts; do typescript-json-schema --defaultNumberType integer --required --skipLibCheck \"$f\" \"*\" -o \"${f%ts}json\"; done",
     "format": "prettier --write \"**/*.{md,mdx}\"",
     "serve:docs": "cd docs && mintlify dev",
-    "build": "rm -rf dist && mkdir dist && touch dist/schema.ts && webpack --config webpack.config.js && tsc"
+    "build": "tsc"
   },
   "devDependencies": {
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
+    "@tsconfig/node20": "^20.1.6",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "babel-loader": "^10.0.0",

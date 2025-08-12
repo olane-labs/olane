@@ -166,7 +166,8 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: AnthropicChatResponse = await response.json();
+      const result: AnthropicChatResponse =
+        (await response.json()) as AnthropicChatResponse;
 
       return {
         message: result.content[0]?.text || '',
@@ -175,7 +176,7 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         stop_reason: result.stop_reason,
         stop_sequence: result.stop_sequence,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to complete chat: ${(error as Error).message}`,
@@ -246,7 +247,8 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: AnthropicMessageResponse = await response.json();
+      const result: AnthropicMessageResponse =
+        (await response.json()) as AnthropicMessageResponse;
 
       return {
         success: true,
@@ -256,7 +258,7 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         stop_reason: result.stop_reason,
         stop_sequence: result.stop_sequence,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
@@ -295,14 +297,15 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: AnthropicListModelsResponse = await response.json();
+      const result: AnthropicListModelsResponse =
+        (await response.json()) as AnthropicListModelsResponse;
 
       return {
         success: true,
         response: result.data,
         models: result.data,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to list models: ${(error as Error).message}`,
@@ -341,7 +344,8 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: AnthropicListModelsResponse = await response.json();
+      const result: AnthropicListModelsResponse =
+        (await response.json()) as AnthropicListModelsResponse;
       const modelInfo = result.data.find((m) => m.id === model);
 
       if (!modelInfo) {
@@ -356,7 +360,7 @@ export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
         response: modelInfo,
         model: modelInfo,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to get model info: ${(error as Error).message}`,

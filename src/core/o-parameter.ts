@@ -3,7 +3,6 @@ import { oParameter as oParameterType } from '@olane/o-protocol';
 export class oParameter implements oParameterType {
   name: string;
   type: string;
-  key: string;
   value: any;
   description?: string;
   required?: boolean;

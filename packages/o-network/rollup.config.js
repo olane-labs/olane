@@ -15,10 +15,8 @@ module.exports = [
     },
     external: [
       // External dependencies that should not be bundled
-      '@supabase/supabase-js',
       '@langchain/community',
       '@langchain/core',
-      '@modelcontextprotocol/sdk',
       '@huggingface/transformers',
       'langchain',
       'child_process',

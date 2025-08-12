@@ -85,7 +85,7 @@ interface PerplexitySearchResponse {
 }
 
 export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
-  private defaultModel: string;
+  private defaultModel!: string;
 
   constructor(config: oToolConfig) {
     super({
@@ -177,7 +177,8 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: PerplexityChatResponse = await response.json();
+      const result: PerplexityChatResponse =
+        (await response.json()) as PerplexityChatResponse;
 
       return {
         success: true,
@@ -186,7 +187,7 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to complete chat: ${(error as Error).message}`,
@@ -282,7 +283,8 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: PerplexityChatResponse = await response.json();
+      const result: PerplexityChatResponse =
+        (await response.json()) as PerplexityChatResponse;
 
       return {
         success: true,
@@ -291,7 +293,7 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
@@ -328,13 +330,14 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: PerplexityModelsResponse = await response.json();
+      const result: PerplexityModelsResponse =
+        (await response.json()) as PerplexityModelsResponse;
 
       return {
         success: true,
         models: result.data,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to list models: ${(error as Error).message}`,
@@ -404,7 +407,8 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: PerplexitySearchResponse = await response.json();
+      const result: PerplexitySearchResponse =
+        (await response.json()) as PerplexitySearchResponse;
 
       return {
         success: true,
@@ -413,7 +417,7 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to search: ${(error as Error).message}`,
@@ -448,7 +452,7 @@ export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
         status: response.ok ? 'online' : 'offline',
         status_code: response.status,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         status: 'offline',

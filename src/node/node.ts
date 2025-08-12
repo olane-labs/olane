@@ -38,7 +38,7 @@ const sharedRegistry = register;
 // collectDefaultMetrics({ register: sharedRegistry });
 
 export abstract class oNode extends oCoreNode {
-  public networkActivity: NetworkActivity;
+  public networkActivity!: NetworkActivity;
   public childNodes: oNode[] = [];
   public childAddresses: oAddress[] = [];
 
@@ -238,7 +238,7 @@ export abstract class oNode extends oCoreNode {
               node.config.leader?.transports.join(', '),
           );
           await node.start();
-        } catch (error) {
+        } catch (error: any) {
           this.logger.error(
             'Failed to start virtual node: ' + node.address.toString(),
             error,
@@ -257,7 +257,7 @@ export abstract class oNode extends oCoreNode {
     const { address, transports }: any = request.params;
     const childAddress = new oAddress(
       address,
-      transports.map((t) => multiaddr(t)),
+      transports.map((t: string) => multiaddr(t)),
     );
     this.childAddresses.push(childAddress);
     return {

@@ -37,7 +37,7 @@ export class oConnection {
     this.p2pConnection = config.p2pConnection;
   }
 
-  async read(source) {
+  async read(source: any) {
     const chunks: any = await all(source);
 
     const data = new Uint8ArrayList(...chunks).slice();

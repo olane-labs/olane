@@ -17,7 +17,7 @@ import { oErrorPlan } from './error/error.plan';
  */
 export class oAgentPlan extends oPlan {
   private MAX_ITERATIONS = 20;
-  private contextIdHash = {};
+  private contextIdHash: { [key: string]: boolean } = {};
 
   constructor(config: oPlanConfig) {
     super(config);

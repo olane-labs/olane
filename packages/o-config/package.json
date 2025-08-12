@@ -1,18 +1,10 @@
 {
   "name": "@olane/o-config",
-  "version": "0.1.0",
-  "type": "module",
+  "version": "0.1.1",
   "main": "dist/index.js",
-  "module": "dist/index.js",
-  "browser": "dist/index.js",
-  "node": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "browser": "./dist/index.js",
-      "node": "./dist/index.js",
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
@@ -44,6 +36,7 @@
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
+    "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",

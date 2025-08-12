@@ -116,9 +116,9 @@ interface OpenAIListModelsResponse {
 }
 
 export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
-  private apiKey: string;
-  private baseUrl: string;
-  private defaultModel: string;
+  private apiKey!: string;
+  private baseUrl!: string;
+  private defaultModel!: string;
   private organization?: string;
 
   constructor(config: oToolConfig) {
@@ -183,7 +183,8 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OpenAIChatResponse = await response.json();
+      const result: OpenAIChatResponse =
+        (await response.json()) as OpenAIChatResponse;
 
       return {
         success: true,
@@ -193,7 +194,7 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         finish_reason: result.choices[0]?.finish_reason,
         function_call: result.choices[0]?.message?.function_call,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to complete chat: ${(error as Error).message}`,
@@ -253,7 +254,8 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OpenAICompletionResponse = await response.json();
+      const result: OpenAICompletionResponse =
+        (await response.json()) as OpenAICompletionResponse;
 
       return {
         success: true,
@@ -262,7 +264,7 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
@@ -303,13 +305,14 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result: OpenAIListModelsResponse = await response.json();
+      const result: OpenAIListModelsResponse =
+        (await response.json()) as OpenAIListModelsResponse;
 
       return {
         success: true,
         models: result.data,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to list models: ${(error as Error).message}`,
@@ -353,13 +356,13 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         };
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as any;
 
       return {
         success: true,
         model_info: result,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         error: `Failed to get model info: ${(error as Error).message}`,
@@ -398,7 +401,7 @@ export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
         status: response.ok ? 'online' : 'offline',
         status_code: response.status,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         status: 'offline',

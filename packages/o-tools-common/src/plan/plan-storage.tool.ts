@@ -6,7 +6,7 @@ import { PlanResolver } from './resolvers';
 
 export function oPlanStorageTool<
   T extends new (...args: any[]) => oVirtualTool,
->(Base: T) {
+>(Base: T): T & (new (...args: any[]) => any) {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);

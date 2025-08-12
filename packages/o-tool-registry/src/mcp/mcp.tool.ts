@@ -34,6 +34,7 @@ export class McpTool extends oTool(oVirtualNode) {
         parameters: tool.inputSchema as any,
         dependencies: [],
       };
+      // @ts-ignore
       this[`_tool_${tool.name}`] = async (request: oRequest) => {
         this.logger.debug('Calling MCP tool: ' + tool.name, request);
         const params = request.params;

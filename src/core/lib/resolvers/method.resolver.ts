@@ -8,9 +8,9 @@ export class oMethodResolver extends oAnythingResolver {
   }
   async resolve(address: oAddress, node: oNode): Promise<oAddress> {
     const nextHopAddress = await super.resolve(address, node);
-    const method = nextHopAddress.protocol.split('/').pop();
+    const method: string | undefined = nextHopAddress.protocol.split('/').pop();
     if (method) {
-      const methodName = node.myTools()[method];
+      const methodName = node.myTools()[method as any];
       if (methodName) {
         return new oAddress(
           nextHopAddress.toString(),

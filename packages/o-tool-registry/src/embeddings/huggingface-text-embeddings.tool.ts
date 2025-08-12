@@ -3,7 +3,7 @@ import { TextEmbeddingsTool } from './text-embeddings.tool';
 import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
 
 export class HuggingfaceTextEmbeddingsTool extends TextEmbeddingsTool {
-  private model: HuggingFaceTransformersEmbeddings;
+  private model!: HuggingFaceTransformersEmbeddings;
 
   async initialize(): Promise<void> {
     await super.initialize();

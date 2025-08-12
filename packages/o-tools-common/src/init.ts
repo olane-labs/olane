@@ -39,7 +39,7 @@ export const initCommonTools = (oNode: oNode) => {
     }),
   ];
   tools.forEach((tool) => {
-    oNode.addChildNode(tool);
+    oNode.addChildNode(tool as any);
   });
   return tools;
 };

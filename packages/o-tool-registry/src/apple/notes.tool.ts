@@ -40,7 +40,7 @@ export class NotesTool extends oTool(oVirtualNode) {
 
       const result = JSON.parse(stdout.trim());
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to execute JXA script: ${error}`);
       throw new Error(`JXA execution failed: ${error.message}`);
     }
@@ -63,7 +63,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         data: result.data,
         message: `Retrieved ${result.data.length} notes successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error getting notes: ${error}`);
       return {
         success: false,
@@ -108,7 +108,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         data: result.data,
         message: 'Note created successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error creating note: ${error}`);
       return {
         success: false,
@@ -152,7 +152,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         data: result.data,
         message: 'Note updated successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error updating note: ${error}`);
       return {
         success: false,
@@ -187,7 +187,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         success: true,
         message: result.message || 'Note deleted successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error deleting note: ${error}`);
       return {
         success: false,
@@ -213,7 +213,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         data: result.data,
         message: `Retrieved ${result.data.length} folders successfully`,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error getting folders: ${error}`);
       return {
         success: false,
@@ -249,7 +249,7 @@ export class NotesTool extends oTool(oVirtualNode) {
         data: result.data,
         message: 'Folder created successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error creating folder: ${error}`);
       return {
         success: false,

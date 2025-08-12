@@ -1,18 +1,10 @@
 {
   "name": "@olane/o-tool",
-  "version": "0.1.0",
-  "type": "module",
+  "version": "0.1.1",
   "main": "dist/index.js",
-  "module": "dist/index.js",
-  "browser": "dist/index.js",
-  "node": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "browser": "./dist/index.js",
-      "node": "./dist/index.js",
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
@@ -39,15 +31,16 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
-    "@olane/o-core": "file:../..",
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-protocol": "file:../o-protocol",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
@@ -70,9 +63,9 @@
     "webpack-dev-server": "^5.2.2"
   },
   "peerDependencies": {
-    "@olane/o-core": "^0.1.0",
-    "@olane/o-config": "^0.1.0",
-    "@olane/o-protocol": "^0.1.0"
+    "@olane/o-config": "^0.1.1",
+    "@olane/o-core": "^0.1.1",
+    "@olane/o-protocol": "^0.1.1"
   },
   "dependencies": {
     "debug": "^4.4.1",
