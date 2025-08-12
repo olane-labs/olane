@@ -160,18 +160,18 @@ jobs:
       # Publish packages in dependency order
       - name: Publish o-config
         working-directory: packages/o-config
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish o-protocol
         working-directory: packages/o-protocol
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish root package (o-core)
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -187,7 +187,7 @@ jobs:
 
       - name: Publish o-tool
         working-directory: packages/o-tool
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -203,7 +203,7 @@ jobs:
 
       - name: Publish o-tools-common
         working-directory: packages/o-tools-common
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -219,7 +219,7 @@ jobs:
 
       - name: Publish o-tool-registry
         working-directory: packages/o-tool-registry
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -235,6 +235,6 @@ jobs:
 
       - name: Publish o-network
         working-directory: packages/o-network
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
