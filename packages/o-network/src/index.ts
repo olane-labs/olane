@@ -1,4 +1,4 @@
-export * from './nodes/common';
+export * from './nodes';
 export * from './network';
 export * from './utils/graceful-shutdown';
 export * from './utils/config';

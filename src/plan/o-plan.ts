@@ -1,4 +1,4 @@
-import { Logger, oAddress, oResponse, UseOptions } from '../';
+import { Logger, oAddress, oResponse, oToolError, UseOptions } from '../';
 import { oPlanConfig } from './interfaces/plan-config.interface';
 import { CID } from 'multiformats/cid';
 import * as json from 'multiformats/codecs/json';
@@ -168,6 +168,11 @@ export class oPlan {
         prompt: prompt,
       },
     });
+    if (response.result.error) {
+      this.logger.error('Error in plan: ', response.result.error);
+      const error: oToolError = response.result.error as oToolError;
+      throw new oToolError(error.code, error.message);
+    }
 
     const data = response.result.data as any;
     const message = data.message;

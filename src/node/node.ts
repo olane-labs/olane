@@ -1,4 +1,5 @@
 import {
+  bootstrap,
   createNode,
   defaultLibp2pConfig,
   Libp2pConfig,
@@ -39,6 +40,7 @@ const sharedRegistry = register;
 export abstract class oNode extends oCoreNode {
   public networkActivity: NetworkActivity;
   public childNodes: oNode[] = [];
+  public childAddresses: oAddress[] = [];
 
   validate(): void {
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
@@ -208,6 +210,7 @@ export abstract class oNode extends oCoreNode {
     await this.advertiseToNetwork();
   }
 
+  // deprecated virtual node startup
   async startChildren(): Promise<void> {
     this.logger.debug(
       'Initializing contained children nodes...',
@@ -219,7 +222,7 @@ export abstract class oNode extends oCoreNode {
           if (node.state !== NodeState.STOPPED) {
             return;
           }
-          node.parentAddress = this.address;
+          node.config.parent = this.address;
           // forward the network leader address to the child node
           if (this.type === NodeType.LEADER) {
             node.config.leader = this.address;
@@ -244,6 +247,22 @@ export abstract class oNode extends oCoreNode {
       }),
     );
     // await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+
+  async validateJoinRequest(request: oRequest): Promise<any> {
+    return true;
+  }
+
+  async _tool_add_child(request: oRequest): Promise<any> {
+    const { address, transports }: any = request.params;
+    const childAddress = new oAddress(
+      address,
+      transports.map((t) => multiaddr(t)),
+    );
+    this.childAddresses.push(childAddress);
+    return {
+      message: 'Child node registered with parent!',
+    };
   }
 
   addChildNode(node: oNode): void {
@@ -306,7 +325,7 @@ export abstract class oNode extends oCoreNode {
     //     ...(defaultLibp2pConfig.peerDiscovery || []),
     //   ];
 
-    //   // let's make sure we only allow communication through the parent transports
+    //   //   // let's make sure we only allow communication through the parent transports
     //   params.connectionGater = {
     //     // deny all inbound connections unless they are from a parent transport
     //     denyInboundConnection: (maConn) => {

@@ -32,6 +32,13 @@ export class oNetwork {
     return node;
   }
 
+  addLeader(leader: oLeaderNode) {
+    this.leaders.push(leader);
+    if (!this.rootLeader) {
+      this.rootLeader = leader;
+    }
+  }
+
   async addNode(node: oNode) {
     if (this.status !== NetworkStatus.RUNNING) {
       throw new Error('Network is not running, cannot add node');
@@ -44,6 +51,9 @@ export class oNetwork {
     const selection = this.entryNode();
     selection.addChildNode(node);
     await selection.start();
+
+    const parent = this.entryNode();
+    parent.addChildNode(node);
   }
 
   private async loadConfig() {

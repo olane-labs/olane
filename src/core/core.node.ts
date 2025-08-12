@@ -30,7 +30,6 @@ export abstract class oCoreNode {
   public errors: Error[] = [];
   public connectionManager: oConnectionManager;
   public leaders: Multiaddr[] = [];
-  public parentAddress: oAddress;
   public addressResolution: oAddressResolution;
   public readonly description: string;
   public dependencies: oDependency[];
@@ -264,11 +263,9 @@ export abstract class oCoreNode {
 
   async connectToParent(): Promise<void> {
     // ensure we have modified the address to be a child address if the parent address is provided
-    if (this.parentAddress) {
-      this.logger.debug(
-        'Connecting to parent: ' + this.parentAddress.toString(),
-      );
-      await this.connect(this.parentAddress, this.parentAddress);
+    if (this.parent) {
+      this.logger.debug('Connecting to parent: ' + this.parent.toString());
+      await this.connect(this.parent, this.parent);
 
       // this.address = CoreUtils.childAddress(this.parentAddress, this.address);
       // await new Promise((resolve) => setTimeout(resolve, 1_000));

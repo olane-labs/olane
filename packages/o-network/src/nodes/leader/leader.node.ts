@@ -22,6 +22,33 @@ export class oLeaderNode extends oCommonNode {
     });
   }
 
+  async validateJoinRequest(request: oRequest): Promise<any> {
+    return true;
+  }
+
+  async _tool_join_network(request: oRequest): Promise<any> {
+    const { caller, parent, transports }: any = request.params;
+    this.logger.debug('Joining network: ' + caller);
+
+    if (!caller || !parent || !transports) {
+      throw new Error('Invalid parameters provided, cannot join network');
+    }
+
+    await this.validateJoinRequest(request);
+
+    await this.use(new oAddress(parent), {
+      method: 'add_child',
+      params: {
+        address: caller,
+        transports: transports,
+      },
+    });
+
+    return {
+      message: 'Network joined!',
+    };
+  }
+
   async _tool_save_plan(request: oRequest): Promise<any> {
     const { plan } = request.params;
     this.logger.debug('Adding plan to network: ' + plan);
@@ -30,36 +57,6 @@ export class oLeaderNode extends oCommonNode {
       this.logger.warn('No network name provided, cannot update config');
       return;
     }
-
-    const networkConfig = await ConfigManager.getNetworkConfig(
-      this.config.networkName,
-    );
-
-    if (!networkConfig) {
-      this.logger.warn('No network config found, cannot update config');
-      return;
-    }
-
-    const plans = [
-      ...(networkConfig.oNetworkConfig?.plans || []),
-      plan,
-    ] as string[];
-
-    await ConfigManager.saveNetworkConfig({
-      ...networkConfig,
-      oNetworkConfig: {
-        ...networkConfig.oNetworkConfig,
-        plans: Array.from(new Set(plans)),
-      },
-    });
-
-    return {
-      result: {
-        data: {
-          success: true,
-        },
-      },
-    };
   }
 
   async _tool_save_in_progress(request: oRequest): Promise<any> {

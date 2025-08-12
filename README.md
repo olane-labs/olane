@@ -5,7 +5,7 @@
 ## Olane — Superintelligent network infrastructure
 
 *Try Self-hosted Version:* 
-Open-sourced with MIT license *maintained by olane labs and the OSS community* 
+Open-sourced with Apache 2.0 license *maintained by olane labs and the OSS community* 
 
 **Request Hosted Version:**
 [Join waitlist](https://olane.com)
