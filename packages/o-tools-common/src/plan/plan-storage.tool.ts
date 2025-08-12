@@ -1,6 +1,6 @@
 import { oToolConfig } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
-import { Stream } from '@olane/o-config/dist';
+import { Stream } from '@olane/o-config';
 import { oVirtualTool } from '@olane/o-tool';
 import { PlanResolver } from './resolvers';
 

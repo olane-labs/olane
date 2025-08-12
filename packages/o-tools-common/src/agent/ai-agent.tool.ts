@@ -1,4 +1,4 @@
-import { oAddress } from '../../../../dist';
+import { oAddress } from '@olane/o-core';
 import { oAgentTool } from './base-agent.tool';
 import { oAgentConfig } from './interfaces/agent.config';
 

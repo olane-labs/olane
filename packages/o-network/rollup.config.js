@@ -18,6 +18,7 @@ module.exports = [
       '@supabase/supabase-js',
       '@langchain/community',
       '@langchain/core',
+      '@modelcontextprotocol/sdk',
       '@huggingface/transformers',
       'langchain',
       'child_process',

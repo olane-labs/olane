@@ -4,7 +4,6 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool';
 import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods';
-import { InitializeResultSchema } from '@modelcontextprotocol/sdk/dist/esm/types';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 export class McpBridgeTool extends oTool(oVirtualNode) {
