@@ -15,49 +15,77 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [
-          'root',
-          'o-config', 
-          'o-protocol',
-          'o-tool',
-          'o-tools-common',
-          'o-tool-registry',
-          'o-network'
-        ]
+    # if: github.event_name != 'release'
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+    # steps:
+    #   - uses: actions/checkout@v4
+    #   - uses: actions/setup-node@v4
+    #     with:
+    #       node-version: 22
+    #       cache: npm
 
-      - name: Install root dependencies
-        run: npm ci
+    #   # Build and test all packages sequentially
+    #   - name: Install root dependencies
+    #     run: npm ci
 
-      - name: Build and test root package
-        if: matrix.package == 'root'
-        run: |
-          npm run build
-          npm run lint
-          # npm test
+    #   - name: Build and test root package
+    #     run: |
+    #       npm run build
+    #       npm run lint
+    #       # npm test
 
-      - name: Build and test package
-        if: matrix.package != 'root'
-        working-directory: packages/${{ matrix.package }}
-        run: |
-          npm ci
-          npm run build
-          npm run lint
-          # npm test
+    #   - name: Build and test o-config
+    #     working-directory: packages/o-config
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       npm run lint
+    #       # npm test
 
-  publish:
+    #   - name: Build and test o-protocol
+    #     working-directory: packages/o-protocol
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       # npm run lint
+    #       # npm test
+
+    #   - name: Build and test o-tool
+    #     working-directory: packages/o-tool
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       npm run lint
+    #       # npm test
+
+    #   - name: Build and test o-tools-common
+    #     working-directory: packages/o-tools-common
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       npm run lint
+    #       # npm test
+
+    #   - name: Build and test o-tool-registry
+    #     working-directory: packages/o-tool-registry
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       npm run lint
+    #       # npm test
+
+    #   - name: Build and test o-network
+    #     working-directory: packages/o-network
+    #     run: |
+    #       npm ci
+    #       npm run build
+    #       npm run lint
+    #       # npm test
+
+  build-and-publish:
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     environment: release
-    needs: build
 
     permissions:
       contents: read
@@ -71,30 +99,70 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
 
+      # Build and test all packages sequentially
       - name: Install root dependencies
         run: npm ci
 
-      - name: Build root package
-        run: npm run build
-
-      # Publish packages in dependency order
-      - name: Install and build o-config
+      - name: Build and test o-config
         working-directory: packages/o-config
         run: |
           npm ci
           npm run build
+          npm run lint
+          # npm test
 
+      - name: Build and test o-protocol
+        working-directory: packages/o-protocol
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          # npm test
+      
+      - name: Build and test root package
+        run: |
+          npm run build
+          npm run lint
+          # npm test
+
+      - name: Build and test o-tool
+        working-directory: packages/o-tool
+        run: |
+          npm ci
+          npm run build
+          npm run lint
+          # npm test
+
+      - name: Build and test o-tools-common
+        working-directory: packages/o-tools-common
+        run: |
+          npm ci
+          npm run build
+          npm run lint
+          # npm test
+
+      - name: Build and test o-tool-registry
+        working-directory: packages/o-tool-registry
+        run: |
+          npm ci
+          npm run build
+          npm run lint
+          # npm test
+
+      - name: Build and test o-network
+        working-directory: packages/o-network
+        run: |
+          npm ci
+          npm run build
+          npm run lint
+          # npm test
+
+      # Publish packages in dependency order
       - name: Publish o-config
         working-directory: packages/o-config
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Install and build o-protocol
-        working-directory: packages/o-protocol
-        run: |
-          npm ci
-          npm run build
 
       - name: Publish o-protocol
         working-directory: packages/o-protocol
@@ -110,7 +178,7 @@ jobs:
       - name: Wait for registry propagation
         run: sleep 30
 
-      - name: Update o-tool dependencies and build
+      - name: Update o-tool dependencies and rebuild
         working-directory: packages/o-tool
         run: |
           # Update to use published versions instead of file dependencies
@@ -126,7 +194,7 @@ jobs:
       - name: Wait for registry propagation
         run: sleep 15
 
-      - name: Update o-tools-common dependencies and build
+      - name: Update o-tools-common dependencies and rebuild
         working-directory: packages/o-tools-common
         run: |
           # Update to use published versions instead of file dependencies
@@ -142,7 +210,7 @@ jobs:
       - name: Wait for registry propagation
         run: sleep 15
 
-      - name: Update o-tool-registry dependencies and build
+      - name: Update o-tool-registry dependencies and rebuild
         working-directory: packages/o-tool-registry
         run: |
           # Update to use published versions instead of file dependencies
@@ -158,7 +226,7 @@ jobs:
       - name: Wait for registry propagation
         run: sleep 15
 
-      - name: Update o-network dependencies and build
+      - name: Update o-network dependencies and rebuild
         working-directory: packages/o-network
         run: |
           # Update to use published versions instead of file dependencies
