@@ -1,10 +1,10 @@
-import { RegistryMemoryTool } from './registry/registry-memory.tool';
+import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oAddress, oNode } from '@olane/o-core';
-import { StorageTool } from './storage';
-import { VaultTool } from './vault/vault.tool';
-import { SearchTool } from './search/search.tool';
-import { SetupTool } from './setup/setup.tool';
-import { DiskPlanStorageTool } from './plan/disk-plan-storage.tool';
+import { StorageTool } from './storage/index.js';
+import { VaultTool } from './vault/vault.tool.js';
+import { SearchTool } from './search/search.tool.js';
+import { SetupTool } from './setup/setup.tool.js';
+import { DiskPlanStorageTool } from './plan/disk-plan-storage.tool.js';
 
 export const initCommonTools = (oNode: oNode) => {
   const params = {

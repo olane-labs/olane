@@ -1,11 +1,11 @@
 import { Connection, Uint8ArrayList, pushable, all } from '@olane/o-config';
-import { Logger } from '../utils/logger';
-import { oAddress } from '../o-address';
+import { Logger } from '../utils/logger.js';
+import { oAddress } from '../o-address.js';
 import { v4 as uuidv4 } from 'uuid';
-import { oRequest } from './o-request';
+import { oRequest } from './o-request.js';
 import { oProtocolMethods } from '@olane/o-protocol';
-import { oResponse } from './o-response';
-import { ConnectionSendParams } from '../interfaces/connection-send-params.interface';
+import { oResponse } from './o-response.js';
+import { ConnectionSendParams } from '../interfaces/connection-send-params.interface.js';
 
 export class oConnection {
   public readonly id: string;

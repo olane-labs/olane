@@ -1,9 +1,9 @@
 import { LocalSearch, oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, ToolResult } from '@olane/o-tool';
-import { DiskStorageProvider } from './providers/disk-storage-provider.tool';
-import { MemoryStorageProvider } from './providers/memory-storage-provider.tool';
-import { StorageProviderTool } from './providers/storage-provider.tool';
-import { GetDataResponse } from './interfaces/get-data.response';
+import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
+import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
+import { StorageProviderTool } from './providers/storage-provider.tool.js';
+import { GetDataResponse } from './interfaces/get-data.response.js';
 
 export class StorageTool extends StorageProviderTool {
   constructor(config: oToolConfig) {

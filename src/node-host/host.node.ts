@@ -1,7 +1,5 @@
 import { defaultLibp2pConfig, memory, multiaddr } from '@olane/o-config';
-import { oNode } from '../node';
-import { oVirtualNode } from '../node-virtual';
-import { CoreUtils, NodeType } from '../core';
+import { oNode } from '../node/node.js';
 
 /**
  * A standalone node that can be used to host other nodes.

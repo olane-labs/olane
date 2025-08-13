@@ -1,5 +1,5 @@
 import { Libp2p, Libp2pEvents, ServiceFactoryMap } from '@olane/o-config';
-import { Logger } from '../..';
+import { Logger } from '../../core/utils/logger.js';
 
 export const NETWORK_ACTIVITY_EVENTS: NetworkActivityEvent[] = [
   'peer:connect',

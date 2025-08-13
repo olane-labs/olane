@@ -5,7 +5,7 @@ import {
   DEFAULT_NETWORKS_PATH,
   DEFAULT_CONFIG_FILE,
 } from '@olane/o-core';
-import { NetworkConfigInterface, NetworkStatus } from '../network';
+import { NetworkConfigInterface, NetworkStatus } from '../network/index.js';
 
 export interface NetworkConfig {
   name: string;

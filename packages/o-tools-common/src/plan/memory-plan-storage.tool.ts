@@ -1,6 +1,6 @@
-import { oPlanStorageTool } from './plan-storage.tool';
+import { oPlanStorageTool } from './plan-storage.tool.js';
 import { oAddress } from '@olane/o-core';
-import { MemoryStorageProvider } from '../storage';
+import { MemoryStorageProvider } from '../storage/index.js';
 import { oToolConfig } from '@olane/o-tool';
 
 type MemoryPlanStorageBase = ReturnType<

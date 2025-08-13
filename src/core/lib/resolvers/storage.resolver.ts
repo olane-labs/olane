@@ -1,4 +1,4 @@
-import { oAnythingResolver } from './anything.resolver';
+import { oAnythingResolver } from './anything.resolver.js';
 
 const storageTransports = ['/store'];
 

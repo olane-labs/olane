@@ -1,6 +1,6 @@
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import { NLP_PARAMS } from './methods/nlp.methods';
+import { NLP_PARAMS } from './methods/nlp.methods.js';
 
 export class NERTool extends oVirtualTool {
   constructor(config: oToolConfig) {

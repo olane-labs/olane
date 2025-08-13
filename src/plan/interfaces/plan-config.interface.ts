@@ -1,5 +1,5 @@
-import { oAddress, oCoreNode } from '../../core';
-import { oPlanContext } from '../plan.context';
+import { oAddress, oCoreNode } from '../../core/index.js';
+import { oPlanContext } from '../plan.context.js';
 
 export interface oPlanConfig {
   // an oAddress that contains the config for the plan

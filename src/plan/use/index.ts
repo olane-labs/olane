@@ -1,1 +1,1 @@
-export * from './use.plan';
+export * from './use.plan.js';

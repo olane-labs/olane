@@ -1,6 +1,6 @@
 import { oAddress } from '@olane/o-core';
-import { oAgentTool } from './base-agent.tool';
-import { oAgentConfig } from './interfaces/agent.config';
+import { oAgentTool } from './base-agent.tool.js';
+import { oAgentConfig } from './interfaces/agent.config.js';
 
 export class oHumanAgentTool extends oAgentTool {
   constructor(config: oAgentConfig) {

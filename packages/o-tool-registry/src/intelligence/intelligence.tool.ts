@@ -2,10 +2,10 @@ import { oTool, oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oResponse, oVirtualNode } from '@olane/o-core';
 import { oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
-import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool';
-import { OpenAIIntelligenceTool } from './openai-intelligence.tool';
-import { OllamaIntelligenceTool } from './ollama-intelligence.tool';
-import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool';
+import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
+import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
+import { OllamaIntelligenceTool } from './ollama-intelligence.tool.js';
+import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool.js';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;

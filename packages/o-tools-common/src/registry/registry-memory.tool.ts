@@ -1,7 +1,7 @@
-import { RegistryTool } from './registry.tool';
+import { RegistryTool } from './registry.tool.js';
 import { oRegistrationParams } from '@olane/o-protocol';
 import { oRequest } from '@olane/o-core';
-import { oRegistrySearchParams } from './interfaces/search.interface';
+import { oRegistrySearchParams } from './interfaces/search.interface.js';
 
 export class RegistryMemoryTool extends RegistryTool {
   async _tool_commit(request: oRequest): Promise<any> {

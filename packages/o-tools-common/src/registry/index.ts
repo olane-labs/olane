@@ -1,2 +1,2 @@
-export * from './registry.tool';
-export * from './registry-memory.tool';
+export * from './registry.tool.js';
+export * from './registry-memory.tool.js';

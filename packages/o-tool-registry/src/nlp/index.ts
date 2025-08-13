@@ -1,1 +1,1 @@
-export * from './ner.tool';
+export * from './ner.tool.js';

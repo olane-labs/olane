@@ -1,4 +1,4 @@
-import { CUSTOM_AGENT_PROMPT } from './custom.prompt';
+import { CUSTOM_AGENT_PROMPT } from './custom.prompt.js';
 
 export const CONFIGURE_PROMPT = (
   intent: string,

@@ -1,9 +1,9 @@
 import { oHostNodeTool, oToolConfig } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
-import { OAuthConfig } from './interfaces/oAuth.config';
-import { OAuthTokens } from './interfaces/oAuth-tokens.interface';
-import { OAuthUserInfo } from './interfaces/oAuth-user-info.interface';
-import { oauthMethods } from './methods/auth.methods';
+import { OAuthConfig } from './interfaces/oAuth.config.js';
+import { OAuthTokens } from './interfaces/oAuth-tokens.interface.js';
+import { OAuthUserInfo } from './interfaces/oAuth-user-info.interface.js';
+import { oauthMethods } from './methods/auth.methods.js';
 
 export class OAuthTool extends oHostNodeTool {
   private oauthConfigs: Map<string, OAuthConfig> = new Map();

@@ -6,9 +6,9 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
-import { oCommonNode } from '../common';
-import { START_METHOD } from './methods/start.method';
-import { ConfigManager } from '../../utils/config';
+import { oCommonNode } from '../common/index.js';
+import { START_METHOD } from './methods/start.method.js';
+import { ConfigManager } from '../../utils/config.js';
 
 export class oLeaderNode extends oCommonNode {
   constructor(config: oToolConfig) {

@@ -1,7 +1,7 @@
 import { Libp2pConfig } from '@olane/o-config';
-import { oAddress } from '../o-address';
-import { NodeType } from './node-type.enum';
-import { oParameter, oDependency, oMethod } from '@olane/o-protocol';
+import { oAddress } from '../o-address.js';
+import { NodeType } from './node-type.enum.js';
+import { oDependency, oMethod } from '@olane/o-protocol';
 
 export interface CoreConfig {
   address: oAddress;

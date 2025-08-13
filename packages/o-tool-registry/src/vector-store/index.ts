@@ -1,2 +1,2 @@
-export * from './langchain-memory.vector-store.tool';
-export * from './vector-memory.tool';
+export * from './langchain-memory.vector-store.tool.js';
+export * from './vector-memory.tool.js';

@@ -1,9 +1,9 @@
 import { oNode } from '@olane/o-core';
-import { NERTool } from './nlp/ner.tool';
-import { HuggingfaceTextEmbeddingsTool } from './embeddings';
-import { LangchainMemoryVectorStoreTool } from './vector-store';
-import { IntelligenceTool } from './intelligence';
-import { McpBridgeTool } from './mcp';
+import { NERTool } from './nlp/ner.tool.js';
+import { HuggingfaceTextEmbeddingsTool } from './embeddings/index.js';
+import { LangchainMemoryVectorStoreTool } from './vector-store/index.js';
+import { IntelligenceTool } from './intelligence/index.js';
+import { McpBridgeTool } from './mcp/index.js';
 
 export const initRegistryTools = (oNode: oNode) => {
   const params = {

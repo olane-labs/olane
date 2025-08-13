@@ -1,5 +1,5 @@
-import { oAddress } from '../../core';
-import { oNode } from '../node';
+import { oAddress } from '../../core/o-address.js';
+import { oNode } from '../node.js';
 
 export class LocalSearch {
   static async search(node: oNode, query: string): Promise<oAddress> {

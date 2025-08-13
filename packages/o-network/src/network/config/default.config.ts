@@ -1,5 +1,5 @@
 import { DEFAULT_NETWORKS_PATH, NodeType, oAddress } from '@olane/o-core';
-import { NetworkConfigInterface } from '../interfaces/network.interface';
+import { NetworkConfigInterface } from '../interfaces/network.interface.js';
 import path from 'path';
 
 export const defaultNetworkConfig = (port: number): NetworkConfigInterface => {

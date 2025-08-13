@@ -6,18 +6,18 @@ import {
   multiaddr,
   PeerId,
 } from '@olane/o-config';
-import { CoreConfig } from './interfaces/core-config.interface';
-import { NodeState } from './interfaces/state.enum';
-import { oAddress } from './o-address';
-import { Logger } from './utils/logger';
-import { NodeType } from './interfaces/node-type.enum';
-import { oConnectionManager } from './lib/o-connection-manager';
-import { oResponse } from './lib/o-response';
-import { oConnection } from './lib/o-connection';
+import { CoreConfig } from './interfaces/core-config.interface.js';
+import { NodeState } from './interfaces/state.enum.js';
+import { oAddress } from './o-address.js';
+import { Logger } from './utils/logger.js';
+import { NodeType } from './interfaces/node-type.enum.js';
+import { oConnectionManager } from './lib/o-connection-manager.js';
+import { oResponse } from './lib/o-response.js';
+import { oConnection } from './lib/o-connection.js';
 import { oMethod } from '@olane/o-protocol';
-import { oAddressResolution } from './lib/o-address-resolution';
-import { oDependency } from './o-dependency';
-import { UseOptions } from './interfaces/use-options.interface';
+import { oAddressResolution } from './lib/o-address-resolution.js';
+import { oDependency } from './o-dependency.js';
+import { UseOptions } from './interfaces/use-options.interface.js';
 
 export abstract class oCoreNode {
   public p2pNode!: Libp2p;

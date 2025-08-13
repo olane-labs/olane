@@ -1,7 +1,7 @@
 import { oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
-import { SETUP_METHODS } from './methods/setup.method';
+import { SETUP_METHODS } from './methods/setup.method.js';
 
 export class SetupTool extends oVirtualTool {
   constructor(config: oToolConfig) {

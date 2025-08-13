@@ -1,8 +1,8 @@
 import { ToolResult } from '@olane/o-tool';
-import { StorageProviderTool } from './storage-provider.tool';
+import { StorageProviderTool } from './storage-provider.tool.js';
 import { CoreConfig, oAddress, oRequest } from '@olane/o-core';
-import { STORAGE_PARAMS } from '../methods/storage.methods';
-import { GetDataResponse } from '../interfaces/get-data.response';
+import { STORAGE_PARAMS } from '../methods/storage.methods.js';
+import { GetDataResponse } from '../interfaces/get-data.response.js';
 
 export class MemoryStorageProvider extends StorageProviderTool {
   private storage: Map<string, string>;
