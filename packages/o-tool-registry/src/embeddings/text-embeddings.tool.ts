@@ -1,10 +1,10 @@
-import { oTool } from '@olane/o-tool';
+import { oTool, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
 import { TEXT_EMBEDDINGS_PARAMS } from './methods/text-embeddings.method';
 
-export abstract class TextEmbeddingsTool extends oTool(oVirtualNode) {
+export abstract class TextEmbeddingsTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

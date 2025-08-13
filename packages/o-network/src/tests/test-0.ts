@@ -1,7 +1,6 @@
 import { oNetwork } from '../network';
-import { NodeType, oAddress } from '@olane/o-core';
+import { NodeType, oAddress, setupGracefulShutdown } from '@olane/o-core';
 import dotenv from 'dotenv';
-import { setupGracefulShutdown } from '../utils/graceful-shutdown';
 
 dotenv.config();
 

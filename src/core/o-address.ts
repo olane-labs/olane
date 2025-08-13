@@ -1,5 +1,5 @@
 import { Multiaddr, multiaddr } from '@olane/o-config';
-import { CID } from 'multiformats/cid';
+import { CID } from 'multiformats';
 import { CoreUtils } from './utils/core.utils';
 
 export class oAddress {

@@ -1,9 +1,7 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
-import { oAddress, oResponse, oVirtualNode } from '@olane/o-core';
-import { oRequest } from '@olane/o-core';
-import { ToolResult } from '@olane/o-tool';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 
-export class AgentsTool extends oTool(oVirtualNode) {
+export class AgentsTool extends oVirtualTool {
   private roundRobinIndex = 0;
 
   constructor(config: oToolConfig) {

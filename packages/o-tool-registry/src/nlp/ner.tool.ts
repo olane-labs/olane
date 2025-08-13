@@ -1,8 +1,8 @@
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { NLP_PARAMS } from './methods/nlp.methods';
 
-export class NERTool extends oTool(oVirtualNode) {
+export class NERTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

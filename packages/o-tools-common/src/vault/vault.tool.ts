@@ -1,9 +1,9 @@
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { EncryptionService } from './lib/encryption';
 import { VAULT_PARAMS } from './methods/vault.methods';
 
-export class VaultTool extends oTool(oVirtualNode) {
+export class VaultTool extends oVirtualTool {
   private encryptionService: EncryptionService;
   private store: Map<string, string> = new Map();
 

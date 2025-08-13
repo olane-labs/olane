@@ -1,10 +1,9 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
-import { oAddress, oDependency, oRequest, oVirtualNode } from '@olane/o-core';
-import { oParameter } from '@olane/o-protocol';
+import { oToolConfig, oVirtualTool } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
-export class McpTool extends oTool(oVirtualNode) {
+export class McpTool extends oVirtualTool {
   private mcpClient: Client;
 
   constructor(config: oToolConfig & { address: oAddress; mcpClient: Client }) {

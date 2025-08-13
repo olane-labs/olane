@@ -1,5 +1,5 @@
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
 
 interface PerplexityMessage {
@@ -84,7 +84,7 @@ interface PerplexitySearchResponse {
   };
 }
 
-export class PerplexityIntelligenceTool extends oTool(oVirtualNode) {
+export class PerplexityIntelligenceTool extends oVirtualTool {
   private defaultModel!: string;
 
   constructor(config: oToolConfig) {

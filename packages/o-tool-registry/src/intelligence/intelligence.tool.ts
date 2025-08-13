@@ -1,4 +1,4 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oResponse, oVirtualNode } from '@olane/o-core';
 import { oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
@@ -7,7 +7,7 @@ import { OpenAIIntelligenceTool } from './openai-intelligence.tool';
 import { OllamaIntelligenceTool } from './ollama-intelligence.tool';
 import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool';
 
-export class IntelligenceTool extends oTool(oVirtualNode) {
+export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
   constructor(config: oToolConfig) {
     super({

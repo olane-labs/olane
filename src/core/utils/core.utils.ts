@@ -9,7 +9,7 @@ import { createHash } from 'crypto';
 import { oAddress } from '../o-address';
 import { oResponse } from '../lib/o-response';
 import { oRequest } from '../lib/o-request';
-import { CID } from 'multiformats/cid';
+import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 
