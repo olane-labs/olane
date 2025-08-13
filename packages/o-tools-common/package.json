@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -65,10 +65,10 @@
     "webpack-dev-server": "^5.2.2"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.1.4",
-    "@olane/o-core": "^0.1.4",
-    "@olane/o-protocol": "^0.1.4",
-    "@olane/o-tool": "^0.1.4"
+    "@olane/o-config": "^0.1.5",
+    "@olane/o-core": "^0.1.5",
+    "@olane/o-protocol": "^0.1.5",
+    "@olane/o-tool": "^0.1.5"
   },
   "dependencies": {
     "debug": "^4.4.1",
