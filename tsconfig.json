@@ -5,7 +5,10 @@
     "declaration": true,
     "declarationMap": true,
     "declarationDir": "./dist",
-    "emitDeclarationOnly": false
+    "emitDeclarationOnly": false,
+    "module": "ESNext",
+    "target": "ES2020",
+    "moduleResolution": "node"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/tests", "webpack.config.js"]

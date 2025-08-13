@@ -1,4 +1,4 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -6,7 +6,7 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-export class NotesTool extends oTool(oVirtualNode) {
+export class NotesTool extends oVirtualTool {
   private jxaScriptPath: string;
 
   constructor(config: oToolConfig) {

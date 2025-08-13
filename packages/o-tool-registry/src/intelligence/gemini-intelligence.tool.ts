@@ -1,5 +1,5 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
 
 interface GeminiContent {
@@ -112,7 +112,7 @@ interface GeminiListModelsResponse {
   models: GeminiModel[];
 }
 
-export class GeminiIntelligenceTool extends oTool(oVirtualNode) {
+export class GeminiIntelligenceTool extends oVirtualTool {
   private apiKey!: string;
   private baseUrl!: string;
   private defaultModel!: string;

@@ -1,5 +1,5 @@
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
 
 interface OpenAIChatMessage {
@@ -115,7 +115,7 @@ interface OpenAIListModelsResponse {
   data: OpenAIModel[];
 }
 
-export class OpenAIIntelligenceTool extends oTool(oVirtualNode) {
+export class OpenAIIntelligenceTool extends oVirtualTool {
   private apiKey!: string;
   private baseUrl!: string;
   private defaultModel!: string;

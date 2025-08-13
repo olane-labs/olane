@@ -1,11 +1,10 @@
 import { Logger, oAddress, oResponse, oToolError, UseOptions } from '../';
 import { oPlanConfig } from './interfaces/plan-config.interface';
-import { CID } from 'multiformats/cid';
+import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt';
 import { oPlanResult } from './interfaces/plan.result';
-import { oPlanContext } from './plan.context';
 import { v4 as uuidv4 } from 'uuid';
 
 export class oPlan {

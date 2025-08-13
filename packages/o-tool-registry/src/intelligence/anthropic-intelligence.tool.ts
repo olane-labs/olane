@@ -1,5 +1,5 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
 
 interface AnthropicMessage {
@@ -98,7 +98,7 @@ interface AnthropicListModelsResponse {
   object: string;
 }
 
-export class AnthropicIntelligenceTool extends oTool(oVirtualNode) {
+export class AnthropicIntelligenceTool extends oVirtualTool {
   private defaultModel = 'claude-opus-4-20250514';
 
   constructor(config: oToolConfig) {

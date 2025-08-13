@@ -1,5 +1,5 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
 
 interface OllamaChatMessage {
@@ -110,7 +110,7 @@ interface OllamaGenerateResponse {
   eval_duration?: number;
 }
 
-export class OllamaIntelligenceTool extends oTool(oVirtualNode) {
+export class OllamaIntelligenceTool extends oVirtualTool {
   static defaultModel = 'llama3.2:latest';
   static defaultUrl = 'http://localhost:11434';
 

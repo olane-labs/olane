@@ -1,12 +1,12 @@
-import { oTool, oToolConfig, ToolResult } from '@olane/o-tool';
-import { oAddress, oDependency, oRequest, oVirtualNode } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool';
 import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
-export class McpBridgeTool extends oTool(oVirtualNode) {
+export class McpBridgeTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

@@ -1,7 +1,7 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
+import { oTool, oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oVirtualNode } from '@olane/o-core';
 
-export class AppleTool extends oTool(oVirtualNode) {
+export class AppleTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

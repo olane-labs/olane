@@ -1,12 +1,13 @@
 {
   "name": "@olane/o-network",
   "version": "0.1.1",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -19,7 +20,7 @@
     "test-1": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-1.ts",
     "test-2": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-2.ts",
     "test-old": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/old.ts",
-    "build:all": "npm run build --prefix ../o-core && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry",
+    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry",
     "test": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-1.ts",
     "net": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/network.ts",
     "cli": "npm run build:all && DEBUG=o-protocol:* npx tsx src/index.ts",
