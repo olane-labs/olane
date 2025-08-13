@@ -38,7 +38,6 @@ export class NetworkUtils {
       }
       // let's translate the peerId to a multiaddr
       const result = await p2pNode.peerRouting.findPeer(value.peer);
-      console.log('Result: ', result);
       return {
         transports: result.multiaddrs,
         staticAddress: '',
