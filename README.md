@@ -70,12 +70,7 @@ Follow these steps to create and start your olane network called `my-network`.
 ```bash
 # install the cli tool
 # clone the cli repo
-git clone git@github.com:olane-labs/o-cli.git
-cd o-cli
-npm install
-npm run build
-chmod +x dist/index.js
-npm install -g .
+npm install -g @olane/o-cli
 
 # create your first network
 olane create -p 4444 my-network
