@@ -1,8 +1,8 @@
-import { oToolConfig, RunTool, ToolResult } from '@olane/o-tool';
-import { StorageProviderTool } from './storage-provider.tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { StorageProviderTool } from './storage-provider.tool.js';
 import { oAddress, oRequest } from '@olane/o-core';
-import { STORAGE_PARAMS } from '../methods/storage.methods';
-import { GetDataResponse } from '../interfaces/get-data.response';
+import { STORAGE_PARAMS } from '../methods/storage.methods.js';
+import { GetDataResponse } from '../interfaces/get-data.response.js';
 
 export class DhtStorageProvider extends StorageProviderTool {
   constructor(config: oToolConfig) {

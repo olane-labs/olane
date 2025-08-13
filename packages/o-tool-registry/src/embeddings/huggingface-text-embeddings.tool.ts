@@ -1,5 +1,5 @@
 import { oRequest } from '@olane/o-core';
-import { TextEmbeddingsTool } from './text-embeddings.tool';
+import { TextEmbeddingsTool } from './text-embeddings.tool.js';
 import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
 
 export class HuggingfaceTextEmbeddingsTool extends TextEmbeddingsTool {

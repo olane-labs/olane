@@ -1,11 +1,11 @@
-import { Logger, oAddress, oCoreNode, oResponse } from '../core';
-import { oPlanResult } from './interfaces/plan.result';
-import { oPlanConfig } from './interfaces/plan-config.interface';
-import { oPlan } from './o-plan';
-import { oUsePlan } from './use/use.plan';
-import { oSearchPlan } from './search/search.plan';
-import { oQueryConfig } from './interfaces/query.config';
-import { oErrorPlan } from './error/error.plan';
+import { Logger, oAddress, oCoreNode, oResponse } from '../core/index.js';
+import { oPlanResult } from './interfaces/plan.result.js';
+import { oPlanConfig } from './interfaces/plan-config.interface.js';
+import { oPlan } from './o-plan.js';
+import { oUsePlan } from './use/use.plan.js';
+import { oSearchPlan } from './search/search.plan.js';
+import { oQueryConfig } from './interfaces/query.config.js';
+import { oErrorPlan } from './error/error.plan.js';
 
 /**
  * oAgentPlan is responsible for managing the execution of plans.

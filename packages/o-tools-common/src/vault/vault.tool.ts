@@ -1,7 +1,7 @@
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import { EncryptionService } from './lib/encryption';
-import { VAULT_PARAMS } from './methods/vault.methods';
+import { EncryptionService } from './lib/encryption.js';
+import { VAULT_PARAMS } from './methods/vault.methods.js';
 
 export class VaultTool extends oVirtualTool {
   private encryptionService: EncryptionService;

@@ -1,2 +1,2 @@
-export * from './setup.tool';
-export * from './methods/setup.method';
+export * from './setup.tool.js';
+export * from './methods/setup.method.js';

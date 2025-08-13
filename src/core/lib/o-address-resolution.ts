@@ -1,5 +1,5 @@
-import { oAddress } from '../o-address';
-import { oAddressResolver } from './o-address-resolver';
+import { oAddress } from '../o-address.js';
+import { oAddressResolver } from './o-address-resolver.js';
 
 export class oAddressResolution {
   private readonly resolvers: oAddressResolver[] = [];

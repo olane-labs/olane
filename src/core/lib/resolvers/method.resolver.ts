@@ -1,6 +1,6 @@
-import { oNode } from '../../../node';
-import { oAddress } from '../../o-address';
-import { oAnythingResolver } from './anything.resolver';
+import { oNode } from '../../../node/index.js';
+import { oAddress } from '../../o-address.js';
+import { oAnythingResolver } from './anything.resolver.js';
 
 export class oMethodResolver extends oAnythingResolver {
   static get transports(): string[] {

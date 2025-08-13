@@ -1,5 +1,5 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
-import { oAddress } from '../o-address';
+import { oAddress } from '../o-address.js';
 
 export class NetworkUtils {
   public static async findNode(

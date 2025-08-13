@@ -1,5 +1,5 @@
-import { oQueryConfig } from './query.config';
-import { oTaskConfig } from './task.config';
+import { oQueryConfig } from './query.config.js';
+import { oTaskConfig } from './task.config.js';
 
 export interface oPlanResult {
   intents?: {

@@ -1,7 +1,7 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
-import { Logger } from '../';
-import { oAddress } from '../o-address';
-import { oNode } from '../../node';
+import { Logger } from '../utils/logger.js';
+import { oAddress } from '../o-address.js';
+import { oNode } from '../../node/index.js';
 
 export class oAddressResolver {
   public logger: Logger;

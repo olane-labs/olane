@@ -18,17 +18,17 @@ import {
   oCoreNode,
   oRequest,
   oResponse,
-} from '../core';
+} from '../core/index.js';
 import { v4 as uuidv4 } from 'uuid';
-import { NextHopResolver } from '../core';
+import { NextHopResolver } from '../core/lib/resolvers/next-hop.resolver.js';
 import { register } from 'prom-client';
-import { NetworkActivity } from './lib/network-activity.lib';
-import { oToolError } from '../error/tool.error';
-import { oToolErrorCodes } from '../error/enums/codes.error';
-import { oAgentPlan } from '../plan/agent.plan';
-import { oPlanContext } from '../plan/plan.context';
-import { oPlanResult } from '../plan/interfaces/plan.result';
-import { oConfigurePlan } from '../plan/configure/configure.plan';
+import { NetworkActivity } from './lib/network-activity.lib.js';
+import { oToolError } from '../error/tool.error.js';
+import { oToolErrorCodes } from '../error/enums/codes.error.js';
+import { oAgentPlan } from '../plan/agent.plan.js';
+import { oPlanContext } from '../plan/plan.context.js';
+import { oPlanResult } from '../plan/interfaces/plan.result.js';
+import { oConfigurePlan } from '../plan/configure/configure.plan.js';
 
 const started = false;
 

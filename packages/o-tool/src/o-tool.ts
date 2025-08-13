@@ -10,12 +10,12 @@ import {
   oToolErrorCodes,
   UseOptions,
 } from '@olane/o-core';
-import { oToolConfig } from './interfaces/tool.interface';
+import { oToolConfig } from './interfaces/tool.interface.js';
 import { IncomingStreamData, Stream } from '@olane/o-config';
 import { oParameter, oProtocolMethods } from '@olane/o-protocol';
-import { RunResult } from './interfaces/run-result.interface';
-import { ToolResult } from './interfaces/tool-result.interface';
-import { ToolUtils } from './tool.utils';
+import { RunResult } from './interfaces/run-result.interface.js';
+import { ToolResult } from './interfaces/tool-result.interface.js';
+import { ToolUtils } from './tool.utils.js';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

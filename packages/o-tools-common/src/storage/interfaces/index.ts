@@ -1,1 +1,1 @@
-export * from './get-data.response';
+export * from './get-data.response.js';

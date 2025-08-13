@@ -1,7 +1,7 @@
 import { oHostNodeTool, ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import { AGENT_METHODS } from './methods/agent.methods';
-import { oAgentConfig } from './interfaces/agent.config';
+import { AGENT_METHODS } from './methods/agent.methods.js';
+import { oAgentConfig } from './interfaces/agent.config.js';
 
 export abstract class oAgentTool extends oHostNodeTool {
   protected respond: (intent: string) => Promise<string>;

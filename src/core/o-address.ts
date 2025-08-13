@@ -1,6 +1,6 @@
 import { Multiaddr, multiaddr } from '@olane/o-config';
 import { CID } from 'multiformats';
-import { CoreUtils } from './utils/core.utils';
+import { CoreUtils } from './utils/core.utils.js';
 
 export class oAddress {
   constructor(

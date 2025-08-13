@@ -1,6 +1,6 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
 import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods';
+import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
 
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant';

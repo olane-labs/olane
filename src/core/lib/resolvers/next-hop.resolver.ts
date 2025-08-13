@@ -1,7 +1,7 @@
 import { Libp2p, multiaddr, Multiaddr } from '@olane/o-config';
-import { oAddress } from '../../o-address';
-import { oAddressResolver } from '../o-address-resolver';
-import { NetworkUtils } from '../../utils';
+import { oAddress } from '../../o-address.js';
+import { oAddressResolver } from '../o-address-resolver.js';
+import { NetworkUtils } from '../../utils/network.utils.js';
 
 export class NextHopResolver extends oAddressResolver {
   // when we use the network to find the next hop, we need to make sure we are just searching for child addresses

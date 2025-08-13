@@ -1,8 +1,8 @@
-import { oAddress } from '../../core';
-import { oPlanConfig } from '../interfaces/plan-config.interface';
-import { oPlanResult } from '../interfaces/plan.result';
-import { oPlan } from '../o-plan';
-import { ERROR_PROMPT } from '../prompts/error.prompt';
+import { oAddress } from '../../core/o-address.js';
+import { oPlanConfig } from '../interfaces/plan-config.interface.js';
+import { oPlanResult } from '../interfaces/plan.result.js';
+import { oPlan } from '../o-plan.js';
+import { ERROR_PROMPT } from '../prompts/error.prompt.js';
 
 export class oErrorPlan extends oPlan {
   private error: any;

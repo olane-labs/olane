@@ -1,6 +1,5 @@
 import { memory } from '@olane/o-config';
-import { CoreConfig } from '../core';
-import { oNode } from '../node';
+import { oNode } from '../node/node.js';
 
 export class oVirtualNode extends oNode {
   /**

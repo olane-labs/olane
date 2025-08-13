@@ -1,9 +1,9 @@
-import { oAddress, oDependency, oResponse } from '../../core';
-import { oPlan } from '../o-plan';
-import { oPlanType } from '../interfaces/plan-type.enum';
-import { oPlanResult } from '../interfaces/plan.result';
-import { oToolError } from '../../error';
-import { oToolErrorCodes } from '../../error/enums/codes.error';
+import { oAddress, oDependency, oResponse } from '../../core/index.js';
+import { oPlan } from '../o-plan.js';
+import { oPlanType } from '../interfaces/plan-type.enum.js';
+import { oPlanResult } from '../interfaces/plan.result.js';
+import { oToolError } from '../../error/tool.error.js';
+import { oToolErrorCodes } from '../../error/enums/codes.error.js';
 
 /**
  * We know what tool we want to use, let's use it.

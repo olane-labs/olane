@@ -1,3 +1,3 @@
-export * from './oAuth-tokens.interface';
-export * from './oAuth-user-info.interface';
-export * from './oAuth.config';
+export * from './oAuth-tokens.interface.js';
+export * from './oAuth-user-info.interface.js';
+export * from './oAuth.config.js';

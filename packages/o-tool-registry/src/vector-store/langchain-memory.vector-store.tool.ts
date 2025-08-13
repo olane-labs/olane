@@ -1,7 +1,7 @@
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
-import { VectorMemoryStorageTool } from './vector-memory.tool';
+import { VectorMemoryStorageTool } from './vector-memory.tool.js';
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
 import { Document, DocumentInput } from '@langchain/core/documents';
 

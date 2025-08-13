@@ -1,6 +1,6 @@
-import { oNode } from '../../../node';
-import { oAddress } from '../../o-address';
-import { oAddressResolver } from '../o-address-resolver';
+import { oNode } from '../../../node/index.js';
+import { oAddress } from '../../o-address.js';
+import { oAddressResolver } from '../o-address-resolver.js';
 
 export abstract class oAnythingResolver extends oAddressResolver {
   get transports(): string[] {
