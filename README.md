@@ -95,9 +95,9 @@ Play Video
 
 1. Join your network ➕
 ```bash
-# join the network
-olane join my-network
+olane chat my-network
 ```
+- Not only can *you* talk to your network, but your network can talk to you now
 2. Talk to your network via "intent" (resolution) 🗣️
 
 ```bash
