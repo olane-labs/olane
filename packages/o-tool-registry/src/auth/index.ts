@@ -1,3 +1,3 @@
-export * from './oAuth.tool';
-export * from './methods/auth.methods';
-export * from './interfaces';
+export * from './oAuth.tool.js';
+export * from './methods/auth.methods.js';
+export * from './interfaces/index.js';

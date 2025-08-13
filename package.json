@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -66,8 +66,8 @@
     "webpack-dev-server": "^5.2.2"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.1.1",
-    "@olane/o-protocol": "^0.1.1"
+    "@olane/o-config": "^0.1.3",
+    "@olane/o-protocol": "^0.1.3"
   },
   "dependencies": {
     "chalk": "^5.4.1",
