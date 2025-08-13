@@ -1,3 +1,3 @@
-export * from './node';
-export * from './lib/local-search.lib';
-export * from './lib/network-activity.lib';
+export * from './node.js';
+export * from './lib/local-search.lib.js';
+export * from './lib/network-activity.lib.js';

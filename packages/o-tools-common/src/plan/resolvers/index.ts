@@ -1,1 +1,1 @@
-export * from './plan.resolver';
+export * from './plan.resolver.js';

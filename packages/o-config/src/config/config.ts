@@ -7,7 +7,6 @@ import { Libp2pInit } from 'libp2p';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { kadDHT, removePublicAddressesMapper } from '@libp2p/kad-dht';
 import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
-import { webSockets } from '@libp2p/websockets';
 
 export interface Libp2pConfig extends Libp2pInit {
   listeners?: string[];
