@@ -1,9 +1,9 @@
-import { oTool, oToolConfig } from '@olane/o-tool';
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
+import { oToolConfig, oVirtualTool } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { SETUP_METHODS } from './methods/setup.method';
 
-export class SetupTool extends oTool(oVirtualNode) {
+export class SetupTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
