@@ -7,3 +7,4 @@ export * from './utils/logger';
 export * from './lib';
 export * from './o-parameter';
 export * from './defaults';
+export * from './graceful-shutdown';

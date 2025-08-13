@@ -1,4 +1,4 @@
-import { Logger } from '@olane/o-core';
+import { Logger } from './utils';
 
 export interface CleanupFunction {
   (): Promise<void> | void;
