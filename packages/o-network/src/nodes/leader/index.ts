@@ -1,1 +1,1 @@
-export * from './leader.node';
+export * from './leader.node.js';

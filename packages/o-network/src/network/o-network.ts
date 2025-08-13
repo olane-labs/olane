@@ -1,15 +1,15 @@
-import { NetworkStatus } from './interfaces/network-status.enum';
-import { NetworkConfigInterface } from './interfaces/network.interface';
+import { NetworkStatus } from './interfaces/network-status.enum.js';
+import { NetworkConfigInterface } from './interfaces/network.interface.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
-import { oLeaderNode } from '../nodes/leader';
+import { oLeaderNode } from '../nodes/leader/index.js';
 import { Logger, oAddress, oNode, oResponse } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
-import { oCommonNode } from '../nodes/common';
+import { oCommonNode } from '../nodes/common/index.js';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { multiaddr } from '@olane/o-config';
-import { ConfigManager } from '../utils/config';
+import { ConfigManager } from '../utils/config.js';
 
 export class oNetwork {
   private leaders: oLeaderNode[] = []; // clones of leader for scale

@@ -1,1 +1,1 @@
-export * from './common.node';
+export * from './common.node.js';
