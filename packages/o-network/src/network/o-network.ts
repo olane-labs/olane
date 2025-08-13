@@ -144,7 +144,6 @@ export class oNetwork {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
-        console.log('Common node config: ', commonNode.config);
         nodes.push(commonNode);
         initCommonTools(commonNode);
         initRegistryTools(commonNode);
@@ -152,7 +151,6 @@ export class oNetwork {
       }
     }
 
-    console.log('Starting ' + nodes.length + ' nodes...');
     await Promise.all(nodes.map((node) => node.start()));
   }
 
@@ -224,7 +222,6 @@ export class oNetwork {
     try {
       // Stop all common nodes first
       if (this.nodes.length > 0) {
-        this.logger.debug(`Stopping ${this.nodes.length} common nodes...`);
         stopPromises.push(
           Promise.allSettled(
             this.nodes.map(async (node) => {
@@ -247,7 +244,6 @@ export class oNetwork {
 
       // Stop all leader nodes
       if (this.leaders.length > 0) {
-        this.logger.debug(`Stopping ${this.leaders.length} leader nodes...`);
         stopPromises.push(
           Promise.allSettled(
             this.leaders.map(async (leader) => {
