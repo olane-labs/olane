@@ -1,0 +1,40 @@
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
+import { EncryptionService } from './lib/encryption.js';
+import { ENCRYPTION_PARAMS } from './methods/encryption.methods.js';
+
+export class EncryptionTool extends oVirtualTool {
+  private encryptionService: EncryptionService;
+
+  constructor(config: oToolConfig) {
+    super({
+      ...config,
+      address: new oAddress('o://encryption'),
+      methods: ENCRYPTION_PARAMS,
+      description: 'Tool to encrypt and decrypt sensitive data',
+    });
+    this.encryptionService = new EncryptionService(process.env.VAULT_KEY);
+  }
+
+  async _tool_encrypt(request: oRequest): Promise<ToolResult> {
+    const params = request.params;
+    const { value } = params;
+    const encryptedValue = await this.encryptionService.encryptToBase64(
+      value as string,
+    );
+    return {
+      value: encryptedValue,
+    };
+  }
+
+  async _tool_decrypt(request: oRequest): Promise<ToolResult> {
+    const params = request.params;
+    const { value } = params;
+    const decryptedValue = await this.encryptionService.decryptFromBase64(
+      value as string,
+    );
+    return {
+      value: decryptedValue,
+    };
+  }
+}

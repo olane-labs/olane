@@ -19,4 +19,5 @@ export abstract class RegistryTool extends oVirtualTool {
   abstract _tool_commit(request: oRequest): Promise<ToolResult>;
   abstract _tool_search(request: oRequest): Promise<ToolResult>;
   abstract _tool_find_all(request: oRequest): Promise<ToolResult>;
+  abstract _tool_remove(request: oRequest): Promise<ToolResult>;
 }

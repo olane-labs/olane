@@ -17,6 +17,7 @@ import { oConnection } from './lib/o-connection.js';
 import { oMethod } from '@olane/o-protocol';
 import { oAddressResolution } from './lib/o-address-resolution.js';
 import { oDependency } from './o-dependency.js';
+import { CID } from 'multiformats';
 
 export abstract class oCoreNode {
   public p2pNode!: Libp2p;
@@ -79,6 +80,15 @@ export abstract class oCoreNode {
 
   get parent(): oAddress | null {
     return this.config.parent || null;
+  }
+
+  get parentPeerId(): string | null {
+    if (!this.parent || this.parent?.transports?.length === 0) {
+      return null;
+    }
+    const transport = this.parent?.transports[0];
+    const peerId = transport.toString().split('/p2p/')[1];
+    return peerId;
   }
 
   get parentTransports(): Multiaddr[] {
@@ -202,6 +212,17 @@ export abstract class oCoreNode {
     return response;
   }
 
+  async advertiseValueToNetwork(value: CID) {
+    const providePromise = (this.p2pNode.services as any).dht.provide(value);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Advertise Content routing provide timeout')),
+        5000,
+      ),
+    );
+    await Promise.race([providePromise, timeoutPromise]);
+  }
+
   async advertiseToNetwork() {
     this.logger.debug(
       'Advertising to network our static and absolute addresses...',
@@ -211,20 +232,8 @@ export abstract class oCoreNode {
     this.logger.debug('Advertising absolute address: ', absoluteAddressCid);
     try {
       // Add timeout to prevent hanging
-      const providePromise = (this.p2pNode.services as any).dht.provide(
-        absoluteAddressCid,
-      );
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error('Advertise Content routing provide timeout')),
-          5000,
-        ),
-      );
-      await Promise.race([providePromise, timeoutPromise]);
-      this.logger.debug(
-        'Successfully advertised absolute address',
-        providePromise,
-      );
+      await this.advertiseValueToNetwork(absoluteAddressCid);
+      this.logger.debug('Successfully advertised absolute address');
     } catch (error: any) {
       this.logger.warn(
         'Failed to advertise absolute address (this is normal for isolated nodes):',
@@ -237,16 +246,7 @@ export abstract class oCoreNode {
     this.logger.debug('Advertising static address: ', staticAddressCid);
     try {
       // Add timeout to prevent hanging
-      const providePromise = (this.p2pNode.services as any).dht.provide(
-        staticAddressCid,
-      );
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error('Content routing provide timeout')),
-          5000,
-        ),
-      );
-      await Promise.race([providePromise, timeoutPromise]);
+      await this.advertiseValueToNetwork(staticAddressCid);
       this.logger.debug('Successfully advertised static address');
     } catch (error: any) {
       this.logger.warn(
@@ -254,6 +254,20 @@ export abstract class oCoreNode {
         error.message,
       );
     }
+  }
+
+  async unregister(): Promise<void> {
+    const address = new oAddress('o://register');
+
+    // attempt to unregister from the network
+    const params = {
+      method: 'remove',
+      params: {
+        peerId: this.peerId.toString(),
+      },
+    };
+
+    await this.use(address, params);
   }
 
   async register(): Promise<void> {
@@ -269,7 +283,7 @@ export abstract class oCoreNode {
       return;
     }
 
-    const address = new oAddress('o://leader/register');
+    const address = new oAddress('o://register');
 
     const params = {
       method: 'commit',
@@ -318,6 +332,10 @@ export abstract class oCoreNode {
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
+
+    // TODO: improve this with a network listener from parent
+    await this.unregister();
+
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }

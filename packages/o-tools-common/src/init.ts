@@ -1,10 +1,10 @@
 import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oAddress, oNode } from '@olane/o-core';
 import { StorageTool } from './storage/index.js';
-import { VaultTool } from './vault/vault.tool.js';
 import { SearchTool } from './search/search.tool.js';
 import { SetupTool } from './setup/setup.tool.js';
-import { DiskPlanStorageTool } from './plan/disk-plan-storage.tool.js';
+import { EncryptionTool } from './encryption/encryption.tool.js';
+import { EncryptedPlanStorageTool } from './plan/encrypted-plan-storage.tool.js';
 
 export const initCommonTools = (oNode: oNode) => {
   const params = {
@@ -20,8 +20,8 @@ export const initCommonTools = (oNode: oNode) => {
       name: 'storage',
       ...params,
     }),
-    new VaultTool({
-      name: 'vault',
+    new EncryptionTool({
+      name: 'encryption',
       ...params,
     }),
     new SearchTool({
@@ -32,7 +32,7 @@ export const initCommonTools = (oNode: oNode) => {
       name: 'setup',
       ...params,
     }),
-    new DiskPlanStorageTool({
+    new EncryptedPlanStorageTool({
       name: 'plan',
       address: new oAddress('o://plan'),
       ...params,

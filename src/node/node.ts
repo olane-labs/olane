@@ -21,7 +21,6 @@ import {
 } from '../core/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import { NextHopResolver } from '../core/lib/resolvers/next-hop.resolver.js';
-import { register } from 'prom-client';
 import { NetworkActivity } from './lib/network-activity.lib.js';
 import { oToolError } from '../error/tool.error.js';
 import { oToolErrorCodes } from '../error/enums/codes.error.js';
@@ -29,10 +28,6 @@ import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';
 import { oPlanResult } from '../plan/interfaces/plan.result.js';
 import { oConfigurePlan } from '../plan/configure/configure.plan.js';
-
-const started = false;
-
-const sharedRegistry = register;
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -105,11 +100,6 @@ export abstract class oNode extends oCoreNode {
 
   async _tool_route(request: oRequest & { stream: Stream }): Promise<any> {
     const { payload }: any = request.params;
-
-    const counter = this.p2pNode.metrics?.registerCounter('tool_route_count', {
-      help: 'Number of tool routes',
-    });
-    counter?.increment();
 
     const { address } = request.params;
     const destinationAddress = new oAddress(address as string);
@@ -248,6 +238,8 @@ export abstract class oNode extends oCoreNode {
           );
           await node.start();
 
+          this.logger.debug('Node started with transports: ', node.transports);
+
           // test the connection to the child node to add it to the p2p network peer store
           await this.connect(node.address, node.address);
         } catch (error: any) {
@@ -301,14 +293,6 @@ export abstract class oNode extends oCoreNode {
       ).concat(`/memory/${uuidv4()}`), // ensure we allow for local in-memory communication
     };
 
-    // TODO: remove this once we have a proper metrics system
-    if (!started) {
-      // this.logger.debug('Enabling metrics');
-      // params.metrics = prometheusMetrics({
-      //   registry: sharedRegistry,
-      // });
-    }
-
     // if the seed is provided, use it to generate the private key
     if (this.config.seed) {
       const privateKey = await CoreUtils.generatePrivateKey(this.config.seed);
@@ -340,14 +324,9 @@ export abstract class oNode extends oCoreNode {
       //   // let's make sure we only allow communication through the parent transports
       params.connectionGater = {
         // who can call us?
-        denyInboundConnection: (maConn) => {
+        denyInboundEncryptedConnection: (peerId, maConn) => {
           // deny all inbound connections unless they are from a parent transport
-          this.logger.debug(
-            'Received inbound connection from: ' + maConn.remoteAddr.toString(),
-            this.parentTransports,
-            leaderTransports,
-          );
-          if (this.parentTransports.includes(maConn.remoteAddr)) {
+          if (this.parentPeerId === peerId.toString()) {
             return false;
           }
           // allow leader inbounds
@@ -357,42 +336,9 @@ export abstract class oNode extends oCoreNode {
           // deny everything else
           return true;
         },
-        // TODO: [SECURITY] we need to manage outbount connections eventually
-        // denyOutboundConnection: (peerId, maConn) => {
-        //   return false; // allow for now
-        // },
-        // denyDialMultiaddr: (multiaddr) => {
-        //   // nodes can only dial to nodes below them or the leader
-        //   if (leaderTransports) {
-        //     const proxyAddresses = leaderTransports;
-        //     const shouldBlock = !proxyAddresses.some((addr) =>
-        //       multiaddr.toString().includes(addr.toString()),
-        //     );
-        //     if (shouldBlock) {
-        //       this.logger.debug(
-        //         'Dialing to ' + multiaddr.toString() + ' blocked!',
-        //       );
-        //     } else {
-        //       this.logger.debug(
-        //         'Dialing to ' + multiaddr.toString() + ' allowed!',
-        //       );
-        //     }
-        //     return !shouldBlock;
-        //   }
-        //   return false;
-        // },
         // allow the user to override the default connection gater
         ...(this.config.network?.connectionGater || {}),
       };
-    } else {
-      // this is either a leader or a single node network
-      // params.connectionGater = {
-      //   denyInboundConnection: (maConn) => {
-      //     return true;
-      //   },
-      //   // allow the user to override the default connection gater
-      //   ...(this.config.network?.connectionGater || {}),
-      // };
     }
 
     // handle the address encapsulation
@@ -434,252 +380,6 @@ export abstract class oNode extends oCoreNode {
 
     // listen for network events
     // this.listenForNetworkEvents();
-
-    // if (this.type === NodeType.LEADER && (this.config.metrics || true)) {
-    // try {
-    //   console.log('Starting metrics server...');
-    //   if (started === false) {
-    //     started = true;
-    //     const server = createServer(async (req, res) => {
-    //       try {
-    //         const url = new URL(req.url || '', `http://${req.headers.host}`);
-    //         const pathname = url.pathname;
-
-    //         // Set CORS headers for Grafana
-    //         res.setHeader('Access-Control-Allow-Origin', '*');
-    //         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    //         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    //         // Handle OPTIONS requests (CORS preflight)
-    //         if (req.method === 'OPTIONS') {
-    //           res.writeHead(200);
-    //           res.end();
-    //           return;
-    //         }
-
-    //         // Prometheus API endpoints
-    //         if (pathname === '/api/v1/query') {
-    //           const query = url.searchParams.get('query');
-    //           const time = url.searchParams.get('time');
-
-    //           if (!query) {
-    //             res.writeHead(400, { 'Content-Type': 'application/json' });
-    //             res.end(JSON.stringify({ error: 'Missing query parameter' }));
-    //             return;
-    //           }
-
-    //           try {
-    //             // Get all metrics from the registry
-    //             const metrics = await sharedRegistry.getMetricsAsJSON();
-
-    //             // Simple query parser for basic PromQL-like queries
-    //             let result;
-    //             if (query === '1+1') {
-    //               // Handle simple scalar queries
-    //               result = {
-    //                 resultType: 'scalar',
-    //                 result: [
-    //                   time ? parseInt(time) : Math.floor(Date.now() / 1000),
-    //                   '2',
-    //                 ],
-    //               };
-    //             } else if (query.includes('{')) {
-    //               // Handle metric queries with labels
-    //               const metricName = query.split('{')[0].trim();
-    //               const metric = metrics.find((m) => m.name === metricName);
-
-    //               if (metric) {
-    //                 result = {
-    //                   resultType: 'vector',
-    //                   result: [
-    //                     {
-    //                       metric: { __name__: metricName },
-    //                       value: [
-    //                         time
-    //                           ? parseInt(time)
-    //                           : Math.floor(Date.now() / 1000),
-    //                         String(metric.values[0]?.value || '0'),
-    //                       ],
-    //                     },
-    //                   ],
-    //                 };
-    //               } else {
-    //                 result = {
-    //                   resultType: 'vector',
-    //                   result: [],
-    //                 };
-    //               }
-    //             } else {
-    //               // Handle simple metric name queries
-    //               const metric = metrics.find((m) => m.name === query);
-
-    //               if (metric) {
-    //                 result = {
-    //                   resultType: 'vector',
-    //                   result: [
-    //                     {
-    //                       metric: { __name__: query },
-    //                       value: [
-    //                         time
-    //                           ? parseInt(time)
-    //                           : Math.floor(Date.now() / 1000),
-    //                         String(metric.values[0]?.value || '0'),
-    //                       ],
-    //                     },
-    //                   ],
-    //                 };
-    //               } else {
-    //                 result = {
-    //                   resultType: 'vector',
-    //                   result: [],
-    //                 };
-    //               }
-    //             }
-
-    //             res.writeHead(200, { 'Content-Type': 'application/json' });
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'success',
-    //                 data: result,
-    //               }),
-    //             );
-    //           } catch (error) {
-    //             this.logger.error('Error executing Prometheus query:', error);
-    //             res.writeHead(400, { 'Content-Type': 'application/json' });
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'error',
-    //                 errorType: 'bad_data',
-    //                 error: error.message,
-    //               }),
-    //             );
-    //           }
-    //           return;
-    //         }
-
-    //         // Prometheus range query endpoint (for time series)
-    //         if (pathname === '/api/v1/query_range') {
-    //           const query = url.searchParams.get('query');
-    //           const start = url.searchParams.get('start');
-    //           const end = url.searchParams.get('end');
-    //           const step = url.searchParams.get('step');
-
-    //           if (!query || !start || !end || !step) {
-    //             res.writeHead(400, { 'Content-Type': 'application/json' });
-    //             res.end(
-    //               JSON.stringify({ error: 'Missing required parameters' }),
-    //             );
-    //             return;
-    //           }
-
-    //           try {
-    //             // For range queries, return current metric value as a single point
-    //             // In a real implementation, you'd want to store historical data
-    //             const metrics = await sharedRegistry.getMetricsAsJSON();
-    //             const metricName = query.split('{')[0].trim();
-    //             const metric = metrics.find((m) => m.name === metricName);
-
-    //             const result = {
-    //               resultType: 'matrix',
-    //               result: metric
-    //                 ? [
-    //                     {
-    //                       metric: { __name__: metricName },
-    //                       values: [
-    //                         [
-    //                           Math.floor(Date.now() / 1000),
-    //                           String(metric.values[0]?.value || '0'),
-    //                         ],
-    //                       ],
-    //                     },
-    //                   ]
-    //                 : [],
-    //             };
-
-    //             res.writeHead(200, { 'Content-Type': 'application/json' });
-
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'success',
-    //                 data: result,
-    //               }),
-    //             );
-    //           } catch (error) {
-    //             this.logger.error(
-    //               'Error executing Prometheus range query:',
-    //               error,
-    //             );
-    //             res.writeHead(400, { 'Content-Type': 'application/json' });
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'error',
-    //                 errorType: 'bad_data',
-    //                 error: error.message,
-    //               }),
-    //             );
-    //           }
-    //           return;
-    //         }
-
-    //         // Default metrics endpoint
-    //         if (pathname === '/metrics') {
-    //           const metrics = await sharedRegistry.metrics();
-    //           res.writeHead(200, { 'Content-Type': 'text/plain' });
-
-    //           res.end(metrics);
-    //           return;
-    //         }
-
-    //         // Health check endpoint
-    //         if (pathname === '/health') {
-    //           res.writeHead(200, { 'Content-Type': 'application/json' });
-    //           res.end(JSON.stringify({ status: 'ok' }));
-    //           return;
-    //         }
-
-    //         // Prometheus label values endpoint (for metric discovery)
-    //         if (pathname === '/api/v1/label/__name__/values') {
-    //           try {
-    //             const metrics = await sharedRegistry.getMetricsAsJSON();
-    //             const metricNames = metrics.map((m) => m.name);
-
-    //             res.writeHead(200, { 'Content-Type': 'application/json' });
-
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'success',
-    //                 data: metricNames,
-    //               }),
-    //             );
-    //           } catch (error) {
-    //             this.logger.error('Error getting metric names:', error);
-    //             res.writeHead(500, { 'Content-Type': 'application/json' });
-    //             res.end(
-    //               JSON.stringify({
-    //                 status: 'error',
-    //                 error: error.message,
-    //               }),
-    //             );
-    //           }
-    //           return;
-    //         }
-
-    //         // Default response for unknown endpoints
-    //         res.writeHead(404, { 'Content-Type': 'application/json' });
-    //         res.end(JSON.stringify({ error: 'Not found' }));
-    //       } catch (error) {
-    //         this.logger.error('Error handling metrics request:', error);
-    //         res.writeHead(500, { 'Content-Type': 'application/json' });
-    //         res.end(JSON.stringify({ error: 'Internal server error' }));
-    //       }
-    //     });
-    //     server.listen(3001, '127.0.0.1');
-    //     this.logger.debug('Metrics server started on port', server.address());
-    //   }
-    // } catch (err) {
-    //   this.logger.error('Error starting metrics server: ', err);
-    // }
-    // }
   }
 
   listenForNetworkEvents() {
