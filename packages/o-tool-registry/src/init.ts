@@ -4,8 +4,11 @@ import { HuggingfaceTextEmbeddingsTool } from './embeddings/index.js';
 import { LangchainMemoryVectorStoreTool } from './vector-store/index.js';
 import { IntelligenceTool } from './intelligence/index.js';
 import { McpBridgeTool } from './mcp/index.js';
+import { oHostNodeTool, oVirtualTool } from '@olane/o-tool';
 
-export const initRegistryTools = (oNode: oNode) => {
+export const initRegistryTools = (
+  oNode: oVirtualTool | oHostNodeTool,
+): void => {
   const params = {
     parent: oNode.address,
     leader: oNode.address,
