@@ -4,6 +4,7 @@ import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
 import { StorageProviderTool } from './providers/storage-provider.tool.js';
 import { GetDataResponse } from './interfaces/get-data.response.js';
+import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
 
 export class StorageTool extends StorageProviderTool {
   constructor(config: oToolConfig) {
@@ -22,6 +23,13 @@ export class StorageTool extends StorageProviderTool {
       new MemoryStorageProvider({
         name: 'memory',
         address: new oAddress('o://memory'),
+        ...config,
+      }),
+    );
+    this.addChildNode(
+      new SecureStorageProvider({
+        name: 'secure',
+        address: new oAddress('o://secure'),
         ...config,
       }),
     );
