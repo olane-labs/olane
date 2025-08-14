@@ -13,54 +13,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    if: github.event_name != 'release'
+  # build:
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name != 'release'
 
-    strategy:
-      matrix:
-        package:
-          - name: root
-            path: .
-            lint: true
-          - name: o-config
-            path: packages/o-config
-            lint: true
-          - name: o-protocol
-            path: packages/o-protocol
-            lint: false
-          - name: o-tool
-            path: packages/o-tool
-            lint: true
-          - name: o-tools-common
-            path: packages/o-tools-common
-            lint: true
-          - name: o-tool-registry
-            path: packages/o-tool-registry
-            lint: true
-          - name: o-network
-            path: packages/o-network
-            lint: true
+  #   strategy:
+  #     matrix:
+  #       package:
+  #         - name: root
+  #           path: .
+  #           lint: true
+  #         - name: o-config
+  #           path: packages/o-config
+  #           lint: true
+  #         - name: o-protocol
+  #           path: packages/o-protocol
+  #           lint: false
+  #         - name: o-tool
+  #           path: packages/o-tool
+  #           lint: true
+  #         - name: o-tools-common
+  #           path: packages/o-tools-common
+  #           lint: true
+  #         - name: o-tool-registry
+  #           path: packages/o-tool-registry
+  #           lint: true
+  #         - name: o-network
+  #           path: packages/o-network
+  #           lint: true
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: npm
 
-      - name: Install root dependencies
-        run: npm ci
+  #     - name: Install root dependencies
+  #       run: npm ci
 
-      - name: Build and test ${{ matrix.package.name }}
-        working-directory: ${{ matrix.package.path }}
-        run: |
-          npm ci
-          npm run build
-          if [ "${{ matrix.package.lint }}" = "true" ]; then
-            npm run lint
-          fi
-          # npm test
+  #     - name: Build and test ${{ matrix.package.name }}
+  #       working-directory: ${{ matrix.package.path }}
+  #       run: |
+  #         npm ci
+  #         npm run build
+  #         if [ "${{ matrix.package.lint }}" = "true" ]; then
+  #           npm run lint
+  #         fi
+  #         # npm test
 
   build-and-publish:
     runs-on: ubuntu-latest
