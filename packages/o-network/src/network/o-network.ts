@@ -10,10 +10,12 @@ import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { multiaddr } from '@olane/o-config';
 import { ConfigManager } from '../utils/config.js';
+import { oHostNodeTool, oVirtualTool } from '@olane/o-tool';
 
+type oNetworkNode = oVirtualTool | oHostNodeTool;
 export class oNetwork {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
-  private nodes: oNode[] = []; // clones of node for scale
+  private nodes: oNetworkNode[] = []; // clones of node for scale
   public rootLeader: oLeaderNode | null = null; // the root leader node
   private logger: Logger;
   public status!: NetworkStatus;
@@ -26,7 +28,7 @@ export class oNetwork {
     this.config = config;
   }
 
-  entryNode(): oNode {
+  entryNode(): oCommonNode | oLeaderNode {
     const node = this.nodes[this.roundRobinIndex];
     this.roundRobinIndex = (this.roundRobinIndex + 1) % this.nodes.length;
     return node;
@@ -39,7 +41,7 @@ export class oNetwork {
     }
   }
 
-  async addNode(node: oNode) {
+  async addNode(node: oNetworkNode) {
     if (this.status !== NetworkStatus.RUNNING) {
       throw new Error('Network is not running, cannot add node');
     }
@@ -111,7 +113,7 @@ export class oNetwork {
   async startNodes(type: NodeType) {
     this.logger.debug('Starting nodes');
 
-    const nodes: oNode[] = [];
+    const nodes: oNetworkNode[] = [];
 
     if (!this.config.nodes || this.config.nodes?.length === 0) {
       throw new Error('No nodes found in config, cannot start network');
@@ -276,7 +278,7 @@ export class oNetwork {
               this.logger.debug('Root leader stopped');
               this.rootLeader = null;
             })
-            .catch((error) => {
+            .catch((error: any) => {
               this.logger.error('Error stopping root leader:', error);
             }),
         );
