@@ -185,25 +185,16 @@ export class oLeaderNode extends oCommonNode {
         method: 'find_all',
         params: {},
       },
-      {
-        noIndex: true,
-      },
     );
 
     const nodesArray = nodes.result.data as any[];
     for (let i = 0; i < nodesArray.length; i++) {
       // first let's get the node's tools
       const node = nodesArray[i];
-      const { result } = await this.use(
-        new oAddress(node.address),
-        {
-          method: 'index_network',
-          params: {},
-        },
-        {
-          noIndex: true,
-        },
-      );
+      const { result } = await this.use(new oAddress(node.address), {
+        method: 'index_network',
+        params: {},
+      });
     }
   }
 

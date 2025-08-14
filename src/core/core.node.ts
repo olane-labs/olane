@@ -17,7 +17,6 @@ import { oConnection } from './lib/o-connection.js';
 import { oMethod } from '@olane/o-protocol';
 import { oAddressResolution } from './lib/o-address-resolution.js';
 import { oDependency } from './o-dependency.js';
-import { UseOptions } from './interfaces/use-options.interface.js';
 
 export abstract class oCoreNode {
   public p2pNode!: Libp2p;
@@ -137,9 +136,6 @@ export abstract class oCoreNode {
           method: 'search',
           params: { staticAddress: result.root },
         },
-        {
-          noIndex: true,
-        },
       );
       const searchResults = response.result.data;
       if (searchResults.length > 0) {
@@ -189,7 +185,6 @@ export abstract class oCoreNode {
       method?: string;
       params?: { [key: string]: any };
     },
-    config: UseOptions = {},
   ): Promise<oResponse> {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
@@ -261,33 +256,12 @@ export abstract class oCoreNode {
     }
   }
 
-  async connectToParent(): Promise<void> {
-    // ensure we have modified the address to be a child address if the parent address is provided
-    if (this.parent) {
-      this.logger.debug('Connecting to parent: ' + this.parent.toString());
-      await this.connect(this.parent, this.parent);
-
-      // this.address = CoreUtils.childAddress(this.parentAddress, this.address);
-      // await new Promise((resolve) => setTimeout(resolve, 1_000));
-      // this.logger.debug('Modified address to: ' + this.address.toString());
-      // TODO: let's ask the parent to route us to the leader
-      this.logger.debug('Successfully connected to parent');
-    } else {
-      this.logger.debug(
-        'Node not configured to connect to parent or has already connected to the parent',
-      );
-    }
-  }
-
   async register(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping registration, node is leader');
       return;
     }
     this.logger.debug('Registering node...');
-
-    // connect to the parent node to establish identity
-    await this.connectToParent();
 
     // register with the leader global registry
     if (!this.config.leader) {
@@ -308,9 +282,7 @@ export abstract class oCoreNode {
       },
     };
 
-    await this.use(address, params, {
-      noIndex: true,
-    });
+    await this.use(address, params);
     // TODO: handle the response from the leader
   }
 

@@ -204,6 +204,15 @@ export abstract class oNode extends oCoreNode {
     };
   }
 
+  async _tool_child_register(request: oRequest): Promise<any> {
+    const { address }: any = request.params;
+    const childAddress = new oAddress(address);
+    this.childAddresses.push(childAddress);
+    return {
+      message: 'Child node registered with parent!',
+    };
+  }
+
   async start(): Promise<void> {
     await super.start();
     await this.startChildren();
@@ -234,10 +243,13 @@ export abstract class oNode extends oCoreNode {
           this.logger.debug(
             'Starting virtual node: ' +
               node.address.toString() +
-              ' with leader transports: ' +
-              node.config.leader?.transports.join(', '),
+              ' with parent transports: ' +
+              node.parentTransports.join(', '),
           );
           await node.start();
+
+          // test the connection to the child node to add it to the p2p network peer store
+          await this.connect(node.address, node.address);
         } catch (error: any) {
           this.logger.error(
             'Failed to start virtual node: ' + node.address.toString(),
@@ -316,61 +328,72 @@ export abstract class oNode extends oCoreNode {
     }
 
     // this is a child node of the network, so communication is heavily restricted
-    // if (this.parentTransports.length > 0) {
-    //   // peer discovery is only allowed through the parent transports
-    //   params.peerDiscovery = [
-    //     bootstrap({
-    //       list: [...this.parentTransports.map((t) => t.toString())],
-    //     }),
-    //     ...(defaultLibp2pConfig.peerDiscovery || []),
-    //   ];
+    if (this.parentTransports.length > 0) {
+      // peer discovery is only allowed through the parent transports
+      params.peerDiscovery = [
+        bootstrap({
+          list: [...this.parentTransports.map((t) => t.toString())],
+        }),
+        ...(defaultLibp2pConfig.peerDiscovery || []),
+      ];
 
-    //   //   // let's make sure we only allow communication through the parent transports
-    //   params.connectionGater = {
-    //     // deny all inbound connections unless they are from a parent transport
-    //     denyInboundConnection: (maConn) => {
-    //       if (this.parentTransports.includes(maConn.remoteAddr)) {
-    //         return false;
-    //       }
-    //       return this.config.type === NodeType.NODE; // allow leader inbounds
-    //     },
-    //     // TODO: [SECURITY] we need to manage outbount connections eventually
-    //     denyOutboundConnection: (peerId, maConn) => {
-    //       return false; // allow for now
-    //     },
-    //     denyDialMultiaddr: (multiaddr) => {
-    //       // Do not dial to any address that is not a leader transport
-    //       if (leaderTransports) {
-    //         const proxyAddresses = leaderTransports;
-    //         const shouldBlock = !proxyAddresses.some((addr) =>
-    //           multiaddr.toString().includes(addr.toString()),
-    //         );
-    //         if (shouldBlock) {
-    //           this.logger.debug(
-    //             'Dialing to ' + multiaddr.toString() + ' blocked!',
-    //           );
-    //         } else {
-    //           this.logger.debug(
-    //             'Dialing to ' + multiaddr.toString() + ' allowed!',
-    //           );
-    //         }
-    //         return !shouldBlock;
-    //       }
-    //       return false;
-    //     },
-    //     // allow the user to override the default connection gater
-    //     ...(this.config.network?.connectionGater || {}),
-    //   };
-    // } else {
-    //   // this is either a leader or a single node network
-    //   // params.connectionGater = {
-    //   //   denyInboundConnection: (maConn) => {
-    //   //     return true;
-    //   //   },
-    //   //   // allow the user to override the default connection gater
-    //   //   ...(this.config.network?.connectionGater || {}),
-    //   // };
-    // }
+      //   // let's make sure we only allow communication through the parent transports
+      params.connectionGater = {
+        // who can call us?
+        denyInboundConnection: (maConn) => {
+          // deny all inbound connections unless they are from a parent transport
+          this.logger.debug(
+            'Received inbound connection from: ' + maConn.remoteAddr.toString(),
+            this.parentTransports,
+            leaderTransports,
+          );
+          if (this.parentTransports.includes(maConn.remoteAddr)) {
+            return false;
+          }
+          // allow leader inbounds
+          if (this.config.type === NodeType.LEADER) {
+            return false;
+          }
+          // deny everything else
+          return true;
+        },
+        // TODO: [SECURITY] we need to manage outbount connections eventually
+        // denyOutboundConnection: (peerId, maConn) => {
+        //   return false; // allow for now
+        // },
+        // denyDialMultiaddr: (multiaddr) => {
+        //   // nodes can only dial to nodes below them or the leader
+        //   if (leaderTransports) {
+        //     const proxyAddresses = leaderTransports;
+        //     const shouldBlock = !proxyAddresses.some((addr) =>
+        //       multiaddr.toString().includes(addr.toString()),
+        //     );
+        //     if (shouldBlock) {
+        //       this.logger.debug(
+        //         'Dialing to ' + multiaddr.toString() + ' blocked!',
+        //       );
+        //     } else {
+        //       this.logger.debug(
+        //         'Dialing to ' + multiaddr.toString() + ' allowed!',
+        //       );
+        //     }
+        //     return !shouldBlock;
+        //   }
+        //   return false;
+        // },
+        // allow the user to override the default connection gater
+        ...(this.config.network?.connectionGater || {}),
+      };
+    } else {
+      // this is either a leader or a single node network
+      // params.connectionGater = {
+      //   denyInboundConnection: (maConn) => {
+      //     return true;
+      //   },
+      //   // allow the user to override the default connection gater
+      //   ...(this.config.network?.connectionGater || {}),
+      // };
+    }
 
     // handle the address encapsulation
     if (
@@ -394,6 +417,7 @@ export abstract class oNode extends oCoreNode {
 
     const params = await this.configure();
     this.p2pNode = await createNode(params);
+    this.logger.debug('Node initialized!', this.transports);
     this.address.setTransports(this.transports.map((t) => multiaddr(t)));
     this.peerId = this.p2pNode.peerId as any;
 
