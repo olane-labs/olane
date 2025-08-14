@@ -33,6 +33,6 @@ export const initRegistryTools = (oNode: oNode) => {
     }),
   ];
   tools.forEach((tool) => {
-    oNode.addChildNode(tool);
+    oNode.addChildNode(tool as any);
   });
 };

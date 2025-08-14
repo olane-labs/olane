@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
  * @param Base - The base class to extend
  * @returns A new class that extends the base class and implements the oTool interface
  */
-export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
+export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);
