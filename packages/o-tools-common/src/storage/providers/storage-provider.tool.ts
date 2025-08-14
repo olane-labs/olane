@@ -29,7 +29,7 @@ export abstract class StorageProviderTool extends oVirtualTool {
     };
 
     // call the appropriate method
-    const result = await this.execute(request).catch((error) => {
+    const result = await this.execute(request).catch((error: any) => {
       this.logger.error('Error executing tool: ' + error);
       return {
         error: error.message,

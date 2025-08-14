@@ -36,7 +36,6 @@ export class StorageTool extends StorageProviderTool {
   }
 
   async _tool_put(request: oRequest): Promise<ToolResult> {
-    const result = LocalSearch.search(this, 'hello');
     // return this.use()
     throw new Error('Not implemented');
   }
