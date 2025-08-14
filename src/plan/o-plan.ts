@@ -97,18 +97,12 @@ export class oPlan {
   async searchPlans(): Promise<any> {
     this.logger.debug('Searching for plans...');
     const cid = await this.toCID();
-    const response = await this.node.use(
-      new oAddress('o://plan'),
-      {
-        method: 'get',
-        params: {
-          key: cid.toString(),
-        },
+    const response = await this.node.use(new oAddress('o://plan'), {
+      method: 'get',
+      params: {
+        key: cid.toString(),
       },
-      {
-        noIndex: true,
-      },
-    );
+    });
     this.logger.debug('Search plans response: ', response);
 
     const result = response.result;

@@ -17,34 +17,22 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
   private embeddingsTool(): EmbeddingsInterface {
     return {
       embedDocuments: async (documents: string[]) => {
-        const response = await this.use(
-          new oAddress('o://embeddings-text'),
-          {
-            method: 'embed_documents',
-            params: {
-              documents,
-            },
+        const response = await this.use(new oAddress('o://embeddings-text'), {
+          method: 'embed_documents',
+          params: {
+            documents,
           },
-          {
-            noIndex: true,
-          },
-        );
+        });
         return response.result.data as any;
       },
       embedQuery: async (document: string) => {
         console.log('Embedding query: ', document);
-        const response = await this.use(
-          new oAddress('o://embeddings-text'),
-          {
-            method: 'embed_query',
-            params: {
-              query: document,
-            },
+        const response = await this.use(new oAddress('o://embeddings-text'), {
+          method: 'embed_query',
+          params: {
+            query: document,
           },
-          {
-            noIndex: true,
-          },
-        );
+        });
         return response.result.data as any;
       },
     };

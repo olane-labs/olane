@@ -60,4 +60,12 @@ export class RegistryMemoryTool extends RegistryTool {
     }
     return result;
   }
+
+  async _tool_remove(request: oRequest): Promise<any> {
+    const params = request.params as oRegistrationParams;
+    this.registry.delete(params.peerId);
+    return {
+      success: true,
+    };
+  }
 }

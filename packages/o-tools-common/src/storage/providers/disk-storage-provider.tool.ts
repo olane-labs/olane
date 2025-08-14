@@ -35,7 +35,7 @@ export class DiskStorageProvider extends StorageProviderTool {
   /**
    * Ensure the storage directory exists
    */
-  private async ensureStorageDir(): Promise<void> {
+  protected async ensureStorageDir(): Promise<void> {
     try {
       await fs.access(this.storageDir);
     } catch {
@@ -46,7 +46,7 @@ export class DiskStorageProvider extends StorageProviderTool {
   /**
    * Get the file path for a given key
    */
-  private getFilePath(key: string): string {
+  protected getFilePath(key: string): string {
     // Sanitize the key to be filesystem safe
     const sanitizedKey = key.replace(/[^a-zA-Z0-9._-]/g, '_');
     return path.join(this.storageDir, `${sanitizedKey}.json`);

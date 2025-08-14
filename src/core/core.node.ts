@@ -17,7 +17,7 @@ import { oConnection } from './lib/o-connection.js';
 import { oMethod } from '@olane/o-protocol';
 import { oAddressResolution } from './lib/o-address-resolution.js';
 import { oDependency } from './o-dependency.js';
-import { UseOptions } from './interfaces/use-options.interface.js';
+import { CID } from 'multiformats';
 
 export abstract class oCoreNode {
   public p2pNode!: Libp2p;
@@ -82,6 +82,15 @@ export abstract class oCoreNode {
     return this.config.parent || null;
   }
 
+  get parentPeerId(): string | null {
+    if (!this.parent || this.parent?.transports?.length === 0) {
+      return null;
+    }
+    const transport = this.parent?.transports[0];
+    const peerId = transport.toString().split('/p2p/')[1];
+    return peerId;
+  }
+
   get parentTransports(): Multiaddr[] {
     return this.parent?.transports.map((t) => multiaddr(t)) || [];
   }
@@ -137,9 +146,6 @@ export abstract class oCoreNode {
           method: 'search',
           params: { staticAddress: result.root },
         },
-        {
-          noIndex: true,
-        },
       );
       const searchResults = response.result.data;
       if (searchResults.length > 0) {
@@ -189,7 +195,6 @@ export abstract class oCoreNode {
       method?: string;
       params?: { [key: string]: any };
     },
-    config: UseOptions = {},
   ): Promise<oResponse> {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
@@ -207,6 +212,17 @@ export abstract class oCoreNode {
     return response;
   }
 
+  async advertiseValueToNetwork(value: CID) {
+    const providePromise = (this.p2pNode.services as any).dht.provide(value);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Advertise Content routing provide timeout')),
+        5000,
+      ),
+    );
+    await Promise.race([providePromise, timeoutPromise]);
+  }
+
   async advertiseToNetwork() {
     this.logger.debug(
       'Advertising to network our static and absolute addresses...',
@@ -216,20 +232,8 @@ export abstract class oCoreNode {
     this.logger.debug('Advertising absolute address: ', absoluteAddressCid);
     try {
       // Add timeout to prevent hanging
-      const providePromise = (this.p2pNode.services as any).dht.provide(
-        absoluteAddressCid,
-      );
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error('Advertise Content routing provide timeout')),
-          5000,
-        ),
-      );
-      await Promise.race([providePromise, timeoutPromise]);
-      this.logger.debug(
-        'Successfully advertised absolute address',
-        providePromise,
-      );
+      await this.advertiseValueToNetwork(absoluteAddressCid);
+      this.logger.debug('Successfully advertised absolute address');
     } catch (error: any) {
       this.logger.warn(
         'Failed to advertise absolute address (this is normal for isolated nodes):',
@@ -242,16 +246,7 @@ export abstract class oCoreNode {
     this.logger.debug('Advertising static address: ', staticAddressCid);
     try {
       // Add timeout to prevent hanging
-      const providePromise = (this.p2pNode.services as any).dht.provide(
-        staticAddressCid,
-      );
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error('Content routing provide timeout')),
-          5000,
-        ),
-      );
-      await Promise.race([providePromise, timeoutPromise]);
+      await this.advertiseValueToNetwork(staticAddressCid);
       this.logger.debug('Successfully advertised static address');
     } catch (error: any) {
       this.logger.warn(
@@ -261,22 +256,18 @@ export abstract class oCoreNode {
     }
   }
 
-  async connectToParent(): Promise<void> {
-    // ensure we have modified the address to be a child address if the parent address is provided
-    if (this.parent) {
-      this.logger.debug('Connecting to parent: ' + this.parent.toString());
-      await this.connect(this.parent, this.parent);
+  async unregister(): Promise<void> {
+    const address = new oAddress('o://register');
 
-      // this.address = CoreUtils.childAddress(this.parentAddress, this.address);
-      // await new Promise((resolve) => setTimeout(resolve, 1_000));
-      // this.logger.debug('Modified address to: ' + this.address.toString());
-      // TODO: let's ask the parent to route us to the leader
-      this.logger.debug('Successfully connected to parent');
-    } else {
-      this.logger.debug(
-        'Node not configured to connect to parent or has already connected to the parent',
-      );
-    }
+    // attempt to unregister from the network
+    const params = {
+      method: 'remove',
+      params: {
+        peerId: this.peerId.toString(),
+      },
+    };
+
+    await this.use(address, params);
   }
 
   async register(): Promise<void> {
@@ -286,16 +277,13 @@ export abstract class oCoreNode {
     }
     this.logger.debug('Registering node...');
 
-    // connect to the parent node to establish identity
-    await this.connectToParent();
-
     // register with the leader global registry
     if (!this.config.leader) {
       this.logger.warn('No leaders found, skipping registration');
       return;
     }
 
-    const address = new oAddress('o://leader/register');
+    const address = new oAddress('o://register');
 
     const params = {
       method: 'commit',
@@ -308,9 +296,7 @@ export abstract class oCoreNode {
       },
     };
 
-    await this.use(address, params, {
-      noIndex: true,
-    });
+    await this.use(address, params);
     // TODO: handle the response from the leader
   }
 
@@ -346,6 +332,10 @@ export abstract class oCoreNode {
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
+
+    // TODO: improve this with a network listener from parent
+    await this.unregister();
+
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }

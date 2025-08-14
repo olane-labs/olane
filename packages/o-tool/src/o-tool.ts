@@ -8,7 +8,6 @@ import {
   oResponse,
   oToolError,
   oToolErrorCodes,
-  UseOptions,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { IncomingStreamData, Stream } from '@olane/o-config';
@@ -65,7 +64,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
       data: {
         [key: string]: unknown;
       },
-      config: UseOptions = {},
     ): Promise<oResponse> {
       // check if we call ourselves
       if (
@@ -100,7 +98,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
         }
         return ToolUtils.buildResponse(request, result, result?.error);
       }
-      return super.use(address, data, config);
+      return super.use(address, data);
     }
 
     async handleStream(streamData: IncomingStreamData): Promise<void> {
@@ -263,25 +261,19 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T) {
       let summary = metadata.description ? metadata.description : null;
       if (!summary) {
         this.logger.debug('No description found, generating summary...');
-        const response = await this.use(
-          new oAddress('o://intelligence'),
-          {
-            method: 'prompt',
-            params: {
-              prompt:
-                `You are a helpful assistant that summarizes what a service does by looking at the service description and the details of the tools that the service contains. \n
+        const response = await this.use(new oAddress('o://intelligence'), {
+          method: 'prompt',
+          params: {
+            prompt:
+              `You are a helpful assistant that summarizes what a service does by looking at the service description and the details of the tools that the service contains. \n
                 Format the output in JSON using this template:` +
-                JSON.stringify({
-                  summary: 'string',
-                }) +
-                'Do NOT include any other text other than the JSON response. The following is the JSON input of the service: ' +
-                JSON.stringify(metadata),
-            },
+              JSON.stringify({
+                summary: 'string',
+              }) +
+              'Do NOT include any other text other than the JSON response. The following is the JSON input of the service: ' +
+              JSON.stringify(metadata),
           },
-          {
-            useCache: true,
-          },
-        );
+        });
         const { result }: any = response;
         const { success }: { success: boolean } = result;
         if (!success) {

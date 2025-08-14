@@ -4,8 +4,6 @@ import { oPlanContext } from '../plan.context.js';
 export interface oPlanConfig {
   // an oAddress that contains the config for the plan
   intent: string;
-  noIndex?: boolean;
-  useCache?: boolean;
 
   context?: oPlanContext;
   sequence?: any[];
