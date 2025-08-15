@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-network",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -65,12 +65,12 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.2.1",
-    "@olane/o-core": "^0.2.1",
-    "@olane/o-protocol": "^0.2.1",
-    "@olane/o-tool": "^0.2.1",
-    "@olane/o-tool-registry": "^0.2.1",
-    "@olane/o-tools-common": "^0.2.1"
+    "@olane/o-config": "^0.2.2",
+    "@olane/o-core": "^0.2.2",
+    "@olane/o-protocol": "^0.2.2",
+    "@olane/o-tool": "^0.2.2",
+    "@olane/o-tool-registry": "^0.2.2",
+    "@olane/o-tools-common": "^0.2.2"
   },
   "dependencies": {
     "chalk": "^5.4.1",

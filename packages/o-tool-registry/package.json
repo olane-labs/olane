@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool-registry",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -41,6 +41,7 @@
     "@olane/o-tools-common": "file:../o-tools-common",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "eslint": "^9.29.0",
@@ -56,11 +57,11 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.2.1",
-    "@olane/o-core": "^0.2.1",
-    "@olane/o-protocol": "^0.2.1",
-    "@olane/o-tool": "^0.2.1",
-    "@olane/o-tools-common": "^0.2.1"
+    "@olane/o-config": "^0.2.2",
+    "@olane/o-core": "^0.2.2",
+    "@olane/o-protocol": "^0.2.2",
+    "@olane/o-tool": "^0.2.2",
+    "@olane/o-tools-common": "^0.2.2"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.2",
@@ -69,6 +70,7 @@
     "@modelcontextprotocol/sdk": "^1.13.0",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "langchain": "^0.3.29"
+    "langchain": "^0.3.29",
+    "uuid": "^10.0.0"
   }
 }
