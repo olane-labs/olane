@@ -167,6 +167,7 @@ export abstract class oCoreNode {
     nextHopAddress: oAddress;
     targetAddress: oAddress;
   }> {
+    const inputTransports = addressWithLeaderTransports.libp2pTransports;
     let targetAddress = addressWithLeaderTransports;
     let nextHopAddress = addressWithLeaderTransports;
 
@@ -176,10 +177,42 @@ export abstract class oCoreNode {
     nextHopAddress = await this.addressResolution.resolve(targetAddress);
     const leaderTransports = this.getTransports(nextHopAddress);
     nextHopAddress.setTransports(leaderTransports);
+
+    // determine if this is external
+    const isInternal = this.isInternalAddress(addressWithLeaderTransports);
+    if (!isInternal) {
+      // external address, so we need to route
+      this.logger.debug(
+        'Address is external, routing...',
+        addressWithLeaderTransports,
+      );
+      return {
+        nextHopAddress: new oAddress(
+          'o://leader',
+          addressWithLeaderTransports.libp2pTransports,
+        ),
+        targetAddress: addressWithLeaderTransports,
+      };
+    }
     return {
       nextHopAddress,
       targetAddress: targetAddress,
     };
+  }
+
+  isInternalAddress(addressWithLeaderTransports: oAddress): boolean {
+    if (addressWithLeaderTransports.libp2pTransports?.length > 0) {
+      // transports are provided, let's see if they match our known leaders
+      const leaderTransports = this.config.leader?.libp2pTransports;
+      if (leaderTransports && leaderTransports.length > 0) {
+        // compare against our known leaders
+        const isInternal = leaderTransports.some((t) =>
+          addressWithLeaderTransports.libp2pTransports.includes(t),
+        );
+        return isInternal;
+      }
+    }
+    return true;
   }
 
   /**
