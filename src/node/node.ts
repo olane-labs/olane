@@ -295,6 +295,7 @@ export abstract class oNode extends oCoreNode {
 
     // if the seed is provided, use it to generate the private key
     if (this.config.seed) {
+      this.logger.debug('Seed provided, generating private key...');
       const privateKey = await CoreUtils.generatePrivateKey(this.config.seed);
       params.privateKey = privateKey;
     } else {
