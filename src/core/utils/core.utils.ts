@@ -20,13 +20,27 @@ export class CoreUtils {
   }
 
   static async generatePrivateKey(seed: string): Promise<any> {
-    const seedBytes = new TextEncoder().encode(seed);
+    // Convert any user phrase to exactly 32 bytes using SHA-256
+    const seedBytes = CoreUtils.phraseToSeedBytes(seed);
 
     const privateKey: any = await generateKeyPairFromSeed('Ed25519', seedBytes);
     return privateKey;
   }
 
-  // Utility function to convert any phrase into a 32-character string
+  /**
+   * Convert any user phrase to exactly 32 bytes for Ed25519 key generation.
+   * This function uses SHA-256 hashing to ensure:
+   * - Deterministic: Same phrase always produces same seed
+   * - Uniform distribution: Good entropy even for weak phrases
+   * - Exactly 32 bytes: Meets Ed25519 cryptographic requirements
+   */
+  public static phraseToSeedBytes(phrase: string): Uint8Array {
+    // Use SHA-256 to create a consistent 32-byte hash
+    const hash = createHash('sha256').update(phrase, 'utf8').digest();
+    return new Uint8Array(hash);
+  }
+
+  // Legacy utility function to convert any phrase into a 32-character hex string
   public static phraseToSeed(phrase: string): string {
     // Use SHA-256 to create a consistent 32-byte hash
     const hash = createHash('sha256').update(phrase).digest('hex');

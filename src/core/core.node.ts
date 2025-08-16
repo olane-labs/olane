@@ -229,11 +229,9 @@ export abstract class oCoreNode {
     );
     // advertise the absolute address to the network with timeout
     const absoluteAddressCid = await this.address.toCID();
-    this.logger.debug('Advertising absolute address: ', absoluteAddressCid);
     try {
       // Add timeout to prevent hanging
       await this.advertiseValueToNetwork(absoluteAddressCid);
-      this.logger.debug('Successfully advertised absolute address');
     } catch (error: any) {
       this.logger.warn(
         'Failed to advertise absolute address (this is normal for isolated nodes):',
@@ -243,11 +241,9 @@ export abstract class oCoreNode {
 
     // advertise the static address to the network with timeout
     const staticAddressCid = await this.staticAddress.toCID();
-    this.logger.debug('Advertising static address: ', staticAddressCid);
     try {
       // Add timeout to prevent hanging
       await this.advertiseValueToNetwork(staticAddressCid);
-      this.logger.debug('Successfully advertised static address');
     } catch (error: any) {
       this.logger.warn(
         'Failed to advertise static address (this is normal for isolated nodes):',
@@ -257,6 +253,10 @@ export abstract class oCoreNode {
   }
 
   async unregister(): Promise<void> {
+    if (this.type === NodeType.LEADER) {
+      this.logger.debug('Skipping unregistration, node is leader');
+      return;
+    }
     const address = new oAddress('o://register');
 
     // attempt to unregister from the network
