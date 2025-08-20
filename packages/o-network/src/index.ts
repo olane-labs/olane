@@ -1,4 +1,3 @@
-export * from './nodes/index.js';
 export * from './network/index.js';
 export * from './utils/config.js';
 export * from '@olane/o-core';
