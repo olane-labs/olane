@@ -136,6 +136,14 @@ jobs:
           npm run build
           # npm run lint
           # npm test
+      
+      - name: Build and test o-host
+        working-directory: packages/o-host
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          # npm test
 
       # Publish packages in dependency order
       - name: Publish o-config
@@ -215,6 +223,19 @@ jobs:
 
       - name: Publish o-network
         working-directory: packages/o-network
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update o-host dependencies and rebuild
+        working-directory: packages/o-host
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-tool@latest --save-dev
+          npm run build
+
+      - name: Publish o-host
+        working-directory: packages/o-host
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

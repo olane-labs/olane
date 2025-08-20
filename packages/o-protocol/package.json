@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
@@ -44,8 +44,6 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.6",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "glob": "^11.0.0",
     "mintlify": "^4.0.468",
     "prettier": "^3.4.2",
