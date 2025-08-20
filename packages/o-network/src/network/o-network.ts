@@ -10,9 +10,9 @@ import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { multiaddr } from '@olane/o-config';
 import { ConfigManager } from '../utils/config.js';
-import { oHostNodeTool, oVirtualTool } from '@olane/o-tool';
+import { oVirtualTool } from '@olane/o-tool';
 
-type oNetworkNode = oVirtualTool | oHostNodeTool;
+type oNetworkNode = oVirtualTool;
 export class oNetwork {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
   private nodes: oNetworkNode[] = []; // clones of node for scale

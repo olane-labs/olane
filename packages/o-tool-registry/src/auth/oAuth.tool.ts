@@ -1,11 +1,11 @@
-import { oHostNodeTool, oToolConfig } from '@olane/o-tool';
+import { oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
 import { OAuthConfig } from './interfaces/oAuth.config.js';
 import { OAuthTokens } from './interfaces/oAuth-tokens.interface.js';
 import { OAuthUserInfo } from './interfaces/oAuth-user-info.interface.js';
 import { oauthMethods } from './methods/auth.methods.js';
 
-export class OAuthTool extends oHostNodeTool {
+export class OAuthTool extends oVirtualTool {
   private oauthConfigs: Map<string, OAuthConfig> = new Map();
   private tokenStore: Map<string, OAuthTokens> = new Map();
 

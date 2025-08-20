@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/olane-labs/o-core.git"
+    "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "Olane Inc.",
   "license": "ISC",
@@ -54,8 +54,8 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.2.3",
-    "@olane/o-protocol": "^0.2.3"
+    "@olane/o-config": "^0.3.0",
+    "@olane/o-protocol": "^0.3.0"
   },
   "dependencies": {
     "chalk": "^5.4.1",

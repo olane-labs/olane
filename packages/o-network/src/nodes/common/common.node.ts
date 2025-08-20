@@ -1,7 +1,7 @@
 import { CoreConfig } from '@olane/o-core';
-import { oHostNodeTool } from '@olane/o-tool';
+import { oVirtualTool } from '@olane/o-tool';
 
-export class oCommonNode extends oHostNodeTool {
+export class oCommonNode extends oVirtualTool {
   constructor(config: CoreConfig) {
     super(config);
   }
