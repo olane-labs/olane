@@ -3,7 +3,6 @@ export * from './interfaces/tool.interface.js';
 export * from './interfaces/run-result.interface.js';
 export * from './interfaces/run-params.interface.js';
 export * from './interfaces/run-tool.interface.js';
-export * from './node.tool.js';
 export * from './interfaces/tool-result.interface.js';
 export * from './tool.utils.js';
 export * from './virtual.tool.js';

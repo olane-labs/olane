@@ -167,17 +167,6 @@ export abstract class oCoreNode {
     nextHopAddress: oAddress;
     targetAddress: oAddress;
   }> {
-    const inputTransports = addressWithLeaderTransports.libp2pTransports;
-    let targetAddress = addressWithLeaderTransports;
-    let nextHopAddress = addressWithLeaderTransports;
-
-    // handle static address translation for search based upon base functionality
-    targetAddress = await this.handleStaticAddressTranslation(targetAddress);
-
-    nextHopAddress = await this.addressResolution.resolve(targetAddress);
-    const leaderTransports = this.getTransports(nextHopAddress);
-    nextHopAddress.setTransports(leaderTransports);
-
     // determine if this is external
     const isInternal = this.isInternalAddress(addressWithLeaderTransports);
     if (!isInternal) {
@@ -194,6 +183,16 @@ export abstract class oCoreNode {
         targetAddress: addressWithLeaderTransports,
       };
     }
+    let targetAddress = addressWithLeaderTransports;
+    let nextHopAddress = addressWithLeaderTransports;
+
+    // handle static address translation for search based upon base functionality
+    targetAddress = await this.handleStaticAddressTranslation(targetAddress);
+
+    nextHopAddress = await this.addressResolution.resolve(targetAddress);
+    const leaderTransports = this.getTransports(nextHopAddress);
+    nextHopAddress.setTransports(leaderTransports);
+
     return {
       nextHopAddress,
       targetAddress: targetAddress,
@@ -203,8 +202,16 @@ export abstract class oCoreNode {
   isInternalAddress(addressWithLeaderTransports: oAddress): boolean {
     if (addressWithLeaderTransports.libp2pTransports?.length > 0) {
       // transports are provided, let's see if they match our known leaders
-      const leaderTransports = this.config.leader?.libp2pTransports;
+      const leaderTransports =
+        this.type === NodeType.LEADER
+          ? this.address.libp2pTransports
+          : this.config.leader?.libp2pTransports;
+      this.logger.debug('Leader transports: ', leaderTransports);
       if (leaderTransports && leaderTransports.length > 0) {
+        this.logger.debug(
+          'Address transports: ',
+          addressWithLeaderTransports.libp2pTransports,
+        );
         // compare against our known leaders
         const isInternal = leaderTransports.some((t) =>
           addressWithLeaderTransports.libp2pTransports.includes(t),
@@ -232,7 +239,12 @@ export abstract class oCoreNode {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
     );
-    this.logger.debug('Using address: ', targetAddress.toString());
+    this.logger.debug(
+      'Using address, target: ',
+      targetAddress.toString(),
+      'nextHop: ',
+      nextHopAddress.toString(),
+    );
 
     const connection = await this.connect(nextHopAddress, targetAddress);
 

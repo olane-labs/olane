@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/olane-labs/o-protocol.git"
+    "url": "git+https://github.com/olane-labs/olane.git"
   },
   "scripts": {
     "check": "npm run check:schema && npm run check:docs",

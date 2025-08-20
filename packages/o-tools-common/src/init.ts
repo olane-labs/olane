@@ -5,9 +5,9 @@ import { SearchTool } from './search/search.tool.js';
 import { SetupTool } from './setup/setup.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
 import { EncryptedPlanStorageTool } from './plan/encrypted-plan-storage.tool.js';
-import { oHostNodeTool, oVirtualTool } from '@olane/o-tool';
+import { oVirtualTool } from '@olane/o-tool';
 
-export const initCommonTools = (oNode: oVirtualTool | oHostNodeTool) => {
+export const initCommonTools = (oNode: oVirtualTool) => {
   const params = {
     parent: oNode.address,
     leader: oNode.address,

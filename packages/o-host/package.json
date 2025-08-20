@@ -1,5 +1,5 @@
 {
-  "name": "@olane/o-tool-registry",
+  "name": "@olane/o-host",
   "version": "0.3.0",
   "type": "module",
   "main": "dist/index.js",
@@ -17,28 +17,26 @@
   ],
   "scripts": {
     "test": "jest",
-    "dev": "npm run build --prefix ../o-core && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && DEBUG=o-protocol:* npx tsx src/index.ts",
+    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "update:lib": "npm install @olane/o-core@latest",
+    "update:lib": "npm install @olane/o-config@latest",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/olane.git"
   },
-  "author": "oLane Inc.",
+  "author": "Olane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@olane/o-config": "file:../o-config",
     "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
-    "@olane/o-tools-common": "file:../o-tools-common",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@types/uuid": "^10.0.0",
@@ -54,23 +52,22 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "5.4.5"
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "@olane/o-config": "^0.3.0",
     "@olane/o-core": "^0.3.0",
-    "@olane/o-protocol": "^0.3.0",
-    "@olane/o-tool": "^0.3.0",
-    "@olane/o-tools-common": "^0.3.0"
+    "@olane/o-tool": "^0.3.0"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.5.2",
-    "@langchain/community": "^0.3.47",
-    "@langchain/core": "^0.3.61",
-    "@modelcontextprotocol/sdk": "^1.13.0",
+    "@libp2p/tcp": "^10.1.16",
+    "@libp2p/mdns": "^11.0.41",
+    "@libp2p/prometheus-metrics": "^4.3.25",
+    "@libp2p/kad-dht": "^15.1.5",
+    "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "langchain": "^0.3.29",
+    "multiformats": "^13.3.7",
     "uuid": "^10.0.0"
   }
 }
