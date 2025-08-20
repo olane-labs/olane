@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -55,9 +55,9 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.3.2",
-    "@olane/o-core": "^0.3.2",
-    "@olane/o-protocol": "^0.3.2"
+    "@olane/o-config": "^0.3.3",
+    "@olane/o-core": "^0.3.3",
+    "@olane/o-protocol": "^0.3.3"
   },
   "dependencies": {
     "debug": "^4.4.1",

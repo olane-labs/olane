@@ -7,7 +7,6 @@ import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
 import { webTransport } from '@libp2p/webtransport';
 import { webSockets } from '@libp2p/websockets';
-import { webRTC } from '@libp2p/webrtc';
 import { circuitRelayTransport } from '@libp2p/circuit-relay-v2';
 
 export interface Libp2pConfig extends Libp2pInit {
@@ -20,7 +19,7 @@ export interface Libp2pConfig extends Libp2pInit {
 
 export const defaultLibp2pConfig: Libp2pConfig = {
   listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
-  transports: [webTransport(), webSockets(), webRTC(), circuitRelayTransport()],
+  transports: [webTransport(), webSockets(), circuitRelayTransport()],
   connectionEncrypters: [noise()],
   streamMuxers: [yamux()],
   services: {
