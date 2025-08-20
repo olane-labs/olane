@@ -60,10 +60,11 @@
     "@olane/o-tool": "^0.3.3"
   },
   "dependencies": {
-    "@libp2p/tcp": "^10.1.16",
+    "@libp2p/kad-dht": "^15.1.5",
     "@libp2p/mdns": "^11.0.41",
     "@libp2p/prometheus-metrics": "^4.3.25",
-    "@libp2p/kad-dht": "^15.1.5",
+    "@libp2p/tcp": "^10.1.16",
+    "@libp2p/webrtc": "^5.2.24",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
