@@ -154,7 +154,7 @@ jobs:
       - name: Publish o-config
         working-directory: packages/o-config
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -162,14 +162,14 @@ jobs:
       - name: Publish o-protocol
         working-directory: packages/o-protocol
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish root package (o-core)
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -187,7 +187,7 @@ jobs:
       - name: Publish o-tool
         working-directory: packages/o-tool
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -205,7 +205,7 @@ jobs:
       - name: Publish o-tools-common
         working-directory: packages/o-tools-common
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -223,7 +223,7 @@ jobs:
       - name: Publish o-tool-registry
         working-directory: packages/o-tool-registry
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -241,7 +241,7 @@ jobs:
       - name: Publish o-network
         working-directory: packages/o-network
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -256,11 +256,13 @@ jobs:
       - name: Publish o-host
         working-directory: packages/o-host
         run: |
-          npm version patch
+          npm version patch --no-git-tag-version
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push tags
         run: |
+          git add .
+          git commit -m "inc versions"
           git push && git push --tags
