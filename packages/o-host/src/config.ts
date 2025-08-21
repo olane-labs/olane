@@ -13,8 +13,8 @@ import { webRTC } from '@libp2p/webrtc';
 import {
   circuitRelayServer,
   circuitRelayTransport,
-  Libp2pConfig,
-} from '@olane/o-config';
+} from '@libp2p/circuit-relay-v2';
+import { Libp2pConfig } from '@olane/o-config';
 
 export const hostLibp2pConfig: Libp2pConfig = {
   listeners: [

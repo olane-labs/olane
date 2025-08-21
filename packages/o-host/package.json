@@ -39,7 +39,6 @@
     "@olane/o-tool": "file:../o-tool",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "eslint": "^9.29.0",
@@ -60,15 +59,17 @@
     "@olane/o-tool": "^0.3.3"
   },
   "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^14.1.1",
     "@libp2p/kad-dht": "^15.1.5",
     "@libp2p/mdns": "^11.0.41",
     "@libp2p/prometheus-metrics": "^4.3.25",
+    "@libp2p/pubsub-peer-discovery": "^11.0.2",
+    "@libp2p/circuit-relay-v2": "^3.2.18",
     "@libp2p/tcp": "^10.1.16",
     "@libp2p/webrtc": "^5.2.24",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "multiformats": "^13.3.7",
-    "uuid": "^10.0.0"
+    "multiformats": "^13.3.7"
   }
 }

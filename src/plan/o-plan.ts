@@ -5,7 +5,6 @@ import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oPlanResult } from './interfaces/plan.result.js';
-import { v4 as uuidv4 } from 'uuid';
 import { oToolError } from '../error/tool.error.js';
 
 export class oPlan {
@@ -203,7 +202,7 @@ export class oPlan {
               pageContent: this.result?.reasoning,
               metadata: {
                 address: this.caller?.toString(),
-                id: uuidv4(),
+                id: crypto.randomUUID(),
               },
             },
           ],

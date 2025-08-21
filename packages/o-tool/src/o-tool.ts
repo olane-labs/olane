@@ -15,7 +15,6 @@ import { oParameter, oProtocolMethods } from '@olane/o-protocol';
 import { RunResult } from './interfaces/run-result.interface.js';
 import { ToolResult } from './interfaces/tool-result.interface.js';
 import { ToolUtils } from './tool.utils.js';
-import { v4 as uuidv4 } from 'uuid';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -251,7 +250,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
                 pageContent: m.description,
                 metadata: {
                   address: this.address?.toString() + '/' + method,
-                  id: uuidv4(),
+                  id: crypto.randomUUID(),
                 },
               },
             ],
@@ -296,7 +295,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
                   pageContent: summary,
                   metadata: {
                     address: this.address?.toString(),
-                    id: uuidv4(),
+                    id: crypto.randomUUID(),
                   },
                 },
               ],
