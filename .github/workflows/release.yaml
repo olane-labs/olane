@@ -145,21 +145,32 @@ jobs:
           # npm run lint
           # npm test
 
+      - name: Config Git author
+        run: |
+          git config --global user.email "bot@olane.com"
+          git config --global user.name "Automated Release"
+
       # Publish packages in dependency order
       - name: Publish o-config
         working-directory: packages/o-config
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish o-protocol
         working-directory: packages/o-protocol
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish root package (o-core)
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -170,12 +181,14 @@ jobs:
         working-directory: packages/o-tool
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest --save-dev
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest --save-peer
           npm run build
 
       - name: Publish o-tool
         working-directory: packages/o-tool
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -186,12 +199,14 @@ jobs:
         working-directory: packages/o-tools-common
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-dev
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
       - name: Publish o-tools-common
         working-directory: packages/o-tools-common
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -202,12 +217,14 @@ jobs:
         working-directory: packages/o-tool-registry
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest --save-dev
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest --save-peer
           npm run build
 
       - name: Publish o-tool-registry
         working-directory: packages/o-tool-registry
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -218,12 +235,14 @@ jobs:
         working-directory: packages/o-network
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest --save-dev
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest --save-peer
           npm run build
 
       - name: Publish o-network
         working-directory: packages/o-network
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -231,11 +250,17 @@ jobs:
         working-directory: packages/o-host
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-tool@latest --save-dev
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-tool@latest --save-peer
           npm run build
 
       - name: Publish o-host
         working-directory: packages/o-host
-        run: npm publish --access public
+        run: |
+          npm version patch
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push tags
+        run: |
+          git push && git push --tags
