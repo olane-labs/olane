@@ -19,7 +19,6 @@ import {
   oRequest,
   oResponse,
 } from '../core/index.js';
-import { v4 as uuidv4 } from 'uuid';
 import { NextHopResolver } from '../core/lib/resolvers/next-hop.resolver.js';
 import { NetworkActivity } from './lib/network-activity.lib.js';
 import { oToolError } from '../error/tool.error.js';
@@ -290,7 +289,7 @@ export abstract class oNode extends oCoreNode {
         this.config.network?.listeners ||
         defaultLibp2pConfig.listeners ||
         []
-      ).concat(`/memory/${uuidv4()}`), // ensure we allow for local in-memory communication
+      ).concat(`/memory/${crypto.randomUUID()}`), // ensure we allow for local in-memory communication
     };
 
     // if the seed is provided, use it to generate the private key

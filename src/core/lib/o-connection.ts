@@ -1,7 +1,6 @@
 import { Connection, Uint8ArrayList, pushable, all } from '@olane/o-config';
 import { Logger } from '../utils/logger.js';
 import { oAddress } from '../o-address.js';
-import { v4 as uuidv4 } from 'uuid';
 import { oRequest } from './o-request.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 import { oResponse } from './o-response.js';
@@ -23,7 +22,7 @@ export class oConnection {
       p2pConnection: Connection;
     },
   ) {
-    this.id = uuidv4();
+    this.id = crypto.randomUUID();
     this.address = config.address;
     this.nextHopAddress = config.nextHopAddress;
     this.logger = new Logger(
