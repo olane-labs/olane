@@ -1,6 +1,7 @@
 import { oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import crypto from 'crypto';
 
 export class McpTool extends oVirtualTool {
   private mcpClient: Client;

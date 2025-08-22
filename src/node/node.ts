@@ -27,6 +27,7 @@ import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';
 import { oPlanResult } from '../plan/interfaces/plan.result.js';
 import { oConfigurePlan } from '../plan/configure/configure.plan.js';
+import crypto from 'crypto';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
