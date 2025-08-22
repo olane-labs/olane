@@ -5,6 +5,7 @@ import { oRequest } from './o-request.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 import { oResponse } from './o-response.js';
 import { ConnectionSendParams } from '../interfaces/connection-send-params.interface.js';
+import crypto from 'crypto';
 
 export class oConnection {
   public readonly id: string;

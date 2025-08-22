@@ -6,6 +6,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oPlanResult } from './interfaces/plan.result.js';
 import { oToolError } from '../error/tool.error.js';
+import crypto from 'crypto';
 
 export class oPlan {
   protected logger: Logger;

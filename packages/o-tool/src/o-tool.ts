@@ -15,6 +15,7 @@ import { oParameter, oProtocolMethods } from '@olane/o-protocol';
 import { RunResult } from './interfaces/run-result.interface.js';
 import { ToolResult } from './interfaces/tool-result.interface.js';
 import { ToolUtils } from './tool.utils.js';
+import crypto from 'crypto';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
