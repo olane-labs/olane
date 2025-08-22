@@ -53,8 +53,8 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.3.3",
-    "@olane/o-protocol": "^0.3.3"
+    "@olane/o-config": "^0.3.4",
+    "@olane/o-protocol": "^0.3.4"
   },
   "dependencies": {
     "chalk": "^5.4.1",
