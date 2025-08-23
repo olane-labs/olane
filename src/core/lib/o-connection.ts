@@ -5,7 +5,7 @@ import { oRequest } from './o-request.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 import { oResponse } from './o-response.js';
 import { ConnectionSendParams } from '../interfaces/connection-send-params.interface.js';
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 export class oConnection {
   public readonly id: string;
@@ -23,7 +23,7 @@ export class oConnection {
       p2pConnection: Connection;
     },
   ) {
-    this.id = crypto.randomUUID();
+    this.id = uuidv4();
     this.address = config.address;
     this.nextHopAddress = config.nextHopAddress;
     this.logger = new Logger(

@@ -175,7 +175,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for registry propagation
-        run: sleep 30
+        run: sleep 5
 
       - name: Update o-tool dependencies and rebuild
         working-directory: packages/o-tool
@@ -193,7 +193,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for registry propagation
-        run: sleep 15
+        run: sleep 5
 
       - name: Update o-tools-common dependencies and rebuild
         working-directory: packages/o-tools-common
@@ -211,7 +211,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for registry propagation
-        run: sleep 15
+        run: sleep 5
 
       - name: Update o-tool-registry dependencies and rebuild
         working-directory: packages/o-tool-registry
@@ -229,7 +229,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Wait for registry propagation
-        run: sleep 15
+        run: sleep 5
 
       - name: Update o-network dependencies and rebuild
         working-directory: packages/o-network
@@ -256,13 +256,13 @@ jobs:
       - name: Publish o-host
         working-directory: packages/o-host
         run: |
-          npm version patch --no-git-tag-version
+          npm version patch
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push tags
         run: |
-          git add .
-          git commit -m "inc versions"
+          git config --global user.email "bot@olane.com"
+          git config --global user.name "Automated Release"
           git push && git push --tags

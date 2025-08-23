@@ -1,7 +1,7 @@
 import { oToolConfig, oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 export class McpTool extends oVirtualTool {
   private mcpClient: Client;
@@ -62,7 +62,7 @@ export class McpTool extends oVirtualTool {
                 pageContent: tool.description,
                 metadata: {
                   address: this.address?.toString() + '/' + tool.name,
-                  id: crypto.randomUUID(),
+                  id: uuidv4(),
                 },
               },
             ],

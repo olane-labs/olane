@@ -6,7 +6,7 @@ import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oPlanResult } from './interfaces/plan.result.js';
 import { oToolError } from '../error/tool.error.js';
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 export class oPlan {
   protected logger: Logger;
@@ -203,7 +203,7 @@ export class oPlan {
               pageContent: this.result?.reasoning,
               metadata: {
                 address: this.caller?.toString(),
-                id: crypto.randomUUID(),
+                id: uuidv4(),
               },
             },
           ],
