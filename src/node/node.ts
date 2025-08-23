@@ -27,7 +27,7 @@ import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';
 import { oPlanResult } from '../plan/interfaces/plan.result.js';
 import { oConfigurePlan } from '../plan/configure/configure.plan.js';
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -290,7 +290,7 @@ export abstract class oNode extends oCoreNode {
         this.config.network?.listeners ||
         defaultLibp2pConfig.listeners ||
         []
-      ).concat(`/memory/${crypto.randomUUID()}`), // ensure we allow for local in-memory communication
+      ).concat(`/memory/${uuidv4()}`), // ensure we allow for local in-memory communication
     };
 
     // if the seed is provided, use it to generate the private key
