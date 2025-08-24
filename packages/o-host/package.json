@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-host",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -34,9 +34,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-config": "0.3.7",
+    "@olane/o-core": "0.3.7",
+    "@olane/o-tool": "0.3.7",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
@@ -54,17 +54,17 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.3.6",
-    "@olane/o-core": "^0.3.6",
-    "@olane/o-tool": "^0.3.6"
+    "@olane/o-config": "^0.3.7",
+    "@olane/o-core": "^0.3.7",
+    "@olane/o-tool": "^0.3.7"
   },
   "dependencies": {
     "@chainsafe/libp2p-gossipsub": "^14.1.1",
+    "@libp2p/circuit-relay-v2": "^3.2.18",
     "@libp2p/kad-dht": "^15.1.5",
     "@libp2p/mdns": "^11.0.41",
     "@libp2p/prometheus-metrics": "^4.3.25",
     "@libp2p/pubsub-peer-discovery": "^11.0.2",
-    "@libp2p/circuit-relay-v2": "^3.2.18",
     "@libp2p/tcp": "^10.1.16",
     "@libp2p/webrtc": "^5.2.24",
     "chalk": "^5.4.1",
