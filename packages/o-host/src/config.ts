@@ -3,17 +3,13 @@ import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { ping } from '@libp2p/ping';
 import { identify } from '@libp2p/identify';
-import { Libp2pInit } from 'libp2p';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { kadDHT, removePublicAddressesMapper } from '@libp2p/kad-dht';
 import { pubsubPeerDiscovery } from '@libp2p/pubsub-peer-discovery';
 import { webTransport } from '@libp2p/webtransport';
 import { webSockets } from '@libp2p/websockets';
 import { webRTC } from '@libp2p/webrtc';
-import {
-  circuitRelayServer,
-  circuitRelayTransport,
-} from '@libp2p/circuit-relay-v2';
+import { circuitRelayServer } from '@libp2p/circuit-relay-v2';
 import { Libp2pConfig } from '@olane/o-config';
 
 export const hostLibp2pConfig: Libp2pConfig = {

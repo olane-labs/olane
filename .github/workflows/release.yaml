@@ -70,6 +70,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -261,7 +262,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push tags
+      - name: Push version changes and create PR
         run: |
           git config --global user.email "bot@olane.com"
           git config --global user.name "Automated Release"
@@ -270,3 +271,13 @@ jobs:
           git add .
           git commit -m "version changes"
           git push origin $BRANCH_NAME
+          
+          # Create draft PR
+          gh pr create \
+            --title "Automated Version Update - $(date +%Y-%m-%d)" \
+            --body "This PR contains automated version updates from the release workflow." \
+            --base main \
+            --head $BRANCH_NAME \
+            --draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
