@@ -4,6 +4,7 @@ import { ping } from '@libp2p/ping';
 import { identify } from '@libp2p/identify';
 import { Libp2pInit } from 'libp2p';
 import { webSockets } from '@libp2p/websockets';
+import { kadDHT } from '@libp2p/kad-dht';
 
 export interface Libp2pConfig extends Libp2pInit {
   listeners?: string[];
@@ -21,5 +22,6 @@ export const defaultLibp2pConfig: Libp2pConfig = {
   services: {
     ping: ping(),
     identify: identify(),
+    dht: kadDHT(),
   },
 };
