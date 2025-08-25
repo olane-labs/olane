@@ -62,12 +62,12 @@ jobs:
       - name: Build and test ${{ matrix.package.name }}
         working-directory: ${{ matrix.package.path }}
         run: |
+          sleep ${{ matrix.package.wait }}
           npm ci
           npm run build
           if [ "${{ matrix.package.lint }}" = "true" ]; then
             npm run lint
           fi
-          sleep ${{ matrix.package.wait }}
           npm test
 
   build-and-publish:
