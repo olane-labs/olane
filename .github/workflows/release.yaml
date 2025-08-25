@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name != 'release'
 
+    permissions:
+      contents: read
+      id-token: read
+
     strategy:
       matrix:
         package:
