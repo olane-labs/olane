@@ -65,7 +65,8 @@ describe('P2P networking', () => {
     const hash = await sha256.digest(bytes);
     const cid = CID.create(1, json.code, hash);
     await dht.provide(cid);
-    const providers: any = dht.findProviders(cid);
+    const dht2: KadDHT = node2.services.dht as KadDHT;
+    const providers: any = dht2.findProviders(cid);
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(
         () => reject(new Error('Content routing provide timeout')),
