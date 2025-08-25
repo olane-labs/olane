@@ -7,9 +7,13 @@
     "declarationDir": "./dist",
     "emitDeclarationOnly": false,
     "module": "ESNext",
-    "target": "ES2020",
-    "moduleResolution": "node"
+    "target": "ES2022",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/tests", "webpack.config.js"]
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -2,12 +2,12 @@
   "name": "@olane/o-core",
   "version": "0.3.8",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,13 +16,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "update:lib": "npm install @olane/o-config@latest",
-    "lint": "eslint src/**/*.ts"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",
@@ -41,6 +42,7 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
+    "aegir": "^47.0.21",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
     "eslint-plugin-prettier": "^5.5.0",

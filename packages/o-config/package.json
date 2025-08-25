@@ -2,12 +2,12 @@
   "name": "@olane/o-config",
   "version": "0.3.8",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,12 +16,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "dev": "npx tsx src/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "lint": "eslint ./src/**/*.ts"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",
@@ -37,6 +39,7 @@
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
+    "aegir": "^47.0.21",
     "buffer": "^6.0.3",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
@@ -64,6 +67,7 @@
     "@libp2p/peer-store": "^11.2.5",
     "@libp2p/ping": "^2.0.35",
     "@libp2p/pubsub": "^10.1.16",
+    "@libp2p/tcp": "^10.1.19",
     "@libp2p/websockets": "^9.2.18",
     "@libp2p/webtransport": "^5.0.50",
     "@multiformats/multiaddr": "^12.5.0",

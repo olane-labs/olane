@@ -59,7 +59,7 @@ export abstract class oCoreNode {
     return this.config.type || NodeType.UNKNOWN;
   }
 
-  get transports() {
+  get transports(): string[] {
     return this.p2pNode
       .getMultiaddrs()
       .map((multiaddr) => multiaddr.toString());
@@ -257,52 +257,16 @@ export abstract class oCoreNode {
     return response;
   }
 
-  async advertiseValueToNetwork(value: CID) {
-    const providePromise = (this.p2pNode.services as any).dht.provide(value);
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error('Advertise Content routing provide timeout')),
-        5000,
-      ),
-    );
-    await Promise.race([providePromise, timeoutPromise]);
-  }
-
-  async advertiseToNetwork() {
-    this.logger.debug(
-      'Advertising to network our static and absolute addresses...',
-    );
-    // advertise the absolute address to the network with timeout
-    const absoluteAddressCid = await this.address.toCID();
-    try {
-      // Add timeout to prevent hanging
-      await this.advertiseValueToNetwork(absoluteAddressCid);
-    } catch (error: any) {
-      this.logger.warn(
-        'Failed to advertise absolute address (this is normal for isolated nodes):',
-        error.message,
-      );
-    }
-
-    // advertise the static address to the network with timeout
-    const staticAddressCid = await this.staticAddress.toCID();
-    try {
-      // Add timeout to prevent hanging
-      await this.advertiseValueToNetwork(staticAddressCid);
-    } catch (error: any) {
-      this.logger.warn(
-        'Failed to advertise static address (this is normal for isolated nodes):',
-        error.message,
-      );
-    }
-  }
-
   async unregister(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
     }
-    const address = new oAddress('o://register');
+    if (!this.config.leader) {
+      this.logger.debug('No leader found, skipping unregistration');
+      return;
+    }
+    const address = new oAddress('o://leader/register');
 
     // attempt to unregister from the network
     const params = {
@@ -326,6 +290,8 @@ export abstract class oCoreNode {
     if (!this.config.leader) {
       this.logger.warn('No leaders found, skipping registration');
       return;
+    } else {
+      this.logger.debug('Registering node with leader...', this.config.leader);
     }
 
     const address = new oAddress('o://register');
@@ -379,7 +345,9 @@ export abstract class oCoreNode {
     this.logger.debug('Tearing down node...');
 
     // TODO: improve this with a network listener from parent
-    await this.unregister();
+    await this.unregister().catch((error) => {
+      this.logger.warn('Failed to unregister node:', error.message);
+    });
 
     if (this.p2pNode) {
       await this.p2pNode.stop();

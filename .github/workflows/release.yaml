@@ -13,54 +13,72 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # build:
-  #   runs-on: ubuntu-latest
-  #   if: github.event_name != 'release'
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'release'
 
-  #   strategy:
-  #     matrix:
-  #       package:
-  #         - name: root
-  #           path: .
-  #           lint: true
-  #         - name: o-config
-  #           path: packages/o-config
-  #           lint: true
-  #         - name: o-protocol
-  #           path: packages/o-protocol
-  #           lint: false
-  #         - name: o-tool
-  #           path: packages/o-tool
-  #           lint: true
-  #         - name: o-tools-common
-  #           path: packages/o-tools-common
-  #           lint: true
-  #         - name: o-tool-registry
-  #           path: packages/o-tool-registry
-  #           lint: true
-  #         - name: o-network
-  #           path: packages/o-network
-  #           lint: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
 
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: npm
+      - name: Build and test o-config
+        working-directory: packages/o-config
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
 
-  #     - name: Install root dependencies
-  #       run: npm ci
+      - name: Build and test o-protocol
+        working-directory: packages/o-protocol
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          # npm test
+      
+      - name: Build and test root package
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
 
-  #     - name: Build and test ${{ matrix.package.name }}
-  #       working-directory: ${{ matrix.package.path }}
-  #       run: |
-  #         npm ci
-  #         npm run build
-  #         if [ "${{ matrix.package.lint }}" = "true" ]; then
-  #           npm run lint
-  #         fi
-  #         # npm test
+      - name: Build and test o-tool
+        working-directory: packages/o-tool
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-tools-common
+        working-directory: packages/o-tools-common
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          # npm test
+
+      - name: Build and test o-tool-registry
+        working-directory: packages/o-tool-registry
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          # npm test
+
+      - name: Build and test o-network
+        working-directory: packages/o-network
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          # npm test
 
   build-and-publish:
     runs-on: ubuntu-latest
@@ -76,7 +94,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           registry-url: 'https://registry.npmjs.org'
 
@@ -138,13 +156,6 @@ jobs:
           # npm run lint
           # npm test
       
-      - name: Build and test o-host
-        working-directory: packages/o-host
-        run: |
-          npm ci
-          npm run build
-          # npm run lint
-          # npm test
 
       - name: Config Git author
         run: |
@@ -247,21 +258,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Update o-host dependencies and rebuild
-        working-directory: packages/o-host
-        run: |
-          # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-tool@latest --save-peer
-          npm run build
-
-      - name: Publish o-host
-        working-directory: packages/o-host
-        run: |
-          npm version patch --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Push version changes and create PR
         run: |
           git config --global user.email "bot@olane.com"
@@ -280,4 +276,4 @@ jobs:
             --head $BRANCH_NAME \
             --draft
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CLASSIC_GITHUB_TOKEN }}
