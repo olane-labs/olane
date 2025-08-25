@@ -77,6 +77,9 @@ export class oLeaderNode extends oCommonNode {
         params: {},
       });
     }
+    return {
+      message: 'Network indexed!',
+    };
   }
 
   // _tool_elect_root(params: RunToolParams): Promise<void> {

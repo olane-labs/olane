@@ -42,6 +42,9 @@ export abstract class oNode extends oCoreNode {
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
       throw new Error('Node is not in a valid state to be initialized');
     }
+    if (!this.address.validate()) {
+      throw new Error('Invalid address');
+    }
   }
 
   async _tool_handshake(handshake: oRequest): Promise<oPlanResult> {

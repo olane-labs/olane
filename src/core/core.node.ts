@@ -236,6 +236,9 @@ export abstract class oCoreNode {
       params?: { [key: string]: any };
     },
   ): Promise<oResponse> {
+    if (!addressWithLeaderTransports.validate()) {
+      throw new Error('Invalid address');
+    }
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
     );
