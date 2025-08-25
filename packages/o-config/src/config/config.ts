@@ -3,8 +3,9 @@ import { yamux } from '@chainsafe/libp2p-yamux';
 import { ping } from '@libp2p/ping';
 import { identify } from '@libp2p/identify';
 import { Libp2pInit } from 'libp2p';
+import { webTransport } from '@libp2p/webtransport';
 import { webSockets } from '@libp2p/websockets';
-import { kadDHT, removePublicAddressesMapper } from '@libp2p/kad-dht';
+import { tcp } from '@libp2p/tcp';
 
 export interface Libp2pConfig extends Libp2pInit {
   listeners?: string[];
@@ -15,17 +16,12 @@ export interface Libp2pConfig extends Libp2pInit {
 }
 
 export const defaultLibp2pConfig: Libp2pConfig = {
-  listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
-  transports: [webSockets()],
+  listeners: [],
+  transports: [webTransport(), webSockets(), tcp()],
   connectionEncrypters: [noise()],
   streamMuxers: [yamux()],
   services: {
     ping: ping(),
     identify: identify(),
-    dht: kadDHT({
-      peerInfoMapper: removePublicAddressesMapper,
-      clientMode: false, // DO NOT CHANGE THIS, it will break the network
-      kBucketSize: 20, // peer size
-    }),
   },
 };

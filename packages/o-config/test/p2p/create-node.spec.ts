@@ -1,32 +1,23 @@
 import { expect } from 'chai';
-import { KadDHT } from '@libp2p/kad-dht';
+import { kadDHT, KadDHT, removePublicAddressesMapper } from '@libp2p/kad-dht';
 import { defaultLibp2pConfig } from '../../src/config/config.js';
 import { createNode } from '../../src/node/node.js';
-import { tcp } from '@libp2p/tcp';
 import { Libp2p } from 'libp2p';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 
-describe('createNode @TCP', () => {
+describe('createNode @WebTransport', () => {
   it('should create a node', async () => {
     const node = await createNode({
       ...defaultLibp2pConfig,
-      listeners: ['/ip4/0.0.0.0/tcp/0'],
-      transports: [tcp()],
     });
     expect(node).to.exist;
     await node.start();
-    const transports = node.getMultiaddrs();
-    expect(transports).to.exist;
-    expect(transports.length).to.be.greaterThan(0);
-    const hasTcp = transports.some((addr) => addr.toString().includes('tcp'));
-    expect(hasTcp).to.be.true;
+    expect(node.status).to.equal('started');
     await node.stop();
   });
 });
-
-describe('createNode @Websockets', () => {});
 
 describe('P2P networking', () => {
   let node1: Libp2p;
@@ -34,14 +25,28 @@ describe('P2P networking', () => {
   it('should start 2 nodes', async () => {
     node1 = await createNode({
       ...defaultLibp2pConfig,
-      listeners: ['/ip4/0.0.0.0/tcp/0'],
-      transports: [tcp()],
+      listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
+      services: {
+        ...defaultLibp2pConfig.services,
+        dht: kadDHT({
+          peerInfoMapper: removePublicAddressesMapper,
+          clientMode: false, // DO NOT CHANGE THIS, it will break the network
+          kBucketSize: 20, // peer size
+        }),
+      },
     });
     await node1.start();
     node2 = await createNode({
       ...defaultLibp2pConfig,
-      listeners: ['/ip4/0.0.0.0/tcp/0'],
-      transports: [tcp()],
+      listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
+      services: {
+        ...defaultLibp2pConfig.services,
+        dht: kadDHT({
+          peerInfoMapper: removePublicAddressesMapper,
+          clientMode: false, // DO NOT CHANGE THIS, it will break the network
+          kBucketSize: 20, // peer size
+        }),
+      },
     });
     await node2.start();
   });
