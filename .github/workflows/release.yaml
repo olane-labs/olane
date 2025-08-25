@@ -23,7 +23,7 @@ jobs:
           - name: root
             path: .
             lint: true
-            wait: 0
+            wait: 2
           - name: o-config
             path: packages/o-config
             lint: true
@@ -35,18 +35,18 @@ jobs:
           - name: o-tool
             path: packages/o-tool
             lint: true
-            wait: 0
+            wait: 5
           - name: o-tools-common
             path: packages/o-tools-common
             lint: true
-            wait: 5
+            wait: 10
           - name: o-tool-registry
             path: packages/o-tool-registry
             lint: true
-            wait: 5
+            wait: 10
           - name: o-network
             path: packages/o-network
-            wait: 10
+            wait: 15
             lint: true
 
     steps:
