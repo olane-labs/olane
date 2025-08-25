@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -34,9 +34,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-config": "0.3.9",
+    "@olane/o-core": "0.3.9",
+    "@olane/o-protocol": "0.3.9",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@types/uuid": "^10.0.0",
@@ -56,9 +56,9 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.3.8",
-    "@olane/o-core": "^0.3.8",
-    "@olane/o-protocol": "^0.3.8"
+    "@olane/o-config": "^0.3.9",
+    "@olane/o-core": "^0.3.9",
+    "@olane/o-protocol": "^0.3.9"
   },
   "dependencies": {
     "debug": "^4.4.1",
