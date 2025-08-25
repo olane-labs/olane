@@ -23,23 +23,30 @@ jobs:
           - name: root
             path: .
             lint: true
+            wait: 0
           - name: o-config
             path: packages/o-config
             lint: true
+            wait: 0
           - name: o-protocol
             path: packages/o-protocol
             lint: false
+            wait: 0
           - name: o-tool
             path: packages/o-tool
             lint: true
+            wait: 0
           - name: o-tools-common
             path: packages/o-tools-common
             lint: true
+            wait: 5
           - name: o-tool-registry
             path: packages/o-tool-registry
             lint: true
+            wait: 5
           - name: o-network
             path: packages/o-network
+            wait: 10
             lint: true
 
     steps:
@@ -60,6 +67,7 @@ jobs:
           if [ "${{ matrix.package.lint }}" = "true" ]; then
             npm run lint
           fi
+          sleep ${{ matrix.package.wait }}
           npm test
 
   build-and-publish:
