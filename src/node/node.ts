@@ -28,6 +28,7 @@ import { oPlanContext } from '../plan/plan.context.js';
 import { oPlanResult } from '../plan/interfaces/plan.result.js';
 import { oConfigurePlan } from '../plan/configure/configure.plan.js';
 import { v4 as uuidv4 } from 'uuid';
+import { CID } from 'multiformats';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -381,6 +382,59 @@ export abstract class oNode extends oCoreNode {
 
     // listen for network events
     // this.listenForNetworkEvents();
+  }
+
+  async advertiseValueToNetwork(value: CID) {
+    if (!this.isServer) {
+      return;
+    }
+    const providePromise = (this.p2pNode.services as any).dht.provide(value);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Advertise Content routing provide timeout')),
+        5000,
+      ),
+    );
+    await Promise.race([providePromise, timeoutPromise]);
+  }
+
+  // if the node has any transports that are not memory, it is a server
+  get isServer(): boolean {
+    return (
+      this.transports.filter((t) => t.includes('memory') === false).length > 0
+    );
+  }
+
+  async advertiseToNetwork() {
+    if (!this.isServer) {
+      return;
+    }
+    this.logger.debug(
+      'Advertising to network our static and absolute addresses...',
+    );
+    // advertise the absolute address to the network with timeout
+    const absoluteAddressCid = await this.address.toCID();
+    try {
+      // Add timeout to prevent hanging
+      await this.advertiseValueToNetwork(absoluteAddressCid);
+    } catch (error: any) {
+      this.logger.warn(
+        'Failed to advertise absolute address (this is normal for isolated nodes):',
+        error.message,
+      );
+    }
+
+    // advertise the static address to the network with timeout
+    const staticAddressCid = await this.staticAddress.toCID();
+    try {
+      // Add timeout to prevent hanging
+      await this.advertiseValueToNetwork(staticAddressCid);
+    } catch (error: any) {
+      this.logger.warn(
+        'Failed to advertise static address (this is normal for isolated nodes):',
+        error.message,
+      );
+    }
   }
 
   listenForNetworkEvents() {

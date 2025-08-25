@@ -2,12 +2,12 @@
   "name": "@olane/o-config",
   "version": "0.3.8",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -20,7 +20,7 @@
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
     "dev": "npx tsx src/index.ts",
-    "build": "aegir build",
+    "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "lint": "aegir lint"
