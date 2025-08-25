@@ -1,6 +1,6 @@
 import { defaultLibp2pConfig, memory } from '@olane/o-config';
 import { CoreConfig, oNode } from '@olane/o-core';
-import { oVirtualTool } from '../virtual.tool';
+import { oVirtualTool } from '../virtual.tool.js';
 
 export class oClientNode extends oVirtualTool {
   constructor(config: CoreConfig) {
