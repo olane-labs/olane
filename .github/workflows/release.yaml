@@ -28,7 +28,7 @@ jobs:
       - name: Build and test o-config
         working-directory: packages/o-config
         run: |
-          npm ci
+          npm i
           npm run build
           # npm run lint
           npm test
@@ -36,14 +36,14 @@ jobs:
       - name: Build and test o-protocol
         working-directory: packages/o-protocol
         run: |
-          npm ci
+          npm i
           npm run build
           # npm run lint
           # npm test
       
       - name: Build and test root package
         run: |
-          npm run ci
+          npm i
           npm run build
           # npm run lint
           npm test
@@ -51,7 +51,7 @@ jobs:
       - name: Build and test o-tool
         working-directory: packages/o-tool
         run: |
-          npm ci
+          npm i
           npm run build
           # npm run lint
           npm test
