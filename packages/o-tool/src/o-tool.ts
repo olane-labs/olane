@@ -326,6 +326,12 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       };
     }
 
+    async _tool_hello_world(request: oRequest): Promise<ToolResult> {
+      return {
+        message: 'Hello, world!',
+      };
+    }
+
     // ensure that the required parameters are present
     findMissingParams(methodName: string, params: any): oParameter[] {
       const method = this.methods[methodName];
