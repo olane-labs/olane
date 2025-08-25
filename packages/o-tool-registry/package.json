@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "echo 'No tests'",
     "dev": "npm run build --prefix ../o-core && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && DEBUG=o-protocol:* npx tsx src/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",

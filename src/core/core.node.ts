@@ -262,6 +262,10 @@ export abstract class oCoreNode {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
     }
+    if (!this.config.leader) {
+      this.logger.debug('No leader found, skipping unregistration');
+      return;
+    }
     const address = new oAddress('o://leader/register');
 
     // attempt to unregister from the network
@@ -272,9 +276,7 @@ export abstract class oCoreNode {
       },
     };
 
-    await this.use(address, params).catch((error) => {
-      this.logger.warn('Failed to unregister node:', error.message);
-    });
+    await this.use(address, params);
   }
 
   async register(): Promise<void> {
@@ -343,7 +345,9 @@ export abstract class oCoreNode {
     this.logger.debug('Tearing down node...');
 
     // TODO: improve this with a network listener from parent
-    await this.unregister();
+    await this.unregister().catch((error) => {
+      this.logger.warn('Failed to unregister node:', error.message);
+    });
 
     if (this.p2pNode) {
       await this.p2pNode.stop();
