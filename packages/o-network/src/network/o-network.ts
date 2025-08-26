@@ -2,16 +2,16 @@ import { NetworkStatus } from './interfaces/network-status.enum.js';
 import { NetworkConfigInterface } from './interfaces/network.interface.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
-import { oLeaderNode, oCommonNode } from '@olane/o-tools-common';
+import { oLeaderNode } from '@olane/o-tools-common';
 import { Logger, oAddress, oNode, oResponse } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { multiaddr } from '@olane/o-config';
 import { ConfigManager } from '../utils/config.js';
-import { oVirtualTool } from '@olane/o-tool';
+import { oServerTool } from '@olane/o-tool';
 
-type oNetworkNode = oVirtualTool;
+type oNetworkNode = oServerTool | oLeaderNode;
 export class oNetwork {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
   private nodes: oNetworkNode[] = []; // clones of node for scale
@@ -27,7 +27,7 @@ export class oNetwork {
     this.config = config;
   }
 
-  entryNode(): oCommonNode | oLeaderNode {
+  entryNode(): oServerTool | oLeaderNode {
     const node = this.nodes[this.roundRobinIndex];
     this.roundRobinIndex = (this.roundRobinIndex + 1) % this.nodes.length;
     return node;
@@ -139,7 +139,7 @@ export class oNetwork {
         this.logger.debug(
           'Starting non-leader node: ' + node.address.toString(),
         );
-        const commonNode = new oCommonNode({
+        const commonNode = new oServerTool({
           ...node,
           address: node.address,
           leader: this.rootLeader?.address || null,

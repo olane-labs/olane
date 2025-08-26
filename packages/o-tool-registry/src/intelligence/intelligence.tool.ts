@@ -60,6 +60,14 @@ export class IntelligenceTool extends oVirtualTool {
   }
 
   async requestMissingData(): Promise<ToolResult> {
+    // check to see if the anthropic key is provided in the ENV vars
+    if (process.env.ANTHROPIC_API_KEY) {
+      return {
+        choice: 'o://anthropic',
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      };
+    }
+
     // if the anthropic key is not in the vault, ask the human
     this.logger.info('Anthropic API key not found in vault, asking human');
     const humanResponse = await this.use(new oAddress('o://human'), {

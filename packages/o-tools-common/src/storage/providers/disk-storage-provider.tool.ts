@@ -25,6 +25,7 @@ export class DiskStorageProvider extends StorageProviderTool {
       ...config,
       address: config.address || new oAddress('o://disk'),
       methods: STORAGE_PARAMS,
+      description: 'Disk storage provider',
     });
     // Use a default storage directory, can be overridden via config
     this.storageDir =

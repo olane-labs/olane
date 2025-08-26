@@ -42,6 +42,9 @@ export abstract class oNode extends oCoreNode {
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
       throw new Error('Node is not in a valid state to be initialized');
     }
+    if (!this.address.validate()) {
+      throw new Error('Invalid address');
+    }
   }
 
   async _tool_handshake(handshake: oRequest): Promise<oPlanResult> {
@@ -103,6 +106,12 @@ export abstract class oNode extends oCoreNode {
     const { payload }: any = request.params;
 
     const { address } = request.params;
+    this.logger.debug(
+      'Routing request to: ',
+      address,
+      ' with payload: ',
+      payload,
+    );
     const destinationAddress = new oAddress(address as string);
 
     // determine the next hop address from the encapsulated address
@@ -154,6 +163,8 @@ export abstract class oNode extends oCoreNode {
     // if not at destination, we need to forward the request to the target
     if (!isAtDestination) {
       forwardRequest = new oRequest(request);
+    } else {
+      this.logger.debug('At destination!');
     }
 
     const pushableStream = pushable();

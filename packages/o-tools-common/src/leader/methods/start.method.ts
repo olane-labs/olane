@@ -1,8 +1,8 @@
 import { oMethod } from '@olane/o-protocol';
 
 export const START_METHOD: oMethod = {
-  name: 'start',
-  description: 'Start a task',
+  name: 'intent',
+  description: 'Resolve the intent of the task',
   dependencies: [],
   parameters: [
     {
@@ -13,7 +13,7 @@ export const START_METHOD: oMethod = {
       required: true,
     },
     {
-      name: 'userInput',
+      name: 'context',
       type: 'string',
       value: 'string',
       description: 'The user input to the task',

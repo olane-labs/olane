@@ -10,6 +10,7 @@ export class DhtStorageProvider extends StorageProviderTool {
       ...config,
       address: new oAddress('o://dht'),
       methods: STORAGE_PARAMS,
+      description: 'Distributed hash table storage provider',
     });
   }
 

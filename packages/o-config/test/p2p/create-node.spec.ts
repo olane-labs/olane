@@ -26,27 +26,11 @@ describe('P2P networking', () => {
     node1 = await createNode({
       ...defaultLibp2pConfig,
       listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
-      services: {
-        ...defaultLibp2pConfig.services,
-        dht: kadDHT({
-          peerInfoMapper: removePublicAddressesMapper,
-          clientMode: false, // DO NOT CHANGE THIS, it will break the network
-          kBucketSize: 20, // peer size
-        }),
-      },
     });
     await node1.start();
     node2 = await createNode({
       ...defaultLibp2pConfig,
       listeners: ['/ip4/0.0.0.0/tcp/0/ws'],
-      services: {
-        ...defaultLibp2pConfig.services,
-        dht: kadDHT({
-          peerInfoMapper: removePublicAddressesMapper,
-          clientMode: false, // DO NOT CHANGE THIS, it will break the network
-          kBucketSize: 20, // peer size
-        }),
-      },
     });
     await node2.start();
   });

@@ -49,7 +49,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
 
     async initialize(): Promise<void> {
       await super.initialize();
-      this.logger.debug('Handling protocol: ' + this.address.protocol);
       await this.handleProtocol(this.address);
       if (
         this.staticAddress &&
