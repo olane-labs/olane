@@ -11,6 +11,7 @@ export class MemoryStorageProvider extends StorageProviderTool {
       ...config,
       address: config.address || new oAddress('o://memory'),
       methods: STORAGE_PARAMS,
+      description: 'In-memory storage provider',
     });
     this.storage = new Map();
   }

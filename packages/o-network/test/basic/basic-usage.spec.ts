@@ -51,6 +51,7 @@ describe('basic-usage @initialize', async () => {
     expect(network.status).to.equal(NetworkStatus.RUNNING);
   });
 
+  // disabled for now, to avoid unecessary indexing costs
   // it('should be able to index the network', async () => {
   //   const entryNode = network.entryNode();
   //   expect(entryNode).to.exist;

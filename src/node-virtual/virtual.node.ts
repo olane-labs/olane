@@ -1,4 +1,4 @@
-import { memory } from '@olane/o-config';
+import { defaultLibp2pConfig, memory } from '@olane/o-config';
 import { oNode } from '../node/node.js';
 
 export class oVirtualNode extends oNode {
@@ -8,6 +8,6 @@ export class oVirtualNode extends oNode {
    * @returns The transports for the virtual node
    */
   configureTransports(): any[] {
-    return [memory()];
+    return [...(defaultLibp2pConfig.transports || [])];
   }
 }

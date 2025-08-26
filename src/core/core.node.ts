@@ -137,6 +137,10 @@ export abstract class oCoreNode {
     addressInput: oAddress,
   ): Promise<oAddress> {
     let result = addressInput;
+    this.logger.debug(
+      'Handling static address translation...',
+      result.toString(),
+    );
     // handle static address translation
     if (result.value.indexOf('o://leader') === -1) {
       // TODO: we need to be more dynamic around the o://leader prefix
@@ -250,6 +254,12 @@ export abstract class oCoreNode {
     );
 
     const connection = await this.connect(nextHopAddress, targetAddress);
+    this.logger.debug(
+      'Connected to: ',
+      targetAddress.toString(),
+      ' sending data: ',
+      data,
+    );
 
     // communicate the payload to the target node
     const response = await connection.send({
@@ -346,11 +356,6 @@ export abstract class oCoreNode {
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
-
-    // TODO: improve this with a network listener from parent
-    await this.unregister().catch((error) => {
-      this.logger.warn('Failed to unregister node:', error.message);
-    });
 
     if (this.p2pNode) {
       await this.p2pNode.stop();

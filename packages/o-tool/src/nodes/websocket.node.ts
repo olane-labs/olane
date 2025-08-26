@@ -6,7 +6,7 @@ export class oWebsocketNode extends oNode {
     super({
       ...config,
       network: {
-        listeners: [
+        listeners: config.network?.listeners || [
           '/ip4/0.0.0.0/tcp/0/ws', // WebSockets over TCP
           '/ip6/::/tcp/0/ws', // IPv6 WebSockets
         ],

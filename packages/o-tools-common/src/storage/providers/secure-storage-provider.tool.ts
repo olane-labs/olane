@@ -24,6 +24,7 @@ export class SecureStorageProvider extends DiskStorageProvider {
       ...config,
       address: config.address || new oAddress('o://secure-storage'),
       methods: STORAGE_PARAMS,
+      description: 'Secure storage provider',
     });
   }
 

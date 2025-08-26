@@ -5,11 +5,10 @@ import {
   oRequest,
   oResponse,
 } from '@olane/o-core';
-import { oToolConfig } from '@olane/o-tool';
-import { oCommonNode } from '../common/index.js';
+import { oServerTool, oToolConfig } from '@olane/o-tool';
 import { START_METHOD } from './methods/start.method.js';
 
-export class oLeaderNode extends oCommonNode {
+export class oLeaderNode extends oServerTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

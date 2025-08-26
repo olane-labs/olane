@@ -106,6 +106,12 @@ export abstract class oNode extends oCoreNode {
     const { payload }: any = request.params;
 
     const { address } = request.params;
+    this.logger.debug(
+      'Routing request to: ',
+      address,
+      ' with payload: ',
+      payload,
+    );
     const destinationAddress = new oAddress(address as string);
 
     // determine the next hop address from the encapsulated address
@@ -157,6 +163,8 @@ export abstract class oNode extends oCoreNode {
     // if not at destination, we need to forward the request to the target
     if (!isAtDestination) {
       forwardRequest = new oRequest(request);
+    } else {
+      this.logger.debug('At destination!');
     }
 
     const pushableStream = pushable();
