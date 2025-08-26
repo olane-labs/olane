@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-config",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -62,18 +62,18 @@
     "@libp2p/identify": "^3.0.35",
     "@libp2p/interface": "^2.10.4",
     "@libp2p/kad-dht": "^15.1.11",
-    "@libp2p/memory": "^1.1.11",
+    "@libp2p/memory": "^1.1.14",
     "@libp2p/peer-id-factory": "^4.2.4",
-    "@libp2p/peer-store": "^11.2.5",
-    "@libp2p/ping": "^2.0.35",
-    "@libp2p/pubsub": "^10.1.16",
+    "@libp2p/peer-store": "^11.2.7",
+    "@libp2p/ping": "^2.0.37",
+    "@libp2p/pubsub": "^10.1.18",
     "@libp2p/tcp": "^10.1.19",
-    "@libp2p/websockets": "^9.2.18",
-    "@libp2p/webtransport": "^5.0.50",
+    "@libp2p/websockets": "^9.2.19",
+    "@libp2p/webtransport": "^5.0.51",
     "@multiformats/multiaddr": "^12.5.0",
     "it-all": "^3.0.9",
     "it-pushable": "^3.2.3",
-    "libp2p": "^2.8.11",
+    "libp2p": "^2.10.0",
     "uint8arraylist": "^2.4.8"
   }
 }
