@@ -118,6 +118,7 @@ export abstract class oNode extends oCoreNode {
     const nextHopAddress =
       await this.addressResolution.resolve(destinationAddress);
 
+    this.logger.debug('Next hop address: ', nextHopAddress.toString());
     // prepare the request for the destination receiver
     let forwardRequest: oRequest = new oRequest({
       params: payload.params,
@@ -250,7 +251,7 @@ export abstract class oNode extends oCoreNode {
           );
           await node.start();
 
-          this.logger.debug('Node started with transports: ', node.transports);
+          this.logger.debug('Child node started: ', node.address.toString());
 
           // test the connection to the child node to add it to the p2p network peer store
           await this.connect(node.address, node.address);

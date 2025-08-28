@@ -251,6 +251,8 @@ export abstract class oCoreNode {
       targetAddress.toString(),
       'nextHop: ',
       nextHopAddress.toString(),
+      'with transports: ',
+      nextHopAddress.libp2pTransports,
     );
 
     const connection = await this.connect(nextHopAddress, targetAddress);
@@ -321,7 +323,7 @@ export abstract class oCoreNode {
     };
 
     await this.use(address, params);
-    // TODO: handle the response from the leader
+    this.logger.debug('Registration successful');
   }
 
   async connect(
