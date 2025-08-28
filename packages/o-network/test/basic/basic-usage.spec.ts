@@ -67,6 +67,44 @@ describe('basic-usage @initialize', async () => {
   // });
 });
 
+describe('external-networks', async () => {
+  it('should be able to use an external network', async () => {
+    const network2 = new oNetwork({
+      // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),
+      nodes: [
+        {
+          type: NodeType.LEADER,
+          address: new oAddress('o://leader'),
+          leader: null,
+          parent: null,
+        },
+        {
+          type: NodeType.NODE,
+          address: new oAddress('o://node2'),
+          leader: null,
+          parent: null,
+        },
+      ],
+      plans: [],
+      noIndexNetwork: true,
+    });
+    await network2.start();
+    expect(network2.status).to.equal(NetworkStatus.RUNNING);
+
+    // let's dial the other network
+
+    await network2.use(
+      new oAddress('o://leader', [
+        ...(network?.rootLeader?.address.libp2pTransports || []),
+      ]),
+      {
+        method: 'index_network',
+        params: {},
+      },
+    );
+  });
+});
+
 describe('basic-usage @stop-network', async () => {
   it('should be able to stop the network', async () => {
     await network.stop();
