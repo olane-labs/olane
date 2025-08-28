@@ -8,3 +8,4 @@ export * from './tool.utils.js';
 export * from './virtual.tool.js';
 export * from './nodes/index.js';
 export * from './server.tool.js';
+export * from './client.tool.js';
