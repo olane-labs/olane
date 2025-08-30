@@ -35,6 +35,12 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-tool-registry": "file:../o-tool-registry",
+    "@olane/o-tools-common": "file:../o-tools-common",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",

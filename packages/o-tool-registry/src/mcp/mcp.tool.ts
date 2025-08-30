@@ -15,15 +15,12 @@ export class McpTool extends oVirtualTool {
         'Tool for wrapping MCP servers to be used as tools in the network',
     });
     this.mcpClient = config.mcpClient;
-    this.setupTools(this.mcpClient).catch((err) => {
-      this.logger.error('Error setting up MCP tools: ', err);
-    });
   }
   // _tool_ functions are dynamically added to the tool based on the MCP server's methods
 
-  async setupTools(mcpClient: Client): Promise<void> {
+  async setupTools(): Promise<void> {
     this.logger.debug('Setting up MCP tools');
-    const tools = await mcpClient.listTools();
+    const tools = await this.mcpClient.listTools();
     this.logger.debug('MCP tools: ', tools);
     tools.tools.forEach((tool) => {
       this.logger.debug('Setting up MCP server tool: ' + tool.name);

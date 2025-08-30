@@ -151,8 +151,9 @@ export class McpBridgeTool extends oVirtualTool {
     });
     this.addChildNode(mcpTool);
     await this.startChildren();
+    await mcpTool.setupTools();
 
-    await this.use(mcpTool.address, {
+    await this.use(new oAddress(mcpTool.address.toString()), {
       method: 'index_network',
       params: {},
     });
