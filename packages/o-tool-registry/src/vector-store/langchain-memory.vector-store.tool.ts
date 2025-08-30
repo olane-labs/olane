@@ -4,6 +4,7 @@ import { oToolConfig } from '@olane/o-tool';
 import { VectorMemoryStorageTool } from './vector-memory.tool.js';
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
 import { Document, DocumentInput } from '@langchain/core/documents';
+import { VECTOR_STORE_PARAMS } from './methods/vector-store.methods.js';
 
 export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
   private vectorStore!: MemoryVectorStore;
@@ -11,6 +12,7 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
+      methods: VECTOR_STORE_PARAMS,
     });
   }
 

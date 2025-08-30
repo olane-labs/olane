@@ -2,12 +2,12 @@
   "name": "@olane/o-tool-registry",
   "version": "0.4.4",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,13 +16,15 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo 'No tests'",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "dev": "npm run build --prefix ../o-core && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && DEBUG=o-protocol:* npx tsx src/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
-    "lint": "eslint src/**/*.ts"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",

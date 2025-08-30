@@ -97,4 +97,37 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
     dependencies: [],
     parameters: [],
   },
+  prompt: {
+    name: 'prompt',
+    description: 'Generate a response using AI based on a prompt',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'prompt',
+        type: 'string',
+        value: 'string',
+        description: 'The prompt to send to the AI model',
+      },
+    ],
+  },
+  search: {
+    name: 'search',
+    description: 'Search for information using AI search capabilities',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'query',
+        type: 'string',
+        value: 'string',
+        description: 'The search query to execute',
+      },
+      {
+        name: 'focus',
+        type: 'string',
+        value: 'string',
+        description: 'The focus area for the search',
+        required: false,
+      },
+    ],
+  },
 };

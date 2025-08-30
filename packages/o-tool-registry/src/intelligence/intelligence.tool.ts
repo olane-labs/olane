@@ -6,6 +6,7 @@ import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
 import { OllamaIntelligenceTool } from './ollama-intelligence.tool.js';
 import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool.js';
+import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
@@ -13,6 +14,7 @@ export class IntelligenceTool extends oVirtualTool {
     super({
       ...config,
       address: new oAddress('o://intelligence'),
+      methods: INTELLIGENCE_PARAMS,
       description:
         config.description ||
         'Tool to help route LLM requests to the best intelligence tool',
