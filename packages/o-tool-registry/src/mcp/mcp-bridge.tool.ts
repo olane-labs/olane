@@ -16,6 +16,21 @@ export class McpBridgeTool extends oVirtualTool {
     });
   }
 
+  async _tool_validate_url(request: oRequest): Promise<ToolResult> {
+    const params = request.params;
+    const { mcpServerUrl } = params;
+    // check the URL contents to see if it is a valid MCP server or a link describing one
+    const response = await this.use(new oAddress('o://leader'), {
+      method: 'intent',
+      params: {
+        intent: `Validate if this url is a valid MCP server: ${mcpServerUrl}. It could be a link to a MCP server, or a link to something else. If it is a link to something else, extract the relevant information to help accomplish our intent.`,
+      },
+    });
+    return {
+      result: response.result.data,
+    };
+  }
+
   async _tool_add_remote_server(request: oRequest): Promise<ToolResult> {
     const params = request.params;
 
@@ -34,59 +49,6 @@ export class McpBridgeTool extends oVirtualTool {
       await mcpClient.connect(transport);
       await this.createMcpTool(mcpClient, mcpServerUrl as string);
       return {
-        message:
-          'Successfully added MCP server with ' +
-          this.childNodes.length +
-          ' tools',
-      };
-    } catch (e: any) {
-      throw new Error(
-        'Error when trying to add MCP server (' +
-          mcpServerUrl +
-          ') to the network: ' +
-          e?.message,
-      );
-    }
-  }
-
-  async _tool_add_remote_server_with_api_key(
-    request: oRequest,
-  ): Promise<ToolResult> {
-    const params = request.params;
-
-    // params have already been validated
-    const { mcpServerUrl, apiKey } = params;
-    try {
-      // let apiKey = apiKeyInput as string;
-      // if (apiKey.indexOf('o://') > -1) {
-      //   const {
-      //     result: { data },
-      //   }: any = await this.use(new oAddress('o://vault'), {
-      //     method: 'get',
-      //     params: { key: apiKeyInput },
-      //   });
-      //   apiKey = data.value;
-      // }
-      this.logger.debug('Adding API keyed MCP server: ' + mcpServerUrl, apiKey);
-      const transport = new StreamableHTTPClientTransport(
-        new URL(mcpServerUrl as string),
-        {
-          requestInit: {
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-            },
-          },
-        },
-      );
-
-      const mcpClient = new Client({
-        name: 'o-node:mcp:' + this.peerId.toString(),
-        version: '1.0.0',
-      });
-      await mcpClient.connect(transport);
-      await this.createMcpTool(mcpClient, mcpServerUrl as string);
-      return {
-        _save: true,
         message:
           'Successfully added MCP server with ' +
           this.childNodes.length +

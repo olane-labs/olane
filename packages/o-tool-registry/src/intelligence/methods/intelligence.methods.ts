@@ -11,6 +11,7 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
         type: 'string',
         value: 'string',
         description: 'The model to use for generation',
+        required: false,
       },
       {
         name: 'messages',

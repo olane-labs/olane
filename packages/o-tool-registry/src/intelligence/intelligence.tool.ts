@@ -63,6 +63,7 @@ export class IntelligenceTool extends oVirtualTool {
 
   async requestMissingData(): Promise<ToolResult> {
     // check to see if the anthropic key is provided in the ENV vars
+
     if (process.env.ANTHROPIC_API_KEY) {
       return {
         choice: 'o://anthropic',
@@ -98,6 +99,19 @@ export class IntelligenceTool extends oVirtualTool {
 
   async chooseIntelligence(request: oRequest): Promise<ToolResult> {
     // check to see if anthropic key is in vault
+    const preference = await this.use(new oAddress('o://memory'), {
+      method: 'get',
+      params: {
+        key: 'intelligence-preference',
+      },
+    });
+    const { value } = preference.result.data as { value: string };
+    if (value) {
+      return {
+        choice: value,
+        apiKey: '',
+      };
+    }
     const response = await this.use(new oAddress('o://memory'), {
       method: 'get',
       params: {
@@ -126,7 +140,6 @@ export class IntelligenceTool extends oVirtualTool {
     const response = await this.use(new oAddress(intelligence.choice), {
       method: 'completion',
       params: {
-        model: 'claude-sonnet-4-20250514',
         apiKey: intelligence.apiKey,
         messages: [
           {
