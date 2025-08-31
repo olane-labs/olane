@@ -63,58 +63,78 @@ describe('intelligence @configure-intelligence', async () => {
   });
 });
 
-describe('mcp-validate-url', async () => {
-  it('should be able to validate a URL', async () => {
-    const response = await network.use(new oAddress('o://leader/node/mcp'), {
-      method: 'validate_url',
-      params: {
-        mcpServerUrl: `https://server.smithery.ai/exa/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
-      },
-    });
-    console.log(response.result.data);
-    expect(response.result.success).to.equal(true);
-  });
-});
-
-describe('mcp-explicit add server', async () => {
-  it('should be able to manually add a remote MCP server', async () => {
-    await network.use(new oAddress('o://leader/node/mcp'), {
-      method: 'add_remote_server',
-      params: {
-        mcpServerUrl: `https://server.smithery.ai/exa/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
-      },
-    });
-  });
-
-  it('should be able to scrape a url', async () => {
-    await network.use(new oAddress('o://leader'), {
-      method: 'intent',
-      params: {
-        intent: `Analyze this url using exa: https://github.com/makenotion/notion-mcp-server`,
-      },
-    });
-  });
-});
-
-// const intents: string[] = [
-//   `Add this MCP server https://server.smithery.ai/@upstash/context7-mcp/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
-//   `Add this MCP server https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem at directory ./`,
-//   `Add this MCP server https://github.com/makenotion/notion-mcp-server with the API key ${process.env.NOTION_API_KEY}`,
-// ];
-
-// for (const intent of intents) {
-//   describe(`mcp-local @intent ${intent}`, async () => {
-//     it(`should be able to resolve this`, async () => {
-//       const response = await network.use(new oAddress('o://leader'), {
-//         method: 'intent',
-//         params: {
-//           intent: intent,
-//         },
-//       });
-//       expect(response.result.success).to.equal(true);
-//     }, 120000); // 2 minutes timeout for each intent test
+// describe('perplexity @do-search', async () => {
+//   it('should be able to search for information', async () => {
+//     const response = await network.use(new oAddress('o://perplexity'), {
+//       method: 'completion',
+//       params: {
+//         model: 'sonar',
+//         messages: [
+//           {
+//             role: 'user',
+//             content: 'What is the capital of France?',
+//           },
+//         ],
+//       },
+//     });
+//     console.log('Perplexity search response: ', response.result.data);
 //   });
-// }
+// });
+
+// describe('mcp-validate-url', async () => {
+//   it('should be able to validate a URL', async () => {
+//     const response = await network.use(new oAddress('o://leader/node/mcp'), {
+//       method: 'validate_url',
+//       params: {
+//         mcpServerUrl: `https://server.smithery.ai/exa/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
+//       },
+//     });
+//     console.log(response.result.data);
+//     expect(response.result.success).to.equal(true);
+//   });
+// });
+
+// describe('mcp-explicit add server', async () => {
+//   it('should be able to manually add a remote MCP server', async () => {
+//     await network.use(new oAddress('o://leader/node/mcp'), {
+//       method: 'add_remote_server',
+//       params: {
+//         mcpServerUrl: `https://server.smithery.ai/exa/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
+//       },
+//     });
+//   });
+
+//   it('should be able to scrape a url', async () => {
+//     const response = await network.use(new oAddress('o://leader'), {
+//       method: 'intent',
+//       params: {
+//         intent: `Analyze this url using exa: https://github.com/makenotion/notion-mcp-server`,
+//       },
+//     });
+//     console.log('Scrape respnose: ', response.result.data);
+//   });
+// });
+
+const intents: string[] = [
+  `Add this MCP server https://server.smithery.ai/@upstash/context7-mcp/mcp?api_key=${process.env.SMITHERY_API_KEY}&profile=clear-deer-XqtpfN`,
+  `Add this MCP server https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem at directory ./`,
+  `Add this MCP server https://github.com/makenotion/notion-mcp-server with the API key ${process.env.NOTION_API_KEY}`,
+];
+
+describe(`mcp-local process suite of intents`, async () => {
+  for (const intent of intents) {
+    it(`should be able to resolve this: ${intent}`, async () => {
+      const response = await network.use(new oAddress('o://leader'), {
+        method: 'intent',
+        params: {
+          intent: intent,
+        },
+      });
+      console.log('Resolving intent response: ', intent, response.result.data);
+      expect(response.result.success).to.equal(true);
+    }); // 2 minutes timeout for each intent test
+  }
+});
 
 describe('basic-usage @stop-network', async () => {
   it('should be able to stop the network', async () => {

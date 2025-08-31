@@ -1,5 +1,5 @@
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, oToolError } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool.js';
@@ -20,14 +20,26 @@ export class McpBridgeTool extends oVirtualTool {
     const params = request.params;
     const { mcpServerUrl } = params;
     // check the URL contents to see if it is a valid MCP server or a link describing one
-    const response = await this.use(new oAddress('o://leader'), {
-      method: 'intent',
+    const response = await this.use(new oAddress('o://perplexity'), {
+      method: 'completion',
       params: {
-        intent: `Validate if this url is a valid MCP server: ${mcpServerUrl}. It could be a link to a MCP server, or a link to something else. If it is a link to something else, extract the relevant information to help accomplish our intent.`,
+        model: 'sonar',
+        messages: [
+          {
+            role: 'user',
+            content: `Is this url an MCP server: ${mcpServerUrl}? Be concise in your answer.`,
+          },
+        ],
       },
     });
+    if (response.result.error) {
+      throw new oToolError(
+        response.result.error.code,
+        response.result.error.message,
+      );
+    }
     return {
-      result: response.result.data,
+      result: response.result.data.message,
     };
   }
 

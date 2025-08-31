@@ -27,7 +27,7 @@ export class McpTool extends oVirtualTool {
       this.methods[tool.name] = {
         name: tool.name,
         description: tool.description || '',
-        parameters: tool.inputSchema as any,
+        parameters: tool.inputSchema.properties as any,
         dependencies: [],
       };
       // @ts-ignore
@@ -42,6 +42,13 @@ export class McpTool extends oVirtualTool {
       };
     });
     await this.startChildren();
+  }
+
+  async myTools() {
+    const tools = await this.mcpClient.listTools();
+    return tools.tools.map((tool) => {
+      return tool.name;
+    });
   }
 
   // let's customize the index functionality to ensure we capture MCP insights
@@ -75,14 +82,18 @@ export class McpTool extends oVirtualTool {
   async whoami(): Promise<any> {
     // do nothing
     const tools = await this.mcpClient.listTools();
-    console.log('mcp+tools: ', tools);
     return {
       tools: tools.tools.map((tool) => {
+        this.logger.debug(
+          'MCP Tool Definition: ',
+          tool.name,
+          tool.description,
+          tool.inputSchema,
+        );
         return {
           name: tool.name,
           description: tool.description,
-          title: tool.title,
-          inputSchema: tool.inputSchema,
+          inputSchema: tool.inputSchema.properties,
         };
       }),
     };

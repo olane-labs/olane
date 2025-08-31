@@ -86,6 +86,7 @@ interface PerplexitySearchResponse {
 
 export class PerplexityIntelligenceTool extends oVirtualTool {
   private defaultModel!: string;
+  private defaultApiKey: string = process.env.SONAR_API_KEY || '';
 
   constructor(config: oToolConfig) {
     super({
@@ -112,7 +113,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
         top_k,
         presence_penalty,
         frequency_penalty,
-        apiKey,
+        apiKey = this.defaultApiKey,
         search_domain,
         return_citations,
         return_images,
@@ -182,7 +183,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
 
       return {
         success: true,
-        response: result.choices[0]?.message?.content || '',
+        message: result.choices[0]?.message?.content || '',
         model: result.model,
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
@@ -215,7 +216,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
         return_citations,
         return_images,
         return_related_questions,
-        apiKey,
+        apiKey = this.defaultApiKey,
       } = params;
 
       if (!prompt) {
@@ -307,7 +308,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
   async _tool_list_models(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.defaultApiKey } = params;
       if (!apiKey) {
         return {
           success: false,
@@ -358,7 +359,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
         exclude_domains,
         use_autoprompt,
         type,
-        apiKey,
+        apiKey = this.defaultApiKey,
       } = params;
 
       if (!query) {
@@ -431,7 +432,7 @@ export class PerplexityIntelligenceTool extends oVirtualTool {
   async _tool_status(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.defaultApiKey } = params;
       if (!apiKey) {
         return {
           success: false,

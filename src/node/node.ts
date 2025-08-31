@@ -53,13 +53,15 @@ export abstract class oNode extends oCoreNode {
       handshake.params.intent,
     );
 
+    const mytools = await this.myTools();
+
     const pc = new oConfigurePlan({
       intent: `This is a handshake request. You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
       currentNode: this,
       caller: this.address,
       context: new oPlanContext([
         `[Method Metadata Begin]\n${JSON.stringify(this.methods)}\n[Method Metadata End]`,
-        `[Method Options Begin]\n${this.myTools().join(', ')}\n[Method Options End]`,
+        `[Method Options Begin]\n${mytools.join(', ')}\n[Method Options End]`,
       ]),
     });
     const result = await pc.execute();
@@ -90,8 +92,8 @@ export abstract class oNode extends oCoreNode {
     );
   }
 
-  matchAgainstMethods(address: oAddress): boolean {
-    const methods = this.myTools();
+  async matchAgainstMethods(address: oAddress): Promise<boolean> {
+    const methods = await this.myTools();
     this.logger.debug('Matching against methods: ', methods);
     const method = address
       .toString()
@@ -107,12 +109,7 @@ export abstract class oNode extends oCoreNode {
     const { payload }: any = request.params;
 
     const { address } = request.params;
-    this.logger.debug(
-      'ROUTING: request to: ',
-      address,
-      ' with payload: ',
-      payload,
-    );
+    this.logger.debug('Routing request to: ', address);
     const destinationAddress = new oAddress(address as string);
 
     // determine the next hop address from the encapsulated address
@@ -137,7 +134,7 @@ export abstract class oNode extends oCoreNode {
       (t) => typeof t !== 'string',
     );
 
-    const isMethodMatch = this.matchAgainstMethods(destinationAddress);
+    const isMethodMatch = await this.matchAgainstMethods(destinationAddress);
     // handle address -> method resolution
     if (isMethodMatch) {
       this.logger.debug('Method match found, forwarding to self...');
