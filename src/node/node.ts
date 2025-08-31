@@ -92,6 +92,7 @@ export abstract class oNode extends oCoreNode {
 
   matchAgainstMethods(address: oAddress): boolean {
     const methods = this.myTools();
+    this.logger.debug('Matching against methods: ', methods);
     const method = address
       .toString()
       .replace(this.address.toString() + '/', '');
@@ -107,7 +108,7 @@ export abstract class oNode extends oCoreNode {
 
     const { address } = request.params;
     this.logger.debug(
-      'Routing request to: ',
+      'ROUTING: request to: ',
       address,
       ' with payload: ',
       payload,
@@ -125,10 +126,6 @@ export abstract class oNode extends oCoreNode {
       id: request.id,
       method: payload.method,
     });
-    // if the next hop is not a libp2p address, we need to communicate to it another way
-    if (this.addressResolution.supportsTransport(nextHopAddress)) {
-      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
-    }
 
     // assume the next hop is a libp2p address, so we need to set the transports and dial it
     nextHopAddress.setTransports(this.getTransports(nextHopAddress));
@@ -154,6 +151,11 @@ export abstract class oNode extends oCoreNode {
         throw new oToolError(error.code, error.message);
       }
       return response.result.data;
+    }
+
+    // if the next hop is not a libp2p address, we need to communicate to it another way
+    if (this.addressResolution.supportsTransport(nextHopAddress)) {
+      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
     }
 
     const targetStream = await this.p2pNode.dialProtocol(

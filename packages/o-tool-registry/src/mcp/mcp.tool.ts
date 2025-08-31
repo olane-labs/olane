@@ -22,7 +22,7 @@ export class McpTool extends oVirtualTool {
     this.logger.debug('Setting up MCP tools');
     const tools = await this.mcpClient.listTools();
     this.logger.debug('MCP tools: ', tools);
-    tools.tools.forEach((tool) => {
+    tools.tools.forEach((tool: any) => {
       this.logger.debug('Setting up MCP server tool: ' + tool.name);
       this.methods[tool.name] = {
         name: tool.name,

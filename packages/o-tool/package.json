@@ -18,6 +18,7 @@
   "scripts": {
     "test": "aegir test",
     "test:node": "aegir test -t node",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "test:browser": "aegir test -t browser",
     "build": "tsc",
     "start:prod": "node dist/index.js",
