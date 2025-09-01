@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool-registry",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -59,11 +59,11 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.4.4",
-    "@olane/o-core": "^0.4.4",
-    "@olane/o-protocol": "^0.4.4",
-    "@olane/o-tool": "^0.4.4",
-    "@olane/o-tools-common": "^0.4.4"
+    "@olane/o-config": "^0.5.0",
+    "@olane/o-core": "^0.5.0",
+    "@olane/o-protocol": "^0.5.0",
+    "@olane/o-tool": "^0.5.0",
+    "@olane/o-tools-common": "^0.5.0"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.2",
