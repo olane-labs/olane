@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
