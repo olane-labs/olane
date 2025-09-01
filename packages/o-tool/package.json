@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -18,6 +18,7 @@
   "scripts": {
     "test": "aegir test",
     "test:node": "aegir test -t node",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "test:browser": "aegir test -t browser",
     "build": "tsc",
     "start:prod": "node dist/index.js",
@@ -32,6 +33,9 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -53,9 +57,9 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.4.4",
-    "@olane/o-core": "^0.4.4",
-    "@olane/o-protocol": "^0.4.4"
+    "@olane/o-config": "^0.5.0",
+    "@olane/o-core": "^0.5.0",
+    "@olane/o-protocol": "^0.5.0"
   },
   "dependencies": {
     "debug": "^4.4.1",

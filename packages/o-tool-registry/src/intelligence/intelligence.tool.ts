@@ -6,6 +6,7 @@ import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
 import { OllamaIntelligenceTool } from './ollama-intelligence.tool.js';
 import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool.js';
+import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
@@ -13,6 +14,7 @@ export class IntelligenceTool extends oVirtualTool {
     super({
       ...config,
       address: new oAddress('o://intelligence'),
+      methods: INTELLIGENCE_PARAMS,
       description:
         config.description ||
         'Tool to help route LLM requests to the best intelligence tool',
@@ -61,6 +63,7 @@ export class IntelligenceTool extends oVirtualTool {
 
   async requestMissingData(): Promise<ToolResult> {
     // check to see if the anthropic key is provided in the ENV vars
+
     if (process.env.ANTHROPIC_API_KEY) {
       return {
         choice: 'o://anthropic',
@@ -96,6 +99,19 @@ export class IntelligenceTool extends oVirtualTool {
 
   async chooseIntelligence(request: oRequest): Promise<ToolResult> {
     // check to see if anthropic key is in vault
+    const preference = await this.use(new oAddress('o://memory'), {
+      method: 'get',
+      params: {
+        key: 'intelligence-preference',
+      },
+    });
+    const { value } = preference.result.data as { value: string };
+    if (value) {
+      return {
+        choice: value,
+        apiKey: '',
+      };
+    }
     const response = await this.use(new oAddress('o://memory'), {
       method: 'get',
       params: {
@@ -124,7 +140,6 @@ export class IntelligenceTool extends oVirtualTool {
     const response = await this.use(new oAddress(intelligence.choice), {
       method: 'completion',
       params: {
-        model: 'claude-sonnet-4-20250514',
         apiKey: intelligence.apiKey,
         messages: [
           {

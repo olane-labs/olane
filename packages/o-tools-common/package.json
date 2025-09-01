@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,6 +19,7 @@
     "test": "echo 'No tests'",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
@@ -32,6 +33,10 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -51,10 +56,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.4.4",
-    "@olane/o-core": "^0.4.4",
-    "@olane/o-protocol": "^0.4.4",
-    "@olane/o-tool": "^0.4.4"
+    "@olane/o-config": "^0.5.0",
+    "@olane/o-core": "^0.5.0",
+    "@olane/o-protocol": "^0.5.0",
+    "@olane/o-tool": "^0.5.0"
   },
   "dependencies": {
     "debug": "^4.4.1",

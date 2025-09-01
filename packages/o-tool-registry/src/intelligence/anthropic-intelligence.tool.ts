@@ -99,7 +99,7 @@ interface AnthropicListModelsResponse {
 }
 
 export class AnthropicIntelligenceTool extends oVirtualTool {
-  private defaultModel = 'claude-opus-4-20250514';
+  private defaultModel = 'claude-sonnet-4-20250514';
 
   constructor(config: oToolConfig) {
     super({

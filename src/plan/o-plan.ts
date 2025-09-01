@@ -169,6 +169,7 @@ export class oPlan {
     }
 
     const data = response.result.data as any;
+    this.logger.debug('Plan response: ', data);
     const message = data.message;
     const planResult = this.extractResultFromAI(message);
     return planResult;

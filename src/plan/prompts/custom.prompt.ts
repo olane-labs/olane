@@ -38,6 +38,11 @@ You resolve user intents by "cycling" through the following steps:
 - Tool addresses are used to access the tool's functionality
 [Address Rules End]
 
+[URL Address Rules Begin]
+- HTTP/HTTPS URL addresses are not olane tool addresses
+- When an address is provided in a user intent, get and analyze the contents of the address before assuming to know how to use it
+[URL Address Rules End]
+
 [Cycle Instructions Begin]
 ${cycleInstructions}
 [Cycle Instructions End]

@@ -1,13 +1,13 @@
 {
   "name": "@olane/o-tool-registry",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,13 +16,16 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo 'No tests'",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "dev": "npm run build --prefix ../o-core && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && DEBUG=o-protocol:* npx tsx src/index.ts",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
-    "lint": "eslint src/**/*.ts"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",
@@ -32,6 +35,11 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
+    "@olane/o-config": "file:../o-config",
+    "@olane/o-core": "file:../..",
+    "@olane/o-protocol": "file:../o-protocol",
+    "@olane/o-tool": "file:../o-tool",
+    "@olane/o-tools-common": "file:../o-tools-common",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -51,11 +59,11 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.4.4",
-    "@olane/o-core": "^0.4.4",
-    "@olane/o-protocol": "^0.4.4",
-    "@olane/o-tool": "^0.4.4",
-    "@olane/o-tools-common": "^0.4.4"
+    "@olane/o-config": "^0.5.0",
+    "@olane/o-core": "^0.5.0",
+    "@olane/o-protocol": "^0.5.0",
+    "@olane/o-tool": "^0.5.0",
+    "@olane/o-tools-common": "^0.5.0"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.2",

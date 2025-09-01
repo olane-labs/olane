@@ -1,5 +1,5 @@
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, oToolError } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool.js';
@@ -14,6 +14,33 @@ export class McpBridgeTool extends oVirtualTool {
       description: 'Tool to help add MCP servers to the network',
       methods: MCP_BRIDGE_METHODS,
     });
+  }
+
+  async _tool_validate_url(request: oRequest): Promise<ToolResult> {
+    const params = request.params;
+    const { mcpServerUrl } = params;
+    // check the URL contents to see if it is a valid MCP server or a link describing one
+    const response = await this.use(new oAddress('o://perplexity'), {
+      method: 'completion',
+      params: {
+        model: 'sonar',
+        messages: [
+          {
+            role: 'user',
+            content: `Is this url an MCP server: ${mcpServerUrl}? Be concise in your answer.`,
+          },
+        ],
+      },
+    });
+    if (response.result.error) {
+      throw new oToolError(
+        response.result.error.code,
+        response.result.error.message,
+      );
+    }
+    return {
+      result: response.result.data.message,
+    };
   }
 
   async _tool_add_remote_server(request: oRequest): Promise<ToolResult> {
@@ -34,59 +61,6 @@ export class McpBridgeTool extends oVirtualTool {
       await mcpClient.connect(transport);
       await this.createMcpTool(mcpClient, mcpServerUrl as string);
       return {
-        message:
-          'Successfully added MCP server with ' +
-          this.childNodes.length +
-          ' tools',
-      };
-    } catch (e: any) {
-      throw new Error(
-        'Error when trying to add MCP server (' +
-          mcpServerUrl +
-          ') to the network: ' +
-          e?.message,
-      );
-    }
-  }
-
-  async _tool_add_remote_server_with_api_key(
-    request: oRequest,
-  ): Promise<ToolResult> {
-    const params = request.params;
-
-    // params have already been validated
-    const { mcpServerUrl, apiKey } = params;
-    try {
-      // let apiKey = apiKeyInput as string;
-      // if (apiKey.indexOf('o://') > -1) {
-      //   const {
-      //     result: { data },
-      //   }: any = await this.use(new oAddress('o://vault'), {
-      //     method: 'get',
-      //     params: { key: apiKeyInput },
-      //   });
-      //   apiKey = data.value;
-      // }
-      this.logger.debug('Adding API keyed MCP server: ' + mcpServerUrl, apiKey);
-      const transport = new StreamableHTTPClientTransport(
-        new URL(mcpServerUrl as string),
-        {
-          requestInit: {
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-            },
-          },
-        },
-      );
-
-      const mcpClient = new Client({
-        name: 'o-node:mcp:' + this.peerId.toString(),
-        version: '1.0.0',
-      });
-      await mcpClient.connect(transport);
-      await this.createMcpTool(mcpClient, mcpServerUrl as string);
-      return {
-        _save: true,
         message:
           'Successfully added MCP server with ' +
           this.childNodes.length +
@@ -151,8 +125,9 @@ export class McpBridgeTool extends oVirtualTool {
     });
     this.addChildNode(mcpTool);
     await this.startChildren();
+    await mcpTool.setupTools();
 
-    await this.use(mcpTool.address, {
+    await this.use(new oAddress(mcpTool.address.toString()), {
       method: 'index_network',
       params: {},
     });

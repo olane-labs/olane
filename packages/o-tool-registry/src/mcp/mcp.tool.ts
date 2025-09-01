@@ -15,22 +15,19 @@ export class McpTool extends oVirtualTool {
         'Tool for wrapping MCP servers to be used as tools in the network',
     });
     this.mcpClient = config.mcpClient;
-    this.setupTools(this.mcpClient).catch((err) => {
-      this.logger.error('Error setting up MCP tools: ', err);
-    });
   }
   // _tool_ functions are dynamically added to the tool based on the MCP server's methods
 
-  async setupTools(mcpClient: Client): Promise<void> {
+  async setupTools(): Promise<void> {
     this.logger.debug('Setting up MCP tools');
-    const tools = await mcpClient.listTools();
+    const tools = await this.mcpClient.listTools();
     this.logger.debug('MCP tools: ', tools);
-    tools.tools.forEach((tool) => {
+    tools.tools.forEach((tool: any) => {
       this.logger.debug('Setting up MCP server tool: ' + tool.name);
       this.methods[tool.name] = {
         name: tool.name,
         description: tool.description || '',
-        parameters: tool.inputSchema as any,
+        parameters: tool.inputSchema.properties as any,
         dependencies: [],
       };
       // @ts-ignore
@@ -45,6 +42,13 @@ export class McpTool extends oVirtualTool {
       };
     });
     await this.startChildren();
+  }
+
+  async myTools() {
+    const tools = await this.mcpClient.listTools();
+    return tools.tools.map((tool) => {
+      return tool.name;
+    });
   }
 
   // let's customize the index functionality to ensure we capture MCP insights
@@ -78,14 +82,18 @@ export class McpTool extends oVirtualTool {
   async whoami(): Promise<any> {
     // do nothing
     const tools = await this.mcpClient.listTools();
-    console.log('mcp+tools: ', tools);
     return {
       tools: tools.tools.map((tool) => {
+        this.logger.debug(
+          'MCP Tool Definition: ',
+          tool.name,
+          tool.description,
+          tool.inputSchema,
+        );
         return {
           name: tool.name,
           description: tool.description,
-          title: tool.title,
-          inputSchema: tool.inputSchema,
+          inputSchema: tool.inputSchema.properties,
         };
       }),
     };

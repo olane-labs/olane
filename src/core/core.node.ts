@@ -246,22 +246,8 @@ export abstract class oCoreNode {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       addressWithLeaderTransports,
     );
-    this.logger.debug(
-      'Using address, target: ',
-      targetAddress.toString(),
-      'nextHop: ',
-      nextHopAddress.toString(),
-      'with transports: ',
-      nextHopAddress.libp2pTransports,
-    );
 
     const connection = await this.connect(nextHopAddress, targetAddress);
-    this.logger.debug(
-      'Connected to: ',
-      targetAddress.toString(),
-      ' sending data: ',
-      data,
-    );
 
     // communicate the payload to the target node
     const response = await connection.send({

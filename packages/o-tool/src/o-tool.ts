@@ -30,7 +30,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
     }
 
     validateToolCall(oRequest: oRequest): boolean {
-      this.logger.debug('Validating tool call: ' + oRequest.method);
       const method = oRequest.method as string;
       if (!method) {
         throw new Error('method parameter is required');
@@ -134,10 +133,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
     }
 
     async execute(req: oRequest, stream?: Stream): Promise<RunResult> {
-      this.logger.debug(
-        'Tool handling incoming stream: ' + this.address.protocol,
-      );
-
       // const protocolUsageCounter = this.p2pNode.metrics?.registerCounter(
       //   'libp2p_protocol_custom_track',
       //   {
@@ -160,7 +155,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
         request.params.address === this.address.value
       ) {
         const { payload }: any = request.params;
-        this.logger.debug('Reached destination, processing payload', payload);
 
         request = new oRequest({
           id: requestConfig.id,
@@ -171,7 +165,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
             ...(payload.params || {}), // TODO: is this correct? this line used to be ...payload
           },
         });
-        this.logger.debug('Processed request: ', request);
       }
 
       const result = await this.run(request, stream);
