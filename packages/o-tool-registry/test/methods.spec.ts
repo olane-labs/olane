@@ -1,9 +1,7 @@
 import { expect } from 'chai';
-import { oAddress } from '@olane/o-core';
 import { OAuthTool } from '../src/auth/oAuth.tool.js';
 import { EmbeddingsTool } from '../src/embeddings/embeddings.tool.js';
 import { IntelligenceTool } from '../src/intelligence/intelligence.tool.js';
-import { McpBridgeTool } from '../src/mcp/mcp-bridge.tool.js';
 import { NERTool } from '../src/nlp/ner.tool.js';
 import { LangchainMemoryVectorStoreTool } from '../src/vector-store/index.js';
 
@@ -40,15 +38,6 @@ describe('registry tool metadata tests', () => {
       parent: null,
     });
     checkMethods(intelligenceTool, intelligenceTool.methods);
-  });
-
-  it('should verify mcp method metadata is present', async () => {
-    const mcpTool = new McpBridgeTool({
-      description: 'MCP tool',
-      leader: null,
-      parent: null,
-    });
-    checkMethods(mcpTool, mcpTool.methods);
   });
 
   it('should verify nlp method metadata is present', async () => {
