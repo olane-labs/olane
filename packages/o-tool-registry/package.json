@@ -40,6 +40,8 @@
     "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
     "@olane/o-tools-common": "file:../o-tools-common",
+    "@olane/o-mcp": "file:../o-mcp",
+    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -63,7 +65,9 @@
     "@olane/o-core": "^0.5.0",
     "@olane/o-protocol": "^0.5.0",
     "@olane/o-tool": "^0.5.0",
-    "@olane/o-tools-common": "^0.5.0"
+    "@olane/o-tools-common": "^0.5.0",
+    "@olane/o-mcp": "^0.5.0",
+    "@olane/o-intelligence": "^0.5.0"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.2",

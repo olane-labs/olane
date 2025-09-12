@@ -6,45 +6,13 @@ import {
   setupGracefulShutdown,
 } from '../../src/index.js';
 import { expect } from 'chai';
-import { NodeState } from '@olane/o-core';
 import dotenv from 'dotenv';
 import { multiaddr } from '@olane/o-config';
+import { defaultNetwork } from '../utils/default.network.js';
 
 dotenv.config();
 
-const network = new oNetwork({
-  // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),
-  nodes: [
-    {
-      type: NodeType.LEADER,
-      address: new oAddress('o://leader'),
-      leader: null,
-      parent: null,
-    },
-    {
-      type: NodeType.NODE,
-      address: new oAddress('o://node'),
-      leader: null,
-      parent: null,
-    },
-  ],
-  plans: [],
-  noIndexNetwork: true,
-});
-
-setupGracefulShutdown(
-  async () => {
-    console.log('Stopping o-network...');
-    await network.stop();
-    console.log('o-network stopped successfully');
-  },
-  {
-    timeout: 30000, // 30 seconds timeout
-    onTimeout: () => {
-      console.error('Shutdown timeout reached, forcing exit');
-    },
-  },
-);
+const network = defaultNetwork;
 
 describe('basic-usage @initialize', async () => {
   it('should be able to startup the network', async () => {

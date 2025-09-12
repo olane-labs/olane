@@ -1,5 +1,5 @@
 {
-  "name": "@olane/o-network",
+  "name": "@olane/o-leader",
   "version": "0.5.0",
   "type": "module",
   "main": "dist/src/index.js",
@@ -16,20 +16,16 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "DEBUG=o-protocol:* aegir test",
+    "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
-    "test-0": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-0.ts",
-    "deep:clean": "rm -rf node_modules && rm package-lock.json",
-    "deep:clean:all": "npm run deep:clean && npm run deep:clean --prefix ../o-tool && npm run deep:clean --prefix ../o-tools-common && npm run deep:clean --prefix ../o-tool-registry && npm run deep:clean --prefix ../..",
-    "deep:install": "npm install && npm install --prefix ../o-tool && npm install --prefix ../o-tools-common && npm install --prefix ../o-tool-registry && npm install --prefix ../..",
-    "deep:restart": "npm run deep:clean:all && npm run deep:install && npm run build:all",
-    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry",
+    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
-    "lint": "aegir lint"
+    "lint": "eslint src/**/*.ts"
   },
   "repository": {
     "type": "git",
@@ -37,25 +33,18 @@
   },
   "author": "oLane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "oLane leader node used as the root node for a network",
   "devDependencies": {
     "@olane/o-config": "file:../o-config",
     "@olane/o-core": "file:../..",
     "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
-    "@olane/o-tool-registry": "file:../o-tool-registry",
-    "@olane/o-tools-common": "file:../o-tools-common",
-    "@olane/o-leader": "file:../o-leader",
-    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
-    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
-    "@types/touch": "^3.1.5",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
-    "aegir": "^47.0.21",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
     "eslint-plugin-prettier": "^5.5.0",
@@ -74,15 +63,10 @@
     "@olane/o-protocol": "^0.5.0",
     "@olane/o-tool": "^0.5.0",
     "@olane/o-tool-registry": "^0.5.0",
-    "@olane/o-tools-common": "^0.5.0",
-    "@olane/o-leader": "^0.5.0",
-    "@olane/o-intelligence": "^0.5.0"
+    "@modelcontextprotocol/sdk": "^1.13.0"
   },
   "dependencies": {
-    "chalk": "^5.4.1",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0",
-    "fs-extra": "^11.3.0",
-    "touch": "^3.1.1"
+    "dotenv": "^16.5.0"
   }
 }

@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { OAuthTool } from '../src/auth/oAuth.tool.js';
 import { EmbeddingsTool } from '../src/embeddings/embeddings.tool.js';
-import { IntelligenceTool } from '../src/intelligence/intelligence.tool.js';
 import { NERTool } from '../src/nlp/ner.tool.js';
 import { LangchainMemoryVectorStoreTool } from '../src/vector-store/index.js';
+import { IntelligenceTool } from '@olane/o-intelligence';
 
 function checkMethods(tool: any, methods: any) {
   const tools = tool.myTools();

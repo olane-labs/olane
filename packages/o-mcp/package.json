@@ -2,12 +2,12 @@
   "name": "@olane/o-mcp",
   "version": "0.5.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,7 +16,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo 'No tests'",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
@@ -37,6 +39,8 @@
     "@olane/o-core": "file:../..",
     "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
+    "@olane/o-leader": "file:../o-leader",
+    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -60,6 +64,7 @@
     "@olane/o-core": "^0.5.0",
     "@olane/o-protocol": "^0.5.0",
     "@olane/o-tool": "^0.5.0",
+    "@olane/o-leader": "^0.5.0",
     "@modelcontextprotocol/sdk": "^1.13.0"
   },
   "dependencies": {
