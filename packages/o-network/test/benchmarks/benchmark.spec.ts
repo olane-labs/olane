@@ -33,30 +33,30 @@ describe('o-mcp github-benchmarks', () => {
     console.log(response.result.data);
   }, 300_000);
 
-  it('should be able to create a branch', async () => {
-    const response = await network.use(new oAddress('o://leader'), {
-      method: 'intent',
-      params: {
-        intent: `Create a branch called "test-branch" in the repo "travel-planner-app"`,
-      },
-    });
-    console.log(response.result.data);
-  }, 300_000);
-
-  // it('should be able to test github benchmarks', async () => {
-  //   for (const testCase of GITHUB_TEST_CASES) {
-  //     console.log(testCase.input);
-  //     const handshakeResponse = await network.use(new oAddress('o://leader'), {
-  //       method: 'intent',
-  //       params: {
-  //         intent: testCase.input,
-  //       },
-  //     });
-  //     console.log(handshakeResponse.result.data);
-  //     // const result = await testCase.output;
-  //     // expect(result).to.contain(testCase.output.contains);
-  //   }
+  // it('should be able to create a branch', async () => {
+  //   const response = await network.use(new oAddress('o://leader'), {
+  //     method: 'intent',
+  //     params: {
+  //       intent: `Create a branch called "test-branch" in the repo "travel-planner-app"`,
+  //     },
+  //   });
+  //   console.log(response.result.data);
   // }, 300_000);
+
+  it('should be able to test github benchmarks', async () => {
+    for (const testCase of GITHUB_TEST_CASES) {
+      console.log(testCase.input);
+      const handshakeResponse = await network.use(new oAddress('o://leader'), {
+        method: 'intent',
+        params: {
+          intent: testCase.input,
+        },
+      });
+      console.log(handshakeResponse.result.data);
+      // const result = await testCase.output;
+      // expect(result).to.contain(testCase.output.contains);
+    }
+  }, 300_000);
 });
 
 describe('basic-usage @stop-network', async () => {

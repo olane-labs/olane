@@ -19,6 +19,7 @@ export const CONFIGURE_PROMPT = (
 
 Step 1 - Validate the intent
 1. If the intent is not a configure request, continue to step 5
+2. If the context provided would suggest that the intent is already solved, continue to step 5
 2. Continue to step 2
 
 Step 2 - Choose Method
@@ -41,6 +42,7 @@ Step 4 - Search for missing parameter values
 3. Continue to step 5
 
 Step 5 - Finish
+1. If the intent seems to be already solved, return answer results.
 1. If this is not a configure request, return an error.
 2. If you are missing parameter values, generate the intents for the "Complex Intent" results using other methods or search to help.
 2. If you have enough information to complete the configure request, follow the "Return Instructions" steps to return the "configure results".
@@ -48,13 +50,20 @@ Step 5 - Finish
 
   `,
     `
-These are the types of cycle results: "Complex Intent Results", "Configure Results", "Error Results", "Search Results".
+These are the types of cycle results: "Answer Results", "Complex Intent Results", "Configure Results", "Error Results", "Search Results".
 
 All Return Step Instructions:
 1. Determine what type of results we have
 2. Output the respective results using the matching output type.
 3. Generate a reasoning statement for why this result was returned.
 4. Do not include \`\`\`json or \`\`\` in your output.
+
+Answer Results:
+{
+  "result": string,
+  "reasoning": string,
+  "type": "result",
+}
 
 Complex Intent Results:
 {

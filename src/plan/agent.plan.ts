@@ -38,7 +38,10 @@ export class oAgentPlan extends oPlan {
     this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
     if (taskResult.error) {
       this.logger.debug('Task error: ', taskResult.error);
-      await this.handleError(taskResult.error, config);
+      const errorResult = await this.handleError(taskResult.error, config);
+      if (errorResult.type === 'result') {
+        return errorResult;
+      }
       return this.doTask(task, config);
     }
     return taskResult;
@@ -94,7 +97,7 @@ export class oAgentPlan extends oPlan {
     this.logger.debug('Handling error...', error);
     const errorPlan = new oAgentPlan({
       ...config,
-      intent: `Solve this error: ${error}`,
+      intent: `If this error is already indicating that the user intent is solved, return a result otherwise solve it. The error is: ${error}`,
       context: this.config.context,
       sequence: this.sequence,
       promptFunction: undefined,

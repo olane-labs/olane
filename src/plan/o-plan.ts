@@ -12,6 +12,7 @@ export class oPlan {
   protected logger: Logger;
   public sequence: oPlan[] = [];
   public cid: CID | undefined;
+  public id: string = uuidv4();
 
   public result: oPlanResult | undefined;
 
@@ -78,8 +79,16 @@ export class oPlan {
   }
 
   get agentHistory() {
+    const added: { [key: string]: boolean } = {};
     return (
       this.sequence
+        ?.filter((s) => {
+          if (added[s.id]) {
+            return false;
+          }
+          added[s.id] = true;
+          return true;
+        })
         ?.map(
           (s, index) =>
             `[Cycle ${index + 1} Begin]\n${JSON.stringify(
