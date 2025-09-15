@@ -61,7 +61,7 @@ Complex Intent Results:
     "simple intent 3",
   ],
   "reasoning": string,
-  "type": "complex-intent",
+  "type": "multiple_step",
 }
 
 Use Tool Results:

@@ -154,7 +154,6 @@ export class oPlan {
     } else {
       prompt = AGENT_PROMPT(this.config.intent, ctxt, this.agentHistory);
     }
-    this.logger.debug('Prompt: ', prompt);
 
     const response = await this.node.use(new oAddress('o://intelligence'), {
       method: 'prompt',
@@ -162,11 +161,6 @@ export class oPlan {
         prompt: prompt,
       },
     });
-    if (response.result.error) {
-      this.logger.error('Error in plan: ', response.result.error);
-      const error: oToolError = response.result.error as oToolError;
-      throw new oToolError(error.code, error.message);
-    }
 
     const data = response.result.data as any;
     this.logger.debug('Plan response: ', data);

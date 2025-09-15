@@ -82,10 +82,14 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
         });
         let success = true;
         const result = await this.execute(request).catch((error) => {
-          this.logger.error('Error executing tool: ' + error);
+          this.logger.error('Error executing tool: ', error);
           success = false;
+          const responseError: oToolError =
+            error instanceof oToolError
+              ? error
+              : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
           return {
-            error: error.message,
+            error: responseError.toJSON(),
           };
         });
 
@@ -105,14 +109,14 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       const request = new oRequest(requestConfig);
       let success = true;
       const result = await this.execute(request, stream).catch((error) => {
-        this.logger.error('Error executing tool: ' + error, typeof error);
+        this.logger.error('Error executing tool: ', error, typeof error);
         success = false;
         const responseError: oToolError =
           error instanceof oToolError
             ? error
             : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
         return {
-          error: responseError,
+          error: responseError.toJSON(),
         };
       });
       if (success) {

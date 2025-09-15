@@ -47,7 +47,7 @@ export class oAgentPlan extends oPlan {
       });
       const taskResult = await taskPlan.execute();
       this.sequence.push(taskPlan);
-      this.logger.debug('Pushed task plan to sequence: ', taskPlan.result);
+      this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
       taskResults.push(taskResult);
       await this.handleError(taskResult.error, config);
     }
@@ -82,7 +82,8 @@ export class oAgentPlan extends oPlan {
     this.logger.debug('Handling error...', error);
     const errorPlan = new oErrorPlan({
       ...config,
-      error: error,
+      intent: `Solve this error: ${error}`,
+      context: this.config.context,
     });
     this.sequence.push(errorPlan);
     const result = await errorPlan.execute();
@@ -98,14 +99,10 @@ export class oAgentPlan extends oPlan {
     for (const intent of output?.intents || []) {
       const subPlan = new oAgentPlan({
         ...this.config,
-        intent: intent.intent,
+        intent: intent,
       });
       const response = await subPlan.execute();
-      this.logger.debug(
-        'Handled multiple step intent: ',
-        intent.intent,
-        response,
-      );
+      this.logger.debug('Handled multiple step intent: ', intent, response);
       results.push(JSON.stringify(response));
     }
     return {
@@ -182,9 +179,14 @@ export class oAgentPlan extends oPlan {
 
         // update the context with the search results
         for (const searchResult of filteredSearchResults) {
-          // add the context data
-          this.contextIdHash[searchResult.metadata.id] = true;
-          searchResultContext += `Tool Address: ${searchResult.metadata.address}\nTool Data: ${searchResult.pageContent}\n\n`;
+          // internal search results
+          if (searchResult?.metadata) {
+            // add the context data
+            this.contextIdHash[searchResult?.metadata?.id || '0'] = true;
+            searchResultContext += `Tool Address: ${searchResult?.metadata?.address || 'unknown'}\nTool Data: ${searchResult?.pageContent || 'unknown'}\n\n`;
+          } else {
+            searchResultContext += `External Search Result: ${searchResult?.message || 'unknown'}\n\n`;
+          }
         }
 
         searchResultContext += `[Search Results End]`;

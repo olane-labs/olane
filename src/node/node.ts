@@ -139,15 +139,15 @@ export abstract class oNode extends oCoreNode {
     if (isMethodMatch) {
       this.logger.debug('Method match found, forwarding to self...');
       const extractedMethod = this.extractMethod(destinationAddress);
-      const response = await this.use(this.address, {
-        method: payload.method || extractedMethod,
-        params: payload.params,
-      });
-      if (response.result.error) {
-        const error: oToolError = response.result.error as oToolError;
-        throw new oToolError(error.code, error.message);
+      try {
+        const response = await this.use(this.address, {
+          method: payload.method || extractedMethod,
+          params: payload.params,
+        });
+        return response.result.data;
+      } catch (error: any) {
+        return error;
       }
-      return response.result.data;
     }
 
     // if the next hop is not a libp2p address, we need to communicate to it another way

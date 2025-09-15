@@ -29,53 +29,55 @@ export class oUsePlan extends oPlan {
       throw new Error('Receiver is required');
     }
 
-    // do handshake to get the method + parameters + dependencies
-    const handshakeResponse = await this.node.use(this.config.receiver, {
-      method: 'handshake',
-      params: {
-        intent: this.config.intent,
-        // sequence: this.sequence.map((s) => {
-        //   return {
-        //     config: s.toCIDInput(),
-        //     result: s.result,
-        //   };
-        // }),
-      },
-    });
-
-    this.logger.debug('Handshake response: ', handshakeResponse);
-    const data = handshakeResponse.result.data as any;
-    this.logger.debug('Handshake data: ', data);
-    const { handshake, error }: any = data;
-    if (error) {
-      return error;
-    }
-    if (!handshake) {
-      throw new oToolError(
-        oToolErrorCodes.TOOL_ERROR,
-        'Failed to configure the tool use',
-      );
-    }
-    const response = await this.node.use(this.config.receiver, {
-      method: handshake.payload?.method,
-      params: handshake.payload?.params,
-    });
-    this.logger.debug('Use response: ', response);
-    // check for error
-    if (response.result.error) {
-      return {
-        error: {
-          ...response.result.error,
-          // methodMetadata: data.methodMetadata,
-          // methods: data.methods,
+    try {
+      // do handshake to get the method + parameters + dependencies
+      const handshakeResponse = await this.node.use(this.config.receiver, {
+        method: 'handshake',
+        params: {
+          intent: this.config.intent,
+          // sequence: this.sequence.map((s) => {
+          //   return {
+          //     config: s.toCIDInput(),
+          //     result: s.result,
+          //   };
+          // }),
         },
+      });
+
+      this.logger.debug('Handshake response: ', handshakeResponse);
+      const data = handshakeResponse.result.data as any;
+      this.logger.debug('Handshake data: ', data);
+      const { handshake, error }: any = data;
+      if (error) {
+        return error;
+      }
+      if (!handshake) {
+        throw new oToolError(
+          oToolErrorCodes.TOOL_ERROR,
+          'Failed to configure the tool use',
+        );
+      }
+      const response = await this.node.use(this.config.receiver, {
+        method: handshake.payload?.method,
+        params: handshake.payload?.params,
+      });
+
+      return {
+        result: response.result,
+        type: 'result',
+      };
+    } catch (error: any) {
+      this.logger.error('Error executing use plan: ', error);
+      if (error instanceof oToolError) {
+        return {
+          error: error.toString(),
+          type: 'error',
+        };
+      }
+      return {
+        error: error?.message || error || 'Unknown error',
         type: 'error',
       };
     }
-
-    return {
-      result: response.result,
-      type: 'result',
-    };
   }
 }

@@ -32,12 +32,7 @@ export class McpBridgeTool extends oVirtualTool {
         ],
       },
     });
-    if (response.result.error) {
-      throw new oToolError(
-        response.result.error.code,
-        response.result.error.message,
-      );
-    }
+
     return {
       result: response.result.data.message,
     };
@@ -47,16 +42,22 @@ export class McpBridgeTool extends oVirtualTool {
     const params = request.params;
 
     // params have already been validated
-    const { mcpServerUrl } = params;
+    const { mcpServerUrl, headers } = params;
     try {
       this.logger.debug('Adding MCP server: ' + mcpServerUrl);
       const transport = new StreamableHTTPClientTransport(
         new URL(mcpServerUrl as string),
+        {
+          requestInit: {
+            headers: headers as Record<string, string>,
+          },
+        },
       );
 
       const mcpClient = new Client({
         name: 'o-node:mcp:' + this.peerId.toString(),
         version: '1.0.0',
+        headers: headers,
       });
       await mcpClient.connect(transport);
       await this.createMcpTool(mcpClient, mcpServerUrl as string);

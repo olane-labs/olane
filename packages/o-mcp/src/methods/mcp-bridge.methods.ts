@@ -28,6 +28,13 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
         description: 'The URL of the MCP server to use',
         required: true,
       },
+      {
+        name: 'headers',
+        type: 'object',
+        value: 'Record<string, string>',
+        description: 'The headers to send to the MCP server',
+        required: false,
+      },
     ],
   },
   add_local_server: {

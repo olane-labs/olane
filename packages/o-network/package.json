@@ -24,7 +24,7 @@
     "deep:clean:all": "npm run deep:clean && npm run deep:clean --prefix ../o-tool && npm run deep:clean --prefix ../o-tools-common && npm run deep:clean --prefix ../o-tool-registry && npm run deep:clean --prefix ../..",
     "deep:install": "npm install && npm install --prefix ../o-tool && npm install --prefix ../o-tools-common && npm install --prefix ../o-tool-registry && npm install --prefix ../..",
     "deep:restart": "npm run deep:clean:all && npm run deep:install && npm run build:all",
-    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry",
+    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",

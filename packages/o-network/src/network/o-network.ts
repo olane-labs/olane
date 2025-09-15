@@ -2,7 +2,7 @@ import { NetworkStatus } from './interfaces/network-status.enum.js';
 import { NetworkConfigInterface } from './interfaces/network.interface.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
-import { oLeaderNode } from '@olane/o-tools-common';
+import { oLeaderNode } from '@olane/o-leader';
 import { Logger, oAddress, oNode, oResponse } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';

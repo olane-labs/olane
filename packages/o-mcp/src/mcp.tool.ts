@@ -1,5 +1,5 @@
 import { oToolConfig, oVirtualTool } from '@olane/o-tool';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, oToolError, oToolErrorCodes } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -38,6 +38,13 @@ export class McpTool extends oVirtualTool {
           name: tool.name,
           arguments: params,
         });
+        this.logger.debug('MCP tool result: ', result);
+        if (result.isError) {
+          throw new oToolError(
+            oToolErrorCodes.TOOL_ERROR,
+            JSON.stringify((result as any).content),
+          );
+        }
         return result.content;
       };
     });

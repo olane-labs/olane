@@ -27,17 +27,27 @@ describe('o-mcp github-benchmarks', () => {
     const response = await network.use(new oAddress('o://leader'), {
       method: 'intent',
       params: {
-        intent: `Add https://api.githubcopilot.com/mcp/ with API key: ${process.env.GITHUB_API_KEY}`,
+        intent: `Add the MCP server https://api.githubcopilot.com/mcp/ use the headers "Authorization: Bearer ${process.env.GITHUB_API_KEY}"`,
       },
     });
     console.log(response.result.data);
-  });
+  }, 300_000);
+
+  it('should be able to create a branch', async () => {
+    const response = await network.use(new oAddress('o://leader'), {
+      method: 'intent',
+      params: {
+        intent: `Create a branch called "test-branch" in the repo "travel-planner-app"`,
+      },
+    });
+    console.log(response.result.data);
+  }, 300_000);
 
   // it('should be able to test github benchmarks', async () => {
   //   for (const testCase of GITHUB_TEST_CASES) {
   //     console.log(testCase.input);
-  //     const handshakeResponse = await network.use(new oAddress('o://mcp'), {
-  //       method: 'handshake',
+  //     const handshakeResponse = await network.use(new oAddress('o://leader'), {
+  //       method: 'intent',
   //       params: {
   //         intent: testCase.input,
   //       },
@@ -46,7 +56,7 @@ describe('o-mcp github-benchmarks', () => {
   //     // const result = await testCase.output;
   //     // expect(result).to.contain(testCase.output.contains);
   //   }
-  // });
+  // }, 300_000);
 });
 
 describe('basic-usage @stop-network', async () => {

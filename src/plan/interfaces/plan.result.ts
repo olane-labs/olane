@@ -2,9 +2,7 @@ import { oQueryConfig } from './query.config.js';
 import { oTaskConfig } from './task.config.js';
 
 export interface oPlanResult {
-  intents?: {
-    intent: string;
-  }[];
+  intents?: string[];
   queries?: oQueryConfig[];
   tasks?: oTaskConfig[];
   handshake?: oTaskConfig;
