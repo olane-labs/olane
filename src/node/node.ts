@@ -29,6 +29,7 @@ import { oPlanResult } from '../plan/interfaces/plan.result.js';
 import { oConfigurePlan } from '../plan/configure/configure.plan.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
+import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -47,7 +48,7 @@ export abstract class oNode extends oCoreNode {
     }
   }
 
-  async _tool_handshake(handshake: oRequest): Promise<oPlanResult> {
+  async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
     this.logger.debug(
       'Performing handshake with intent: ',
       handshake.params.intent,
@@ -55,23 +56,14 @@ export abstract class oNode extends oCoreNode {
 
     const mytools = await this.myTools();
 
-    const pc = new oConfigurePlan({
-      intent: `This is a handshake request. You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
-      currentNode: this,
-      caller: this.address,
-      context: new oPlanContext([
-        `[Method Metadata Begin]\n${JSON.stringify(this.methods)}\n[Method Metadata End]`,
-        `[Method Options Begin]\n${mytools.join(', ')}\n[Method Options End]`,
-      ]),
-    });
-    const result = await pc.execute();
-    this.logger.debug('Handshake result: ', result);
-    if (result.error) {
-      return result;
-    }
-
-    this.logger.debug('Handshake json: ', result.handshake);
-    return result;
+    return {
+      tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
+      methods: this.methods,
+      successes: [],
+      failures: [],
+      task: undefined,
+      type: 'handshake',
+    };
   }
 
   abstract configureTransports(): any[];

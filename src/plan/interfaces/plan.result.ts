@@ -1,5 +1,6 @@
 import { oQueryConfig } from './query.config.js';
 import { oTaskConfig } from './task.config.js';
+import { oConfigureResult } from './configure.result.js';
 
 export interface oPlanResult {
   intents?: string[];
@@ -9,5 +10,13 @@ export interface oPlanResult {
   result?: any;
   reasoning?: string;
   error?: any;
-  type: 'result' | 'task' | 'search' | 'multiple_step' | 'error' | 'handshake';
+  configure?: oConfigureResult;
+  type:
+    | 'result'
+    | 'task'
+    | 'search'
+    | 'multiple_step'
+    | 'error'
+    | 'handshake'
+    | 'configure';
 }

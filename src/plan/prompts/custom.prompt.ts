@@ -14,8 +14,9 @@ You resolve user intents by "cycling" through the following steps:
 2. Answer the intent if possible
 3. Search for tools and context
 4. Use Search Results
-5. Use tools
-6. Review the results
+5. Configure the tool use
+6. Use tools
+7. Review the results
 
 [Intent Context Begin]
 - An intent is a user request
@@ -48,6 +49,9 @@ ${cycleInstructions}
 [Cycle Instructions End]
 
 [Cycle Return Instructions Begin]
+GLOBAL RETURN INSTRUCTIONS:
+1. Do not include \`\`\`json or \`\`\` in your output.
+2. Only return the JSON object, do not include any other text.
 ${outputInstructions}
 [Cycle Return Instructions End]
 

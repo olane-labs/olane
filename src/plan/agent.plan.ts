@@ -5,7 +5,7 @@ import { oPlan } from './o-plan.js';
 import { oUsePlan } from './use/use.plan.js';
 import { oSearchPlan } from './search/search.plan.js';
 import { oQueryConfig } from './interfaces/query.config.js';
-import { oErrorPlan } from './error/error.plan.js';
+import { oTaskConfig } from './interfaces/task.config.js';
 
 /**
  * oAgentPlan is responsible for managing the execution of plans.
@@ -21,6 +21,27 @@ export class oAgentPlan extends oPlan {
 
   constructor(config: oPlanConfig) {
     super(config);
+  }
+
+  async doTask(task: oTaskConfig, config: oPlanConfig): Promise<oPlanResult> {
+    this.logger.debug('Doing task...');
+    const taskPlan = new oUsePlan({
+      ...config,
+      intent: this.config.intent,
+      context: this.config.context,
+      receiver: new oAddress(task.address),
+      sequence: this.sequence,
+      promptFunction: undefined,
+    });
+    const taskResult = await taskPlan.execute();
+    this.sequence.push(taskPlan);
+    this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
+    if (taskResult.error) {
+      this.logger.debug('Task error: ', taskResult.error);
+      await this.handleError(taskResult.error, config);
+      return this.doTask(task, config);
+    }
+    return taskResult;
   }
 
   async handleTasks(
@@ -39,17 +60,8 @@ export class oAgentPlan extends oPlan {
       }
 
       // perform task if necessary
-      const taskPlan = new oUsePlan({
-        ...config,
-        intent: this.config.intent,
-        context: this.config.context,
-        receiver: new oAddress(task.address),
-      });
-      const taskResult = await taskPlan.execute();
-      this.sequence.push(taskPlan);
-      this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
-      taskResults.push(taskResult);
-      await this.handleError(taskResult.error, config);
+      const result = await this.doTask(task, config);
+      taskResults.push(result);
     }
     return taskResults;
   }
@@ -80,13 +92,15 @@ export class oAgentPlan extends oPlan {
 
   async handleError(error: any, config: oPlanConfig): Promise<oPlanResult> {
     this.logger.debug('Handling error...', error);
-    const errorPlan = new oErrorPlan({
+    const errorPlan = new oAgentPlan({
       ...config,
       intent: `Solve this error: ${error}`,
       context: this.config.context,
+      sequence: this.sequence,
+      promptFunction: undefined,
     });
-    this.sequence.push(errorPlan);
     const result = await errorPlan.execute();
+    this.sequence.push(errorPlan);
     return result;
   }
 
@@ -100,8 +114,11 @@ export class oAgentPlan extends oPlan {
       const subPlan = new oAgentPlan({
         ...this.config,
         intent: intent,
+        sequence: this.sequence,
+        promptFunction: undefined,
       });
       const response = await subPlan.execute();
+      this.sequence.push(subPlan);
       this.logger.debug('Handled multiple step intent: ', intent, response);
       results.push(JSON.stringify(response));
     }
@@ -130,6 +147,7 @@ export class oAgentPlan extends oPlan {
         caller: this.node?.address,
         context: this.config.context,
         sequence: this.sequence,
+        promptFunction: this.config.promptFunction,
       };
 
       // search or resolve the intent with tool usage
@@ -150,7 +168,8 @@ export class oAgentPlan extends oPlan {
       if (
         resultType === 'result' ||
         resultType === 'error' ||
-        resultType === 'handshake'
+        resultType === 'handshake' ||
+        resultType === 'configure'
       ) {
         return planResult;
       }

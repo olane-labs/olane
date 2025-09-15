@@ -121,15 +121,12 @@ export class oPlan {
   extractResultFromAI(message: string): oPlanResult {
     this.logger.debug('Extracting result from AI: ', message);
     // handle 4 levels of nested JSON
-    const matches = message.match(
-      /\{(?:[^{}]*|\{(?:[^{}]*|\{(?:[^{}]*|\{(?:[^{}]*|\{[^{}]*\})*\})*\})*\})*\}/,
-    );
-    if (!matches || matches.length === 0) {
-      // AI failed to return a valid JSON object
+    const match = message.match(/\{.+\}/s);
+
+    const json = match ? match[0] : null;
+    if (!json) {
       throw new Error('AI failed to return a valid JSON object');
     }
-
-    const json = matches[0];
 
     this.logger.debug('[AGENT PLAN] Analysis result: ', json);
 
@@ -154,6 +151,7 @@ export class oPlan {
     } else {
       prompt = AGENT_PROMPT(this.config.intent, ctxt, this.agentHistory);
     }
+    // this.logger.debug('Prompt: ', prompt);
 
     const response = await this.node.use(new oAddress('o://intelligence'), {
       method: 'prompt',

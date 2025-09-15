@@ -48,10 +48,11 @@ Step 5 - Review the tool use results
   These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results".
 
 All Return Step Instructions:
-1. Determine what type of results we have
-2. Output the respective results using the matching output type.
-3. Generate a reasoning statement for why this result was returned.
-4. Do not include \`\`\`json or \`\`\` in your output.
+1. Do not explain your reasoning process, just return the output in the correct format.
+2. Determine what type of results we have
+3. Output the respective results using the matching output type.
+4. Generate a reasoning key value pair for why this result was returned.
+5. Do not include \`\`\`json or \`\`\` in your output.
 
 Complex Intent Results:
 {
