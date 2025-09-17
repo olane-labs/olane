@@ -134,7 +134,7 @@ export class IntelligenceTool extends oVirtualTool {
         name: 'anthropic',
       },
       {
-        key: process.env.OPEN_AI_KEY,
+        key: process.env.OPENAI_API_KEY,
         address: 'o://openai',
         name: 'openai',
       },

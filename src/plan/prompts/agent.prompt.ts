@@ -13,9 +13,10 @@ export const AGENT_PROMPT = (
   Every Step Instructions:
 1. Review the provided user intent and context
 2. If you can complete the user intent, return the answer using the "Return Instructions" steps
-3. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
-3. Review the current step number and perform the instructions associated with that step.
-4. Start with step 1
+3. If the intent is already completed in past cycles, stop here and follow the "Return Instructions" steps
+4. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
+5. Review the current step number and perform the instructions associated with that step.
+6. Start with step 1
 
 Step 1 - Evaluate the intent
 1. A complex step means there are multiple actions required to complete the user's intent
