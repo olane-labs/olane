@@ -200,7 +200,20 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
           },
         );
       }
-      return this.callMyTool(request, stream);
+      // resolve o:// addresses
+      // THIS HAS A RECURSIVE CALL issue
+      this.logger.debug(
+        'Calling function at address: ',
+        this.address.toString(),
+        'with request: ',
+        request.method,
+      );
+      // const isPlaceholder = this.address.toString().includes('placeholder');
+      // request = await oRequest.translateToRawRequest(request, this);
+      let result = await this.callMyTool(request, stream);
+      // result = await oRequest.translateResultForAgent(result, this);
+      return result;
+      // translate to o:// addresses
     }
 
     myTools(): string[] {

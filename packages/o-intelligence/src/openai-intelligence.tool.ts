@@ -116,9 +116,8 @@ interface OpenAIListModelsResponse {
 }
 
 export class OpenAIIntelligenceTool extends oVirtualTool {
-  private apiKey!: string;
-  private baseUrl!: string;
-  private defaultModel!: string;
+  private baseUrl: string = 'https://api.openai.com/v1';
+  private defaultModel: string = 'gpt-5-mini';
   private organization?: string;
 
   constructor(config: oToolConfig) {
@@ -137,9 +136,14 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_completion(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, messages, ...options } = params;
+      const {
+        model = this.defaultModel,
+        messages,
+        apiKey,
+        ...options
+      } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: 'OpenAI API key is required',
@@ -157,12 +161,12 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
         model: model as string,
         messages: messages as OpenAIChatMessage[],
         stream: false,
-        ...options,
+        // ...options,
       };
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
 
       if (this.organization) {
@@ -188,7 +192,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
 
       return {
         success: true,
-        response: result.choices[0]?.message?.content || '',
+        message: result.choices[0]?.message?.content || '',
         model: result.model,
         usage: result.usage,
         finish_reason: result.choices[0]?.finish_reason,
@@ -208,9 +212,9 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_generate(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, prompt, ...options } = params;
+      const { model = this.defaultModel, prompt, apiKey, ...options } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: 'OpenAI API key is required',
@@ -233,7 +237,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
 
       // if (this.organization) {
@@ -277,7 +281,10 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
    */
   async _tool_list_models(request: oRequest): Promise<ToolResult> {
     try {
-      if (!this.apiKey) {
+      const params = request.params as any;
+      const { apiKey } = params;
+
+      if (!apiKey) {
         return {
           success: false,
           error: 'OpenAI API key is required',
@@ -285,7 +292,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
       }
 
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
 
       if (this.organization) {
@@ -326,9 +333,9 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_model_info(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel } = params;
+      const { model = this.defaultModel, apiKey } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: 'OpenAI API key is required',
@@ -336,7 +343,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
       }
 
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
 
       if (this.organization) {
@@ -375,7 +382,10 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
    */
   async _tool_status(request: oRequest): Promise<ToolResult> {
     try {
-      if (!this.apiKey) {
+      const params = request.params as any;
+      const { apiKey } = params;
+
+      if (!apiKey) {
         return {
           success: false,
           status: 'no_api_key',
@@ -384,7 +394,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
       }
 
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       };
 
       if (this.organization) {

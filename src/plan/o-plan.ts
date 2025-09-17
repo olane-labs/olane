@@ -84,6 +84,7 @@ export class oPlan {
       this.sequence
         ?.filter((s) => {
           if (added[s.id]) {
+            console.log('Deduplication plan: ', s.id);
             return false;
           }
           added[s.id] = true;
@@ -91,13 +92,13 @@ export class oPlan {
         })
         ?.map(
           (s, index) =>
-            `[Cycle ${index + 1} Begin]\n${JSON.stringify(
+            `[Cycle ${index + 1} Begin ${s.id}]\n${JSON.stringify(
               {
                 ...s.result,
               },
               null,
               2,
-            )} \n[Cycle ${index + 1} End]`,
+            )} \n[Cycle ${index + 1} End ${s.id}]`,
         )
         .join('\n') || ''
     );

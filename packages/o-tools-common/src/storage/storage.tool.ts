@@ -5,6 +5,7 @@ import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.
 import { StorageProviderTool } from './providers/storage-provider.tool.js';
 import { GetDataResponse } from './interfaces/get-data.response.js';
 import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
+import { PlaceholderTool } from './placeholder.tool.js';
 
 export class StorageTool extends StorageProviderTool {
   constructor(config: oToolConfig) {
@@ -30,6 +31,12 @@ export class StorageTool extends StorageProviderTool {
       new SecureStorageProvider({
         name: 'secure',
         address: new oAddress('o://secure'),
+        ...config,
+      }),
+    );
+    this.addChildNode(
+      new PlaceholderTool({
+        name: 'placeholder storage',
         ...config,
       }),
     );

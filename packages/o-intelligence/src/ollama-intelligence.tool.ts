@@ -111,7 +111,7 @@ interface OllamaGenerateResponse {
 }
 
 export class OllamaIntelligenceTool extends oVirtualTool {
-  static defaultModel = 'deepseek-r1:7b';
+  static defaultModel = 'llama3.2:latest';
   static defaultUrl = 'http://localhost:11434';
 
   constructor(config: oToolConfig) {

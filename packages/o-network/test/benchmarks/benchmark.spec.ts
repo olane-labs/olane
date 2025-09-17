@@ -22,17 +22,19 @@ describe('basic-usage @initialize', async () => {
   });
 });
 
-describe('o-mcp github-benchmarks', () => {
-  it('should be able to add the github mcp server', async () => {
-    const response = await network.use(new oAddress('o://leader'), {
-      method: 'intent',
-      params: {
-        intent: `Add the MCP server https://api.githubcopilot.com/mcp/ use the headers "Authorization: Bearer ${process.env.GITHUB_API_KEY}"`,
-      },
-    });
-    console.log(response.result.data);
-  }, 300_000);
+// describe('intelligence @configure-intelligence', async () => {
+//   it('should be able to set the intelligence preference to ollama', async () => {
+//     await network.use(new oAddress('o://memory'), {
+//       method: 'put',
+//       params: {
+//         key: 'intelligence-preference',
+//         value: 'o://ollama',
+//       },
+//     });
+//   });
+// });
 
+describe('o-mcp github-benchmarks', () => {
   // it('should be able to create a branch', async () => {
   //   const response = await network.use(new oAddress('o://leader'), {
   //     method: 'intent',
@@ -44,6 +46,13 @@ describe('o-mcp github-benchmarks', () => {
   // }, 300_000);
 
   it('should be able to test github benchmarks', async () => {
+    const response = await network.use(new oAddress('o://leader'), {
+      method: 'intent',
+      params: {
+        intent: `Add the MCP server https://api.githubcopilot.com/mcp/ use the headers "Authorization: Bearer ${process.env.GITHUB_API_KEY}"`,
+      },
+    });
+
     for (const testCase of GITHUB_TEST_CASES) {
       console.log(testCase.input);
       const handshakeResponse = await network.use(new oAddress('o://leader'), {

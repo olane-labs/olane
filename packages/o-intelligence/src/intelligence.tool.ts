@@ -6,7 +6,10 @@ import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
 import { OllamaIntelligenceTool } from './ollama-intelligence.tool.js';
 import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool.js';
+import { GrokIntelligenceTool } from './grok-intelligence.tool.js';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { IntelligenceStorageKeys } from './enums/intelligence-storage-keys.enum.js';
+import { LLMProviders } from './enums/llm-providers.enum.js';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
@@ -59,85 +62,158 @@ export class IntelligenceTool extends oVirtualTool {
         leader: null,
       }),
     );
+    this.addChildNode(
+      new GrokIntelligenceTool({
+        ...config,
+        parent: null,
+        leader: null,
+      }),
+    );
   }
 
-  async requestMissingData(): Promise<ToolResult> {
-    // check to see if the anthropic key is provided in the ENV vars
-
-    if (process.env.ANTHROPIC_API_KEY) {
+  async getModelProvider(): Promise<{ provider: LLMProviders }> {
+    // check ENV vars for override
+    if (process.env.MODEL_PROVIDER_CHOICE) {
+      if (
+        Object.values(LLMProviders).includes(
+          process.env.MODEL_PROVIDER_CHOICE as LLMProviders,
+        )
+      ) {
+        return {
+          provider: process.env.MODEL_PROVIDER_CHOICE as LLMProviders,
+        };
+      }
+      throw new Error(
+        'Invalid model provider choice, please set the MODEL_PROVIDER_CHOICE environment variable to a valid model provider',
+      );
+    }
+    // check secure storage for preference
+    const config = await this.use(new oAddress('o://secure-storage'), {
+      method: 'get',
+      params: {
+        key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+      },
+    });
+    const payload = config.result.data as ToolResult;
+    if (payload && payload.value) {
+      const modelProvider = payload.value as string;
       return {
-        choice: 'o://anthropic',
-        apiKey: process.env.ANTHROPIC_API_KEY,
+        provider: modelProvider as LLMProviders,
       };
     }
-
-    // if the anthropic key is not in the vault, ask the human
-    this.logger.info('Anthropic API key not found in vault, asking human');
-    const humanResponse = await this.use(new oAddress('o://human'), {
+    // we need to ask the human for the model provider
+    this.logger.info('Asking human for model selection');
+    const modelResponse = await this.use(new oAddress('o://human'), {
       method: 'question',
       params: {
-        question: 'Enter the anthropic api key',
+        question:
+          'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
       },
     });
 
     // process the human response
-    const { answer } = humanResponse.result.data as { answer: string };
-    this.logger.info('Human answer: ', answer);
-
-    await this.use(new oAddress('o://memory'), {
+    const { answer: model } = modelResponse.result.data as { answer: string };
+    await this.use(new oAddress('o://secure-storage'), {
       method: 'put',
       params: {
-        key: 'anthropic-api-key',
-        value: answer,
+        key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+        value: model,
       },
     });
     return {
-      choice: 'o://anthropic',
-      apiKey: answer,
+      provider: model as LLMProviders,
     };
   }
 
-  async chooseIntelligence(request: oRequest): Promise<ToolResult> {
-    // check to see if anthropic key is in vault
-    const preference = await this.use(new oAddress('o://memory'), {
-      method: 'get',
-      params: {
-        key: 'intelligence-preference',
+  async getProviderApiKey(provider: LLMProviders): Promise<{ apiKey: string }> {
+    // leverage the ENV vars first
+    const ENV_KEYS = [
+      {
+        key: process.env.ANTHROPIC_API_KEY,
+        address: 'o://anthropic',
+        name: 'anthropic',
       },
-    });
-    const { value } = preference.result.data as { value: string };
-    if (value) {
+      {
+        key: process.env.OPEN_AI_KEY,
+        address: 'o://openai',
+        name: 'openai',
+      },
+      {
+        key: process.env.SONAR_API_KEY,
+        address: 'o://sonar',
+        name: 'sonar',
+      },
+      {
+        key: process.env.GEMINI_API_KEY,
+        address: 'o://gemini',
+        name: 'gemini',
+      },
+      {
+        key: process.env.GROK_API_KEY,
+        address: 'o://grok',
+        name: 'grok',
+      },
+    ];
+    const modelEnvConfig = ENV_KEYS.find((key) => key.name === provider);
+    if (modelEnvConfig && !!modelEnvConfig.key) {
       return {
-        choice: value,
-        apiKey: '',
+        apiKey: modelEnvConfig.key,
       };
     }
-    const response = await this.use(new oAddress('o://memory'), {
+    // check secure storage 2nd
+    const config = await this.use(new oAddress('o://secure-storage'), {
       method: 'get',
       params: {
-        key: 'anthropic-api-key',
+        key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
       },
     });
-    // if the anthropic key is in the vault, use it
-    if (response.result.data) {
-      const { value } = response.result.data as { value: string };
-      if (value) {
-        return {
-          choice: 'o://anthropic',
-          apiKey: value,
-        };
-      }
+    const payload = config.result.data as ToolResult;
+    if (payload && payload.value) {
+      const apiKey = payload.value as string;
+      return {
+        apiKey,
+      };
     }
+    // we need to ask the human for the api key
+    const keyResponse = await this.use(new oAddress('o://human'), {
+      method: 'question',
+      params: {
+        question: `What is the API key for the ${provider} model?`,
+      },
+    });
 
-    const result = await this.requestMissingData();
-    return result;
+    // process the human response
+    const { answer: key } = keyResponse.result.data as { answer: string };
+    await this.use(new oAddress('o://secure-storage'), {
+      method: 'put',
+      params: {
+        key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
+        value: key,
+      },
+    });
+    return {
+      apiKey: key,
+    };
+  }
+
+  async chooseIntelligence(
+    request: oRequest,
+  ): Promise<{ choice: oAddress; apiKey: string }> {
+    // check to see if anthropic key is in vault
+    const { provider } = await this.getModelProvider();
+    const { apiKey } = await this.getProviderApiKey(provider);
+    return {
+      choice: new oAddress(`o://${provider}`),
+      apiKey,
+    };
   }
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: oRequest): Promise<ToolResult> {
     const { prompt } = request.params;
     const intelligence = await this.chooseIntelligence(request);
-    const response = await this.use(new oAddress(intelligence.choice), {
+    this.logger.debug('Using AI provider: ', intelligence.choice);
+    const response = await this.use(intelligence.choice, {
       method: 'completion',
       params: {
         apiKey: intelligence.apiKey,

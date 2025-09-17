@@ -75,17 +75,17 @@
 // //   });
 // // });
 
-// // describe('intelligence @configure-intelligence', async () => {
-// //   it('should be able to set the intelligence preference to ollama', async () => {
-// //     await network.use(new oAddress('o://memory'), {
-// //       method: 'put',
-// //       params: {
-// //         key: 'intelligence-preference',
-// //         value: 'o://ollama',
-// //       },
-// //     });
-// //   });
-// // });
+// describe('intelligence @configure-intelligence', async () => {
+//   it('should be able to set the intelligence preference to ollama', async () => {
+//     await network.use(new oAddress('o://memory'), {
+//       method: 'put',
+//       params: {
+//         key: 'intelligence-preference',
+//         value: 'o://ollama',
+//       },
+//     });
+//   });
+// });
 
 // // describe('perplexity @do-search', async () => {
 // //   it('should be able to search for information', async () => {

@@ -24,7 +24,7 @@ export class oAgentPlan extends oPlan {
   }
 
   async doTask(task: oTaskConfig, config: oPlanConfig): Promise<oPlanResult> {
-    this.logger.debug('Doing task...');
+    this.logger.debug('Doing task...', task);
     const taskPlan = new oUsePlan({
       ...config,
       intent: this.config.intent,
@@ -42,7 +42,7 @@ export class oAgentPlan extends oPlan {
       if (errorResult.type === 'result') {
         return errorResult;
       }
-      return this.doTask(task, config);
+      // return this.doTask(task, config);
     }
     return taskResult;
   }
@@ -84,6 +84,7 @@ export class oAgentPlan extends oPlan {
         intent: `Searching for context to help with the user intent`,
         query: query?.query,
         external: query?.provider === 'external',
+        promptFunction: undefined,
       });
       const result = await searchPlan.execute();
       this.sequence.push(searchPlan);

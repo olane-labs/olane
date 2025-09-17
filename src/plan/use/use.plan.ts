@@ -9,6 +9,7 @@ import { oPlanContext } from '../plan.context.js';
 import { oHandshakeResult } from '../interfaces/handshake.result.js';
 import { oAgentPlan } from '../agent.plan.js';
 import { CONFIGURE_PROMPT } from '../prompts/configure.prompt.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * We know what tool we want to use, let's use it.
@@ -26,6 +27,19 @@ export class oUsePlan extends oPlan {
       response.push(result);
     }
     return response;
+  }
+
+  static hasOlaneAddress(value: string): boolean {
+    return (
+      !!value &&
+      typeof value === 'string' &&
+      !!value?.match(/o:\/\/.*(placeholder)+(?:\/[\w.-]+)+/g)
+    );
+  }
+
+  static extractAddresses(value: string): string[] {
+    const matches = value.matchAll(/o:\/\/.*(placeholder)+(?:\/[\w.-]+)+/g);
+    return Array.from(matches, (match) => match[0]);
   }
 
   async run(): Promise<oPlanResult> {
@@ -74,10 +88,67 @@ export class oUsePlan extends oPlan {
       }
 
       const { task } = configure;
+      const params = task.payload?.params;
+      for (const key in params) {
+        let value = params[key];
+        if (oUsePlan.hasOlaneAddress(value)) {
+          console.log('Has olane address: ', value);
+          const addresses = oUsePlan.extractAddresses(value);
+          for (const address of addresses) {
+            console.log('Extracted address: ', address);
+            const largeDataResponse = await this.node.use(
+              new oAddress('o://leader/storage/placeholder'),
+              {
+                method: 'get',
+                params: {},
+              },
+            );
+            console.log('Large data response: ', largeDataResponse);
+            value = value.replace(
+              address,
+              (largeDataResponse.result.data as any)?.value || 'unknown value',
+            );
+          }
+          params[key] = value;
+        }
+      }
       const response = await this.node.use(this.config.receiver, {
         method: task.payload?.method,
-        params: task.payload?.params,
+        params: params,
       });
+
+      // if the response is larger than 10,000 characters, then put it in an address
+      const THRESHOLD_DATA_SIZE = 10_000;
+      if (
+        response.result.data &&
+        JSON.stringify(response.result.data).length > THRESHOLD_DATA_SIZE
+      ) {
+        const data = response.result.data as any;
+        for (const key in data) {
+          const value = data[key];
+          if (
+            value &&
+            typeof value === 'string' &&
+            value.length > THRESHOLD_DATA_SIZE
+          ) {
+            const addressKey = uuidv4();
+            data[key] = `o://leader/storage/placeholder/${addressKey}`;
+            this.logger.debug('Storing large data in address: ', data[key]);
+            await this.node.use(
+              new oAddress('o://leader/storage/placeholder'),
+              {
+                method: 'put',
+                params: {
+                  key: addressKey,
+                  value: value,
+                },
+              },
+            );
+          }
+        }
+        // update the response data
+        response.result.data = data;
+      }
 
       return {
         result: response.result,
