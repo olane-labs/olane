@@ -236,7 +236,7 @@ export abstract class oCoreNode {
    */
   async use(
     addressWithLeaderTransports: oAddress,
-    data: {
+    data?: {
       method?: string;
       params?: { [key: string]: any };
     },
@@ -253,7 +253,7 @@ export abstract class oCoreNode {
     // communicate the payload to the target node
     const response = await connection.send({
       address: targetAddress?.toString() || '',
-      payload: data,
+      payload: data || {},
     });
 
     // if there is an error, throw it to continue to bubble up

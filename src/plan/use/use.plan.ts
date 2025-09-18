@@ -10,6 +10,8 @@ import { oHandshakeResult } from '../interfaces/handshake.result.js';
 import { oAgentPlan } from '../agent.plan.js';
 import { CONFIGURE_PROMPT } from '../prompts/configure.prompt.js';
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectUtils } from '../../utils/object.utils.js';
+import { toString } from 'multiformats/dist/src/bytes.js';
 
 /**
  * We know what tool we want to use, let's use it.
@@ -88,67 +90,40 @@ export class oUsePlan extends oPlan {
       }
 
       const { task } = configure;
-      const params = task.payload?.params;
-      for (const key in params) {
-        let value = params[key];
-        if (oUsePlan.hasOlaneAddress(value)) {
-          console.log('Has olane address: ', value);
-          const addresses = oUsePlan.extractAddresses(value);
-          for (const address of addresses) {
-            console.log('Extracted address: ', address);
-            const largeDataResponse = await this.node.use(
-              new oAddress('o://leader/storage/placeholder'),
-              {
-                method: 'get',
-                params: {},
-              },
-            );
-            console.log('Large data response: ', largeDataResponse);
-            value = value.replace(
-              address,
-              (largeDataResponse.result.data as any)?.value || 'unknown value',
-            );
-          }
-          params[key] = value;
+      let params = task.payload?.params;
+      params = await ObjectUtils.allKeyValues(params, async (key, val) => {
+        let value = val;
+        if (!oUsePlan.hasOlaneAddress(value)) {
+          return value;
         }
-      }
+        // extract the addresses & process them if LFS is needed
+        this.logger.debug('Has olane address: ', value);
+        const addresses = oUsePlan.extractAddresses(value);
+        for (const address of addresses) {
+          this.logger.debug('Extracted address: ', address);
+          const largeDataResponse = await this.node.use(
+            new oAddress('o://leader/storage/placeholder'),
+            {
+              method: 'get',
+              params: {},
+            },
+          );
+          this.logger.debug(
+            'Large data response: ',
+            largeDataResponse.result.data,
+          );
+          value = value.replace(
+            address,
+            (largeDataResponse.result.data as any)?.value || 'unknown value',
+          );
+          this.logger.debug('Updated the value with LFS value: ', value);
+        }
+        return value;
+      });
       const response = await this.node.use(this.config.receiver, {
         method: task.payload?.method,
         params: params,
       });
-
-      // if the response is larger than 10,000 characters, then put it in an address
-      const THRESHOLD_DATA_SIZE = 10_000;
-      if (
-        response.result.data &&
-        JSON.stringify(response.result.data).length > THRESHOLD_DATA_SIZE
-      ) {
-        const data = response.result.data as any;
-        for (const key in data) {
-          const value = data[key];
-          if (
-            value &&
-            typeof value === 'string' &&
-            value.length > THRESHOLD_DATA_SIZE
-          ) {
-            const addressKey = uuidv4();
-            data[key] = `o://leader/storage/placeholder/${addressKey}`;
-            this.logger.debug('Storing large data in address: ', data[key]);
-            await this.node.use(
-              new oAddress('o://leader/storage/placeholder'),
-              {
-                method: 'put',
-                params: {
-                  key: addressKey,
-                  value: value,
-                },
-              },
-            );
-          }
-        }
-        // update the response data
-        response.result.data = data;
-      }
 
       return {
         result: response.result,
@@ -167,5 +142,46 @@ export class oUsePlan extends oPlan {
         type: 'error',
       };
     }
+  }
+
+  async postflight(result: oPlanResult): Promise<oPlanResult> {
+    // if the response is larger than 10,000 characters, then put it in an address
+    const THRESHOLD_DATA_SIZE = 1_000;
+    if (
+      this.config?.receiver &&
+      this.config.receiver.toString().indexOf('placeholder') === -1 &&
+      JSON.stringify(result).length > THRESHOLD_DATA_SIZE
+    ) {
+      let data = result.result;
+      data = await ObjectUtils.allKeyValues(data, async (key, val) => {
+        const value = val;
+        if (
+          value &&
+          typeof value === 'string' &&
+          value.length > THRESHOLD_DATA_SIZE
+        ) {
+          const addressKey = uuidv4();
+          this.logger.debug('Storing large data in address: ', value);
+          const largeDataResponse = await this.node.use(
+            new oAddress('o://leader/storage/placeholder'),
+            {
+              method: 'put',
+              params: {
+                key: addressKey,
+                value: value,
+                intent: this.config.intent,
+              },
+            },
+          );
+          const { instructions } = largeDataResponse.result.data as any;
+          return instructions;
+        }
+      });
+      // update the response data
+      result.result = data;
+    }
+    this.result = result;
+    await super.postflight(result);
+    return result;
   }
 }

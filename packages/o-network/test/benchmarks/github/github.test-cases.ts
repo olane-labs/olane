@@ -2,6 +2,14 @@ import { TestCase } from '../interfaces/test-case.interface';
 
 export const GITHUB_TEST_CASES: TestCase[] = [
   {
+    name: 'github-000',
+    description: 'Large file test case',
+    input: `I am creating a new repo called large-file-test. Search the repo for https://github.com/olane-labs/olane libp2p related functionality. Once you find it copy each file that is related to libp2p to the large-file-test repo.`,
+    output: {
+      contains: 'a',
+    },
+  },
+  {
     name: 'github-001',
     description:
       'Test case for creating a new repository with 3 branches and a PR',

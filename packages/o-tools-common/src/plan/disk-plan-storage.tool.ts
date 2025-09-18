@@ -1,7 +1,7 @@
 import { oPlanStorageTool } from './plan-storage.tool.js';
 import { oAddress } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
-import { DiskStorageProvider } from '../storage/index.js';
+import { DiskStorageProvider } from '@olane/o-storage';
 
 type DiskPlanStorageBase = ReturnType<
   typeof oPlanStorageTool<typeof DiskStorageProvider>

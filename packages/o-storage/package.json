@@ -39,6 +39,8 @@
     "@olane/o-core": "file:../..",
     "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
+    "@olane/o-leader": "file:../o-leader",
+    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",

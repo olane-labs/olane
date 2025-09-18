@@ -1,6 +1,6 @@
 import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oAddress, oNode } from '@olane/o-core';
-import { StorageTool } from './storage/index.js';
+import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
 import { SetupTool } from './setup/setup.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';

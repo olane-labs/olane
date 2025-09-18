@@ -3,4 +3,5 @@ export interface PlaceholderPutResponse {
   intent: string;
   summary: string;
   instructions: string;
+  address: string;
 }

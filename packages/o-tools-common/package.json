@@ -37,6 +37,7 @@
     "@olane/o-core": "file:../..",
     "@olane/o-protocol": "file:../o-protocol",
     "@olane/o-tool": "file:../o-tool",
+    "@olane/o-storage": "file:../o-storage",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -59,7 +60,8 @@
     "@olane/o-config": "^0.5.0",
     "@olane/o-core": "^0.5.0",
     "@olane/o-protocol": "^0.5.0",
-    "@olane/o-tool": "^0.5.0"
+    "@olane/o-tool": "^0.5.0",
+    "@olane/o-storage": "^0.5.0"
   },
   "dependencies": {
     "debug": "^4.4.1",
