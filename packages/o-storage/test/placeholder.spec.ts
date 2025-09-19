@@ -1,10 +1,13 @@
 import { NodeState, oAddress } from '@olane/o-core';
 import { expect } from 'chai';
-import { oLeaderNode } from '@olane/o-leader';
+import { oLeaderNode, RegistryMemoryTool } from '@olane/o-leader';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { StorageTool } from '../src/index.js';
 import { bigfile } from './data/bigfile.js';
 import { oVirtualTool } from '@olane/o-tool';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const leader = new oLeaderNode({
   parent: null,
@@ -19,6 +22,11 @@ leader.addChildNode(node);
 
 describe('o-storage @placeholder', () => {
   it('should be able to start a node', async () => {
+    const registryTool = new RegistryMemoryTool({
+      parent: leader.address,
+      leader: leader.address,
+    });
+    leader.addChildNode(registryTool);
     const intelligenceTool = new IntelligenceTool({
       parent: node.address,
       leader: node.address,
@@ -49,8 +57,17 @@ describe('o-storage @placeholder', () => {
 
   it('should be able to perform a get', async () => {
     const result = await leader.use(
+      new oAddress('o://leader/storage/placeholder/test-key-1234'),
+    );
+    const data = result.result.data as any;
+    expect(data.value.length > 0).to.be.true;
+  });
+
+  it('should be able to perform an explicit get', async () => {
+    const result = await leader.use(
       new oAddress('o://leader/storage/placeholder/test-key-1234/get'),
     );
-    console.log('get result: ', result.result.data);
+    const data = result.result.data as any;
+    expect(data.value.length > 0).to.be.true;
   });
 });

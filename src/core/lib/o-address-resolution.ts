@@ -9,8 +9,16 @@ export class oAddressResolution {
   }
 
   supportsTransport(address: oAddress): boolean {
+    if (address.libp2pTransports.length > 0) {
+      return false;
+    }
     return this.resolvers.some((r) =>
       address.customTransports.some((t) => {
+        console.log(
+          'Checking if resolver supports transport: ',
+          t,
+          r.transports,
+        );
         return r.transports.includes(t);
       }),
     );
@@ -21,10 +29,6 @@ export class oAddressResolution {
     for (const resolver of this.resolvers) {
       resolvedAddress = await resolver.resolve(resolvedAddress);
     }
-    // // ensure we have the transports from the original address
-    // if (address.transports.length > 0) {
-    //   resolvedAddress.setTransports(address.transports as Multiaddr[]);
-    // }
     return resolvedAddress;
   }
 }

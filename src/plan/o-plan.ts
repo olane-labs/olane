@@ -7,6 +7,7 @@ import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oPlanResult } from './interfaces/plan.result.js';
 import { oToolError } from '../error/tool.error.js';
 import { v4 as uuidv4 } from 'uuid';
+import { RegexUtils } from '../utils/index.js';
 
 export class oPlan {
   protected logger: Logger;
@@ -128,23 +129,6 @@ export class oPlan {
     this.cid = await this.toCID();
   }
 
-  extractResultFromAI(message: string): oPlanResult {
-    this.logger.debug('Extracting result from AI: ', message);
-    // handle 4 levels of nested JSON
-    const match = message.match(/\{.+\}/s);
-
-    const json = match ? match[0] : null;
-    if (!json) {
-      throw new Error('AI failed to return a valid JSON object');
-    }
-
-    this.logger.debug('[AGENT PLAN] Analysis result: ', json);
-
-    // process the result and react
-    const planResult = JSON.parse(json) as oPlanResult;
-    return planResult;
-  }
-
   async run(): Promise<oPlanResult> {
     this.logger.debug('Running plan...');
 
@@ -173,7 +157,7 @@ export class oPlan {
     const data = response.result.data as any;
     this.logger.debug('Plan response: ', data);
     const message = data.message;
-    const planResult = this.extractResultFromAI(message);
+    const planResult = RegexUtils.extractResultFromAI(message);
     return planResult;
   }
 

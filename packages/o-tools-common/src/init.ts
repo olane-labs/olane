@@ -1,4 +1,4 @@
-import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
+import { RegistryMemoryTool } from '@olane/o-leader';
 import { oAddress, oNode } from '@olane/o-core';
 import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';

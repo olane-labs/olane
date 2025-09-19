@@ -68,9 +68,10 @@ export abstract class oNode extends oCoreNode {
 
   abstract configureTransports(): any[];
 
-  myTools(): string[] {
-    return Object.getOwnPropertyNames(oNode.prototype)
+  myTools(obj?: any): string[] {
+    return Object.getOwnPropertyNames(obj || this.constructor.prototype)
       .filter((key) => key.startsWith('_tool_'))
+      .filter((key) => !!key)
       .map((key) => key.replace('_tool_', ''));
   }
 
@@ -108,13 +109,25 @@ export abstract class oNode extends oCoreNode {
     const nextHopAddress =
       await this.addressResolution.resolve(destinationAddress);
 
-    this.logger.debug('Next hop address: ', nextHopAddress.toString());
+    this.logger.debug(
+      'Next hop address: ',
+      nextHopAddress.toString(),
+      nextHopAddress.customTransports,
+    );
     // prepare the request for the destination receiver
     let forwardRequest: oRequest = new oRequest({
       params: payload.params,
       id: request.id,
       method: payload.method,
     });
+
+    // if the next hop is not a libp2p address, we need to communicate to it another way
+    if (this.addressResolution.supportsTransport(nextHopAddress)) {
+      this.logger.debug(
+        'Bridge transports supported, applying custom transports...',
+      );
+      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
+    }
 
     // assume the next hop is a libp2p address, so we need to set the transports and dial it
     nextHopAddress.setTransports(this.getTransports(nextHopAddress));
@@ -140,11 +153,6 @@ export abstract class oNode extends oCoreNode {
       } catch (error: any) {
         return error;
       }
-    }
-
-    // if the next hop is not a libp2p address, we need to communicate to it another way
-    if (this.addressResolution.supportsTransport(nextHopAddress)) {
-      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
     }
 
     const targetStream = await this.p2pNode.dialProtocol(

@@ -1,5 +1,5 @@
 import { oToolConfig, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, RegexUtils } from '@olane/o-core';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
 import { PlaceholderPutRequest } from './interfaces/placeholder-put.request.js';
 import { PlaceholderPutResponse } from './interfaces/placeholder-put.response.js';
@@ -15,7 +15,8 @@ export class PlaceholderTool extends MemoryStorageProvider {
   }
 
   async myTools(): Promise<string[]> {
-    return super.myTools();
+    const tools = await super.myTools(MemoryStorageProvider.prototype);
+    return tools;
   }
 
   async _tool_put(
@@ -57,7 +58,7 @@ export class PlaceholderTool extends MemoryStorageProvider {
     });
     const data = response.result.data as any;
     this.logger.debug('Placeholder AI put response: ', data);
-    const { summary } = JSON.parse(data.message);
+    const { summary } = RegexUtils.extractResultFromAI(data.message);
     const req = new oRequest({
       method: 'put',
       id: request.id,
@@ -77,7 +78,7 @@ export class PlaceholderTool extends MemoryStorageProvider {
       value,
       intent,
       summary,
-      instructions: `To save on context window size, I have summarized the document and the contents are available at this address: "${this.address.toString()}/${key}/get". Simply use this address in place of the original value and it will be automatically translated before it gets to the tool. The summary for this document is: ${summary}.`,
+      instructions: `To save on context window size, I have summarized the document and the contents are available at this address: "${this.address.toString()}/${key}". Simply use this address in place of the original value and it will be automatically translated before it gets to the tool. The summary for this document is: ${summary}.`,
       address: `${this.address.toString()}/${key}`,
     };
   }

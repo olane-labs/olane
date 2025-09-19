@@ -1,5 +1,11 @@
 import { oVirtualTool, ToolResult, ToolUtils } from '@olane/o-tool';
-import { oAddress, oRequest, oResponse } from '@olane/o-core';
+import {
+  CoreConfig,
+  oAddress,
+  oRequest,
+  oResponse,
+  StorageResolver,
+} from '@olane/o-core';
 import { GetDataResponse } from '../interfaces/get-data.response.js';
 
 export abstract class StorageProviderTool extends oVirtualTool {
@@ -17,32 +23,48 @@ export abstract class StorageProviderTool extends oVirtualTool {
   ): Promise<oResponse> {
     this.logger.debug('Applying bridge transports to address: ', address);
     // extract the key from the address
-    const key = address.toString().split('/').pop();
+    let key = null;
+    let method: string = 'get';
+    const parts = address.toString().split('/');
+    const tools = await this.myTools();
+    this.logger.debug('Tools: ', tools);
+    if (tools.includes(parts[parts.length - 1])) {
+      method = parts.pop() || 'get'; // first pop the method
+      key = parts.pop(); // then pop the key
+    } else {
+      key = parts.pop();
+    }
+    this.logger.debug(
+      'Determined key + method: ',
+      key,
+      method,
+      request?.params?.method,
+    );
     if (!key) {
       throw new Error('Invalid address');
     }
 
     // restructure the request to include the key
-    request.params = {
-      ...request.params,
-      key,
-    };
-
-    // call the appropriate method
-    const result = await this.execute(request).catch((error: any) => {
-      this.logger.error('Error executing tool: ', error);
-      return {
-        error: error.message,
-      };
+    const req = new oRequest({
+      method: method,
+      params: {
+        ...request.params,
+        key,
+        method: method,
+      },
+      id: request.id,
     });
 
-    return ToolUtils.buildResponse(request, result, result?.error);
+    // call the appropriate method
+    const result = await this.execute(req);
+
+    return result;
   }
 
-  // async initialize(): Promise<void> {
-  //   await super.initialize();
-  //   this.addressResolution.addResolver(
-  //     new StorageResolver(this.address, this.p2pNode),
-  //   );
-  // }
+  async initialize(): Promise<void> {
+    await super.initialize();
+    this.addressResolution.addResolver(
+      new StorageResolver(this.address, this.p2pNode),
+    );
+  }
 }

@@ -216,13 +216,6 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       // translate to o:// addresses
     }
 
-    myTools(): string[] {
-      return Object.getOwnPropertyNames(this.constructor.prototype)
-        .filter((key) => key.startsWith('_tool_'))
-        .filter((key) => !!key)
-        .map((key) => key.replace('_tool_', ''));
-    }
-
     myToolParams(tool: string): Record<string, any> {
       const func = Object.keys(this).find((key) =>
         key.startsWith('_params_' + tool),
@@ -330,6 +323,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
     async whoami() {
       const metadata = await super.whoami();
       return {
+        // @ts-ignore
         tools: this.myTools(),
         description: this.description,
       };
