@@ -2,7 +2,6 @@ import { RegistryMemoryTool } from '@olane/o-leader';
 import { oAddress, oNode } from '@olane/o-core';
 import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
-import { SetupTool } from './setup/setup.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
 import { EncryptedPlanStorageTool } from './plan/encrypted-plan-storage.tool.js';
 import { oVirtualTool } from '@olane/o-tool';
@@ -27,10 +26,6 @@ export const initCommonTools = (oNode: oVirtualTool) => {
     }),
     new SearchTool({
       name: 'search',
-      ...params,
-    }),
-    new SetupTool({
-      name: 'setup',
       ...params,
     }),
     new EncryptedPlanStorageTool({
