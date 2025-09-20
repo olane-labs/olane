@@ -44,7 +44,6 @@ export class NetworkUtils {
         absoluteAddress: '',
       };
     } catch (timeoutError: any) {
-      console.log('Timeout error: ', timeoutError);
       if (timeoutError.message === 'Content routing provide timeout') {
         return { transports: [], staticAddress: '', absoluteAddress: '' };
       }

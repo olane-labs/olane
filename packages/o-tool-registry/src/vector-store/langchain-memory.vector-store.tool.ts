@@ -28,7 +28,6 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
         return response.result.data as any;
       },
       embedQuery: async (document: string) => {
-        console.log('Embedding query: ', document);
         const response = await this.use(new oAddress('o://embeddings-text'), {
           method: 'embed_query',
           params: {
@@ -62,7 +61,6 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
 
   async _tool_search_similar(request: oRequest): Promise<any> {
     const params = request.params;
-    console.log('Search similar params: ', params);
     const query = params.query as string;
     const limit = params.limit as number;
     const results = await this.vectorStore.similaritySearch(query, limit);

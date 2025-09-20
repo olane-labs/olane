@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "DEBUG=o-protocol:* aegir test",
+    "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
     "test-0": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-0.ts",
@@ -24,7 +24,7 @@
     "deep:clean:all": "npm run deep:clean && npm run deep:clean --prefix ../o-tool && npm run deep:clean --prefix ../o-tools-common && npm run deep:clean --prefix ../o-tool-registry && npm run deep:clean --prefix ../..",
     "deep:install": "npm install && npm install --prefix ../o-tool && npm install --prefix ../o-tools-common && npm install --prefix ../o-tool-registry && npm install --prefix ../..",
     "deep:restart": "npm run deep:clean:all && npm run deep:install && npm run build:all",
-    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry",
+    "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
@@ -45,6 +45,8 @@
     "@olane/o-tool": "file:../o-tool",
     "@olane/o-tool-registry": "file:../o-tool-registry",
     "@olane/o-tools-common": "file:../o-tools-common",
+    "@olane/o-leader": "file:../o-leader",
+    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -72,7 +74,9 @@
     "@olane/o-protocol": "^0.5.0",
     "@olane/o-tool": "^0.5.0",
     "@olane/o-tool-registry": "^0.5.0",
-    "@olane/o-tools-common": "^0.5.0"
+    "@olane/o-tools-common": "^0.5.0",
+    "@olane/o-leader": "^0.5.0",
+    "@olane/o-intelligence": "^0.5.0"
   },
   "dependencies": {
     "chalk": "^5.4.1",

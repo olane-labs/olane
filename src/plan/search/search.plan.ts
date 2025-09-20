@@ -16,23 +16,31 @@ export class oSearchPlan extends oPlan {
    * Search external providers.
    */
   private async externalSearch(): Promise<oPlanResult> {
+    const response = await this.node.use(new oAddress('o://perplexity'), {
+      method: 'completion',
+      params: {
+        model: 'sonar',
+        messages: [
+          {
+            role: 'user',
+            content: this.query,
+          },
+        ],
+      },
+    });
+    this.logger.debug('External search response: ', response.result.data);
+
     return {
-      result: [],
+      result: [response.result.data],
       type: 'result',
     };
-    // const response = await this.node.use(new oAddress('o://search'), {
-    //   method: 'vector',
-    //   params: {
-    //     query: this.query,
-    //   },
-    // });
-    // return response.result.data;
   }
 
   /**
    * Search internal providers such as the local vector store, local database, etc.
    */
   private async internalSearch(): Promise<oPlanResult> {
+    // find all tools that are search tools
     const response = await this.node.use(new oAddress('o://search'), {
       method: 'vector',
       params: {

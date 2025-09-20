@@ -36,6 +36,19 @@ export class oRequest implements JSONRPCRequest {
     return JSON.stringify(this.toJSON());
   }
 
+  static hasOlaneAddress(value: string): boolean {
+    return (
+      !!value &&
+      typeof value === 'string' &&
+      !!value?.match(/o:\/\/.*(placeholder)+(?:\/[\w.-]+)+/g)
+    );
+  }
+
+  static extractAddresses(value: string): string[] {
+    const matches = value.matchAll(/o:\/\/.*(placeholder)+(?:\/[\w.-]+)+/g);
+    return Array.from(matches, (match) => match[0]);
+  }
+
   static fromJSON(json: Request & { id: RequestId }): oRequest {
     return new oRequest(json);
   }

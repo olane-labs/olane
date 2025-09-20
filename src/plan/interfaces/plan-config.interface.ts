@@ -16,5 +16,8 @@ export interface oPlanConfig {
     intent: string,
     context: string,
     agentHistory: string,
+    extraInstructions: string,
   ) => string;
+  extraInstructions?: string;
+  parentId?: string;
 }

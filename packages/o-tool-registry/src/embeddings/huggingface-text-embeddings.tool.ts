@@ -20,7 +20,6 @@ export class HuggingfaceTextEmbeddingsTool extends TextEmbeddingsTool {
 
   async _tool_embed_query(request: oRequest): Promise<number[]> {
     const { query }: any = request.params;
-    console.log('Embedding query: ', request.params);
     const result = await this.model.embedQuery(query);
     return result;
   }

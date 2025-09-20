@@ -3,4 +3,5 @@ export enum oPlanType {
   SEARCH = 'search',
   CONFIGURE = 'configure',
   USE = 'use',
+  ERROR = 'error',
 }

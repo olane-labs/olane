@@ -9,9 +9,11 @@ export abstract class oAnythingResolver extends oAddressResolver {
 
   async resolve(address: oAddress, node: oNode): Promise<oAddress> {
     const nextHopAddress = this.determineNextHopAddress(address);
+
     // at this point, the next-hop resolver did not work so we can trust that the
     // next hop should be contained within the current node as an abstraction
-    this.logger.debug('Resolving anything address: ', address);
+    this.logger.debug('Resolving anything address: ', address, this.transports);
+    // this ADDS the transport from the custom resolver to the address
     return new oAddress(
       nextHopAddress.toString(),
       (address.transports || []).concat(this.transports),

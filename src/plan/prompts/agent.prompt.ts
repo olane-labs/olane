@@ -4,6 +4,7 @@ export const AGENT_PROMPT = (
   intent: string,
   context: string,
   agentHistory: string,
+  extraInstructions: string,
 ) =>
   CUSTOM_AGENT_PROMPT(
     intent,
@@ -13,9 +14,10 @@ export const AGENT_PROMPT = (
   Every Step Instructions:
 1. Review the provided user intent and context
 2. If you can complete the user intent, return the answer using the "Return Instructions" steps
-3. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
-3. Review the current step number and perform the instructions associated with that step.
-4. Start with step 1
+3. If the intent is already completed in past cycles, stop here and follow the "Return Instructions" steps
+4. If you experience 3 similar errors in a row, stop here and follow the "Return Instructions" steps to indicate the error.
+5. Review the current step number and perform the instructions associated with that step.
+6. Start with step 1
 
 Step 1 - Evaluate the intent
 1. A complex step means there are multiple actions required to complete the user's intent
@@ -26,7 +28,10 @@ Step 2 - Search for tools and context
 1. If all entities and tool addresses are known within the user intent, continue to step 3
 2. Review the user's intent, the current node's functionality, rules and context
 3. If there are unknown tool addresses or entities within the user intent, generate search queries to resolve the unknown entities. 
-4. Search queries can be internal or external. If they are internal, they should be vector database queries. If they are external, they should be concise queries to internet search providers. Stop here and follow the "Return Instructions" steps
+4. If there is a placeholder address used (o://.../placeholder), do not extract the contents of the placeholder address unless necessary for completing the user intent.
+5. Search for internal "search tools" that might contain information about the unknown entities.
+6. Use the search result data & tooling to help you resolve the unknown entities.
+7. Continue to step 3.
 
 Step 3 - Filter Search Results
 1. If all search results are relevant to the user intent resolution, continue to step 4.
@@ -43,15 +48,17 @@ Step 5 - Review the tool use results
 2. Summarize the result of each tool use in 1 concise sentence
 3. In the summary, clearly mention if it succeeded or failed
 4. If it failed, make sure to include why it failed
+
   `,
     `
-  These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results".
+  These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results", "Configure Results".
 
 All Return Step Instructions:
-1. Determine what type of results we have
-2. Output the respective results using the matching output type.
-3. Generate a reasoning statement for why this result was returned.
-4. Do not include \`\`\`json or \`\`\` in your output.
+1. Do not explain your reasoning process, just return the output in the correct format.
+2. Determine what type of results we have
+3. Output the respective results using the matching output type.
+4. Generate a reasoning key value pair for why this result was returned.
+5. Do not include \`\`\`json or \`\`\` in your output.
 
 Complex Intent Results:
 {
@@ -61,7 +68,7 @@ Complex Intent Results:
     "simple intent 3",
   ],
   "reasoning": string,
-  "type": "complex-intent",
+  "type": "multiple_step",
 }
 
 Use Tool Results:
@@ -80,8 +87,8 @@ Search Results:
 {
   "queries": [
     {
-      "query": "key terms to search for",
-      "provider": "internal" | "external",
+      "query": "vector database query key terms to search for",
+      "provider": "internal",
     }
   ],
   "reasoning": string,
@@ -102,5 +109,17 @@ Error Results:
   "type": "error",
 }
 
+Configure Results:
+{
+  "configure": {
+    "task": {
+      "address": string,
+      "payload": { "method": string, "params": any }
+    }
+  },
+  "type": "configure",
+}
+
   `,
+    extraInstructions,
   );

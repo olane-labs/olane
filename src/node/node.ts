@@ -25,10 +25,9 @@ import { oToolError } from '../error/tool.error.js';
 import { oToolErrorCodes } from '../error/enums/codes.error.js';
 import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';
-import { oPlanResult } from '../plan/interfaces/plan.result.js';
-import { oConfigurePlan } from '../plan/configure/configure.plan.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
+import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -47,7 +46,7 @@ export abstract class oNode extends oCoreNode {
     }
   }
 
-  async _tool_handshake(handshake: oRequest): Promise<oPlanResult> {
+  async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
     this.logger.debug(
       'Performing handshake with intent: ',
       handshake.params.intent,
@@ -55,30 +54,22 @@ export abstract class oNode extends oCoreNode {
 
     const mytools = await this.myTools();
 
-    const pc = new oConfigurePlan({
-      intent: `This is a handshake request. You have already found the tool to resolve the user's intent: ${this.address.toString()}. Configure the handshake for the request to use the tool with user intent: ${handshake.params.intent}`,
-      currentNode: this,
-      caller: this.address,
-      context: new oPlanContext([
-        `[Method Metadata Begin]\n${JSON.stringify(this.methods)}\n[Method Metadata End]`,
-        `[Method Options Begin]\n${mytools.join(', ')}\n[Method Options End]`,
-      ]),
-    });
-    const result = await pc.execute();
-    this.logger.debug('Handshake result: ', result);
-    if (result.error) {
-      return result;
-    }
-
-    this.logger.debug('Handshake json: ', result.handshake);
-    return result;
+    return {
+      tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
+      methods: this.methods,
+      successes: [],
+      failures: [],
+      task: undefined,
+      type: 'handshake',
+    };
   }
 
   abstract configureTransports(): any[];
 
-  myTools(): string[] {
-    return Object.getOwnPropertyNames(oNode.prototype)
+  myTools(obj?: any): string[] {
+    return Object.getOwnPropertyNames(obj || this.constructor.prototype)
       .filter((key) => key.startsWith('_tool_'))
+      .filter((key) => !!key)
       .map((key) => key.replace('_tool_', ''));
   }
 
@@ -116,13 +107,25 @@ export abstract class oNode extends oCoreNode {
     const nextHopAddress =
       await this.addressResolution.resolve(destinationAddress);
 
-    this.logger.debug('Next hop address: ', nextHopAddress.toString());
+    this.logger.debug(
+      'Next hop address: ',
+      nextHopAddress.toString(),
+      nextHopAddress.customTransports,
+    );
     // prepare the request for the destination receiver
     let forwardRequest: oRequest = new oRequest({
       params: payload.params,
       id: request.id,
       method: payload.method,
     });
+
+    // if the next hop is not a libp2p address, we need to communicate to it another way
+    if (this.addressResolution.supportsTransport(nextHopAddress)) {
+      this.logger.debug(
+        'Bridge transports supported, applying custom transports...',
+      );
+      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
+    }
 
     // assume the next hop is a libp2p address, so we need to set the transports and dial it
     nextHopAddress.setTransports(this.getTransports(nextHopAddress));
@@ -139,20 +142,15 @@ export abstract class oNode extends oCoreNode {
     if (isMethodMatch) {
       this.logger.debug('Method match found, forwarding to self...');
       const extractedMethod = this.extractMethod(destinationAddress);
-      const response = await this.use(this.address, {
-        method: payload.method || extractedMethod,
-        params: payload.params,
-      });
-      if (response.result.error) {
-        const error: oToolError = response.result.error as oToolError;
-        throw new oToolError(error.code, error.message);
+      try {
+        const response = await this.use(this.address, {
+          method: payload.method || extractedMethod,
+          params: payload.params,
+        });
+        return response.result.data;
+      } catch (error: any) {
+        return error;
       }
-      return response.result.data;
-    }
-
-    // if the next hop is not a libp2p address, we need to communicate to it another way
-    if (this.addressResolution.supportsTransport(nextHopAddress)) {
-      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
     }
 
     const targetStream = await this.p2pNode.dialProtocol(
@@ -195,6 +193,7 @@ export abstract class oNode extends oCoreNode {
     const response = await pc.execute();
     return {
       ...response,
+      cycles: pc.sequence.length,
       sequence: pc.sequence.map((s) => {
         return {
           reasoning: s.result?.reasoning,

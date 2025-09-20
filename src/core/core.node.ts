@@ -18,6 +18,7 @@ import { oMethod } from '@olane/o-protocol';
 import { oAddressResolution } from './lib/o-address-resolution.js';
 import { oDependency } from './o-dependency.js';
 import { CID } from 'multiformats';
+import { oToolError } from '../error/tool.error.js';
 
 export abstract class oCoreNode {
   public p2pNode!: Libp2p;
@@ -235,7 +236,7 @@ export abstract class oCoreNode {
    */
   async use(
     addressWithLeaderTransports: oAddress,
-    data: {
+    data?: {
       method?: string;
       params?: { [key: string]: any };
     },
@@ -252,8 +253,17 @@ export abstract class oCoreNode {
     // communicate the payload to the target node
     const response = await connection.send({
       address: targetAddress?.toString() || '',
-      payload: data,
+      payload: data || {},
     });
+
+    // if there is an error, throw it to continue to bubble up
+    if (response.result.error) {
+      console.log(
+        'response.result.error',
+        JSON.stringify(response.result.error, null, 2),
+      );
+      throw oToolError.fromJSON(response.result.error);
+    }
 
     return response;
   }

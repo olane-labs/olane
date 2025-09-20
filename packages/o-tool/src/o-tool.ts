@@ -82,10 +82,14 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
         });
         let success = true;
         const result = await this.execute(request).catch((error) => {
-          this.logger.error('Error executing tool: ' + error);
+          this.logger.error('Error executing tool: ', error);
           success = false;
+          const responseError: oToolError =
+            error instanceof oToolError
+              ? error
+              : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
           return {
-            error: error.message,
+            error: responseError.toJSON(),
           };
         });
 
@@ -105,14 +109,14 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       const request = new oRequest(requestConfig);
       let success = true;
       const result = await this.execute(request, stream).catch((error) => {
-        this.logger.error('Error executing tool: ' + error, typeof error);
+        this.logger.error('Error executing tool: ', error, typeof error);
         success = false;
         const responseError: oToolError =
           error instanceof oToolError
             ? error
             : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
         return {
-          error: responseError,
+          error: responseError.toJSON(),
         };
       });
       if (success) {
@@ -196,14 +200,20 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
           },
         );
       }
-      return this.callMyTool(request, stream);
-    }
-
-    myTools(): string[] {
-      return Object.getOwnPropertyNames(this.constructor.prototype)
-        .filter((key) => key.startsWith('_tool_'))
-        .filter((key) => !!key)
-        .map((key) => key.replace('_tool_', ''));
+      // resolve o:// addresses
+      // THIS HAS A RECURSIVE CALL issue
+      this.logger.debug(
+        'Calling function at address: ',
+        this.address.toString(),
+        'with request: ',
+        request.method,
+      );
+      // const isPlaceholder = this.address.toString().includes('placeholder');
+      // request = await oRequest.translateToRawRequest(request, this);
+      let result = await this.callMyTool(request, stream);
+      // result = await oRequest.translateResultForAgent(result, this);
+      return result;
+      // translate to o:// addresses
     }
 
     myToolParams(tool: string): Record<string, any> {
@@ -313,6 +323,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
     async whoami() {
       const metadata = await super.whoami();
       return {
+        // @ts-ignore
         tools: this.myTools(),
         description: this.description,
       };
