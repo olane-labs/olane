@@ -69,16 +69,16 @@ jobs:
           # npm run lint
           npm test
       
-      - name: Build and test o-storage
-        working-directory: packages/o-storage
+      - name: Build and test o-intelligence
+        working-directory: packages/o-intelligence
         run: |
           npm i
           npm run build
           # npm run lint
           npm test
-
-      - name: Build and test o-intelligence
-        working-directory: packages/o-intelligence
+      
+      - name: Build and test o-storage
+        working-directory: packages/o-storage
         run: |
           npm i
           npm run build
