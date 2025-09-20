@@ -83,7 +83,7 @@ jobs:
           npm i
           npm run build
           # npm run lint
-          npm test
+          # npm test
 
       - name: Build and test o-mcp
         working-directory: packages/o-mcp

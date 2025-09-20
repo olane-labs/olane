@@ -155,7 +155,7 @@ export class oUsePlan extends oPlan {
           const addressKey = uuidv4();
           this.logger.debug('Storing large data in address: ', value);
           const largeDataResponse = await this.node.use(
-            new oAddress('o://leader/storage/placeholder'),
+            new oAddress('o://placeholder'),
             {
               method: 'put',
               params: {
