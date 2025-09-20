@@ -31,17 +31,16 @@ export class oAgentPlan extends oPlan {
       context: this.config.context,
       receiver: new oAddress(task.address),
       sequence: this.sequence,
-      promptFunction: this.config.promptFunction,
     });
     const taskResult = await taskPlan.execute();
     this.addSequencePlan(taskPlan);
     this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
     if (taskResult.error) {
       this.logger.debug('Task error: ', taskResult.error);
-      const errorResult = await this.handleError(taskResult.error, config);
-      if (errorResult.type === 'result') {
-        return errorResult;
-      }
+      // const errorResult = await this.handleError(taskResult.error, config);
+      // if (errorResult.type === 'result') {
+      //   return errorResult;
+      // }
       // return this.doTask(task, config);
     }
     return taskResult;
@@ -84,7 +83,6 @@ export class oAgentPlan extends oPlan {
         intent: `Searching for context to help with the user intent`,
         query: query?.query,
         external: query?.provider === 'external',
-        promptFunction: undefined,
       });
       const result = await searchPlan.execute();
       this.addSequencePlan(searchPlan);
@@ -94,36 +92,34 @@ export class oAgentPlan extends oPlan {
     return results.flat();
   }
 
-  async handleError(error: any, config: oPlanConfig): Promise<oPlanResult> {
-    this.logger.debug('Handling error...', error);
-    const errorPlan = new oAgentPlan({
-      ...config,
-      intent: `If this error is already indicating that the user intent is solved, return a result otherwise solve it. The error is: ${error}`,
-      context: this.config.context,
-      sequence: this.sequence,
-      promptFunction: undefined,
-    });
-    const result = await errorPlan.execute();
-    this.addSequencePlan(errorPlan);
-    return result;
-  }
+  // async handleError(error: any, config: oPlanConfig): Promise<oPlanResult> {
+  //   this.logger.debug('Handling error...', error);
+  //   const errorPlan = new oAgentPlan({
+  //     ...config,
+  //     intent: `If this error is already indicating that the user intent is solved, return a result otherwise solve it. The error is: ${error}`,
+  //     context: this.config.context,
+  //     sequence: this.sequence,
+  //     parentId: this.id,
+  //   });
+  //   const result = await errorPlan.execute();
+  //   this.addSequencePlan(errorPlan);
+  //   return result;
+  // }
 
   /**
    * The analysis of the intent results in a list of steps and queries to complete the intent.
    */
   async handleMultipleStep(output: oPlanResult): Promise<oPlanResult> {
-    console.log('Handling multi step ...', output);
     const results: any[] = [];
     for (const intent of output?.intents || []) {
       const subPlan = new oAgentPlan({
         ...this.config,
         intent: intent,
         sequence: this.sequence,
-        promptFunction: undefined,
+        parentId: this.id,
       });
       const response = await subPlan.execute();
       this.addSequencePlan(subPlan);
-      this.logger.debug('Handled multiple step intent: ', intent, response);
       results.push(JSON.stringify(response));
     }
     return {
@@ -146,12 +142,10 @@ export class oAgentPlan extends oPlan {
 
       // setup the plan config
       const planConfig: oPlanConfig = {
-        intent: this.config.intent as string,
+        ...this.config,
         currentNode: this.node,
         caller: this.node?.address,
-        context: this.config.context,
         sequence: this.sequence,
-        promptFunction: this.config.promptFunction,
       };
 
       // search or resolve the intent with tool usage

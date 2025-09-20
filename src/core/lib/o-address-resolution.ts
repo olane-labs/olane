@@ -14,11 +14,6 @@ export class oAddressResolution {
     }
     return this.resolvers.some((r) =>
       address.customTransports.some((t) => {
-        console.log(
-          'Checking if resolver supports transport: ',
-          t,
-          r.transports,
-        );
         return r.transports.includes(t);
       }),
     );

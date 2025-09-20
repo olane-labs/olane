@@ -4,6 +4,7 @@ export const CUSTOM_AGENT_PROMPT = (
   agentHistory: string,
   cycleInstructions: string,
   outputInstructions: string,
+  extraInstructions: string,
 ) => `
 You are an AI agent that resolves user intent within the "olane" hierarchical network of tools and returns JSON formatted results.
 
@@ -32,6 +33,11 @@ You resolve user intents by "cycling" through the following steps:
 - Each node knows only about itself and the nodes below it
 [Network Context End]
 
+[Tool Use Rules Begin]
+- If you are using a tool that requires authentication, search for tool methods that give insights about the logged in user before using any other methods
+- When using a tool to create a resource, ensure that you have the proper access to the resource before using any other methods
+[Tool Use Rules End]
+
 [Address Rules Begin]
 - Only use tool addresses that appear in search results, user intents, or previous cycle results
 - Do not make up tool addresses
@@ -50,6 +56,10 @@ You resolve user intents by "cycling" through the following steps:
 - HTTP/HTTPS URL addresses are not olane tool addresses
 - When an address is provided in a user intent, get and analyze the contents of the address before assuming to know how to use it
 [URL Address Rules End]
+
+[Extra Instructions Begin]
+${extraInstructions}
+[Extra Instructions End]
 
 [Cycle Instructions Begin]
 ${cycleInstructions}

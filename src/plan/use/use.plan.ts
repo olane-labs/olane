@@ -4,14 +4,12 @@ import { oPlanType } from '../interfaces/plan-type.enum.js';
 import { oPlanResult } from '../interfaces/plan.result.js';
 import { oToolError } from '../../error/tool.error.js';
 import { oToolErrorCodes } from '../../error/enums/codes.error.js';
-import { oConfigurePlan } from '../configure/configure.plan.js';
 import { oPlanContext } from '../plan.context.js';
 import { oHandshakeResult } from '../interfaces/handshake.result.js';
 import { oAgentPlan } from '../agent.plan.js';
-import { CONFIGURE_PROMPT } from '../prompts/configure.prompt.js';
+import { CONFIGURE_INSTRUCTIONS } from '../prompts/configure.prompt.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectUtils } from '../../utils/object.utils.js';
-import { toString } from 'multiformats/dist/src/bytes.js';
 
 /**
  * We know what tool we want to use, let's use it.
@@ -64,13 +62,14 @@ export class oUsePlan extends oPlan {
 
       const pc = new oAgentPlan({
         ...this.config,
-        promptFunction: CONFIGURE_PROMPT,
         sequence: this.sequence,
-        intent: `This is a configure request. You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
+        intent: `This is a configure request, prioritize "Configure Request Instructions". You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
         context: new oPlanContext([
           `[Method Metadata Begin]\n${JSON.stringify(methods, null, 2)}\n[Method Metadata End]`,
           `[Method Options Begin]\n${(tools || []).join(', ')}\n[Method Options End]`,
         ]),
+        extraInstructions: CONFIGURE_INSTRUCTIONS,
+        parentId: this.id,
       });
       const result = await pc.execute();
       this.addSequencePlan(pc);
@@ -100,7 +99,6 @@ export class oUsePlan extends oPlan {
         this.logger.debug('Has olane address: ', value);
         const addresses = oUsePlan.extractAddresses(value);
         for (const address of addresses) {
-          console.log('[LFS] Extracted address: ', address);
           const largeDataResponse = await this.node.use(new oAddress(address));
           this.logger.debug(
             'Large data response: ',
@@ -120,7 +118,7 @@ export class oUsePlan extends oPlan {
       });
 
       return {
-        result: response.result,
+        result: `Tool input: ${JSON.stringify(task || {}, null, 2)}\nTool output: ${JSON.stringify(response.result, null, 2)}`,
         type: 'result',
       };
     } catch (error: any) {

@@ -14,12 +14,14 @@ export class oPlan {
   public sequence: oPlan[] = [];
   public cid: CID | undefined;
   public id: string = uuidv4();
+  public parentId: string | undefined;
 
   public result: oPlanResult | undefined;
 
   constructor(protected readonly config: oPlanConfig) {
     this.logger = new Logger('oPlan:' + `[${this.config.intent}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
+    this.parentId = this.config.parentId;
   }
 
   get caller() {
@@ -56,15 +58,15 @@ export class oPlan {
 
   addSequencePlan(plan: oPlan) {
     this.sequence.push(plan);
-    console.log(
-      `[Cycle ${this.sequence.length} - ${this.id}]\n ${JSON.stringify(
-        {
-          ...plan.result,
-        },
-        null,
-        2,
-      )}\n[Cycle ${this.sequence.length} - ${this.id}]`,
-    );
+    // console.log(
+    //   `${this.parentId ? '--[Child ' : '['}Cycle ${this.sequence.length} - ${this.id}]\n ${JSON.stringify(
+    //     {
+    //       ...plan.result,
+    //     },
+    //     null,
+    //     2,
+    //   )}\n${this.parentId ? '--[Child ' : '['}Cycle ${this.sequence.length} - ${this.id}]`,
+    // );
   }
 
   async toCID(): Promise<CID> {
@@ -98,7 +100,6 @@ export class oPlan {
       this.sequence
         ?.filter((s) => {
           if (added[s.id]) {
-            console.log('Deduplication plan: ', s.id);
             return false;
           }
           added[s.id] = true;
@@ -106,7 +107,10 @@ export class oPlan {
         })
         ?.map(
           (s, index) =>
-            `[Cycle ${index + 1} Begin ${s.id}]\n${JSON.stringify(
+            `[Cycle ${index + 1} Begin ${s.id}]\n
+            Cycle Intent: ${s.config.intent}\n
+            Cycle Result:\n
+            ${JSON.stringify(
               {
                 ...s.result,
               },
@@ -153,9 +157,15 @@ export class oPlan {
         this.config.intent,
         ctxt,
         this.agentHistory,
+        this.config.extraInstructions || '',
       );
     } else {
-      prompt = AGENT_PROMPT(this.config.intent, ctxt, this.agentHistory);
+      prompt = AGENT_PROMPT(
+        this.config.intent,
+        ctxt,
+        this.agentHistory,
+        this.config.extraInstructions || '',
+      );
     }
     // this.logger.debug('Prompt: ', prompt);
 
@@ -163,6 +173,7 @@ export class oPlan {
       method: 'prompt',
       params: {
         prompt: prompt,
+        response_format: 'json_object',
       },
     });
 
@@ -192,23 +203,23 @@ export class oPlan {
   }
 
   async addReasoning(): Promise<void> {
-    if (this.result?.reasoning) {
-      this.logger.debug('Adding knowledge: ', this.result?.reasoning);
-      await this.node.use(new oAddress('o://vector-store'), {
-        method: 'add_documents',
-        params: {
-          documents: [
-            {
-              pageContent: this.result?.reasoning,
-              metadata: {
-                address: this.caller?.toString(),
-                id: uuidv4(),
-              },
-            },
-          ],
-        },
-      });
-    }
+    // if (this.result?.reasoning) {
+    //   this.logger.debug('Adding knowledge: ', this.result?.reasoning);
+    //   await this.node.use(new oAddress('o://vector-store'), {
+    //     method: 'add_documents',
+    //     params: {
+    //       documents: [
+    //         {
+    //           pageContent: this.result?.reasoning,
+    //           metadata: {
+    //             address: this.caller?.toString(),
+    //             id: uuidv4(),
+    //           },
+    //         },
+    //       ],
+    //     },
+    //   });
+    // }
   }
 
   async postflight(response: oPlanResult): Promise<oPlanResult> {

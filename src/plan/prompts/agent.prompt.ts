@@ -4,6 +4,7 @@ export const AGENT_PROMPT = (
   intent: string,
   context: string,
   agentHistory: string,
+  extraInstructions: string,
 ) =>
   CUSTOM_AGENT_PROMPT(
     intent,
@@ -28,7 +29,9 @@ Step 2 - Search for tools and context
 2. Review the user's intent, the current node's functionality, rules and context
 3. If there are unknown tool addresses or entities within the user intent, generate search queries to resolve the unknown entities. 
 4. If there is a placeholder address used (o://.../placeholder), do not extract the contents of the placeholder address unless necessary for completing the user intent.
-5. Search queries can be internal or external. If they are internal, they should be vector database queries. If they are external, they should be concise queries to internet search providers. Stop here and follow the "Return Instructions" steps
+5. Search for internal "search tools" that might contain information about the unknown entities.
+6. Use the search result data & tooling to help you resolve the unknown entities.
+7. Continue to step 3.
 
 Step 3 - Filter Search Results
 1. If all search results are relevant to the user intent resolution, continue to step 4.
@@ -48,7 +51,7 @@ Step 5 - Review the tool use results
 
   `,
     `
-  These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results".
+  These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results", "Configure Results".
 
 All Return Step Instructions:
 1. Do not explain your reasoning process, just return the output in the correct format.
@@ -84,8 +87,8 @@ Search Results:
 {
   "queries": [
     {
-      "query": "key terms to search for",
-      "provider": "internal" | "external",
+      "query": "vector database query key terms to search for",
+      "provider": "internal",
     }
   ],
   "reasoning": string,
@@ -106,5 +109,17 @@ Error Results:
   "type": "error",
 }
 
+Configure Results:
+{
+  "configure": {
+    "task": {
+      "address": string,
+      "payload": { "method": string, "params": any }
+    }
+  },
+  "type": "configure",
+}
+
   `,
+    extraInstructions,
   );

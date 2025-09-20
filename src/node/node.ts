@@ -25,8 +25,6 @@ import { oToolError } from '../error/tool.error.js';
 import { oToolErrorCodes } from '../error/enums/codes.error.js';
 import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';
-import { oPlanResult } from '../plan/interfaces/plan.result.js';
-import { oConfigurePlan } from '../plan/configure/configure.plan.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
 import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';

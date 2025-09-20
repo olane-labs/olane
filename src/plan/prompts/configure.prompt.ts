@@ -1,16 +1,5 @@
-import { CUSTOM_AGENT_PROMPT } from './custom.prompt.js';
-
-export const CONFIGURE_PROMPT = (
-  intent: string,
-  context: string,
-  agentHistory: string,
-) =>
-  CUSTOM_AGENT_PROMPT(
-    intent,
-    context,
-    agentHistory,
-    `
-  Every Step Instructions:
+export const CONFIGURE_INSTRUCTIONS = `
+  Configure Request Instructions:
 1. Review the provided user intent and context
 2. If you can complete the user intent, return the answer using the "Return Instructions" steps
 3. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
@@ -48,64 +37,4 @@ Step 5 - Finish
 2. If you have enough information to complete the configure request, follow the "Return Instructions" steps to return the "configure results".
 3. If you do not have enough information to complete the configure request, return an error.
 
-  `,
-    `
-These are the types of cycle results: "Answer Results", "Complex Intent Results", "Configure Results", "Error Results", "Search Results".
-
-All Return Step Instructions:
-1. Determine what type of results we have
-2. Output the respective results using the matching output type.
-3. Generate a reasoning statement for why this result was returned.
-4. Do not include \`\`\`json or \`\`\` in your output.
-
-Answer Results:
-{
-  "result": string,
-  "reasoning": string,
-  "type": "result",
-}
-
-Complex Intent Results:
-{
-  "intents": [
-    "simple intent 1",
-    "simple intent 2",
-    "simple intent 3",
-  ],
-  "reasoning": string,
-  "type": "multiple_step",
-}
-
-Configure Results:
-{
-  "configure": {
-    "task": {
-      "address": string,
-      "payload": { "method": string, "params": any }
-    }
-  },
-  "type": "configure",
-}
-
-Search Results:
-{
-  "queries": [
-    {
-      "query": "key terms to search for",
-      "provider": "internal" | "external",
-    }
-  ],
-  "reasoning": string,
-  "type": "search",
-}
-
-
-Error Results:
-{
-  "error": string,
-  "reasoning": string,
-  "type": "error",
-}
-
-    `,
-  );
+  `;
