@@ -109,6 +109,14 @@ jobs:
           # npm run lint
           # npm test
 
+      - name: Build and test o-gateway-interface
+        working-directory: packages/o-gateway-interface
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          npm test
+
       - name: Build and test o-network
         working-directory: packages/o-network
         run: |
@@ -164,10 +172,50 @@ jobs:
       - name: Build and test o-tool
         working-directory: packages/o-tool
         run: |
-          npm ci
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-agent
+        working-directory: packages/o-agent
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-leader
+        working-directory: packages/o-leader
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+      
+      - name: Build and test o-intelligence
+        working-directory: packages/o-intelligence
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+      
+      - name: Build and test o-storage
+        working-directory: packages/o-storage
+        run: |
+          npm i
           npm run build
           # npm run lint
           # npm test
+
+      - name: Build and test o-mcp
+        working-directory: packages/o-mcp
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
 
       - name: Build and test o-tools-common
         working-directory: packages/o-tools-common
@@ -184,6 +232,14 @@ jobs:
           npm run build
           # npm run lint
           # npm test
+
+      - name: Build and test o-gateway-interface
+        working-directory: packages/o-gateway-interface
+        run: |
+          npm ci
+          npm run build
+          # npm run lint
+          npm test
 
       - name: Build and test o-network
         working-directory: packages/o-network
@@ -244,6 +300,73 @@ jobs:
       - name: Wait for registry propagation
         run: sleep 5
 
+      - name: Update o-gateway-interface dependencies and rebuild
+        working-directory: packages/o-gateway-interface
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run build
+
+      - name: Publish o-gateway-interface
+        working-directory: packages/o-gateway-interface
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Wait for registry propagation
+        run: sleep 5
+
+      - name: Update o-agent dependencies and rebuild
+        working-directory: packages/o-agent
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run build
+
+      - name: Publish o-agent
+        working-directory: packages/o-agent
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update o-intelligence dependencies and rebuild
+        working-directory: packages/o-intelligence
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run build
+
+      - name: Publish o-intelligence
+        working-directory: packages/o-intelligence
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update o-storage dependencies and rebuild
+        working-directory: packages/o-storage
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run build
+
+      - name: Publish o-storage
+        working-directory: packages/o-storage
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      
+      - name: Wait for registry propagation
+        run: sleep 5
+
       - name: Update o-tools-common dependencies and rebuild
         working-directory: packages/o-tools-common
         run: |
@@ -271,6 +394,39 @@ jobs:
 
       - name: Publish o-tool-registry
         working-directory: packages/o-tool-registry
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Wait for registry propagation
+        run: sleep 5
+
+      - name: Update o-leader dependencies and rebuild
+        working-directory: packages/o-leader
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tool-registry@latest --save-peer
+          npm run build
+
+      - name: Publish o-leader
+        working-directory: packages/o-leader
+        run: |
+          npm version patch --no-git-tag-version
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Update o-mcp dependencies and rebuild
+        working-directory: packages/o-mcp
+        run: |
+          # Update to use published versions instead of file dependencies
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-leader@latest --save-peer
+          npm run build
+
+      - name: Publish o-mcp
+        working-directory: packages/o-mcp
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
