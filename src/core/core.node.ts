@@ -258,7 +258,10 @@ export abstract class oCoreNode {
 
     // if there is an error, throw it to continue to bubble up
     if (response.result.error) {
-      console.log('response.result.error', response.result.error);
+      console.log(
+        'response.result.error',
+        JSON.stringify(response.result.error, null, 2),
+      );
       throw oToolError.fromJSON(response.result.error);
     }
 

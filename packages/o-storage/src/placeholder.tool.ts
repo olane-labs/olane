@@ -48,8 +48,9 @@ export class PlaceholderTool extends MemoryStorageProvider {
         Document Summarization Rules:
         1. Extract the key points about the document.
         2. Filter the key points to only include information that is relevant to the user's intent.
-        3. The first sentence should mention the type of document that you are summarizing.
-        3. If the user's intent does not need to know anything about the document, return a very short summary.
+        3. Include mentions of any file names or paths that are relevant to the user's intent in the summary.
+        4. The first sentence should mention the type of document that you are summarizing.
+        5. If the user's intent does not need to know anything about the document, return a very short summary.
 
         The intent is ${intent || 'empty'}.
         The document is ${value.substring(0, 50_000)}.
@@ -78,7 +79,7 @@ export class PlaceholderTool extends MemoryStorageProvider {
       value,
       intent,
       summary,
-      instructions: `To save on context window size, I have summarized the document and the contents are available at this address: "${this.address.toString()}/${key}". Simply use this address in place of the original value and it will be automatically translated before it gets to the tool. The summary for this document is: ${summary}.`,
+      instructions: `To save on context window size, I have summarized the document and the contents are available at this address: "${this.address.toString()}/${key}". This address represents the original value and it will be automatically translated before it gets to the tool. DO NOT "get" the contents of this address unless absolutely necessary. \n\nThe summary for this document is: ${summary}.`,
       address: `${this.address.toString()}/${key}`,
     };
   }

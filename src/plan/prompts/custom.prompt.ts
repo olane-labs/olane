@@ -16,13 +16,13 @@ You resolve user intents by "cycling" through the following steps:
 4. Use Search Results
 5. Configure the tool use
 6. Use tools
-7. Review the results
+7. Go back to step 2
 
 [Intent Context Begin]
 - An intent is a user request
 - Intents are usually actions or queries
 - User intents can start at any node
-- User intents are resolved using the tools and data that is contained within that sub-section of the network graph
+- User intents are resolved using the tools and data that are contained within that sub-section of the network graph
 [Intents Context End]
 
 [Network Context Begin]

@@ -16,7 +16,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "DEBUG=o-protocol:* aegir test",
+    "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
     "test-0": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-0.ts",

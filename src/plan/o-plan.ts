@@ -19,7 +19,7 @@ export class oPlan {
 
   constructor(protected readonly config: oPlanConfig) {
     this.logger = new Logger('oPlan:' + `[${this.config.intent}]`);
-    this.sequence = this.config.sequence || [];
+    this.sequence = Object.assign([], this.config.sequence || []);
   }
 
   get caller() {
@@ -52,6 +52,19 @@ export class oPlan {
       sequence: this.sequence.map((s) => `o://plan/${s.cid?.toString()}`),
       result: this.result,
     };
+  }
+
+  addSequencePlan(plan: oPlan) {
+    this.sequence.push(plan);
+    console.log(
+      `[Cycle ${this.sequence.length} - ${this.id}]\n ${JSON.stringify(
+        {
+          ...plan.result,
+        },
+        null,
+        2,
+      )}\n[Cycle ${this.sequence.length} - ${this.id}]`,
+    );
   }
 
   async toCID(): Promise<CID> {
@@ -133,7 +146,6 @@ export class oPlan {
     this.logger.debug('Running plan...');
 
     const ctxt = this.config.context?.toString() || '';
-    this.logger.debug('Agent history: ', this.agentHistory);
     let prompt: string | null = null;
     if (this.config.promptFunction) {
       this.logger.debug('Using prompt function: ', this.config.promptFunction);

@@ -40,6 +40,7 @@ export class oSearchPlan extends oPlan {
    * Search internal providers such as the local vector store, local database, etc.
    */
   private async internalSearch(): Promise<oPlanResult> {
+    // find all tools that are search tools
     const response = await this.node.use(new oAddress('o://search'), {
       method: 'vector',
       params: {

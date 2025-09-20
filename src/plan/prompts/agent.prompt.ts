@@ -14,7 +14,7 @@ export const AGENT_PROMPT = (
 1. Review the provided user intent and context
 2. If you can complete the user intent, return the answer using the "Return Instructions" steps
 3. If the intent is already completed in past cycles, stop here and follow the "Return Instructions" steps
-4. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
+4. If you experience 3 similar errors in a row, stop here and follow the "Return Instructions" steps to indicate the error.
 5. Review the current step number and perform the instructions associated with that step.
 6. Start with step 1
 
@@ -27,7 +27,8 @@ Step 2 - Search for tools and context
 1. If all entities and tool addresses are known within the user intent, continue to step 3
 2. Review the user's intent, the current node's functionality, rules and context
 3. If there are unknown tool addresses or entities within the user intent, generate search queries to resolve the unknown entities. 
-4. Search queries can be internal or external. If they are internal, they should be vector database queries. If they are external, they should be concise queries to internet search providers. Stop here and follow the "Return Instructions" steps
+4. If there is a placeholder address used (o://.../placeholder), do not extract the contents of the placeholder address unless necessary for completing the user intent.
+5. Search queries can be internal or external. If they are internal, they should be vector database queries. If they are external, they should be concise queries to internet search providers. Stop here and follow the "Return Instructions" steps
 
 Step 3 - Filter Search Results
 1. If all search results are relevant to the user intent resolution, continue to step 4.
@@ -44,6 +45,7 @@ Step 5 - Review the tool use results
 2. Summarize the result of each tool use in 1 concise sentence
 3. In the summary, clearly mention if it succeeded or failed
 4. If it failed, make sure to include why it failed
+
   `,
     `
   These are the types of cycle results: "Complex Intent Results", "Search Results", "Use Tool Results", "Answer Results", "Error Results".

@@ -195,6 +195,7 @@ export abstract class oNode extends oCoreNode {
     const response = await pc.execute();
     return {
       ...response,
+      cycles: pc.sequence.length,
       sequence: pc.sequence.map((s) => {
         return {
           reasoning: s.result?.reasoning,

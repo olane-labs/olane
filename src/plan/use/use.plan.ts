@@ -69,11 +69,11 @@ export class oUsePlan extends oPlan {
         intent: `This is a configure request. You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
         context: new oPlanContext([
           `[Method Metadata Begin]\n${JSON.stringify(methods, null, 2)}\n[Method Metadata End]`,
-          `[Method Options Begin]\n${tools.join(', ')}\n[Method Options End]`,
+          `[Method Options Begin]\n${(tools || []).join(', ')}\n[Method Options End]`,
         ]),
       });
       const result = await pc.execute();
-      this.sequence.push(pc);
+      this.addSequencePlan(pc);
       this.logger.debug('Configure result: ', result);
       const { configure, error: configureError }: oPlanResult = result;
       if (configureError) {
@@ -100,14 +100,8 @@ export class oUsePlan extends oPlan {
         this.logger.debug('Has olane address: ', value);
         const addresses = oUsePlan.extractAddresses(value);
         for (const address of addresses) {
-          this.logger.debug('Extracted address: ', address);
-          const largeDataResponse = await this.node.use(
-            new oAddress('o://leader/storage/placeholder'),
-            {
-              method: 'get',
-              params: {},
-            },
-          );
+          console.log('[LFS] Extracted address: ', address);
+          const largeDataResponse = await this.node.use(new oAddress(address));
           this.logger.debug(
             'Large data response: ',
             largeDataResponse.result.data,

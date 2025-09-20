@@ -61,6 +61,9 @@ describe('o-mcp github-benchmarks', () => {
           intent: testCase.input,
         },
       });
+      console.log(
+        `Finished with ${handshakeResponse.result.data.cycles} cycles`,
+      );
       console.log(handshakeResponse.result.data);
       // const result = await testCase.output;
       // expect(result).to.contain(testCase.output.contains);

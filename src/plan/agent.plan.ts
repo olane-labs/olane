@@ -31,10 +31,10 @@ export class oAgentPlan extends oPlan {
       context: this.config.context,
       receiver: new oAddress(task.address),
       sequence: this.sequence,
-      promptFunction: undefined,
+      promptFunction: this.config.promptFunction,
     });
     const taskResult = await taskPlan.execute();
-    this.sequence.push(taskPlan);
+    this.addSequencePlan(taskPlan);
     this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
     if (taskResult.error) {
       this.logger.debug('Task error: ', taskResult.error);
@@ -87,7 +87,7 @@ export class oAgentPlan extends oPlan {
         promptFunction: undefined,
       });
       const result = await searchPlan.execute();
-      this.sequence.push(searchPlan);
+      this.addSequencePlan(searchPlan);
       this.logger.debug('Search result: ', result.result);
       results.push(result.result);
     }
@@ -104,7 +104,7 @@ export class oAgentPlan extends oPlan {
       promptFunction: undefined,
     });
     const result = await errorPlan.execute();
-    this.sequence.push(errorPlan);
+    this.addSequencePlan(errorPlan);
     return result;
   }
 
@@ -112,7 +112,7 @@ export class oAgentPlan extends oPlan {
    * The analysis of the intent results in a list of steps and queries to complete the intent.
    */
   async handleMultipleStep(output: oPlanResult): Promise<oPlanResult> {
-    this.logger.debug('Handling analysis...', output);
+    console.log('Handling multi step ...', output);
     const results: any[] = [];
     for (const intent of output?.intents || []) {
       const subPlan = new oAgentPlan({
@@ -122,7 +122,7 @@ export class oAgentPlan extends oPlan {
         promptFunction: undefined,
       });
       const response = await subPlan.execute();
-      this.sequence.push(subPlan);
+      this.addSequencePlan(subPlan);
       this.logger.debug('Handled multiple step intent: ', intent, response);
       results.push(JSON.stringify(response));
     }
@@ -163,7 +163,7 @@ export class oAgentPlan extends oPlan {
       const { error, result, type } = planResult;
 
       // update the sequence to reflect state change
-      this.sequence.push(plan);
+      this.addSequencePlan(plan);
 
       // handle the various result types
       const resultType = type;
