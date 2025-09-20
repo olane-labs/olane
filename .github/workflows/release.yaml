@@ -53,6 +53,46 @@ jobs:
           # npm run lint
           npm test
 
+      - name: Build and test o-agent
+        working-directory: packages/o-agent
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-leader
+        working-directory: packages/o-leader
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+      
+      - name: Build and test o-storage
+        working-directory: packages/o-storage
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-intelligence
+        working-directory: packages/o-intelligence
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
+      - name: Build and test o-mcp
+        working-directory: packages/o-mcp
+        run: |
+          npm i
+          npm run build
+          # npm run lint
+          npm test
+
       - name: Build and test o-tools-common
         working-directory: packages/o-tools-common
         run: |
