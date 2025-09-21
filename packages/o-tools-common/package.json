@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -31,14 +31,8 @@
   },
   "author": "oLane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "oLane common tools for most tool nodes",
   "devDependencies": {
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
-    "@olane/o-tool": "file:../o-tool",
-    "@olane/o-storage": "file:../o-storage",
-    "@olane/o-leader": "file:../o-leader",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -58,12 +52,12 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.0",
-    "@olane/o-core": "^0.6.0",
-    "@olane/o-protocol": "^0.6.0",
-    "@olane/o-tool": "^0.6.0",
-    "@olane/o-storage": "^0.6.0",
-    "@olane/o-leader": "^0.6.0"
+    "@olane/o-config": "^0.6.1",
+    "@olane/o-core": "^0.6.1",
+    "@olane/o-protocol": "^0.6.1",
+    "@olane/o-tool": "^0.6.1",
+    "@olane/o-storage": "^0.6.1",
+    "@olane/o-leader": "^0.6.1"
   },
   "dependencies": {
     "debug": "^4.4.1",

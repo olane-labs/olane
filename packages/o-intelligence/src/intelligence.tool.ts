@@ -1,5 +1,5 @@
 import { oToolConfig, oVirtualTool } from '@olane/o-tool';
-import { oAddress } from '@olane/o-core';
+import { oAddress, oResponse } from '@olane/o-core';
 import { oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
@@ -87,39 +87,47 @@ export class IntelligenceTool extends oVirtualTool {
         'Invalid model provider choice, please set the MODEL_PROVIDER_CHOICE environment variable to a valid model provider',
       );
     }
+    let model = LLMProviders.ANTHROPIC;
     // check secure storage for preference
-    const config = await this.use(new oAddress('o://secure-storage'), {
+    await this.use(new oAddress('o://secure'), {
       method: 'get',
       params: {
         key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
       },
-    });
-    const payload = config.result.data as ToolResult;
-    if (payload && payload.value) {
-      const modelProvider = payload.value as string;
-      return {
-        provider: modelProvider as LLMProviders,
-      };
-    }
-    // we need to ask the human for the model provider
-    this.logger.info('Asking human for model selection');
-    const modelResponse = await this.use(new oAddress('o://human'), {
-      method: 'question',
-      params: {
-        question:
-          'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
-      },
-    });
+    })
+      .then((config: oResponse) => {
+        const payload = config.result.data as ToolResult;
+        if (payload && payload.value) {
+          const modelProvider = payload.value as string;
+          model = modelProvider as LLMProviders;
+        }
+      })
+      .catch(async (err: Error) => {
+        this.logger.error('Error getting model provider preference: ', err);
+        // we need to ask the human for the model provider
+        this.logger.info('Asking human for model selection...');
+        const modelResponse = await this.use(new oAddress('o://human'), {
+          method: 'question',
+          params: {
+            question:
+              'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
+          },
+        });
 
-    // process the human response
-    const { answer: model } = modelResponse.result.data as { answer: string };
-    await this.use(new oAddress('o://secure-storage'), {
-      method: 'put',
-      params: {
-        key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
-        value: model,
-      },
-    });
+        // process the human response
+        const { answer: modelHuman } = modelResponse.result.data as {
+          answer: string;
+        };
+        model = modelHuman.toLowerCase() as LLMProviders;
+        await this.use(new oAddress('o://secure'), {
+          method: 'put',
+          params: {
+            key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+            value: model,
+          },
+        });
+      });
+
     return {
       provider: model as LLMProviders,
     };
@@ -160,39 +168,43 @@ export class IntelligenceTool extends oVirtualTool {
         apiKey: modelEnvConfig.key,
       };
     }
+    let apiKey = '';
     // check secure storage 2nd
-    const config = await this.use(new oAddress('o://secure-storage'), {
+    await this.use(new oAddress('o://secure'), {
       method: 'get',
       params: {
         key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
       },
-    });
-    const payload = config.result.data as ToolResult;
-    if (payload && payload.value) {
-      const apiKey = payload.value as string;
-      return {
-        apiKey,
-      };
-    }
-    // we need to ask the human for the api key
-    const keyResponse = await this.use(new oAddress('o://human'), {
-      method: 'question',
-      params: {
-        question: `What is the API key for the ${provider} model?`,
-      },
-    });
+    })
+      .then((config: oResponse) => {
+        const payload = config.result.data as ToolResult;
+        if (payload && payload.value) {
+          const apiKeyStored = payload.value as string;
+          apiKey = apiKeyStored;
+        }
+      })
+      .catch(async (err: Error) => {
+        // we need to ask the human for the api key
+        const keyResponse = await this.use(new oAddress('o://human'), {
+          method: 'question',
+          params: {
+            question: `What is the API key for the ${provider} model?`,
+          },
+        });
 
-    // process the human response
-    const { answer: key } = keyResponse.result.data as { answer: string };
-    await this.use(new oAddress('o://secure-storage'), {
-      method: 'put',
-      params: {
-        key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
-        value: key,
-      },
-    });
+        // process the human response
+        const { answer: key } = keyResponse.result.data as { answer: string };
+        apiKey = key;
+        await this.use(new oAddress('o://secure'), {
+          method: 'put',
+          params: {
+            key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
+            value: key,
+          },
+        });
+      });
     return {
-      apiKey: key,
+      apiKey: apiKey,
     };
   }
 

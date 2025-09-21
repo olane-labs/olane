@@ -33,11 +33,8 @@ export class ConfigManager {
   private static configFile = DEFAULT_CONFIG_FILE;
 
   static async initialize(): Promise<void> {
-    console.log('Initializing config...', ConfigManager.configPath);
     await fs.ensureDir(ConfigManager.configPath);
-    console.log('Ensuring config path...', ConfigManager.configPath);
     await fs.ensureDir(ConfigManager.networksPath);
-    console.log('Ensured networks path...', ConfigManager.networksPath);
 
     if (!(await fs.pathExists(ConfigManager.configFile))) {
       await this.writeConfig(this.getDefaultConfig());

@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-network",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -39,14 +39,6 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
-    "@olane/o-tool": "file:../o-tool",
-    "@olane/o-tool-registry": "file:../o-tool-registry",
-    "@olane/o-tools-common": "file:../o-tools-common",
-    "@olane/o-leader": "file:../o-leader",
-    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -69,14 +61,14 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.0",
-    "@olane/o-core": "^0.6.0",
-    "@olane/o-protocol": "^0.6.0",
-    "@olane/o-tool": "^0.6.0",
-    "@olane/o-tool-registry": "^0.6.0",
-    "@olane/o-tools-common": "^0.6.0",
-    "@olane/o-leader": "^0.6.0",
-    "@olane/o-intelligence": "^0.6.0"
+    "@olane/o-config": "^0.6.1",
+    "@olane/o-core": "^0.6.1",
+    "@olane/o-protocol": "^0.6.1",
+    "@olane/o-tool": "^0.6.1",
+    "@olane/o-tool-registry": "^0.6.1",
+    "@olane/o-tools-common": "^0.6.1",
+    "@olane/o-leader": "^0.6.1",
+    "@olane/o-intelligence": "^0.6.1"
   },
   "dependencies": {
     "chalk": "^5.4.1",
