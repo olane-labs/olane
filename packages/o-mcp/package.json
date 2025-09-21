@@ -35,12 +35,6 @@
   "license": "ISC",
   "description": "oLane Core",
   "devDependencies": {
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
-    "@olane/o-tool": "file:../o-tool",
-    "@olane/o-leader": "file:../o-leader",
-    "@olane/o-intelligence": "file:../o-intelligence",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -65,6 +59,7 @@
     "@olane/o-protocol": "^0.6.1",
     "@olane/o-tool": "^0.6.1",
     "@olane/o-leader": "^0.6.1",
+    "@olane/o-intelligence": "^0.6.1",
     "@modelcontextprotocol/sdk": "^1.13.0"
   },
   "dependencies": {

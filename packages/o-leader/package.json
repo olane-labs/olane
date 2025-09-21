@@ -35,10 +35,6 @@
   "license": "ISC",
   "description": "oLane leader node used as the root node for a network",
   "devDependencies": {
-    "@olane/o-config": "file:../o-config",
-    "@olane/o-core": "file:../..",
-    "@olane/o-protocol": "file:../o-protocol",
-    "@olane/o-tool": "file:../o-tool",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
@@ -61,8 +57,7 @@
     "@olane/o-config": "^0.6.1",
     "@olane/o-core": "^0.6.1",
     "@olane/o-protocol": "^0.6.1",
-    "@olane/o-tool": "^0.6.1",
-    "@modelcontextprotocol/sdk": "^1.13.0"
+    "@olane/o-tool": "^0.6.1"
   },
   "dependencies": {
     "debug": "^4.4.1",
