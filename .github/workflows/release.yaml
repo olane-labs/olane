@@ -440,7 +440,7 @@ jobs:
         working-directory: packages/o-network
         run: |
           # Update to use published versions instead of file dependencies
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest --save-peer
+          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest @olane/o-intelligence@latest @olane/o-leader@latest --save-peer
           npm run build
 
       - name: Publish o-network
