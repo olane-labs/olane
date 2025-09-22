@@ -351,6 +351,7 @@ jobs:
       - name: Publish root package (o-core)
         continue-on-error: true
         run: |
+          npm i
           npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer
           npm run build
           npm version patch --no-git-tag-version
@@ -386,6 +387,7 @@ jobs:
         working-directory: packages/o-tool
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest --save-peer
           npm run build
 
@@ -425,6 +427,7 @@ jobs:
         working-directory: packages/o-gateway-interface
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
@@ -465,6 +468,7 @@ jobs:
         working-directory: packages/o-agent
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
@@ -504,6 +508,7 @@ jobs:
         working-directory: packages/o-intelligence
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
@@ -543,6 +548,7 @@ jobs:
         working-directory: packages/o-storage
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
@@ -582,6 +588,7 @@ jobs:
         working-directory: packages/o-tools-common
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
           npm run build
 
@@ -622,6 +629,7 @@ jobs:
         working-directory: packages/o-leader
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tool-registry@latest --save-peer
           npm run build
 
@@ -661,6 +669,7 @@ jobs:
         working-directory: packages/o-mcp
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-leader@latest --save-peer
           npm run build
 
@@ -700,6 +709,7 @@ jobs:
         working-directory: packages/o-tool-registry
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest --save-peer
           npm run build
 
@@ -740,6 +750,7 @@ jobs:
         working-directory: packages/o-network
         run: |
           # Update to use published versions instead of file dependencies
+          npm i
           npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest @olane/o-intelligence@latest @olane/o-leader@latest --save-peer
           npm run build
 
