@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -54,10 +54,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.7",
-    "@olane/o-core": "^0.6.7",
+    "@olane/o-config": "^0.6.8",
+    "@olane/o-core": "^0.6.8",
     "@olane/o-leader": "^0.6.7",
-    "@olane/o-protocol": "^0.6.7",
+    "@olane/o-protocol": "^0.6.8",
     "@olane/o-storage": "^0.6.7",
     "@olane/o-tool": "^0.6.7"
   },

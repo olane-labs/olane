@@ -9,9 +9,6 @@ export class oAddressResolution {
   }
 
   supportsTransport(address: oAddress): boolean {
-    if (address.libp2pTransports.length > 0) {
-      return false;
-    }
     return this.resolvers.some((r) =>
       address.customTransports.some((t) => {
         return r.transports.includes(t);

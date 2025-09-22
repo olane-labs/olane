@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-leader",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -55,9 +55,9 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.7",
-    "@olane/o-core": "^0.6.7",
-    "@olane/o-protocol": "^0.6.7",
+    "@olane/o-config": "^0.6.8",
+    "@olane/o-core": "^0.6.8",
+    "@olane/o-protocol": "^0.6.8",
     "@olane/o-tool": "^0.6.7"
   },
   "dependencies": {

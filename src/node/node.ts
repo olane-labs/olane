@@ -111,7 +111,7 @@ export abstract class oNode extends oCoreNode {
     this.logger.debug(
       'Next hop address: ',
       nextHopAddress.toString(),
-      nextHopAddress.customTransports,
+      nextHopAddress.transports,
     );
     // prepare the request for the destination receiver
     let forwardRequest: oRequest = new oRequest({
@@ -125,7 +125,12 @@ export abstract class oNode extends oCoreNode {
       this.logger.debug(
         'Bridge transports supported, applying custom transports...',
       );
-      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
+      try {
+        // attempt to resolve with bridge transports
+        return this.applyBridgeTransports(nextHopAddress, forwardRequest);
+      } catch (error: any) {
+        this.logger.error('Failed to apply bridge transports: ', error.message);
+      }
     }
 
     // assume the next hop is a libp2p address, so we need to set the transports and dial it

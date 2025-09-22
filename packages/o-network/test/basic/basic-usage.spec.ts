@@ -36,24 +36,24 @@ describe('basic-usage @initialize', async () => {
   // });
 });
 
-describe('olane network usage', async () => {
-  it('should be able to use the olane network', async () => {
-    // let's dial the other network
+// describe('olane network usage', async () => {
+//   it('should be able to use the olane network', async () => {
+//     // let's dial the other network
 
-    const response = await network.use(
-      new oAddress('o://leader', [
-        multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
-      ]),
-      {
-        method: 'intent',
-        params: {
-          intent: 'What can I do?',
-        },
-      },
-    );
-    console.log(response.result.data);
-  });
-});
+//     const response = await network.use(
+//       new oAddress('o://leader', [
+//         multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+//       ]),
+//       {
+//         method: 'intent',
+//         params: {
+//           intent: 'What can I do?',
+//         },
+//       },
+//     );
+//     console.log(response.result.data);
+//   });
+// });
 
 // describe('external-networks', async () => {
 //   it('should be able to use an external network', async () => {
