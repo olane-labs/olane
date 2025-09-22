@@ -171,10 +171,10 @@ class ReleaseManager {
         cwd: this.packageManager.rootDir,
         stdio: 'inherit',
       });
-      execSync(`git tag v${newVersion}`, {
-        cwd: this.packageManager.rootDir,
-        stdio: 'inherit',
-      });
+      // execSync(`git tag v${newVersion}`, {
+      //   cwd: this.packageManager.rootDir,
+      //   stdio: 'inherit',
+      // });
 
       console.log(`✅ Created release branch: ${branchName}`);
       console.log(`✅ Created tag: v${newVersion}`);

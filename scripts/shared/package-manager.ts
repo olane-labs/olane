@@ -33,7 +33,6 @@ export const OLANE_PACKAGES = [
   '@olane/o-tools-common',
   '@olane/o-tool-registry',
   '@olane/o-network',
-  '@olane/o-cli',
 ];
 
 export interface PackageInfo {
@@ -92,9 +91,9 @@ export class PackageManager {
     }
 
     // CLI package if it exists
-    if (existsSync(this.cliDir)) {
-      this.addPackage(this.cliDir, 'cli');
-    }
+    // if (existsSync(this.cliDir)) {
+    //   this.addPackage(this.cliDir, 'cli');
+    // }
 
     console.log(`📦 Found ${this.packages.size} packages`);
   }
