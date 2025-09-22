@@ -24,7 +24,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install script dependencies
-        working-directory: scripts
+        working-directory: scripts/release
         run: npm install
 
       - name: Run build and test
@@ -58,7 +58,7 @@ jobs:
           git config --global user.name "Automated Release"
 
       - name: Install script dependencies
-        working-directory: scripts
+        working-directory: scripts/release
         run: npm install
 
       - name: Run optimized release

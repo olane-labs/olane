@@ -1,5 +1,5 @@
 {
-  "name": "@olane/release-scripts",
+  "name": "@olane/scripts-release",
   "version": "1.0.0",
   "type": "module",
   "private": true,
