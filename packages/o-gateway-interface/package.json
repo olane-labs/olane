@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-gateway-interface",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,6 +23,7 @@
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
@@ -52,9 +53,9 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.7",
-    "@olane/o-core": "^0.6.7",
-    "@olane/o-protocol": "^0.6.7",
+    "@olane/o-config": "^0.6.8",
+    "@olane/o-core": "^0.6.8",
+    "@olane/o-protocol": "^0.6.8",
     "@olane/o-tool": "^0.6.7"
   },
   "dependencies": {

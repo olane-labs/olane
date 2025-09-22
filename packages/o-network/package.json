@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-network",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -19,16 +19,11 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
-    "test-0": "npm run build:all && DEBUG=o-protocol:* npx tsx src/tests/test-0.ts",
-    "deep:clean": "rm -rf node_modules && rm package-lock.json",
-    "deep:clean:all": "npm run deep:clean && npm run deep:clean --prefix ../o-tool && npm run deep:clean --prefix ../o-tools-common && npm run deep:clean --prefix ../o-tool-registry && npm run deep:clean --prefix ../..",
-    "deep:install": "npm install && npm install --prefix ../o-tool && npm install --prefix ../o-tools-common && npm install --prefix ../o-tool-registry && npm install --prefix ../..",
-    "deep:restart": "npm run deep:clean:all && npm run deep:install && npm run build:all",
     "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "update:lib": "npm install @olane/o-core@latest",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest @olane/o-intelligence@latest @olane/o-leader@latest --save-peer",
     "lint": "aegir lint"
   },
   "repository": {
@@ -61,11 +56,11 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.7",
-    "@olane/o-core": "^0.6.7",
+    "@olane/o-config": "^0.6.8",
+    "@olane/o-core": "^0.6.8",
     "@olane/o-intelligence": "^0.6.7",
     "@olane/o-leader": "^0.6.7",
-    "@olane/o-protocol": "^0.6.7",
+    "@olane/o-protocol": "^0.6.8",
     "@olane/o-storage": "^0.6.7",
     "@olane/o-tool": "^0.6.7",
     "@olane/o-tool-registry": "^0.6.7",

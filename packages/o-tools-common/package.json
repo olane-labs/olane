@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.6.7",
+  "version": "0.6.9",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,6 +20,7 @@
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
@@ -53,10 +54,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.7",
-    "@olane/o-core": "^0.6.7",
+    "@olane/o-config": "^0.6.8",
+    "@olane/o-core": "^0.6.8",
     "@olane/o-leader": "^0.6.7",
-    "@olane/o-protocol": "^0.6.7",
+    "@olane/o-protocol": "^0.6.8",
     "@olane/o-storage": "^0.6.7",
     "@olane/o-tool": "^0.6.7"
   },

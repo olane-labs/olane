@@ -34,42 +34,42 @@ describe('basic-usage @initialize', async () => {
 //   });
 // });
 
-describe('o-mcp github-benchmarks', () => {
-  // it('should be able to create a branch', async () => {
-  //   const response = await network.use(new oAddress('o://leader'), {
-  //     method: 'intent',
-  //     params: {
-  //       intent: `Create a branch called "test-branch" in the repo "travel-planner-app"`,
-  //     },
-  //   });
-  //   console.log(response.result.data);
-  // }, 300_000);
+// describe('o-mcp github-benchmarks', () => {
+//   // it('should be able to create a branch', async () => {
+//   //   const response = await network.use(new oAddress('o://leader'), {
+//   //     method: 'intent',
+//   //     params: {
+//   //       intent: `Create a branch called "test-branch" in the repo "travel-planner-app"`,
+//   //     },
+//   //   });
+//   //   console.log(response.result.data);
+//   // }, 300_000);
 
-  it('should be able to test github benchmarks', async () => {
-    const response = await network.use(new oAddress('o://leader'), {
-      method: 'intent',
-      params: {
-        intent: `Add the MCP server https://api.githubcopilot.com/mcp/ use the headers "Authorization: Bearer ${process.env.GITHUB_API_KEY}"`,
-      },
-    });
+//   it('should be able to test github benchmarks', async () => {
+//     const response = await network.use(new oAddress('o://leader'), {
+//       method: 'intent',
+//       params: {
+//         intent: `Add the MCP server https://api.githubcopilot.com/mcp/ use the headers "Authorization: Bearer ${process.env.GITHUB_API_KEY}"`,
+//       },
+//     });
 
-    for (const testCase of GITHUB_TEST_CASES) {
-      console.log(testCase.input);
-      const handshakeResponse = await network.use(new oAddress('o://leader'), {
-        method: 'intent',
-        params: {
-          intent: testCase.input,
-        },
-      });
-      console.log(
-        `Finished with ${handshakeResponse.result.data.cycles} cycles`,
-      );
-      console.log(handshakeResponse.result.data);
-      // const result = await testCase.output;
-      // expect(result).to.contain(testCase.output.contains);
-    }
-  }, 300_000);
-});
+//     for (const testCase of GITHUB_TEST_CASES) {
+//       console.log(testCase.input);
+//       const handshakeResponse = await network.use(new oAddress('o://leader'), {
+//         method: 'intent',
+//         params: {
+//           intent: testCase.input,
+//         },
+//       });
+//       console.log(
+//         `Finished with ${handshakeResponse.result.data.cycles} cycles`,
+//       );
+//       console.log(handshakeResponse.result.data);
+//       // const result = await testCase.output;
+//       // expect(result).to.contain(testCase.output.contains);
+//     }
+//   }, 300_000);
+// });
 
 describe('basic-usage @stop-network', async () => {
   it('should be able to stop the network', async () => {
