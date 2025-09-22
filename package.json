@@ -39,6 +39,9 @@
   "author": "Olane Inc.",
   "license": "ISC",
   "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",

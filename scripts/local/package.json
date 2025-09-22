@@ -1,0 +1,43 @@
+{
+  "name": "@olane/local-workspace",
+  "version": "0.6.9",
+  "type": "module",
+  "private": true,
+  "description": "Local development workspace for Olane ecosystem testing",
+  "workspaces": [
+    "../packages/*",
+    "../../o-network-cli"
+  ],
+  "scripts": {
+    "build:all": "tsx ../scripts/release.ts --skip-tests --dry-run=false",
+    "build:parallel": "tsx ../scripts/release.ts --skip-tests --parallel --dry-run=false",
+    "build:dry-run": "tsx ../scripts/release.ts --skip-tests --dry-run",
+    "test:all": "npm run test --workspaces --if-present",
+    "test:network": "npm run test --workspace=@olane/o-network",
+    "test:cli": "npm run test --workspace=@olane/o-cli",
+    "clean:all": "npm run clean --workspaces --if-present",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json && npm run deep:clean --workspaces --if-present",
+    "dev:network": "npm run dev --workspace=@olane/o-network",
+    "dev:cli": "npm run dev --workspace=@olane/o-cli",
+    "watch:all": "npm run watch --workspaces --if-present",
+    "lint:all": "npm run lint --workspaces --if-present",
+    "install:all": "npm install",
+    "link:all": "npm install --workspaces",
+    "setup": "npm run install:all && npm run build:all",
+    "dev:setup": "npm run clean:all && npm run setup",
+    "setup:workspace": "tsx setup-workspace-deps.ts && npm install",
+    "restore:deps": "tsx restore-original-deps.ts",
+    "dev:build": "tsx ../scripts/dev-release.ts build",
+    "dev:test": "tsx ../scripts/dev-release.ts test",
+    "dev:watch": "tsx ../scripts/dev-release.ts watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olane-labs/olane.git"
+  },
+  "author": "Olane Inc.",
+  "license": "ISC",
+  "devDependencies": {
+    "tsx": "^4.20.3"
+  }
+}
