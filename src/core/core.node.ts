@@ -258,7 +258,7 @@ export abstract class oCoreNode {
 
     // if there is an error, throw it to continue to bubble up
     if (response.result.error) {
-      console.log(
+      this.logger.error(
         'response.result.error',
         JSON.stringify(response.result.error, null, 2),
       );
