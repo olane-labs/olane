@@ -125,15 +125,18 @@ jobs:
           # npm run lint
           # npm test
 
-  build-and-publish:
+  # Build all packages and store artifacts
+  build-packages:
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     environment: release
 
     permissions:
-      contents: write
+      contents: read
       id-token: write
-      pull-requests: write
+
+    outputs:
+      version-suffix: ${{ steps.version-info.outputs.suffix }}
 
     steps:
       - uses: actions/checkout@v4
@@ -142,6 +145,10 @@ jobs:
           node-version: 22
           cache: npm
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Generate version suffix
+        id: version-info
+        run: echo "suffix=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
 
       # Build and test all packages sequentially
       - name: Install root dependencies
@@ -248,14 +255,39 @@ jobs:
           npm run build
           # npm run lint
           # npm test
-      
 
-      - name: Config Git author
-        run: |
-          git config --global user.email "bot@olane.com"
-          git config --global user.name "Automated Release"
+      # Store the entire workspace as an artifact for publish jobs
+      - name: Upload workspace artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-workspace
+          path: |
+            .
+            !node_modules
+            !**/node_modules
+          retention-days: 1
 
-      # Publish packages in dependency order
+  # Core packages (no dependencies)
+  publish-o-config:
+    needs: build-packages
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Publish o-config
         working-directory: packages/o-config
         run: |
@@ -263,6 +295,26 @@ jobs:
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-o-protocol:
+    needs: build-packages
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish o-protocol
         working-directory: packages/o-protocol
@@ -272,6 +324,26 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-o-core:
+    needs: build-packages
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Publish root package (o-core)
         run: |
           npm version patch --no-git-tag-version
@@ -279,8 +351,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Tier 1 packages (depend on core packages)
+  publish-o-tool:
+    needs: [publish-o-config, publish-o-protocol, publish-o-core]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-tool dependencies and rebuild
         working-directory: packages/o-tool
@@ -297,8 +390,28 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-o-gateway-interface:
+    needs: [publish-o-config, publish-o-protocol, publish-o-core, publish-o-tool]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-gateway-interface dependencies and rebuild
         working-directory: packages/o-gateway-interface
@@ -315,8 +428,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Tier 2 packages (depend on tier 1)
+  publish-o-agent:
+    needs: [publish-o-tool]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-agent dependencies and rebuild
         working-directory: packages/o-agent
@@ -333,6 +467,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-o-intelligence:
+    needs: [publish-o-tool]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Wait for registry propagation
+        run: sleep 10
+
       - name: Update o-intelligence dependencies and rebuild
         working-directory: packages/o-intelligence
         run: |
@@ -347,6 +504,29 @@ jobs:
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-o-storage:
+    needs: [publish-o-tool]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Wait for registry propagation
+        run: sleep 10
 
       - name: Update o-storage dependencies and rebuild
         working-directory: packages/o-storage
@@ -363,9 +543,28 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      
+  publish-o-tools-common:
+    needs: [publish-o-tool]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-tools-common dependencies and rebuild
         working-directory: packages/o-tools-common
@@ -382,8 +581,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Tier 3 packages (depend on tier 2)
+  publish-o-leader:
+    needs: [publish-o-tool-registry]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-leader dependencies and rebuild
         working-directory: packages/o-leader
@@ -400,6 +620,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-o-mcp:
+    needs: [publish-o-leader]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Wait for registry propagation
+        run: sleep 10
+
       - name: Update o-mcp dependencies and rebuild
         working-directory: packages/o-mcp
         run: |
@@ -415,8 +658,28 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-o-tool-registry:
+    needs: [publish-o-tools-common]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-tool-registry dependencies and rebuild
         working-directory: packages/o-tool-registry
@@ -433,8 +696,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Final tier
+  publish-o-network:
+    needs: [publish-o-intelligence, publish-o-leader, publish-o-tool-registry]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Wait for registry propagation
-        run: sleep 5
+        run: sleep 10
 
       - name: Update o-network dependencies and rebuild
         working-directory: packages/o-network
@@ -451,11 +735,29 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push version changes and create PR
+  # Final job to handle version changes and PR creation
+  finalize-release:
+    needs: [publish-o-network]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Download workspace artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-workspace
+
+      - name: Config Git author
         run: |
           git config --global user.email "bot@olane.com"
           git config --global user.name "Automated Release"
-          BRANCH_NAME="version-change-$(date +%Y%m%d-%H%M%S)"
+
+      - name: Push version changes and create PR
+        run: |
+          BRANCH_NAME="version-change-${{ needs.build-packages.outputs.version-suffix }}"
           git checkout -b $BRANCH_NAME
           git add .
           git commit -m "version changes"
