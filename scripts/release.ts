@@ -29,6 +29,7 @@ class ReleaseManager {
   private packages: Map<string, PackageInfo> = new Map();
   private dependencyGraph: Map<string, string[]> = new Map();
   private buildOrder: string[] = [];
+  private originalVersion: string = '';
 
   constructor(private options: ReleaseOptions = {}) {}
 
@@ -57,6 +58,13 @@ class ReleaseManager {
       for (const dir of packageDirs) {
         this.addPackage(join(packagesDir, dir), dir);
       }
+    }
+
+    // Store original version from root package before any bumping
+    const rootPackage = this.packages.get('@olane/o-core');
+    if (rootPackage) {
+      this.originalVersion = rootPackage.version;
+      console.log(`📌 Original version: ${this.originalVersion}`);
     }
 
     console.log(`📦 Found ${this.packages.size} packages`);
@@ -382,13 +390,16 @@ class ReleaseManager {
     }
 
     console.log('📝 Creating git release...');
-
+    // clear the packages
+    this.packages.clear();
+    this.discoverPackages();
     const rootPackage = this.packages.get('@olane/o-core');
     if (!rootPackage) throw new Error('Root package not found');
 
-    const version = rootPackage.packageJson.version;
+    const newVersion = rootPackage.packageJson.version; // Version after bump
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const branchName = `release/v${version}-${timestamp}`;
+    // Use new version for branch name, commit, and tag
+    const branchName = `release/v${newVersion}-${timestamp}`;
 
     try {
       execSync('git add .', { cwd: ROOT_DIR, stdio: 'inherit' });
@@ -396,14 +407,14 @@ class ReleaseManager {
         cwd: ROOT_DIR,
         stdio: 'inherit',
       });
-      execSync(`git commit -m "Release v${version}"`, {
+      execSync(`git commit -m "Release v${newVersion}"`, {
         cwd: ROOT_DIR,
         stdio: 'inherit',
       });
-      execSync(`git tag v${version}`, { cwd: ROOT_DIR, stdio: 'inherit' });
+      execSync(`git tag v${newVersion}`, { cwd: ROOT_DIR, stdio: 'inherit' });
 
       console.log(`✅ Created release branch: ${branchName}`);
-      console.log(`✅ Created tag: v${version}`);
+      console.log(`✅ Created tag: v${newVersion}`);
     } catch (error) {
       console.error('❌ Git operations failed:', error);
       throw error;
