@@ -328,7 +328,10 @@ export class IntelligenceTool extends oVirtualTool {
     if (hostingProvider === HostModelProvider.OLANE) {
       const response = await this.use(
         new oAddress(options.address, [
-          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+          multiaddr(
+            process.env.OLANE_ADDRESS ||
+              '/dns4/leader.olane.com/tcp/4000/tls/ws',
+          ),
         ]),
         {
           method: 'completion',
@@ -359,7 +362,10 @@ export class IntelligenceTool extends oVirtualTool {
       this.logger.debug('Forwarding to olane sub-tool: ', address);
       const response = await this.use(
         new oAddress(address, [
-          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+          multiaddr(
+            process.env.OLANE_ADDRESS ||
+              '/dns4/leader.olane.com/tcp/4000/tls/ws',
+          ),
         ]),
         {
           method: payload.method,
