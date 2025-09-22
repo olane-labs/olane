@@ -100,6 +100,7 @@ interface AnthropicListModelsResponse {
 
 export class AnthropicIntelligenceTool extends oVirtualTool {
   private defaultModel = 'claude-sonnet-4-20250514';
+  private apiKey: string = process.env.ANTHROPIC_API_KEY || '';
 
   constructor(config: oToolConfig) {
     super({
@@ -123,7 +124,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
         messages,
         system,
         max_tokens = 1000,
-        apiKey,
+        apiKey = this.apiKey,
       } = params;
 
       if (!apiKey) {
@@ -195,7 +196,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
         prompt,
         system,
         max_tokens = 1000,
-        apiKey,
+        apiKey = this.apiKey,
         ...options
       } = params;
 
@@ -272,7 +273,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
   async _tool_list_models(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {
@@ -319,7 +320,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
   async _tool_model_info(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, apiKey } = params;
+      const { model = this.defaultModel, apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {
@@ -374,7 +375,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
   async _tool_status(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {

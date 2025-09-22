@@ -13,6 +13,7 @@ import { LLMProviders } from './enums/llm-providers.enum.js';
 import { ConfigureRequest } from './interfaces/configure.request.js';
 import { HostModelProvider } from './enums/host-model-provider.enum.js';
 import { multiaddr } from '@olane/o-config';
+import { PromptRequest } from './interfaces/prompt.request.js';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
@@ -123,26 +124,31 @@ export class IntelligenceTool extends oVirtualTool {
 
     // no preference found, ask the human
     this.logger.info('Asking human for model selection...');
-    const modelResponse = await this.use(new oAddress('o://human'), {
-      method: 'question',
-      params: {
-        question:
-          'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
-      },
-    });
+    try {
+      const modelResponse = await this.use(new oAddress('o://human'), {
+        method: 'question',
+        params: {
+          question:
+            'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
+        },
+      });
 
-    // process the human response
-    const { answer: modelHuman } = modelResponse.result.data as {
-      answer: string;
-    };
-    model = modelHuman.toLowerCase() as LLMProviders;
-    await this.use(new oAddress('o://secure'), {
-      method: 'put',
-      params: {
-        key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
-        value: model,
-      },
-    });
+      // process the human response
+      const { answer: modelHuman } = modelResponse.result.data as {
+        answer: string;
+      };
+      model = modelHuman.toLowerCase() as LLMProviders;
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+          value: model,
+        },
+      });
+    } catch (error) {
+      this.logger.warn('Defaulting to anthropic');
+      model = LLMProviders.ANTHROPIC;
+    }
 
     return {
       provider: model as LLMProviders,
@@ -252,36 +258,18 @@ export class IntelligenceTool extends oVirtualTool {
     };
   }
 
-  async chooseIntelligence(
-    request: oRequest,
-  ): Promise<{
+  async chooseIntelligence(request: PromptRequest): Promise<{
     choice: oAddress;
     apiKey: string;
     options: any;
-    method: string;
   }> {
     // check to see if anthropic key is in vault
-    const { provider: hostingProvider, options } =
-      await this.getHostingProvider();
-    if (hostingProvider === HostModelProvider.OLANE) {
-      return {
-        choice: new oAddress(options.address, [
-          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
-        ]),
-        apiKey: '',
-        options: {
-          token: options.token,
-        },
-        method: 'prompt',
-      };
-    }
     const { provider } = await this.getModelProvider();
     const { apiKey } = await this.getProviderApiKey(provider);
     return {
       choice: new oAddress(`o://${provider}`),
       apiKey,
       options: {},
-      method: 'completion',
     };
   }
 
@@ -329,13 +317,50 @@ export class IntelligenceTool extends oVirtualTool {
     };
   }
 
-  // we cannot wrap this tool use in a plan because it is a core dependency in all planning
-  async _tool_prompt(request: oRequest): Promise<ToolResult> {
+  async attemptUseOlaneIntelligence(
+    request: PromptRequest,
+  ): Promise<ToolResult | null> {
     const { prompt } = request.params;
+    const { provider: hostingProvider, options } =
+      await this.getHostingProvider();
+
+    // forward to olane
+    if (hostingProvider === HostModelProvider.OLANE) {
+      const response = await this.use(
+        new oAddress(options.address, [
+          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+        ]),
+        {
+          method: 'completion',
+          params: {
+            token: options.token,
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          },
+        },
+      );
+      return response.result.data as ToolResult;
+    }
+    return null;
+  }
+
+  // we cannot wrap this tool use in a plan because it is a core dependency in all planning
+  async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
+    const { prompt } = request.params;
+
+    // attempt to forward to a remote intelligence tool
+    const olaneResult = await this.attemptUseOlaneIntelligence(request);
+    if (olaneResult) {
+      return olaneResult;
+    }
+
     const intelligence = await this.chooseIntelligence(request);
-    this.logger.debug('Using AI provider: ', intelligence.choice);
     const response = await this.use(intelligence.choice, {
-      method: intelligence.method,
+      method: 'completion',
       params: {
         apiKey: intelligence.apiKey,
         messages: [

@@ -113,7 +113,7 @@ interface GeminiListModelsResponse {
 }
 
 export class GeminiIntelligenceTool extends oVirtualTool {
-  private apiKey!: string;
+  private apiKey: string = process.env.GEMINI_API_KEY || '';
   private baseUrl!: string;
   private defaultModel!: string;
 

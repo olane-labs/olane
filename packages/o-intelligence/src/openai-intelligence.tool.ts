@@ -119,6 +119,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   private baseUrl: string = 'https://api.openai.com/v1';
   private defaultModel: string = 'gpt-5-mini';
   private organization?: string;
+  private apiKey: string = process.env.OPENAI_API_KEY || '';
 
   constructor(config: oToolConfig) {
     super({
@@ -139,7 +140,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
       const {
         model = this.defaultModel,
         messages,
-        apiKey,
+        apiKey = this.apiKey,
         ...options
       } = params;
 
@@ -212,7 +213,12 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_generate(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, prompt, apiKey, ...options } = params;
+      const {
+        model = this.defaultModel,
+        prompt,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
 
       if (!apiKey) {
         return {
@@ -282,7 +288,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_list_models(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {
@@ -333,7 +339,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_model_info(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, apiKey } = params;
+      const { model = this.defaultModel, apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {
@@ -383,7 +389,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
   async _tool_status(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
 
       if (!apiKey) {
         return {
