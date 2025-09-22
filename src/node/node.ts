@@ -28,6 +28,7 @@ import { oPlanContext } from '../plan/plan.context.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
 import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';
+import { RouteRequest } from './interfaces/route.request.js';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -96,8 +97,8 @@ export abstract class oNode extends oCoreNode {
     return address.protocol.split('/').pop() || '';
   }
 
-  async _tool_route(request: oRequest & { stream: Stream }): Promise<any> {
-    const { payload }: any = request.params;
+  async _tool_route(request: RouteRequest): Promise<any> {
+    const { payload } = request.params;
 
     const { address } = request.params;
     this.logger.debug('Routing request to: ', address);
