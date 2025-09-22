@@ -6,6 +6,8 @@
  */
 
 import { createPackageManager } from '../shared/package-manager.ts';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 interface DevOptions {
   command: string;
@@ -14,7 +16,9 @@ interface DevOptions {
 }
 
 class DevReleaseManager {
-  private packageManager = createPackageManager(__dirname);
+  private packageManager = createPackageManager(
+    dirname(fileURLToPath(import.meta.url)),
+  );
   private packages: string[] = [];
 
   constructor(private options: DevOptions) {

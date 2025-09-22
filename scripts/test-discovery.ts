@@ -5,11 +5,15 @@
  */
 
 import { createPackageManager } from './shared/package-manager.ts';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 function testPackageDiscovery(): void {
   console.log('🧪 Testing Package Discovery...\n');
 
-  const packageManager = createPackageManager(__dirname);
+  const packageManager = createPackageManager(
+    dirname(fileURLToPath(import.meta.url)),
+  );
 
   // Discover packages
   packageManager.discoverPackages();

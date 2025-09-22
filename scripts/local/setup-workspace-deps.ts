@@ -6,6 +6,8 @@
  */
 
 import { createPackageManager } from '../shared/package-manager.ts';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 interface ConversionStats {
   packagesProcessed: number;
@@ -14,7 +16,9 @@ interface ConversionStats {
 }
 
 class WorkspaceDependencyConverter {
-  private packageManager = createPackageManager(__dirname);
+  private packageManager = createPackageManager(
+    dirname(fileURLToPath(import.meta.url)),
+  );
   private stats: ConversionStats = {
     packagesProcessed: 0,
     dependenciesConverted: 0,

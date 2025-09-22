@@ -2,6 +2,8 @@
 
 import { execSync } from 'child_process';
 import { createPackageManager } from '../shared/package-manager.ts';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 interface ReleaseOptions {
   skipTests?: boolean;
@@ -12,7 +14,9 @@ interface ReleaseOptions {
 }
 
 class ReleaseManager {
-  private packageManager = createPackageManager(__dirname);
+  private packageManager = createPackageManager(
+    dirname(fileURLToPath(import.meta.url)),
+  );
   private originalVersion: string = '';
 
   constructor(private options: ReleaseOptions = {}) {}

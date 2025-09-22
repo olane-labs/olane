@@ -6,6 +6,8 @@
  */
 
 import { createPackageManager } from '../shared/package-manager.ts';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 interface RestorationStats {
   packagesProcessed: number;
@@ -15,7 +17,9 @@ interface RestorationStats {
 }
 
 class DependencyRestorer {
-  private packageManager = createPackageManager(__dirname);
+  private packageManager = createPackageManager(
+    dirname(fileURLToPath(import.meta.url)),
+  );
   private stats: RestorationStats = {
     packagesProcessed: 0,
     packagesRestored: 0,
