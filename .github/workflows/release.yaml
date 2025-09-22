@@ -289,6 +289,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish o-config
+        continue-on-error: true
         working-directory: packages/o-config
         run: |
           npm i
@@ -320,6 +321,7 @@ jobs:
 
       - name: Publish o-protocol
         working-directory: packages/o-protocol
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -347,6 +349,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Publish root package (o-core)
+        continue-on-error: true
         run: |
           npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer
           npm run build
@@ -388,6 +391,7 @@ jobs:
 
       - name: Publish o-tool
         working-directory: packages/o-tool
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -426,6 +430,7 @@ jobs:
 
       - name: Publish o-gateway-interface
         working-directory: packages/o-gateway-interface
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -465,6 +470,7 @@ jobs:
 
       - name: Publish o-agent
         working-directory: packages/o-agent
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -503,6 +509,7 @@ jobs:
 
       - name: Publish o-intelligence
         working-directory: packages/o-intelligence
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -541,6 +548,7 @@ jobs:
 
       - name: Publish o-storage
         working-directory: packages/o-storage
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -579,6 +587,7 @@ jobs:
 
       - name: Publish o-tools-common
         working-directory: packages/o-tools-common
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -618,6 +627,7 @@ jobs:
 
       - name: Publish o-leader
         working-directory: packages/o-leader
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -656,6 +666,7 @@ jobs:
 
       - name: Publish o-mcp
         working-directory: packages/o-mcp
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -694,6 +705,7 @@ jobs:
 
       - name: Publish o-tool-registry
         working-directory: packages/o-tool-registry
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -733,6 +745,7 @@ jobs:
 
       - name: Publish o-network
         working-directory: packages/o-network
+        continue-on-error: true
         run: |
           npm version patch --no-git-tag-version
           npm publish --access public
