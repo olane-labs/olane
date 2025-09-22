@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-mcp",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -55,12 +55,12 @@
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "@olane/o-config": "^0.6.4",
-    "@olane/o-core": "^0.6.4",
+    "@olane/o-config": "^0.6.5",
+    "@olane/o-core": "^0.6.5",
     "@olane/o-intelligence": "^0.6.4",
-    "@olane/o-leader": "^0.6.4",
-    "@olane/o-protocol": "^0.6.4",
-    "@olane/o-tool": "^0.6.4"
+    "@olane/o-leader": "^0.6.6",
+    "@olane/o-protocol": "^0.6.5",
+    "@olane/o-tool": "^0.6.5"
   },
   "dependencies": {
     "debug": "^4.4.1",
