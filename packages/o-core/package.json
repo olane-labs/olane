@@ -1,5 +1,5 @@
 {
-  "name": "@olane/o-storage",
+  "name": "@olane/o-core",
   "version": "0.6.10",
   "type": "module",
   "main": "dist/src/index.js",
@@ -19,29 +19,32 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
-    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
-    "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
+    "build": "tsc",
     "start:prod": "node dist/index.js",
-    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "prepublishOnly": "npm run build",
-    "update:lib": "npm install @olane/o-core@latest",
-    "lint": "eslint src/**/*.ts"
+    "lint": "aegir lint",
+    "release": "cd scripts/release && npm run release",
+    "release:dry-run": "cd scripts/release && npm run release:dry-run",
+    "release:parallel": "cd scripts/release && npm run release:parallel",
+    "release:minor": "cd scripts/release && npm run release:minor",
+    "release:major": "cd scripts/release && npm run release:major"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/olane.git"
   },
-  "author": "oLane Inc.",
+  "author": "Olane Inc.",
   "license": "ISC",
-  "description": "oLane storage tool",
+  "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-intelligence": "^0.6.10",
-    "@olane/o-leader": "^0.6.10",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "aegir": "^47.0.21",
@@ -55,16 +58,16 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
-    "typescript": "5.4.5"
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "@olane/o-config": "^0.6.9",
-    "@olane/o-core": "^0.6.9",
-    "@olane/o-protocol": "^0.6.9",
-    "@olane/o-tool": "^0.6.9"
+    "@olane/o-protocol": "^0.6.9"
   },
   "dependencies": {
+    "chalk": "^5.4.1",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "multiformats": "^13.3.7"
   }
 }

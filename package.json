@@ -1,31 +1,28 @@
 {
-  "name": "@olane/o-core",
+  "name": "@olane/o-root",
   "version": "0.6.10",
-  "type": "module",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
-    }
-  },
+  "homepage": "https://olane.com",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "files": [
     "dist/**/*",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "aegir test",
-    "test:node": "aegir test -t node",
-    "test:browser": "aegir test -t browser",
-    "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "test": "npm run test --workspaces",
+    "test:node": "npm run test:node --workspaces",
+    "test:browser": "npm run test:browser --workspaces",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces --if-present",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json && npm run deep:clean --workspaces --if-present",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
-    "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "lint": "aegir lint",
     "release": "cd scripts/release && npm run release",
     "release:dry-run": "cd scripts/release && npm run release:dry-run",
     "release:parallel": "cd scripts/release && npm run release:parallel",
@@ -34,14 +31,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/olane-labs/olane.git"
+    "url": "https://github.com/olane-labs/olane.git"
   },
   "author": "Olane Inc.",
   "license": "ISC",
   "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
@@ -62,10 +56,6 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
-  },
-  "peerDependencies": {
-    "@olane/o-config": "^0.6.9",
-    "@olane/o-protocol": "^0.6.9"
   },
   "dependencies": {
     "chalk": "^5.4.1",

@@ -125,12 +125,9 @@ export abstract class oNode extends oCoreNode {
       this.logger.debug(
         'Bridge transports supported, applying custom transports...',
       );
-      try {
-        // attempt to resolve with bridge transports
-        return this.applyBridgeTransports(nextHopAddress, forwardRequest);
-      } catch (error: any) {
-        this.logger.error('Failed to apply bridge transports: ', error.message);
-      }
+      this.logger.debug('Next hop address: BRENDON!');
+      // attempt to resolve with bridge transports
+      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
     }
 
     // assume the next hop is a libp2p address, so we need to set the transports and dial it
