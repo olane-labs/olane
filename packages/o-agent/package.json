@@ -16,7 +16,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo 'No tests'",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
@@ -39,6 +41,7 @@
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
+    "aegir": "^47.0.21",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
     "eslint-plugin-prettier": "^5.5.0",
