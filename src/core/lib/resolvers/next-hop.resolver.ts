@@ -9,7 +9,7 @@ export class NextHopResolver extends oAddressResolver {
     try {
       this.logger.debug('Finding node for address: ', address.toString());
       const { transports } = await NetworkUtils.findNode(this.p2pNode, address);
-      this.logger.debug('Found node for address: ', address.toString());
+      this.logger.debug('Found node for address: ', transports);
       return transports;
     } catch (e) {
       this.logger.warn('No providers found', e);

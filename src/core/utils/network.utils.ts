@@ -1,5 +1,6 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
 import { oAddress } from '../o-address.js';
+import { Logger } from '../index.js';
 
 export class NetworkUtils {
   public static async findNode(
@@ -10,6 +11,7 @@ export class NetworkUtils {
     staticAddress: string;
     absoluteAddress: string;
   }> {
+    const logger = new Logger(this.constructor.name);
     const cid = await address.toCID();
     const providers = await (p2pNode.services as any).dht.findProviders(cid);
     const timeoutPromise = new Promise((_, reject) =>
@@ -38,6 +40,7 @@ export class NetworkUtils {
       }
       // let's translate the peerId to a multiaddr
       const result = await p2pNode.peerRouting.findPeer(value.peer);
+      logger.debug('Found node:', result);
       return {
         transports: result.multiaddrs,
         staticAddress: '',

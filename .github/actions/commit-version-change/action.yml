@@ -1,0 +1,30 @@
+name: 'Commit Version Change'
+description: 'Commits package version changes to the version branch'
+inputs:
+  package-path:
+    description: 'Path to the package.json file to commit'
+    required: true
+  commit-message:
+    description: 'Commit message'
+    required: true
+  branch-name:
+    description: 'Name of the branch to commit to'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Git
+      shell: bash
+      run: |
+        git config --global user.email "bot@olane.com"
+        git config --global user.name "Automated Release"
+
+    - name: Commit version change to branch
+      shell: bash
+      run: |
+        git fetch origin ${{ inputs.branch-name }}
+        git checkout ${{ inputs.branch-name }}
+        git add ${{ inputs.package-path }}
+        git commit -m "${{ inputs.commit-message }}" || echo "No changes to commit"
+        git push origin ${{ inputs.branch-name }}

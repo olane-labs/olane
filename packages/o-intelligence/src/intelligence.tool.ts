@@ -348,6 +348,33 @@ export class IntelligenceTool extends oVirtualTool {
     return null;
   }
 
+  async _tool_route(request: any): Promise<ToolResult> {
+    const { provider: hostingProvider, options } =
+      await this.getHostingProvider();
+
+    const { address, payload } = request.params;
+
+    // forward to olane sub-tool
+    if (hostingProvider === HostModelProvider.OLANE) {
+      this.logger.debug('Forwarding to olane sub-tool: ', address);
+      const response = await this.use(
+        new oAddress(address, [
+          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+        ]),
+        {
+          method: payload.method,
+          params: {
+            ...payload.params,
+            token: options.token,
+          },
+        },
+      );
+      return response.result.data as ToolResult;
+    }
+
+    return super._tool_route(request);
+  }
+
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
     const { prompt } = request.params;

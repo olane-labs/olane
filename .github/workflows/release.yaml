@@ -125,8 +125,45 @@ jobs:
           # npm run lint
           # npm test
 
+  # Create branch for version changes
+  create-version-branch:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    environment: release
+
+    permissions:
+      contents: write
+
+    outputs:
+      branch-name: ${{ steps.branch-info.outputs.name }}
+      version-suffix: ${{ steps.version-info.outputs.suffix }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CLASSIC_GITHUB_TOKEN }}
+
+      - name: Generate version suffix and branch name
+        id: version-info
+        run: echo "suffix=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Set branch name
+        id: branch-info
+        run: echo "name=version-change-${{ steps.version-info.outputs.suffix }}" >> $GITHUB_OUTPUT
+
+      - name: Config Git author
+        run: |
+          git config --global user.email "bot@olane.com"
+          git config --global user.name "Automated Release"
+
+      - name: Create and push version branch
+        run: |
+          git checkout -b ${{ steps.branch-info.outputs.name }}
+          git push origin ${{ steps.branch-info.outputs.name }}
+
   # Build all packages and store artifacts
   build-packages:
+    needs: create-version-branch
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     environment: release
@@ -136,7 +173,7 @@ jobs:
       id-token: write
 
     outputs:
-      version-suffix: ${{ steps.version-info.outputs.suffix }}
+      version-suffix: ${{ needs.create-version-branch.outputs.version-suffix }}
 
     steps:
       - uses: actions/checkout@v4
@@ -269,11 +306,11 @@ jobs:
 
   # Core packages (no dependencies)
   publish-o-config:
-    needs: build-packages
+    needs: [build-packages, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -299,12 +336,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-config/package.json
+          commit-message: "Update o-config version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-protocol:
-    needs: build-packages
+    needs: [build-packages, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -328,12 +372,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-protocol/package.json
+          commit-message: "Update o-protocol version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-core:
-    needs: build-packages
+    needs: [build-packages, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -359,13 +410,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: package.json
+          commit-message: "Update o-core version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   # Tier 1 packages (depend on core packages)
   publish-o-tool:
-    needs: [publish-o-config, publish-o-protocol, publish-o-core]
+    needs: [publish-o-config, publish-o-protocol, publish-o-core, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -400,12 +458,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-tool/package.json
+          commit-message: "Update o-tool version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-gateway-interface:
-    needs: [publish-o-config, publish-o-protocol, publish-o-core, publish-o-tool]
+    needs: [publish-o-config, publish-o-protocol, publish-o-core, publish-o-tool, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -440,13 +505,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-gateway-interface/package.json
+          commit-message: "Update o-gateway-interface version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   # Tier 2 packages (depend on tier 1)
   publish-o-agent:
-    needs: [publish-o-tool]
+    needs: [publish-o-tool, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -481,12 +553,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-agent/package.json
+          commit-message: "Update o-agent version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-intelligence:
-    needs: [publish-o-tool]
+    needs: [publish-o-tool, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -521,12 +600,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-intelligence/package.json
+          commit-message: "Update o-intelligence version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-storage:
-    needs: [publish-o-tool]
+    needs: [publish-o-tool, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -561,12 +647,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-storage/package.json
+          commit-message: "Update o-storage version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-tools-common:
-    needs: [publish-o-tool]
+    needs: [publish-o-tool, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -601,13 +694,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-tools-common/package.json
+          commit-message: "Update o-tools-common version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   # Tier 3 packages (depend on tier 2)
   publish-o-leader:
-    needs: [publish-o-tool-registry]
+    needs: [publish-o-tool-registry, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -642,12 +742,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-leader/package.json
+          commit-message: "Update o-leader version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-mcp:
-    needs: [publish-o-leader]
+    needs: [publish-o-leader, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -682,12 +789,19 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-mcp/package.json
+          commit-message: "Update o-mcp version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   publish-o-tool-registry:
-    needs: [publish-o-tools-common]
+    needs: [publish-o-tools-common, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -722,13 +836,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-tool-registry/package.json
+          commit-message: "Update o-tool-registry version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   # Final tier
   publish-o-network:
-    needs: [publish-o-intelligence, publish-o-leader, publish-o-tool-registry]
+    needs: [publish-o-intelligence, publish-o-leader, publish-o-tool-registry, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -763,9 +884,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit version change
+        uses: ./.github/actions/commit-version-change
+        with:
+          package-path: packages/o-network/package.json
+          commit-message: "Update o-network version"
+          branch-name: ${{ needs.create-version-branch.outputs.branch-name }}
+
   # Final job to handle version changes and PR creation
   finalize-release:
-    needs: [publish-o-network]
+    needs: [publish-o-network, create-version-branch]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -773,25 +901,20 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Download workspace artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: built-workspace
+          token: ${{ secrets.CLASSIC_GITHUB_TOKEN }}
 
       - name: Config Git author
         run: |
           git config --global user.email "bot@olane.com"
           git config --global user.name "Automated Release"
 
-      - name: Push version changes and create PR
+      - name: Create PR from version branch
         run: |
-          BRANCH_NAME="version-change-${{ needs.build-packages.outputs.version-suffix }}"
-          git checkout -b $BRANCH_NAME
-          git add .
-          git commit -m "version changes"
-          git push origin $BRANCH_NAME
+          BRANCH_NAME="${{ needs.create-version-branch.outputs.branch-name }}"
           
-          # Create draft PR
+          # Create draft PR from the existing branch
           gh pr create \
             --title "Automated Version Update - $(date +%Y-%m-%d)" \
             --body "This PR contains automated version updates from the release workflow." \
