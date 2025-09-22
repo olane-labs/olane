@@ -10,6 +10,9 @@ import { GrokIntelligenceTool } from './grok-intelligence.tool.js';
 import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
 import { IntelligenceStorageKeys } from './enums/intelligence-storage-keys.enum.js';
 import { LLMProviders } from './enums/llm-providers.enum.js';
+import { ConfigureRequest } from './interfaces/configure.request.js';
+import { HostModelProvider } from './enums/host-model-provider.enum.js';
+import { multiaddr } from '@olane/o-config';
 
 export class IntelligenceTool extends oVirtualTool {
   private roundRobinIndex = 0;
@@ -71,6 +74,25 @@ export class IntelligenceTool extends oVirtualTool {
     );
   }
 
+  async getSecureValue(key: string): Promise<string | null> {
+    try {
+      const response = await this.use(new oAddress('o://secure'), {
+        method: 'get',
+        params: {
+          key: key,
+        },
+      });
+      const payload = response.result.data as ToolResult;
+      if (payload && payload.value) {
+        return payload.value as string;
+      }
+      return null;
+    } catch (error) {
+      this.logger.error('Error getting secure value: ', error);
+      return null;
+    }
+  }
+
   async getModelProvider(): Promise<{ provider: LLMProviders }> {
     // check ENV vars for override
     if (process.env.MODEL_PROVIDER_CHOICE) {
@@ -89,44 +111,38 @@ export class IntelligenceTool extends oVirtualTool {
     }
     let model = LLMProviders.ANTHROPIC;
     // check secure storage for preference
+    const modelProviderStored = await this.getSecureValue(
+      IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+    );
+    if (modelProviderStored) {
+      model = modelProviderStored as LLMProviders;
+      return {
+        provider: model,
+      };
+    }
+
+    // no preference found, ask the human
+    this.logger.info('Asking human for model selection...');
+    const modelResponse = await this.use(new oAddress('o://human'), {
+      method: 'question',
+      params: {
+        question:
+          'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
+      },
+    });
+
+    // process the human response
+    const { answer: modelHuman } = modelResponse.result.data as {
+      answer: string;
+    };
+    model = modelHuman.toLowerCase() as LLMProviders;
     await this.use(new oAddress('o://secure'), {
-      method: 'get',
+      method: 'put',
       params: {
         key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+        value: model,
       },
-    })
-      .then((config: oResponse) => {
-        const payload = config.result.data as ToolResult;
-        if (payload && payload.value) {
-          const modelProvider = payload.value as string;
-          model = modelProvider as LLMProviders;
-        }
-      })
-      .catch(async (err: Error) => {
-        this.logger.error('Error getting model provider preference: ', err);
-        // we need to ask the human for the model provider
-        this.logger.info('Asking human for model selection...');
-        const modelResponse = await this.use(new oAddress('o://human'), {
-          method: 'question',
-          params: {
-            question:
-              'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
-          },
-        });
-
-        // process the human response
-        const { answer: modelHuman } = modelResponse.result.data as {
-          answer: string;
-        };
-        model = modelHuman.toLowerCase() as LLMProviders;
-        await this.use(new oAddress('o://secure'), {
-          method: 'put',
-          params: {
-            key: IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
-            value: model,
-          },
-        });
-      });
+    });
 
     return {
       provider: model as LLMProviders,
@@ -170,53 +186,139 @@ export class IntelligenceTool extends oVirtualTool {
     }
     let apiKey = '';
     // check secure storage 2nd
+    const apiKeyStored = await this.getSecureValue(
+      `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
+    );
+    if (apiKeyStored) {
+      return {
+        apiKey: apiKeyStored,
+      };
+    }
+
+    // no preference found, ask the human
+    this.logger.info('Asking human for API key...');
+    const keyResponse = await this.use(new oAddress('o://human'), {
+      method: 'question',
+      params: {
+        question: `What is the API key for the ${provider} model?`,
+      },
+    });
+
+    // process the human response
+    const { answer: key } = keyResponse.result.data as { answer: string };
+    apiKey = key;
     await this.use(new oAddress('o://secure'), {
-      method: 'get',
+      method: 'put',
       params: {
         key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
+        value: key,
       },
-    })
-      .then((config: oResponse) => {
-        const payload = config.result.data as ToolResult;
-        if (payload && payload.value) {
-          const apiKeyStored = payload.value as string;
-          apiKey = apiKeyStored;
-        }
-      })
-      .catch(async (err: Error) => {
-        // we need to ask the human for the api key
-        const keyResponse = await this.use(new oAddress('o://human'), {
-          method: 'question',
-          params: {
-            question: `What is the API key for the ${provider} model?`,
-          },
-        });
-
-        // process the human response
-        const { answer: key } = keyResponse.result.data as { answer: string };
-        apiKey = key;
-        await this.use(new oAddress('o://secure'), {
-          method: 'put',
-          params: {
-            key: `${provider}-${IntelligenceStorageKeys.API_KEY_SUFFIX}`,
-            value: key,
-          },
-        });
-      });
+    });
     return {
       apiKey: apiKey,
+    };
+  }
+  async getHostingProvider(): Promise<{
+    provider: HostModelProvider;
+    options: any;
+  }> {
+    let provider = HostModelProvider.LOCAL;
+    const hostingProviderStored = await this.getSecureValue(
+      IntelligenceStorageKeys.HOSTING_PROVIDER_PREFERENCE,
+    );
+    if (hostingProviderStored) {
+      provider = hostingProviderStored as HostModelProvider;
+    }
+    let token = null;
+    const accessTokenStored = await this.getSecureValue(
+      IntelligenceStorageKeys.ACCESS_TOKEN,
+    );
+    if (accessTokenStored) {
+      token = accessTokenStored;
+    }
+    const addressStored = await this.getSecureValue(
+      IntelligenceStorageKeys.OLANE_ADDRESS,
+    );
+    let address = 'o://leader/auth/intelligence';
+    if (addressStored) {
+      address = addressStored as string;
+    }
+    return {
+      provider: provider,
+      options: {
+        token: token,
+        address: address,
+      },
     };
   }
 
   async chooseIntelligence(
     request: oRequest,
-  ): Promise<{ choice: oAddress; apiKey: string }> {
+  ): Promise<{ choice: oAddress; apiKey: string; options: any }> {
     // check to see if anthropic key is in vault
+    const { provider: hostingProvider, options } =
+      await this.getHostingProvider();
+    if (hostingProvider === HostModelProvider.OLANE) {
+      return {
+        choice: new oAddress(options.address, [
+          multiaddr('/dns4/leader.olane.com/tcp/4000/tls/ws'),
+        ]),
+        apiKey: '',
+        options: {
+          token: options.token,
+        },
+      };
+    }
     const { provider } = await this.getModelProvider();
     const { apiKey } = await this.getProviderApiKey(provider);
     return {
       choice: new oAddress(`o://${provider}`),
       apiKey,
+      options: {},
+    };
+  }
+
+  async _tool_configure(request: ConfigureRequest): Promise<ToolResult> {
+    const { modelProvider, hostingProvider, accessToken, address } =
+      request.params;
+    if (hostingProvider) {
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: `${IntelligenceStorageKeys.HOSTING_PROVIDER_PREFERENCE}`,
+          value: hostingProvider,
+        },
+      });
+    }
+    if (accessToken) {
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: `${IntelligenceStorageKeys.ACCESS_TOKEN}`,
+          value: accessToken,
+        },
+      });
+    }
+    if (address) {
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: `${IntelligenceStorageKeys.OLANE_ADDRESS}`,
+          value: address,
+        },
+      });
+    }
+    if (modelProvider) {
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: `${IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE}`,
+          value: modelProvider,
+        },
+      });
+    }
+    return {
+      success: true,
     };
   }
 

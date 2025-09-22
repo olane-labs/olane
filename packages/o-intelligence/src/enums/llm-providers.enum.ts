@@ -4,4 +4,5 @@ export enum LLMProviders {
   OLLAMA = 'ollama',
   PERPLEXITY = 'perplexity',
   GROK = 'grok',
+  OLANE = 'olane',
 }
