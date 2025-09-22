@@ -12,12 +12,14 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
         value: 'string',
         description:
           'The model provider to use (anthropic, openai, ollama, perplexity, grok, olane)',
+        required: false,
       },
       {
         name: 'hostingProvider',
         type: 'string',
         value: 'string',
         description: 'The hosting provider to use (olane, local)',
+        required: false,
       },
     ],
   },
