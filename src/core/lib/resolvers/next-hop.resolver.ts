@@ -18,6 +18,10 @@ export class NextHopResolver extends oAddressResolver {
   }
 
   async findProviderTransports(address: oAddress): Promise<Multiaddr[]> {
+    this.logger.debug(
+      'Finding provider transports for address: ',
+      address.toString(),
+    );
     // let's default the static resolution to the p2p approach
     if (this.isStaticAddress(address)) {
       return this.resolveAddressToTransports(address);
@@ -26,10 +30,13 @@ export class NextHopResolver extends oAddressResolver {
     const peer = peers.find((p) =>
       p.protocols.some((p) => p === address.protocol),
     );
+    this.logger.debug('Found peer: ', peer);
     if (
-      !peer &&
-      this.isHoppingDown(address) &&
-      !this.isLeaderNextHop(address)
+      !peer ||
+      !peer.addresses.length
+      // &&
+      // this.isHoppingDown(address) &&
+      // !this.isLeaderNextHop(address)
     ) {
       return this.resolveAddressToTransports(address);
     }

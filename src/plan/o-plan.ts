@@ -180,6 +180,9 @@ export class oPlan {
     const data = response.result.data as any;
     this.logger.debug('Plan response: ', data);
     const message = data.message;
+    if (!message) {
+      throw new Error('No message returned from intelligence');
+    }
     const planResult = RegexUtils.extractResultFromAI(message);
     return planResult;
   }
