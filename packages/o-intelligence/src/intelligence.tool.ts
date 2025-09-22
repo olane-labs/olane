@@ -254,7 +254,12 @@ export class IntelligenceTool extends oVirtualTool {
 
   async chooseIntelligence(
     request: oRequest,
-  ): Promise<{ choice: oAddress; apiKey: string; options: any }> {
+  ): Promise<{
+    choice: oAddress;
+    apiKey: string;
+    options: any;
+    method: string;
+  }> {
     // check to see if anthropic key is in vault
     const { provider: hostingProvider, options } =
       await this.getHostingProvider();
@@ -267,6 +272,7 @@ export class IntelligenceTool extends oVirtualTool {
         options: {
           token: options.token,
         },
+        method: 'prompt',
       };
     }
     const { provider } = await this.getModelProvider();
@@ -275,6 +281,7 @@ export class IntelligenceTool extends oVirtualTool {
       choice: new oAddress(`o://${provider}`),
       apiKey,
       options: {},
+      method: 'completion',
     };
   }
 
@@ -328,7 +335,7 @@ export class IntelligenceTool extends oVirtualTool {
     const intelligence = await this.chooseIntelligence(request);
     this.logger.debug('Using AI provider: ', intelligence.choice);
     const response = await this.use(intelligence.choice, {
-      method: 'completion',
+      method: intelligence.method,
       params: {
         apiKey: intelligence.apiKey,
         messages: [
