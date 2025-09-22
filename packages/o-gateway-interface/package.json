@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-gateway-interface",
-  "version": "0.6.9",
+  "version": "0.6.10",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -53,10 +53,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.8",
-    "@olane/o-core": "^0.6.8",
-    "@olane/o-protocol": "^0.6.8",
-    "@olane/o-tool": "^0.6.7"
+    "@olane/o-config": "^0.6.9",
+    "@olane/o-core": "^0.6.9",
+    "@olane/o-protocol": "^0.6.9",
+    "@olane/o-tool": "^0.6.9"
   },
   "dependencies": {
     "debug": "^4.4.1",

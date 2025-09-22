@@ -171,7 +171,11 @@ class ReleaseManager {
         cwd: this.packageManager.rootDir,
         stdio: 'inherit',
       });
-      execSync(`git tag v${newVersion}`, {
+      // execSync(`git tag v${newVersion}`, {
+      //   cwd: this.packageManager.rootDir,
+      //   stdio: 'inherit',
+      // });
+      execSync(`git push --set-upstream origin ${branchName}`, {
         cwd: this.packageManager.rootDir,
         stdio: 'inherit',
       });

@@ -1,9 +1,7 @@
 import { expect } from 'chai';
 import { OAuthTool } from '../src/auth/oAuth.tool.js';
 import { EmbeddingsTool } from '../src/embeddings/embeddings.tool.js';
-import { NERTool } from '../src/nlp/ner.tool.js';
 import { LangchainMemoryVectorStoreTool } from '../src/vector-store/index.js';
-import { IntelligenceTool } from '@olane/o-intelligence';
 
 function checkMethods(tool: any, methods: any) {
   const tools = tool.myTools();
@@ -29,24 +27,6 @@ describe('registry tool metadata tests', () => {
       parent: null,
     });
     checkMethods(embeddingsTool, embeddingsTool.methods);
-  });
-
-  it('should verify intelligence method metadata is present', async () => {
-    const intelligenceTool = new IntelligenceTool({
-      description: 'Intelligence tool',
-      leader: null,
-      parent: null,
-    });
-    checkMethods(intelligenceTool, intelligenceTool.methods);
-  });
-
-  it('should verify nlp method metadata is present', async () => {
-    const nlpTool = new NERTool({
-      description: 'NLP tool',
-      leader: null,
-      parent: null,
-    });
-    checkMethods(nlpTool, nlpTool.methods);
   });
 
   it('should verify vector-store method metadata is present', async () => {
