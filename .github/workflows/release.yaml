@@ -291,6 +291,8 @@ jobs:
       - name: Publish o-config
         working-directory: packages/o-config
         run: |
+          npm i
+          npm run build
           npm version patch --no-git-tag-version
           npm publish --access public
         env:
@@ -346,6 +348,8 @@ jobs:
 
       - name: Publish root package (o-core)
         run: |
+          npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer
+          npm run build
           npm version patch --no-git-tag-version
           npm publish --access public
         env:
