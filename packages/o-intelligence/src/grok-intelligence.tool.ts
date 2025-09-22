@@ -48,6 +48,7 @@ interface GrokListModelsResponse {
 export class GrokIntelligenceTool extends oVirtualTool {
   private baseUrl: string = 'https://api.x.ai/v1';
   private defaultModel: string = 'grok-3-mini';
+  private apiKey: string = process.env.GROK_API_KEY || '';
 
   constructor(config: oToolConfig) {
     super({
@@ -65,7 +66,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
       const {
         model = this.defaultModel,
         messages,
-        apiKey,
+        apiKey = this.apiKey,
         ...options
       } = params;
 
@@ -131,7 +132,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
         model = this.defaultModel,
         prompt,
         system,
-        apiKey,
+        apiKey = this.apiKey,
         ...options
       } = params;
       const key = apiKey || process.env.GROK_API_KEY;
@@ -196,7 +197,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
   async _tool_list_models(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
       const key = apiKey || process.env.GROK_API_KEY;
       if (!key) {
         return { success: false, error: 'Grok API key is required' };
@@ -229,7 +230,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
   async _tool_model_info(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, apiKey } = params;
+      const { model = this.defaultModel, apiKey = this.apiKey } = params;
       const key = apiKey || process.env.GROK_API_KEY;
       if (!key) {
         return { success: false, error: 'Grok API key is required' };
@@ -261,7 +262,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
   async _tool_status(request: oRequest): Promise<ToolResult> {
     try {
       const params = request.params as any;
-      const { apiKey } = params;
+      const { apiKey = this.apiKey } = params;
       const key = apiKey || process.env.GROK_API_KEY;
       if (!key) {
         return {
