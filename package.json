@@ -21,6 +21,7 @@
     "test:browser": "aegir test -t browser",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",

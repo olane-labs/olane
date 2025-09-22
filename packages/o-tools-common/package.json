@@ -20,6 +20,7 @@
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",

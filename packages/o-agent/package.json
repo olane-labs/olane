@@ -25,6 +25,7 @@
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {

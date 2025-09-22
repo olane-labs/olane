@@ -19,6 +19,7 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest --save-peer",
     "test:browser": "aegir test -t browser",
     "build": "tsc",
     "start:prod": "node dist/index.js",

@@ -314,6 +314,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -352,6 +355,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -388,6 +394,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -403,7 +412,7 @@ jobs:
         continue-on-error: true
         run: |
           npm i
-          npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer
+          npm run update:peers
           npm run build
           npm version patch --no-git-tag-version
           npm publish --access public
@@ -427,6 +436,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -446,7 +458,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-tool
@@ -474,6 +486,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -493,7 +508,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-gateway-interface
@@ -522,6 +537,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -541,7 +559,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-agent
@@ -569,6 +587,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -588,7 +609,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-intelligence
@@ -616,6 +637,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -635,7 +659,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-storage
@@ -663,6 +687,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -682,7 +709,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-tools-common
@@ -711,6 +738,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -730,7 +760,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tool-registry@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-leader
@@ -758,6 +788,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -777,7 +810,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-leader@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-mcp
@@ -805,6 +838,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -824,7 +860,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-tool-registry
@@ -853,6 +889,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download workspace artifact
         uses: actions/download-artifact@v4
         with:
@@ -872,7 +911,7 @@ jobs:
         run: |
           # Update to use published versions instead of file dependencies
           npm i
-          npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-tools-common@latest @olane/o-tool-registry@latest @olane/o-intelligence@latest @olane/o-leader@latest --save-peer
+          npm run update:peers
           npm run build
 
       - name: Publish o-network
