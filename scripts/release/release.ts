@@ -175,6 +175,10 @@ class ReleaseManager {
       //   cwd: this.packageManager.rootDir,
       //   stdio: 'inherit',
       // });
+      execSync(`git push --set-upstream origin ${branchName}`, {
+        cwd: this.packageManager.rootDir,
+        stdio: 'inherit',
+      });
 
       console.log(`✅ Created release branch: ${branchName}`);
       console.log(`✅ Created tag: v${newVersion}`);
