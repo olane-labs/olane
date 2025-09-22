@@ -256,21 +256,21 @@ jobs:
           git config --global user.name "Automated Release"
 
       # Publish packages in dependency order
-      - name: Publish o-config
-        working-directory: packages/o-config
-        run: |
-          npm version patch --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - name: Publish o-config
+      #   working-directory: packages/o-config
+      #   run: |
+      #     npm version patch --no-git-tag-version
+      #     npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish o-protocol
-        working-directory: packages/o-protocol
-        run: |
-          npm version patch --no-git-tag-version
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # - name: Publish o-protocol
+      #   working-directory: packages/o-protocol
+      #   run: |
+      #     npm version patch --no-git-tag-version
+      #     npm publish --access public
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish root package (o-core)
         run: |
