@@ -8,6 +8,8 @@ export interface oPlanConfig {
   context?: oPlanContext;
   sequence?: any[];
 
+  streamTo?: oAddress;
+
   // o-networking information
   currentNode: oCoreNode;
   caller: oAddress;

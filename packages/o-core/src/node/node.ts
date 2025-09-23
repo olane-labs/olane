@@ -182,11 +182,12 @@ export abstract class oNode extends oCoreNode {
    */
   async _tool_intent(request: oRequest): Promise<any> {
     this.logger.debug('Intent resolution called: ', request.params);
-    const { intent, context } = request.params;
+    const { intent, context, streamTo } = request.params;
     const pc = new oAgentPlan({
       intent: intent as string,
       currentNode: this,
       caller: this.address,
+      streamTo: new oAddress(streamTo as string),
       context: context
         ? new oPlanContext([
             `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
@@ -300,6 +301,15 @@ export abstract class oNode extends oCoreNode {
     const params: Libp2pConfig = {
       ...this.networkConfig,
       transports: this.configureTransports(),
+      connectionManager: {
+        ...(this.networkConfig.connectionManager || {
+          minConnections: 10, // Keep at least 10 connections
+          maxConnections: 100, // Allow up to 100 connections
+          pollInterval: 2000, // Check connections every 2 seconds
+          autoDialInterval: 10000, // Auto-dial new peers every 10 seconds
+          dialTimeout: 30000, // 30 second dial timeout
+        }),
+      },
       listeners: (
         this.config.network?.listeners ||
         defaultLibp2pConfig.listeners ||
