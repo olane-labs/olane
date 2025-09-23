@@ -1,8 +1,44 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
 import { oAddress } from '../o-address.js';
 import { Logger } from '../index.js';
+import { CID } from 'multiformats';
 
 export class NetworkUtils {
+  public static async findProviders(
+    p2pNode: Libp2p,
+    cid: CID,
+  ): Promise<{
+    transports: Multiaddr[];
+    staticAddress: string;
+    absoluteAddress: string;
+  }> {
+    const logger = new Logger('NetworkUtils');
+    let peer = null;
+    let multiaddrs = [];
+    for await (const event of (p2pNode.services as any).dht.findProviders(
+      cid,
+    )) {
+      // Look for events that contain actual provider information
+      if (event.name === 'PEER_RESPONSE') {
+        if (event.providers?.length === 0) {
+          logger.debug('No providers found');
+          break;
+        }
+        peer = event.providers[0].id;
+        multiaddrs = event.providers[0].multiaddrs;
+        break;
+      }
+      if (event.name === 'PATH_ENDED' || event.name === 'QUERY_ERROR') {
+        break;
+      }
+    }
+    return {
+      transports: multiaddrs,
+      staticAddress: '',
+      absoluteAddress: '',
+    };
+  }
+
   public static async findNode(
     p2pNode: Libp2p,
     address: oAddress,
@@ -11,46 +47,19 @@ export class NetworkUtils {
     staticAddress: string;
     absoluteAddress: string;
   }> {
-    const logger = new Logger(this.constructor.name);
     const cid = await address.toCID();
-    const providers = await (p2pNode.services as any).dht.findProviders(cid);
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error('Content routing provide timeout')),
-        5_000,
+    return await Promise.race([
+      new Promise<{
+        transports: Multiaddr[];
+        staticAddress: string;
+        absoluteAddress: string;
+      }>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Content routing provide timeout')),
+          5_000,
+        ),
       ),
-    );
-
-    try {
-      const { value, done } = await Promise.race([
-        providers.next(),
-        timeoutPromise,
-      ]);
-      /*
-        value: {
-          peer: PeerId(12D3KooWB8Jm24WQmRQgggUUfxVKRGULxYMjSuy1aqV3DYKrEbod),
-          path: { index: 0, queued: 0, running: 1, total: 1 },
-          name: 'DIAL_PEER',
-          type: 7
-        }
-        */
-
-      if (!value) {
-        return { transports: [], staticAddress: '', absoluteAddress: '' };
-      }
-      // let's translate the peerId to a multiaddr
-      const result = await p2pNode.peerRouting.findPeer(value.peer);
-      logger.debug('Found node:', result);
-      return {
-        transports: result.multiaddrs,
-        staticAddress: '',
-        absoluteAddress: '',
-      };
-    } catch (timeoutError: any) {
-      if (timeoutError.message === 'Content routing provide timeout') {
-        return { transports: [], staticAddress: '', absoluteAddress: '' };
-      }
-      throw timeoutError;
-    }
+      this.findProviders(p2pNode, cid),
+    ]);
   }
 }

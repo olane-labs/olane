@@ -401,14 +401,28 @@ export abstract class oNode extends oCoreNode {
     if (!this.isServer) {
       return;
     }
-    const providePromise = (this.p2pNode.services as any).dht.provide(value);
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error('Advertise Content routing provide timeout')),
-        5000,
-      ),
-    );
-    await Promise.race([providePromise, timeoutPromise]);
+    this.logger.debug('Advertising value to network: ', value.toString());
+    // const providePromise = (this.p2pNode.services as any).dht.provide(value);
+    for await (const event of (this.p2pNode.services as any).dht.provide(
+      value,
+    )) {
+      this.logger.debug('Advertise event: ', event);
+      if (
+        event.name === 'PATH_ENDED' ||
+        event.name === 'QUERY_ERROR' ||
+        event.name === 'PEER_RESPONSE'
+      ) {
+        break;
+      }
+    }
+    this.logger.debug('Advertise complete!');
+    // const timeoutPromise = new Promise((_, reject) =>
+    //   setTimeout(
+    //     () => reject(new Error('Advertise Content routing provide timeout')),
+    //     5000,
+    //   ),
+    // );
+    // await Promise.race([providePromise, timeoutPromise]);
   }
 
   // if the node has any transports that are not memory, it is a server
