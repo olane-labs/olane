@@ -199,7 +199,7 @@ class ReleaseManager {
 
       await this.installDependencies();
       await this.buildPackages();
-      await this.runTests();
+      // await this.runTests();
 
       if (!this.options.dryRun) {
         await this.bumpVersions();

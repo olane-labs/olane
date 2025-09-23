@@ -75,8 +75,8 @@ export class PackageManager {
     console.log('🔍 Discovering packages...');
     this.packages.clear();
 
-    // Root package
-    this.addPackage(this.rootDir, 'root');
+    // Root package (do not add it)
+    // this.addPackage(this.rootDir, 'root');
 
     // Packages directory
     if (existsSync(this.packagesDir)) {
