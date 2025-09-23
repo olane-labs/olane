@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-root",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "homepage": "https://olane.com",
   "private": true,
   "type": "module",
@@ -63,5 +63,9 @@
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "multiformats": "^13.3.7"
+  },
+  "peerDependencies": {
+    "@olane/o-config": "^0.6.10",
+    "@olane/o-protocol": "^0.6.10"
   }
 }
