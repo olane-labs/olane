@@ -1,6 +1,6 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
 import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface GeminiContent {
   role: 'user' | 'model';
@@ -122,7 +122,7 @@ export class GeminiIntelligenceTool extends oVirtualTool {
       ...config,
       address: new oAddress('o://gemini'),
       description: 'Intelligence tool using Google Gemini suite of models',
-      methods: INTELLIGENCE_PARAMS,
+      methods: LLM_PARAMS,
       dependencies: [],
     });
   }

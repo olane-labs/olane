@@ -3,4 +3,5 @@ export interface ConnectionSendParams {
   payload: {
     [key: string]: unknown;
   };
+  id?: string;
 }

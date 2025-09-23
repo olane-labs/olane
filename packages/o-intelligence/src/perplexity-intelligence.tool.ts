@@ -1,6 +1,6 @@
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
@@ -85,15 +85,16 @@ interface PerplexitySearchResponse {
 }
 
 export class PerplexityIntelligenceTool extends oVirtualTool {
-  private defaultModel!: string;
+  private defaultModel: string = 'sonar';
   private defaultApiKey: string = process.env.SONAR_API_KEY || '';
 
   constructor(config: oToolConfig) {
     super({
       ...config,
       address: new oAddress('o://perplexity'),
-      description: 'Intelligence tool using Perplexity LLM suite of models',
-      methods: INTELLIGENCE_PARAMS,
+      description:
+        'Perplexity sonar model is useful for searching the web or providing information about a wide range of topics',
+      methods: LLM_PARAMS,
       dependencies: [],
     });
   }

@@ -1,6 +1,6 @@
 import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
 import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -119,7 +119,7 @@ export class OllamaIntelligenceTool extends oVirtualTool {
       ...config,
       address: new oAddress('o://ollama'),
       description: 'Intelligence tool using Ollama LLM suite of models',
-      methods: INTELLIGENCE_PARAMS,
+      methods: LLM_PARAMS,
       dependencies: [],
     });
     // this.baseUrl = config.ollamaUrl || 'http://localhost:11434';

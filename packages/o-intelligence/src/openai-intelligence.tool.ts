@@ -1,6 +1,6 @@
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface OpenAIChatMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
@@ -126,7 +126,7 @@ export class OpenAIIntelligenceTool extends oVirtualTool {
       ...config,
       address: new oAddress('o://openai'),
       description: "Open AI's suite of intelligence models.",
-      methods: INTELLIGENCE_PARAMS,
+      methods: LLM_PARAMS,
       dependencies: [],
     });
   }

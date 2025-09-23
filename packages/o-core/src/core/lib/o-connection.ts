@@ -62,7 +62,7 @@ export class oConnection {
         _requestMethod: method,
         ...params,
       },
-      id: this.requestCounter++,
+      id: params.id || uuidv4(),
     });
   }
 
