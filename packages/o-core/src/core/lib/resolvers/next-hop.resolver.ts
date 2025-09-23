@@ -43,7 +43,7 @@ export class NextHopResolver extends oAddressResolver {
     if (!peer) {
       return [];
     }
-    return peer.addresses.map((a) =>
+    return peer.addresses.map((a: any) =>
       multiaddr(a.multiaddr + '/p2p/' + peer.id.toString()),
     );
   }
@@ -51,6 +51,7 @@ export class NextHopResolver extends oAddressResolver {
   async findNextHop(targetAddress: oAddress): Promise<oAddress> {
     // check to see if we are at the destination
     if (targetAddress.protocol === this.address.protocol) {
+      this.logger.debug('At destination, finding provider transports...');
       const transports = await this.findProviderTransports(targetAddress);
       return new oAddress(
         targetAddress.value,

@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 
 import { execSync } from 'child_process';
-import { createPackageManager } from '../shared/package-manager.ts';
+import { createPackageManager } from '../shared/package-manager.js';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 

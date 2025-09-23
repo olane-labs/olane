@@ -38,8 +38,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-intelligence": "^0.6.7",
-    "@olane/o-leader": "^0.6.7",
+    "@olane/o-intelligence": "^0.6.10",
+    "@olane/o-leader": "^0.6.10",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
