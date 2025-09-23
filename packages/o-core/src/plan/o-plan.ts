@@ -58,6 +58,18 @@ export class oPlan {
 
   addSequencePlan(plan: oPlan) {
     this.sequence.push(plan);
+    if (this.config.streamTo) {
+      this.node
+        .use(this.config.streamTo, {
+          method: 'receive_stream',
+          params: {
+            data: plan.result || '',
+          },
+        })
+        .catch((error) => {
+          this.logger.error('Error sending agent stream: ', error);
+        });
+    }
     // console.log(
     //   `${this.parentId ? '--[Child ' : '['}Cycle ${this.sequence.length} - ${this.id}]\n ${JSON.stringify(
     //     {

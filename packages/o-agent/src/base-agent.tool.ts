@@ -6,6 +6,7 @@ import { oAgentConfig } from './interfaces/agent.config.js';
 export abstract class oAgentTool extends oVirtualTool {
   protected respond: (intent: string) => Promise<string>;
   protected answer: (intent: string) => Promise<string>;
+  protected receiveStream: (data: any) => Promise<any>;
 
   constructor(config: oAgentConfig) {
     super({
@@ -15,6 +16,7 @@ export abstract class oAgentTool extends oVirtualTool {
     });
     this.respond = config.respond;
     this.answer = config.answer;
+    this.receiveStream = config.receiveStream;
   }
 
   async _tool_intent(request: oRequest): Promise<ToolResult> {
@@ -36,6 +38,16 @@ export abstract class oAgentTool extends oVirtualTool {
     return {
       success: true,
       answer: response,
+    };
+  }
+
+  async _tool_receive_stream(request: oRequest): Promise<ToolResult> {
+    const { data } = request.params;
+
+    await this.receiveStream(data);
+
+    return {
+      success: true,
     };
   }
 }

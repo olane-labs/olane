@@ -225,6 +225,7 @@ export class IntelligenceTool extends oVirtualTool {
     };
   }
   async getHostingProvider(): Promise<{
+    modelProvider: LLMProviders;
     provider: HostModelProvider;
     options: any;
   }> {
@@ -249,8 +250,16 @@ export class IntelligenceTool extends oVirtualTool {
     if (addressStored) {
       address = addressStored as string;
     }
+    const modelProviderStored = await this.getSecureValue(
+      IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
+    );
+    let modelProvider = modelProviderStored as LLMProviders;
+    if (!modelProvider) {
+      modelProvider = LLMProviders.ANTHROPIC;
+    }
     return {
       provider: provider,
+      modelProvider: modelProvider,
       options: {
         token: token,
         address: address,
@@ -321,13 +330,13 @@ export class IntelligenceTool extends oVirtualTool {
     request: PromptRequest,
   ): Promise<ToolResult | null> {
     const { prompt } = request.params;
-    const { provider: hostingProvider, options } =
+    const { provider: hostingProvider, options, modelProvider } =
       await this.getHostingProvider();
 
     // forward to olane
     if (hostingProvider === HostModelProvider.OLANE) {
       const response = await this.use(
-        new oAddress(options.address, [
+        new oAddress(options.address + '/' + modelProvider, [
           multiaddr(
             process.env.OLANE_ADDRESS ||
               '/dns4/leader.olane.com/tcp/4000/tls/ws',
