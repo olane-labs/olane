@@ -397,16 +397,13 @@ export abstract class oNode extends oCoreNode {
     // this.listenForNetworkEvents();
   }
 
-  async advertiseValueToNetwork(value: CID) {
-    if (!this.isServer) {
+  async dhtProvide(value: CID) {
+    if (!this.config.parent && !this.config.leader) {
       return;
     }
-    this.logger.debug('Advertising value to network: ', value.toString());
-    // const providePromise = (this.p2pNode.services as any).dht.provide(value);
     for await (const event of (this.p2pNode.services as any).dht.provide(
       value,
     )) {
-      this.logger.debug('Advertise event: ', event);
       if (
         event.name === 'PATH_ENDED' ||
         event.name === 'QUERY_ERROR' ||
@@ -415,14 +412,22 @@ export abstract class oNode extends oCoreNode {
         break;
       }
     }
+  }
+
+  async advertiseValueToNetwork(value: CID) {
+    if (!this.isServer) {
+      return;
+    }
+    this.logger.debug('Advertising value to network: ', value.toString());
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Advertise Content routing provide timeout')),
+        5000,
+      ),
+    );
+    await Promise.race([this.dhtProvide(value), timeoutPromise]);
     this.logger.debug('Advertise complete!');
-    // const timeoutPromise = new Promise((_, reject) =>
-    //   setTimeout(
-    //     () => reject(new Error('Advertise Content routing provide timeout')),
-    //     5000,
-    //   ),
-    // );
-    // await Promise.race([providePromise, timeoutPromise]);
   }
 
   // if the node has any transports that are not memory, it is a server
@@ -441,27 +446,24 @@ export abstract class oNode extends oCoreNode {
     );
     // advertise the absolute address to the network with timeout
     const absoluteAddressCid = await this.address.toCID();
-    try {
-      // Add timeout to prevent hanging
-      await this.advertiseValueToNetwork(absoluteAddressCid);
-    } catch (error: any) {
+    // Add timeout to prevent hanging
+    this.advertiseValueToNetwork(absoluteAddressCid).catch((error: any) => {
       this.logger.warn(
         'Failed to advertise absolute address (this is normal for isolated nodes):',
         error.message,
       );
-    }
+    });
 
     // advertise the static address to the network with timeout
     const staticAddressCid = await this.staticAddress.toCID();
-    try {
-      // Add timeout to prevent hanging
-      await this.advertiseValueToNetwork(staticAddressCid);
-    } catch (error: any) {
+
+    // Add timeout to prevent hanging
+    this.advertiseValueToNetwork(staticAddressCid).catch((error: any) => {
       this.logger.warn(
-        'Failed to advertise static address (this is normal for isolated nodes):',
+        'Failed to advertise absolute address (this is normal for isolated nodes):',
         error.message,
       );
-    }
+    });
   }
 
   listenForNetworkEvents() {
