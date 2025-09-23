@@ -1,0 +1,101 @@
+import { oMethod } from '@olane/o-protocol';
+
+export const LLM_PARAMS: { [key: string]: oMethod } = {
+  completion: {
+    name: 'completion',
+    description: 'The primary method for interacting with the service',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description: 'The model to use for generation',
+        required: false,
+      },
+      {
+        name: 'messages',
+        type: 'array',
+        value: 'string[]',
+        description: 'The messages to use for generation',
+      },
+      {
+        name: 'options',
+        type: 'object',
+        value: 'object',
+        description: 'The options to use for generation',
+        required: false,
+      },
+    ],
+  },
+  generate: {
+    name: 'generate',
+    description: 'Generate',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description: 'The model to use for generation',
+      },
+    ],
+  },
+  list_models: {
+    name: 'list_models',
+    description: 'List models',
+    dependencies: [],
+    parameters: [],
+  },
+  pull_model: {
+    name: 'pull_model',
+    description: 'Pull model',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description: 'The model to pull',
+      },
+      {
+        name: 'insecure',
+        type: 'boolean',
+        value: 'boolean',
+        description: 'Whether to allow insecure connections',
+      },
+    ],
+  },
+  delete_model: {
+    name: 'delete_model',
+    description: 'Delete model',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description: 'The model to delete',
+      },
+    ],
+  },
+  model_info: {
+    name: 'model_info',
+    description: 'Model info',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description: 'The model to get info for',
+      },
+    ],
+  },
+  status: {
+    name: 'status',
+    description: 'Status',
+    dependencies: [],
+    parameters: [],
+  },
+};

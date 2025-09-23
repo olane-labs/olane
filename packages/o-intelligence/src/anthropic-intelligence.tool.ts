@@ -1,6 +1,6 @@
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -108,7 +108,7 @@ export class AnthropicIntelligenceTool extends oVirtualTool {
       address: new oAddress('o://anthropic'),
       description: 'Intelligence tool using Anthropic LLM suite of models',
       // shared parameters for all tools
-      methods: INTELLIGENCE_PARAMS,
+      methods: LLM_PARAMS,
       dependencies: [],
     });
   }

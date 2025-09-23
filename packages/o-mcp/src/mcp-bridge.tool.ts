@@ -108,6 +108,30 @@ export class McpBridgeTool extends oVirtualTool {
     };
   }
 
+  async _tool_search(request: oRequest): Promise<ToolResult> {
+    const params = request.params;
+    const { name, provider, functionality } = params;
+    let count = 0;
+    const response = await this.use(new oAddress('o://perplexity'), {
+      method: 'completion',
+      params: {
+        model: 'sonar',
+        messages: [
+          {
+            role: 'user',
+            content: `Search for model context protocol servers. Return all of the information necessary to connect or run the MCP server. Necessary information may include: command to run the MCP server, arguments to run the MCP server, headers to send to the MCP server, remote mcp url, and any other information necessary to run the MCP server. The MCP server is described by:
+            ${provider ? `${++count}. Provider: ${provider}` : ''}
+            ${name ? `${++count}. Name: ${name}` : ''}
+            ${functionality ? `${++count}. Functionality: ${functionality}` : ''}`,
+          },
+        ],
+      },
+    });
+    return {
+      result: response.result.data.message,
+    };
+  }
+
   async createMcpTool(
     mcpClient: Client,
     url: string,

@@ -28,10 +28,11 @@ Step 2 - Search for tools and context
 1. If all entities and tool addresses are known within the user intent, continue to step 3
 2. Review the user's intent, the current node's functionality, rules and context
 3. If there are unknown tool addresses or entities within the user intent, generate search queries to resolve the unknown entities. 
-4. If there is a placeholder address used (o://.../placeholder), do not extract the contents of the placeholder address unless necessary for completing the user intent.
-5. Search for internal "search tools" that might contain information about the unknown entities.
-6. Use the search result data & tooling to help you resolve the unknown entities.
-7. Continue to step 3.
+4. Use the o://mcp search tool to find model context protocol servers (MCP servers) that can help you add tooling that could help you complete the user intent.
+5. If there is a placeholder address used (o://.../placeholder), do not extract the contents of the placeholder address unless necessary for completing the user intent.
+6. Search for internal "search tools" that might contain information about the unknown entities.
+7. Use the search result data & tooling to help you resolve the unknown entities.
+8. Continue to step 3.
 
 Step 3 - Filter Search Results
 1. If all search results are relevant to the user intent resolution, continue to step 4.

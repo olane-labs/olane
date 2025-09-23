@@ -140,6 +140,10 @@ export class oAgentPlan extends oPlan {
         this.config.context?.toString()?.length,
       );
 
+      if (this.config.shouldContinue && !this.config.shouldContinue()) {
+        throw new Error('Cancelled');
+      }
+
       // setup the plan config
       const planConfig: oPlanConfig = {
         ...this.config,

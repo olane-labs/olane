@@ -37,6 +37,35 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
       },
     ],
   },
+  search: {
+    name: 'search',
+    description: 'Search for MCP servers',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'name',
+        type: 'string',
+        value: 'string',
+        description: 'The mcp server name to search for',
+        required: false,
+      },
+      {
+        name: 'provider',
+        type: 'string',
+        value: 'string',
+        description:
+          'Who the MCP server is provided by. This is inferred from the user intent.',
+        required: false,
+      },
+      {
+        name: 'functionality',
+        type: 'string',
+        value: 'string',
+        description: 'Description of the functionality of the MCP server',
+        required: false,
+      },
+    ],
+  },
   add_local_server: {
     name: 'add_local_server',
     description:

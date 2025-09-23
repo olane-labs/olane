@@ -1,9 +1,7 @@
 import {
   CoreUtils,
-  NodeType,
   oAddress,
   oCoreNode,
-  oDependency,
   oRequest,
   oResponse,
   oToolError,
@@ -227,11 +225,28 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       return this[func]();
     }
 
+    async _tool_cancel_request(request: oRequest): Promise<ToolResult> {
+      const { requestId } = request.params;
+      delete this.requests[requestId as string];
+      return {
+        message: 'Request cancelled',
+      };
+    }
+
     async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
       const method = request.method as string;
       this.logger.debug('Calling tool: ' + method);
+      this.requests[request.id] = request;
       // @ts-ignore
-      return this[`_tool_${method}`]({ ...request.toJSON(), stream });
+      const result = await this[`_tool_${method}`]({
+        ...request.toJSON(),
+        stream,
+      }).catch((error: any) => {
+        delete this.requests[request.id];
+        throw error;
+      });
+      delete this.requests[request.id];
+      return result;
     }
 
     async index() {

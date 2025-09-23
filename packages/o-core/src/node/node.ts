@@ -193,7 +193,11 @@ export abstract class oNode extends oCoreNode {
             `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
           ])
         : undefined,
+      shouldContinue: () => {
+        return !!this.requests[request.id];
+      },
     });
+
     const response = await pc.execute();
     return {
       ...response,

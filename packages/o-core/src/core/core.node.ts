@@ -14,7 +14,7 @@ import { NodeType } from './interfaces/node-type.enum.js';
 import { oConnectionManager } from './lib/o-connection-manager.js';
 import { oResponse } from './lib/o-response.js';
 import { oConnection } from './lib/o-connection.js';
-import { oMethod } from '@olane/o-protocol';
+import { oMethod, oRequest } from '@olane/o-protocol';
 import { oAddressResolution } from './lib/o-address-resolution.js';
 import { oDependency } from './o-dependency.js';
 import { CID } from 'multiformats';
@@ -35,6 +35,7 @@ export abstract class oCoreNode {
   public readonly description: string;
   public dependencies: oDependency[];
   public methods: { [key: string]: oMethod };
+  public requests: { [key: string]: oRequest } = {};
 
   public successCount: number = 0;
   public errorCount: number = 0;
@@ -239,6 +240,7 @@ export abstract class oCoreNode {
     data?: {
       method?: string;
       params?: { [key: string]: any };
+      id?: string;
     },
   ): Promise<oResponse> {
     if (!addressWithLeaderTransports.validate()) {
@@ -254,6 +256,7 @@ export abstract class oCoreNode {
     const response = await connection.send({
       address: targetAddress?.toString() || '',
       payload: data || {},
+      id: data?.id,
     });
 
     // if there is an error, throw it to continue to bubble up

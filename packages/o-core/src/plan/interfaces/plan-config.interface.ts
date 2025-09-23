@@ -22,4 +22,6 @@ export interface oPlanConfig {
   ) => string;
   extraInstructions?: string;
   parentId?: string;
+
+  shouldContinue?: () => boolean;
 }

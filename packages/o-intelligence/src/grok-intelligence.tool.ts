@@ -1,6 +1,6 @@
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
+import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface GrokMessage {
   role: 'system' | 'user' | 'assistant';
@@ -55,7 +55,7 @@ export class GrokIntelligenceTool extends oVirtualTool {
       ...config,
       address: new oAddress('o://grok'),
       description: 'Intelligence tool using xAI Grok suite of models',
-      methods: INTELLIGENCE_PARAMS,
+      methods: LLM_PARAMS,
       dependencies: [],
     });
   }
