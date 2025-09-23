@@ -4,6 +4,7 @@ import {
   NetworkStatus,
   oNetwork,
   setupGracefulShutdown,
+  NodeState,
 } from '../../src/index.js';
 import { expect } from 'chai';
 import dotenv from 'dotenv';
@@ -34,6 +35,37 @@ describe('basic-usage @initialize', async () => {
   //   expect(data.error).to.be.undefined;
   //   expect(data.message).to.equal('Network indexed!');
   // });
+
+  it('should be able to use olane remote services', async () => {
+    const entryNode = network.entryNode();
+    expect(entryNode).to.exist;
+    expect(entryNode.state).to.equal(NodeState.RUNNING);
+    // configure the intelligence tool
+    await entryNode.use(new oAddress('o://intelligence'), {
+        method: 'configure',
+        params: {
+          modelProvider: 'anthropic',
+          hostingProvider: 'olane',
+          accessToken: 'test',
+          address: 'o://leader/intelligence'
+        }
+      }
+    );
+    // use the intelligence tool
+    const response2 = await entryNode.use(new oAddress('o://perplexity'), {
+      method: 'completion',
+      params: {
+        model: 'sonar',
+        messages: [
+          {
+            role: 'user',
+            content: 'What is the weather in Tokyo?',
+          },
+        ],
+      },
+    });
+    console.log(response2.result.data);
+  });
 });
 
 // describe('olane network usage', async () => {

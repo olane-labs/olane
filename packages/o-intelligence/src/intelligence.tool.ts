@@ -355,13 +355,16 @@ export class IntelligenceTool extends oVirtualTool {
     const { provider: hostingProvider, options } =
       await this.getHostingProvider();
 
-    const { address, payload } = request.params;
+    const { address, payload, } = request.params;
 
     // forward to olane sub-tool
     if (hostingProvider === HostModelProvider.OLANE) {
       this.logger.debug('Forwarding to olane sub-tool: ', address);
+      const destinationAddress = new oAddress(address);
+      const pieces = destinationAddress.paths.split(this.staticAddress.paths);
+      const subAddress = pieces[pieces.length - 1];
       const response = await this.use(
-        new oAddress(address, [
+        new oAddress(options.address + subAddress, [
           multiaddr(
             process.env.OLANE_ADDRESS ||
               '/dns4/leader.olane.com/tcp/4000/tls/ws',
