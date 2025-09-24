@@ -2,6 +2,7 @@ import {
   bootstrap,
   createNode,
   defaultLibp2pConfig,
+  Libp2p,
   Libp2pConfig,
   Multiaddr,
   multiaddr,
@@ -14,6 +15,7 @@ import {
   NodeState,
   NodeType,
   oAddress,
+  oConnection,
   oConnectionManager,
   oCoreNode,
   oRequest,
@@ -29,14 +31,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
 import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';
 import { RouteRequest } from './interfaces/route.request.js';
+import { PeerId } from '@olane/o-config';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
 
 export abstract class oNode extends oCoreNode {
   public networkActivity!: NetworkActivity;
-  public childNodes: oNode[] = [];
-  public childAddresses: oAddress[] = [];
+  public peerId!: PeerId;
+  public p2pNode!: Libp2p;
 
   validate(): void {
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
@@ -45,6 +48,12 @@ export abstract class oNode extends oCoreNode {
     if (!this.address.validate()) {
       throw new Error('Invalid address');
     }
+  }
+
+  get transports(): string[] {
+    return this.p2pNode
+      .getMultiaddrs()
+      .map((multiaddr) => multiaddr.toString());
   }
 
   async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
@@ -65,7 +74,59 @@ export abstract class oNode extends oCoreNode {
     };
   }
 
-  abstract configureTransports(): any[];
+  async unregister(): Promise<void> {
+    if (this.type === NodeType.LEADER) {
+      this.logger.debug('Skipping unregistration, node is leader');
+      return;
+    }
+    if (!this.config.leader) {
+      this.logger.debug('No leader found, skipping unregistration');
+      return;
+    }
+    const address = new oAddress('o://leader/register');
+
+    // attempt to unregister from the network
+    const params = {
+      method: 'remove',
+      params: {
+        peerId: this.peerId.toString(),
+      },
+    };
+
+    await this.use(address, params);
+  }
+
+  async register(): Promise<void> {
+    if (this.type === NodeType.LEADER) {
+      this.logger.debug('Skipping registration, node is leader');
+      return;
+    }
+    this.logger.debug('Registering node...');
+
+    // register with the leader global registry
+    if (!this.config.leader) {
+      this.logger.warn('No leaders found, skipping registration');
+      return;
+    } else {
+      this.logger.debug('Registering node with leader...', this.config.leader);
+    }
+
+    const address = new oAddress('o://register');
+
+    const params = {
+      method: 'commit',
+      params: {
+        peerId: this.peerId.toString(),
+        address: this.address.toString(),
+        protocols: this.p2pNode.getProtocols(),
+        transports: this.transports,
+        staticAddress: this.staticAddress.toString(),
+      },
+    };
+
+    await this.use(address, params);
+    this.logger.debug('Registration successful');
+  }
 
   myTools(obj?: any): string[] {
     return Object.getOwnPropertyNames(obj || this.constructor.prototype)
@@ -288,15 +349,6 @@ export abstract class oNode extends oCoreNode {
     };
   }
 
-  addChildNode(node: oNode): void {
-    this.logger.debug('Adding virtual node: ' + node.address.toString());
-    this.childNodes.push(node);
-  }
-
-  removeChildNode(node: oNode): void {
-    this.childNodes = this.childNodes.filter((n) => n !== node);
-  }
-
   /**
    * Configure the libp2p node
    * @returns The libp2p config
@@ -384,6 +436,36 @@ export abstract class oNode extends oCoreNode {
     }
 
     return params;
+  }
+
+  async connect(
+    nextHopAddress: oAddress,
+    targetAddress: oAddress,
+  ): Promise<oConnection> {
+    if (!this.connectionManager) {
+      this.logger.error('Connection manager not initialized');
+      throw new Error('Node is not ready to connect to other nodes');
+    }
+    const connection = await this.connectionManager
+      .connect({
+        address: targetAddress,
+        nextHopAddress,
+        callerAddress: this.address,
+      })
+      .catch((error) => {
+        // TODO: we need to handle this better and document
+        if (error.message === 'Can not dial self') {
+          this.logger.error(
+            'Make sure you are entering the network not directly through the leader node.',
+          );
+        }
+        throw error;
+      });
+    this.logger.debug('Successfully connected to: ', nextHopAddress.toString());
+    if (!connection) {
+      throw new Error('Connection failed');
+    }
+    return connection;
   }
 
   async initialize(): Promise<void> {
@@ -489,6 +571,9 @@ export abstract class oNode extends oCoreNode {
       await node.stop();
     }
     this.childNodes = [];
+    if (this.p2pNode) {
+      await this.p2pNode.stop();
+    }
     return super.teardown();
   }
 }

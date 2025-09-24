@@ -21,12 +21,10 @@ import { CID } from 'multiformats';
 import { oToolError } from '../error/tool.error.js';
 
 export abstract class oCoreNode {
-  public p2pNode!: Libp2p;
   public logger: Logger;
   public networkConfig: Libp2pConfig;
   public address: oAddress;
   public readonly staticAddress: oAddress;
-  public peerId!: PeerId;
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
   public connectionManager!: oConnectionManager;
@@ -36,6 +34,8 @@ export abstract class oCoreNode {
   public dependencies: oDependency[];
   public methods: { [key: string]: oMethod };
   public requests: { [key: string]: oRequest } = {};
+  public childNodes: oCoreNode[] = [];
+  public childAddresses: oAddress[] = [];
 
   public successCount: number = 0;
   public errorCount: number = 0;
@@ -62,10 +62,10 @@ export abstract class oCoreNode {
   }
 
   get transports(): string[] {
-    return this.p2pNode
-      .getMultiaddrs()
-      .map((multiaddr) => multiaddr.toString());
+    return [];
   }
+
+  abstract configureTransports(): any[];
 
   async initialize(): Promise<void> {}
 
@@ -271,96 +271,26 @@ export abstract class oCoreNode {
     return response;
   }
 
-  async unregister(): Promise<void> {
-    if (this.type === NodeType.LEADER) {
-      this.logger.debug('Skipping unregistration, node is leader');
-      return;
-    }
-    if (!this.config.leader) {
-      this.logger.debug('No leader found, skipping unregistration');
-      return;
-    }
-    const address = new oAddress('o://leader/register');
-
-    // attempt to unregister from the network
-    const params = {
-      method: 'remove',
-      params: {
-        peerId: this.peerId.toString(),
-      },
-    };
-
-    await this.use(address, params);
+  addChildNode(node: oCoreNode): void {
+    this.logger.debug('Adding virtual node: ' + node.address.toString());
+    this.childNodes.push(node);
   }
 
-  async register(): Promise<void> {
-    if (this.type === NodeType.LEADER) {
-      this.logger.debug('Skipping registration, node is leader');
-      return;
-    }
-    this.logger.debug('Registering node...');
-
-    // register with the leader global registry
-    if (!this.config.leader) {
-      this.logger.warn('No leaders found, skipping registration');
-      return;
-    } else {
-      this.logger.debug('Registering node with leader...', this.config.leader);
-    }
-
-    const address = new oAddress('o://register');
-
-    const params = {
-      method: 'commit',
-      params: {
-        peerId: this.peerId.toString(),
-        address: this.address.toString(),
-        protocols: this.p2pNode.getProtocols(),
-        transports: this.transports,
-        staticAddress: this.staticAddress.toString(),
-      },
-    };
-
-    await this.use(address, params);
-    this.logger.debug('Registration successful');
+  removeChildNode(node: oCoreNode): void {
+    this.childNodes = this.childNodes.filter((n) => n !== node);
   }
 
-  async connect(
+  abstract unregister(): Promise<void>;
+
+  abstract register(): Promise<void>;
+
+  abstract connect(
     nextHopAddress: oAddress,
     targetAddress: oAddress,
-  ): Promise<oConnection> {
-    if (!this.connectionManager) {
-      this.logger.error('Connection manager not initialized');
-      throw new Error('Node is not ready to connect to other nodes');
-    }
-    const connection = await this.connectionManager
-      .connect({
-        address: targetAddress,
-        nextHopAddress,
-        callerAddress: this.address,
-      })
-      .catch((error) => {
-        // TODO: we need to handle this better and document
-        if (error.message === 'Can not dial self') {
-          this.logger.error(
-            'Make sure you are entering the network not directly through the leader node.',
-          );
-        }
-        throw error;
-      });
-    this.logger.debug('Successfully connected to: ', nextHopAddress.toString());
-    if (!connection) {
-      throw new Error('Connection failed');
-    }
-    return connection;
-  }
+  ): Promise<oConnection>;
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
-
-    if (this.p2pNode) {
-      await this.p2pNode.stop();
-    }
   }
 
   /**
@@ -373,11 +303,9 @@ export abstract class oCoreNode {
       return;
     }
     this.state = NodeState.STARTING;
-    this.p2pNode = this.p2pNode;
 
     try {
       await this.initialize();
-      this.logger.debug('Initializing connection manager...');
       await this.register().catch((error) => {
         this.logger.error('Failed to register node', error);
       });

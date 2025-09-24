@@ -4,5 +4,3 @@ dist
 .env
 .vscode
 .npmrc
-.claude
-.cursor
