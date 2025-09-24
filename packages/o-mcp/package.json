@@ -56,9 +56,9 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.13.0",
-    "@olane/o-config": "^0.6.11",
-    "@olane/o-core": "^0.6.11",
+    "@modelcontextprotocol/sdk": "^1.18.1",
+    "@olane/o-config": "^0.6.12",
+    "@olane/o-core": "^0.6.12",
     "@olane/o-intelligence": "^0.6.7",
     "@olane/o-leader": "^0.6.11",
     "@olane/o-protocol": "^0.6.11",
