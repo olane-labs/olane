@@ -1,0 +1,273 @@
+---
+title: 'Development Setup'
+description: 'Set up your development environment for building with Olane'
+---
+
+## Prerequisites
+
+Before you start developing with Olane, make sure you have the following installed:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    Version 18.0.0 or higher
+  </Card>
+  <Card title="npm/yarn/pnpm" icon="box">
+    Package manager of your choice
+  </Card>
+</CardGroup>
+
+## Installation
+
+### Install the Olane packages
+
+<CodeGroup>
+
+```bash npm
+npm install @olane/o-protocol @olane/o-config
+```
+
+```bash yarn
+yarn add @olane/o-protocol @olane/o-config
+```
+
+```bash pnpm
+pnpm add @olane/o-protocol @olane/o-config
+```
+
+</CodeGroup>
+
+### Development Dependencies
+
+For TypeScript development, also install:
+
+<CodeGroup>
+
+```bash npm
+npm install -D typescript @types/node
+```
+
+```bash yarn
+yarn add -D typescript @types/node
+```
+
+```bash pnpm
+pnpm add -D typescript @types/node
+```
+
+</CodeGroup>
+
+## Project Structure
+
+Here's a recommended project structure for Olane applications:
+
+```
+my-olane-app/
+├── src/
+│   ├── nodes/
+│   │   ├── node1.ts
+│   │   └── node2.ts
+│   ├── config/
+│   │   └── network.ts
+│   ├── services/
+│   │   └── data-service.ts
+│   └── index.ts
+├── tests/
+├── package.json
+└── tsconfig.json
+```
+
+## Configuration
+
+### Basic Configuration
+
+Create a configuration file for your network:
+
+```typescript
+// src/config/network.ts
+import { NetworkConfig } from '@olane/o-config';
+
+export const networkConfig: NetworkConfig = {
+  name: 'my-network',
+  nodes: [
+    {
+      id: 'node1',
+      address: 'localhost:3001',
+      services: ['data-storage', 'messaging']
+    },
+    {
+      id: 'node2', 
+      address: 'localhost:3002',
+      services: ['compute', 'messaging']
+    }
+  ],
+  protocols: {
+    messaging: {
+      enabled: true,
+      encryption: true
+    },
+    dataSync: {
+      enabled: true,
+      interval: 30000
+    }
+  }
+};
+```
+
+### Environment Variables
+
+Create a `.env` file for environment-specific configuration:
+
+```bash
+# .env
+NODE_ENV=development
+OLANE_PORT=3000
+OLANE_LOG_LEVEL=debug
+NETWORK_NAME=my-dev-network
+```
+
+## Development Workflow
+
+### 1. Start Development Server
+
+Create a development script:
+
+```typescript
+// src/dev-server.ts
+import { createNode } from '@olane/o-protocol';
+import { networkConfig } from './config/network';
+
+async function startDevelopment() {
+  const node = await createNode({
+    ...networkConfig,
+    development: true,
+    hotReload: true
+  });
+
+  await node.start();
+  
+  console.log('🚀 Development server started');
+  console.log(`📍 Node address: ${node.address}`);
+  console.log(`🔗 Network: ${node.networkId}`);
+}
+
+startDevelopment().catch(console.error);
+```
+
+### 2. Hot Reloading
+
+For automatic restarts during development, use `nodemon`:
+
+```bash
+npm install -D nodemon
+```
+
+Add to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "nodemon --exec tsx src/dev-server.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
+```
+
+### 3. Testing
+
+Set up testing with Jest:
+
+```bash
+npm install -D jest @types/jest ts-jest
+```
+
+Create `jest.config.js`:
+
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+  ],
+};
+```
+
+## Debugging
+
+### Enable Debug Logs
+
+Set the `DEBUG` environment variable:
+
+```bash
+DEBUG=olane:* npm run dev
+```
+
+### VSCode Configuration
+
+Create `.vscode/launch.json` for debugging:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Olane App",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/index.ts",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "env": {
+        "DEBUG": "olane:*"
+      },
+      "runtimeArgs": ["-r", "tsx/cjs"]
+    }
+  ]
+}
+```
+
+## Best Practices
+
+<CardGroup cols={1}>
+  <Card title="Error Handling" icon="shield-exclamation">
+    Always implement proper error handling for network operations and node failures.
+  </Card>
+  <Card title="Logging" icon="file-lines">
+    Use structured logging with appropriate log levels for better debugging.
+  </Card>
+  <Card title="Configuration Management" icon="gear">
+    Keep configuration separate from code and use environment variables for sensitive data.
+  </Card>
+  <Card title="Testing" icon="vial">
+    Write comprehensive tests for your nodes and network interactions.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+Once you have your development environment set up:
+
+1. **Explore the API Reference** - Learn about available methods and configuration options
+2. **Join a Network** - Connect to existing Olane networks or create your own
+3. **Build Services** - Create services that run on your nodes
+4. **Deploy** - Learn about production deployment strategies
+
+<CardGroup cols={2}>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/introduction"
+  >
+    Detailed API documentation and examples
+  </Card>
+  <Card
+    title="Network Guide"
+    icon="network-wired"
+    href="/essentials/networks"
+  >
+    Learn about network topology and management
+  </Card>
+</CardGroup>
