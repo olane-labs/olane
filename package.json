@@ -21,6 +21,8 @@
     "clean": "npm run clean --workspaces --if-present",
     "deep:clean": "rm -rf node_modules && rm package-lock.json && npm run deep:clean --workspaces --if-present",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "docs:dev": "cd docs && mintlify dev",
+    "docs:build": "cd docs && mintlify build",
     "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",

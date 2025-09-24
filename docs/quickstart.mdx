@@ -1,0 +1,118 @@
+---
+title: 'Quickstart'
+description: 'Start building with Olane in under 5 minutes'
+---
+
+## Setup your development environment
+
+Learn how to update your docs locally and deploy them to the public.
+
+### Install Olane
+
+<CodeGroup>
+
+```bash npm
+npm install @olane/o-protocol @olane/o-config
+```
+
+```bash yarn
+yarn add @olane/o-protocol @olane/o-config
+```
+
+```bash pnpm
+pnpm add @olane/o-protocol @olane/o-config
+```
+
+</CodeGroup>
+
+### Create your first node
+
+Create a new file called `node.js` and add the following code:
+
+```javascript
+import { createNode } from '@olane/o-protocol';
+import { defaultConfig } from '@olane/o-config';
+
+async function main() {
+  // Create a new Olane node
+  const node = await createNode({
+    ...defaultConfig,
+    // Your node configuration
+    name: 'my-first-node',
+    port: 3000
+  });
+
+  // Start the node
+  await node.start();
+  
+  console.log('Node started successfully!');
+  console.log(`Node ID: ${node.id}`);
+  console.log(`Listening on port: ${node.port}`);
+}
+
+main().catch(console.error);
+```
+
+### Run your node
+
+Execute your node with:
+
+```bash
+node node.js
+```
+
+You should see output similar to:
+```
+Node started successfully!
+Node ID: 12D3KooWH3uVF6wv9Z8...
+Listening on port: 3000
+```
+
+## Make it your own
+
+Update your docs to your brand and add valuable content for the best user conversion.
+
+<CardGroup cols={2}>
+  <Card
+    title="Customize Style"
+    icon="palette"
+    href="/essentials/settings"
+  >
+    Customize your docs to your company's colors and brands
+  </Card>
+  <Card
+    title="Reference APIs"
+    icon="code"
+    href="/api-reference/introduction"
+  >
+    Automatically generate API documentation from your codebase
+  </Card>
+  <Card
+    title="Add Components"
+    icon="screwdriver-wrench"
+    href="/essentials/components"
+  >
+    Build interactive features and designs to guide your users
+  </Card>
+  <Card
+    title="Get Inspiration"
+    icon="stars"
+    href="/showcase"
+  >
+    Check out our showcase of the most beautiful documentation
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<Steps>
+  <Step title="Join a Network">
+    Connect your node to an existing Olane network or create your own network cluster.
+  </Step>
+  <Step title="Build Your First App">
+    Create a simple application that runs on your Olane node.
+  </Step>
+  <Step title="Deploy to Production">
+    Learn how to deploy your Olane nodes in production environments.
+  </Step>
+</Steps>
