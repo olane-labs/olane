@@ -10,7 +10,7 @@ export abstract class RegistryTool extends oVirtualTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
-      address: new oAddress('o://register'),
+      address: new oAddress('o://registry'),
       methods: REGISTRY_PARAMS,
       description: 'Network registry of tools and their respective addresses',
     });

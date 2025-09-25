@@ -111,7 +111,7 @@ export abstract class oNode extends oCore {
       this.logger.debug('Registering node with leader...', this.config.leader);
     }
 
-    const address = new oAddress('o://register');
+    const address = new oAddress('o://registry');
 
     const params = {
       method: 'commit',

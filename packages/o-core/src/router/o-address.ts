@@ -1,23 +1,17 @@
-import { Multiaddr, multiaddr } from '@olane/o-config';
-import { CID } from 'multiformats';
-import { CoreUtils } from '../utils/core.utils.js';
+import { oObject } from '../core/o-object.js';
+import { oTransport } from '../transports/o-transport.js';
+import { RestrictedAddresses } from './enums/restricted-addresses.enum';
 
-export class oAddress {
+export class oAddress extends oObject {
   constructor(
     public readonly value: string,
-    public transports: Array<Multiaddr | string> = [],
-  ) {}
+    public transports: Array<oTransport> = [],
+  ) {
+    super(value);
+  }
 
-  setTransports(transports: Multiaddr[]): void {
+  setTransports(transports: oTransport[]): void {
     this.transports = transports;
-  }
-
-  get libp2pTransports(): Multiaddr[] {
-    return this.transports.filter((t) => typeof t !== 'string');
-  }
-
-  get customTransports(): string[] {
-    return this.transports.filter((t) => typeof t === 'string');
   }
 
   validate(): boolean {
@@ -43,19 +37,40 @@ export class oAddress {
     return this.value;
   }
 
-  toMultiaddr(): Multiaddr {
-    return multiaddr(this.protocol);
-  }
-
-  static fromMultiaddr(ma: Multiaddr): oAddress {
-    return new oAddress(ma.toString().replace('/o/', 'o://'));
+  supportsTransport(transport: oTransport): boolean {
+    return this.transports.some((t) => t.type === transport.type);
   }
 
   static equals(a: oAddress, b: oAddress): boolean {
     return a.value === b.value;
   }
 
-  async toCID(): Promise<CID> {
-    return await CoreUtils.toCID({ address: this.toString() });
+  static leader(): oAddress {
+    return new oAddress(RestrictedAddresses.LEADER);
+  }
+
+  static isStatic(address: oAddress): boolean {
+    return address.value.startsWith(RestrictedAddresses.LEADER) === false;
+  }
+
+  static next(address: oAddress, targetAddress: oAddress): oAddress {
+    const remainingPath = targetAddress.protocol.replace(
+      address.protocol + '/',
+      '',
+    );
+    // we are at the destination
+    if (remainingPath === '') {
+      return address;
+    }
+    // do we need to go back to the leader?
+    if (
+      remainingPath === targetAddress.toString() ||
+      oAddress.isStatic(targetAddress)
+    ) {
+      return oAddress.leader();
+    }
+    // we need to go to the child address
+    const nextHop = remainingPath.replace('/o/', '').split('/').reverse().pop();
+    return new oAddress(address.value + '/' + nextHop);
   }
 }

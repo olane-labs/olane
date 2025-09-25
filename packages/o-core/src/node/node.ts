@@ -23,15 +23,14 @@ import {
 } from '../core/index.js';
 import { NextHopResolver } from '../core/lib/resolvers/next-hop.resolver.js';
 import { NetworkActivity } from './lib/network-activity.lib.js';
-import { oToolError } from '../error/o-error.js';
-import { oToolErrorCodes } from '../error/enums/codes.error.js';
-import { oAgentPlan } from '../plan/agent.plan.js';
-import { oPlanContext } from '../plan/plan.context.js';
+import { oError } from '../error/o-error.js';
+import { oErrorCodes } from '../error/enums/codes.error.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats';
-import { oHandshakeResult } from '../plan/interfaces/handshake.result.js';
-import { RouteRequest } from './interfaces/route.request.js';
 import { PeerId } from '@olane/o-config';
+import { oTransport } from '../transports/o-transport.js';
+import { oNodeRouter } from './router/o-node.router.js';
+import { oAddressResolution } from '../router/o-address-resolution.js';
 
 // Enable default Node.js metrics
 // collectDefaultMetrics({ register: sharedRegistry });
@@ -41,37 +40,23 @@ export abstract class oNode extends oCore {
   public peerId!: PeerId;
   public p2pNode!: Libp2p;
 
-  validate(): void {
-    if (this.p2pNode && this.state !== NodeState.STOPPED) {
-      throw new Error('Node is not in a valid state to be initialized');
-    }
-    if (!this.address.validate()) {
-      throw new Error('Invalid address');
-    }
+  get networkConfig(): Libp2pConfig {
+    return this.config.network || defaultLibp2pConfig;
   }
 
-  get transports(): string[] {
+  abstract initializeRouter(): Promise<oNodeRouter> {
+    this.addressResolution = new oAddressResolution(this.hierarchyManager);
+    return new oNodeRouter();
+  }
+
+  get parentTransports(): Multiaddr[] {
+    return this.parent?.transports.map((t) => multiaddr(t)) || [];
+  }
+
+  get transports(): oTransport[] {
     return this.p2pNode
       .getMultiaddrs()
       .map((multiaddr) => multiaddr.toString());
-  }
-
-  async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
-    this.logger.debug(
-      'Performing handshake with intent: ',
-      handshake.params.intent,
-    );
-
-    const mytools = await this.myTools();
-
-    return {
-      tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
-      methods: this.methods,
-      successes: [],
-      failures: [],
-      task: undefined,
-      type: 'handshake',
-    };
   }
 
   async unregister(): Promise<void> {
@@ -111,7 +96,7 @@ export abstract class oNode extends oCore {
       this.logger.debug('Registering node with leader...', this.config.leader);
     }
 
-    const address = new oAddress('o://register');
+    const address = new oAddress('o://registry');
 
     const params = {
       method: 'commit',
@@ -128,19 +113,12 @@ export abstract class oNode extends oCore {
     this.logger.debug('Registration successful');
   }
 
-  myTools(obj?: any): string[] {
-    return Object.getOwnPropertyNames(obj || this.constructor.prototype)
-      .filter((key) => key.startsWith('_tool_'))
-      .filter((key) => !!key)
-      .map((key) => key.replace('_tool_', ''));
-  }
-
   async applyBridgeTransports(
     address: oAddress,
     request: oRequest,
   ): Promise<oResponse> {
-    throw new oToolError(
-      oToolErrorCodes.TOOL_TRANSPORT_NOT_SUPPORTED,
+    throw new oError(
+      oErrorCodes.TRANSPORT_NOT_SUPPORTED,
       'Bridge transports not implemented',
     );
   }
@@ -156,131 +134,6 @@ export abstract class oNode extends oCore {
 
   extractMethod(address: oAddress): string {
     return address.protocol.split('/').pop() || '';
-  }
-
-  async _tool_route(request: RouteRequest): Promise<any> {
-    const { payload } = request.params;
-
-    const { address } = request.params;
-    this.logger.debug('Routing request to: ', address);
-    const destinationAddress = new oAddress(address as string);
-
-    // determine the next hop address from the encapsulated address
-    const nextHopAddress =
-      await this.addressResolution.resolve(destinationAddress);
-
-    this.logger.debug(
-      'Next hop address: ',
-      nextHopAddress.toString(),
-      nextHopAddress.transports,
-    );
-    // prepare the request for the destination receiver
-    let forwardRequest: oRequest = new oRequest({
-      params: payload.params,
-      id: request.id,
-      method: payload.method,
-    });
-
-    // if the next hop is not a libp2p address, we need to communicate to it another way
-    if (this.addressResolution.supportsTransport(nextHopAddress)) {
-      this.logger.debug(
-        'Bridge transports supported, applying custom transports...',
-      );
-      this.logger.debug('Next hop address: BRENDON!');
-      // attempt to resolve with bridge transports
-      return this.applyBridgeTransports(nextHopAddress, forwardRequest);
-    }
-
-    // assume the next hop is a libp2p address, so we need to set the transports and dial it
-    nextHopAddress.setTransports(this.getTransports(nextHopAddress));
-
-    const isAtDestination = nextHopAddress.value === destinationAddress.value;
-
-    // if we are at the destination, let's look for the closest tool that can service the request
-    const transports = nextHopAddress.transports.filter(
-      (t) => typeof t !== 'string',
-    );
-
-    const isMethodMatch = await this.matchAgainstMethods(destinationAddress);
-    // handle address -> method resolution
-    if (isMethodMatch) {
-      this.logger.debug('Method match found, forwarding to self...');
-      const extractedMethod = this.extractMethod(destinationAddress);
-      try {
-        const response = await this.use(this.address, {
-          method: payload.method || extractedMethod,
-          params: payload.params,
-        });
-        return response.result.data;
-      } catch (error: any) {
-        return error;
-      }
-    }
-
-    const targetStream = await this.p2pNode.dialProtocol(
-      transports,
-      nextHopAddress.protocol,
-    );
-
-    // if not at destination, we need to forward the request to the target
-    if (!isAtDestination) {
-      forwardRequest = new oRequest(request);
-    } else {
-      this.logger.debug('At destination!');
-    }
-
-    const pushableStream = pushable();
-    pushableStream.push(new TextEncoder().encode(forwardRequest.toString()));
-    pushableStream.end();
-    await targetStream.sink(pushableStream);
-    await pipe(targetStream.source, request.stream.sink);
-  }
-
-  /**
-   * Where all intents go to be resolved.
-   * @param request
-   * @returns
-   */
-  async _tool_intent(request: oRequest): Promise<any> {
-    this.logger.debug('Intent resolution called: ', request.params);
-    const { intent, context, streamTo } = request.params;
-    const pc = new oAgentPlan({
-      intent: intent as string,
-      currentNode: this,
-      caller: this.address,
-      streamTo: new oAddress(streamTo as string),
-      context: context
-        ? new oPlanContext([
-            `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
-          ])
-        : undefined,
-      shouldContinue: () => {
-        return !!this.requests[request.id];
-      },
-    });
-
-    const response = await pc.execute();
-    return {
-      ...response,
-      cycles: pc.sequence.length,
-      sequence: pc.sequence.map((s) => {
-        return {
-          reasoning: s.result?.reasoning,
-          result: s.result?.result,
-          error: s.result?.error,
-          type: s.result?.type,
-        };
-      }),
-    };
-  }
-
-  async _tool_child_register(request: oRequest): Promise<any> {
-    const { address }: any = request.params;
-    const childAddress = new oAddress(address);
-    this.childAddresses.push(childAddress);
-    return {
-      message: 'Child node registered with parent!',
-    };
   }
 
   async start(): Promise<void> {
@@ -336,19 +189,6 @@ export abstract class oNode extends oCore {
   async validateJoinRequest(request: oRequest): Promise<any> {
     return true;
   }
-
-  async _tool_add_child(request: oRequest): Promise<any> {
-    const { address, transports }: any = request.params;
-    const childAddress = new oAddress(
-      address,
-      transports.map((t: string) => multiaddr(t)),
-    );
-    this.childAddresses.push(childAddress);
-    return {
-      message: 'Child node registered with parent!',
-    };
-  }
-
   /**
    * Configure the libp2p node
    * @returns The libp2p config
@@ -470,7 +310,12 @@ export abstract class oNode extends oCore {
 
   async initialize(): Promise<void> {
     this.logger.debug('Initializing node...');
-    this.validate();
+    if (this.p2pNode && this.state !== NodeState.STOPPED) {
+      throw new Error('Node is not in a valid state to be initialized');
+    }
+    if (!this.address.validate()) {
+      throw new Error('Invalid address');
+    }
 
     const params = await this.configure();
     this.p2pNode = await createNode(params);

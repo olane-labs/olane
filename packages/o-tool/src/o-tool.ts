@@ -214,6 +214,13 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       // translate to o:// addresses
     }
 
+    myTools(obj?: any): string[] {
+      return Object.getOwnPropertyNames(obj || this.constructor.prototype)
+        .filter((key) => key.startsWith('_tool_'))
+        .filter((key) => !!key)
+        .map((key) => key.replace('_tool_', ''));
+    }
+
     myToolParams(tool: string): Record<string, any> {
       const func = Object.keys(this).find((key) =>
         key.startsWith('_params_' + tool),
@@ -223,6 +230,161 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       }
       // @ts-ignore
       return this[func]();
+    }
+
+    async _tool_handshake(handshake: oRequest): Promise<any> {
+      this.logger.debug(
+        'Performing handshake with intent: ',
+        handshake.params.intent,
+      );
+
+      const mytools = await this.myTools();
+
+      return {
+        tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
+        methods: this.methods,
+        successes: [],
+        failures: [],
+        task: undefined,
+        type: 'handshake',
+      };
+    }
+
+    async _tool_route(request: RouteRequest): Promise<any> {
+      const { payload } = request.params;
+
+      const { address } = request.params;
+      this.logger.debug('Routing request to: ', address);
+      const destinationAddress = new oAddress(address as string);
+
+      // determine the next hop address from the encapsulated address
+      const nextHopAddress =
+        await this.addressResolution.resolve(destinationAddress);
+
+      this.logger.debug(
+        'Next hop address: ',
+        nextHopAddress.toString(),
+        nextHopAddress.transports,
+      );
+      // prepare the request for the destination receiver
+      let forwardRequest: oRequest = new oRequest({
+        params: payload.params,
+        id: request.id,
+        method: payload.method,
+      });
+
+      // if the next hop is not a libp2p address, we need to communicate to it another way
+      if (this.addressResolution.supportsTransport(nextHopAddress)) {
+        this.logger.debug(
+          'Bridge transports supported, applying custom transports...',
+        );
+        this.logger.debug('Next hop address: BRENDON!');
+        // attempt to resolve with bridge transports
+        return this.applyBridgeTransports(nextHopAddress, forwardRequest);
+      }
+
+      // assume the next hop is a libp2p address, so we need to set the transports and dial it
+      nextHopAddress.setTransports(this.getTransports(nextHopAddress));
+
+      const isAtDestination = nextHopAddress.value === destinationAddress.value;
+
+      // if we are at the destination, let's look for the closest tool that can service the request
+      const transports = nextHopAddress.transports.filter(
+        (t) => typeof t !== 'string',
+      );
+
+      const isMethodMatch = await this.matchAgainstMethods(destinationAddress);
+      // handle address -> method resolution
+      if (isMethodMatch) {
+        this.logger.debug('Method match found, forwarding to self...');
+        const extractedMethod = this.extractMethod(destinationAddress);
+        try {
+          const response = await this.use(this.address, {
+            method: payload.method || extractedMethod,
+            params: payload.params,
+          });
+          return response.result.data;
+        } catch (error: any) {
+          return error;
+        }
+      }
+
+      const targetStream = await this.p2pNode.dialProtocol(
+        transports,
+        nextHopAddress.protocol,
+      );
+
+      // if not at destination, we need to forward the request to the target
+      if (!isAtDestination) {
+        forwardRequest = new oRequest(request);
+      } else {
+        this.logger.debug('At destination!');
+      }
+
+      const pushableStream = pushable();
+      pushableStream.push(new TextEncoder().encode(forwardRequest.toString()));
+      pushableStream.end();
+      await targetStream.sink(pushableStream);
+      await pipe(targetStream.source, request.stream.sink);
+    }
+
+    async _tool_add_child(request: oRequest): Promise<any> {
+      const { address, transports }: any = request.params;
+      const childAddress = new oAddress(
+        address,
+        transports.map((t: string) => multiaddr(t)),
+      );
+      this.childAddresses.push(childAddress);
+      return {
+        message: 'Child node registered with parent!',
+      };
+    }
+
+    /**
+     * Where all intents go to be resolved.
+     * @param request
+     * @returns
+     */
+    async _tool_intent(request: oRequest): Promise<any> {
+      this.logger.debug('Intent resolution called: ', request.params);
+      const { intent, context, streamTo } = request.params;
+      const pc = new oAgentPlan({
+        intent: intent as string,
+        currentNode: this,
+        caller: this.address,
+        streamTo: new oAddress(streamTo as string),
+        context: context
+          ? new oPlanContext([
+              `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
+            ])
+          : undefined,
+        shouldContinue: () => {
+          return !!this.requests[request.id];
+        },
+      });
+
+      const response = await pc.execute();
+      return {
+        ...response,
+        cycles: pc.sequence.length,
+        sequence: pc.sequence.map((s) => {
+          return {
+            reasoning: s.result?.reasoning,
+            result: s.result?.result,
+            error: s.result?.error,
+            type: s.result?.type,
+          };
+        }),
+      };
+    }
+
+    async _tool_child_register(request: oRequest): Promise<any> {
+      const { address }: any = request.params;
+      const childAddress = new oAddress(address);
+      this.childAddresses.push(childAddress);
+      return {
+        message: 'Child node registered with parent!',
+      };
     }
 
     async _tool_cancel_request(request: oRequest): Promise<ToolResult> {

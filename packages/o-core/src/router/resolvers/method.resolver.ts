@@ -1,10 +1,13 @@
-import { oNode } from '../../../node/index.js';
-import { oAddress } from '../../o-address.js';
+import { oNode } from '../../node/o-node.js';
+import { oAddress } from '../../router/o-address.js';
+import { oCustomTransport } from '../../transports/custom.transport.js';
+import { TransportType } from '../../transports/interfaces/transport-type.enum.js';
+import { oTransport } from '../../transports/o-transport.js';
 import { oAnythingResolver } from './anything.resolver.js';
 
 export class oMethodResolver extends oAnythingResolver {
-  static get transports(): string[] {
-    return ['/method'];
+  static get customTransports(): oTransport[] {
+    return [new oCustomTransport('/method')];
   }
   async resolve(address: oAddress, node: oNode): Promise<oAddress> {
     const nextHopAddress = await super.resolve(address, node);
@@ -14,7 +17,7 @@ export class oMethodResolver extends oAnythingResolver {
       if (methodName) {
         return new oAddress(
           nextHopAddress.toString(),
-          oMethodResolver.transports,
+          oMethodResolver.customTransports,
         );
       }
     }

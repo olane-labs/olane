@@ -8,9 +8,9 @@ export interface oHierarchyManagerConfig {
 }
 
 export class oHierarchyManager extends oObject {
-  private leaders: oAddress[] = [];
-  private children: oAddress[] = [];
-  private parents: oAddress[] = []; // multiple parents allow for more flexibility with address construction
+  public leaders: oAddress[] = [];
+  public children: oAddress[] = [];
+  public parents: oAddress[] = []; // multiple parents allow for more flexibility with address construction
 
   constructor(config: oHierarchyManagerConfig) {
     super();
@@ -30,6 +30,10 @@ export class oHierarchyManager extends oObject {
       ...this.children,
       new oAddress(address.toString()),
     ]);
+  }
+
+  getChild(address: oAddress): oAddress | undefined {
+    return this.children.find((a) => a.toString() === address.toString());
   }
 
   removeChild(address: oAddress | string): void {

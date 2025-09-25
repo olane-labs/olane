@@ -22,23 +22,25 @@ import { oObject } from './o-object.js';
 import { oMetrics } from './lib/o-metrics.js';
 import { oHierarchyManager } from './lib/o-hierarchy.manager.js';
 import { oRequestManager } from './lib/o-request.manager.js';
+import { oTransport } from '../transports/o-transport.js';
+import { oRouter } from '../router/o-router.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
   public connectionManager!: oConnectionManager;
-  public addressResolution: oAddressResolution;
+  public addressResolution!: oAddressResolution;
   public hierarchyManager: oHierarchyManager;
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
+  public router!: oRouter;
 
   constructor(readonly config: oCoreConfig) {
     super(
       (config.name ? `:${config.name}` : '') + ':' + config.address.toString(),
     );
     this.address = config.address || new oAddress('o://node');
-    this.addressResolution = new oAddressResolution();
     this.hierarchyManager = new oHierarchyManager({
       leaders: this.config.leader ? [this.config.leader] : [],
       parents: this.config.parent ? [this.config.parent] : [],
@@ -61,15 +63,11 @@ export abstract class oCore extends oObject {
     return this.config.address;
   }
 
-  get networkConfig(): Libp2pConfig {
-    return this.config.network || defaultLibp2pConfig;
-  }
-
   get type(): NodeType {
     return this.config.type || NodeType.UNKNOWN;
   }
 
-  get transports(): string[] {
+  get transports(): oTransport[] {
     return [];
   }
 
@@ -99,8 +97,8 @@ export abstract class oCore extends oObject {
     return peerId;
   }
 
-  get parentTransports(): Multiaddr[] {
-    return this.parent?.transports.map((t) => multiaddr(t)) || [];
+  get parentTransports(): oTransport[] {
+    return this.parent?.transports || [];
   }
 
   /**
@@ -111,19 +109,18 @@ export abstract class oCore extends oObject {
    * @returns
    */
   async use(
-    addressWithLeaderTransports: oAddress,
+    address: oAddress,
     data?: {
       method?: string;
       params?: { [key: string]: any };
       id?: string;
     },
   ): Promise<oResponse> {
-    if (!addressWithLeaderTransports.validate()) {
+    if (!address.validate()) {
       throw new Error('Invalid address');
     }
-    const { nextHopAddress, targetAddress } = await this.translateAddress(
-      addressWithLeaderTransports,
-    );
+    const { nextHopAddress, targetAddress } =
+      await this.router.translate(address);
 
     const connection = await this.connect(nextHopAddress, targetAddress);
 
@@ -167,6 +164,8 @@ export abstract class oCore extends oObject {
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
   }
+
+  abstract initializeRouter(): Promise<oRouter>;
 
   /**
    * Start the node
