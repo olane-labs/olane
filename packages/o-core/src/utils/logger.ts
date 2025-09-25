@@ -8,6 +8,10 @@ export class Logger {
     this.log = debug('o-protocol:' + name);
   }
 
+  setNamespace(name: string) {
+    this.log = debug('o-protocol:' + name);
+  }
+
   debug(...args: any[]) {
     this.log(chalk.blue('[DEBUG]'), ...args);
   }

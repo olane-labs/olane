@@ -10,6 +10,16 @@ export class oAddress extends oObject {
     super(value);
   }
 
+  equals(other: oAddress): boolean {
+    return this.value === other.value && this.transportsEqual(other);
+  }
+
+  transportsEqual(other: oAddress): boolean {
+    return this.transports.every((t) =>
+      other.transports.some((t2) => t.toString() === t2.toString()),
+    );
+  }
+
   setTransports(transports: oTransport[]): void {
     this.transports = transports;
   }

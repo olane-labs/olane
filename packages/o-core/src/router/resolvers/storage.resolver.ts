@@ -1,12 +1,12 @@
-import { oAnythingResolver } from './anything.resolver.js';
+// import { oAnythingResolver } from './anything.resolver.js';
 
-const storageTransports = ['/store'];
+// const storageTransports = ['/store'];
 
-export class StorageResolver extends oAnythingResolver {
-  get transports(): string[] {
-    return storageTransports;
-  }
-  static get transports(): string[] {
-    return storageTransports;
-  }
-}
+// export class StorageResolver extends oAnythingResolver {
+//   get transports(): string[] {
+//     return storageTransports;
+//   }
+//   static get transports(): string[] {
+//     return storageTransports;
+//   }
+// }

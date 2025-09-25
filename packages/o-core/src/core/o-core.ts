@@ -1,15 +1,6 @@
-import {
-  defaultLibp2pConfig,
-  Libp2p,
-  Libp2pConfig,
-  Multiaddr,
-  multiaddr,
-  PeerId,
-} from '@olane/o-config';
 import { oCoreConfig } from './interfaces/core-config.interface.js';
 import { NodeState } from './interfaces/state.enum.js';
 import { oAddress } from '../router/o-address.js';
-import { Logger } from '../utils/logger.js';
 import { NodeType } from './interfaces/node-type.enum.js';
 import { oConnectionManager } from '../connection/o-connection-manager.js';
 import { oResponse } from '../connection/o-response.js';
@@ -165,7 +156,7 @@ export abstract class oCore extends oObject {
     this.logger.debug('Tearing down node...');
   }
 
-  abstract initializeRouter(): Promise<oRouter>;
+  abstract initializeRouter(): oRouter;
 
   /**
    * Start the node

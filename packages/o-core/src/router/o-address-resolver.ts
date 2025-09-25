@@ -1,6 +1,4 @@
-import { Libp2p } from '@olane/o-config';
 import { oAddress } from './o-address.js';
-import { oCore } from '../core/o-core.js';
 import { oObject } from '../core/o-object.js';
 import { oTransport } from '../transports/o-transport.js';
 import { TransportType } from '../transports/interfaces/transport-type.enum.js';

@@ -7,8 +7,8 @@ import {
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
-import { oResponse } from '../lib/o-response.js';
-import { oRequest } from '../lib/o-request.js';
+import { oResponse } from '../connection/o-response.js';
+import { oRequest } from '../connection/o-request.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
