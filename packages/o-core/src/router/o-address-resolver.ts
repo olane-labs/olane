@@ -1,7 +1,7 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
 import { Logger } from '../utils/logger.js';
-import { oAddress } from '../o-address.js';
-import { oNode } from '../../node/index.js';
+import { oAddress } from './o-address.js';
+import { oCore } from '../core/o-core.js';
 
 export class oAddressResolver {
   public logger: Logger;
@@ -43,7 +43,7 @@ export class oAddressResolver {
     return nextHopAddress;
   }
 
-  async resolve(address: oAddress, node?: oNode): Promise<oAddress> {
+  async resolve(address: oAddress, node?: oCore): Promise<oAddress> {
     return address;
   }
 }

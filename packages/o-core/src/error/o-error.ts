@@ -1,11 +1,7 @@
-import { oToolErrorCodes } from './enums/codes.error.js';
-export interface oToolErrorInterface {
-  code: number;
-  message: string;
-  details?: any;
-}
+import { oErrorCodes } from './enums/codes.error.js';
+import { oErrorInterface } from './interfaces/o-error.interface.js';
 
-export class oToolError extends Error implements oToolErrorInterface {
+export class oError extends Error implements oErrorInterface {
   code: number = 0;
   details?: any;
   message: string = '';
@@ -27,9 +23,9 @@ export class oToolError extends Error implements oToolErrorInterface {
 
   static fromJSON(json: any) {
     if (json?.code && json?.message) {
-      return new oToolError(json.code, json.message, json.details);
+      return new oError(json.code, json.message, json.details);
     }
-    return new oToolError(oToolErrorCodes.TOOL_ERROR, json, json?.details);
+    return new oError(oErrorCodes.UNKNOWN, json, json?.details);
   }
 
   toString() {

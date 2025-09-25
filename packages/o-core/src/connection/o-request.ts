@@ -5,12 +5,14 @@ import {
   RequestId,
   RequestParams,
 } from '@olane/o-protocol';
+import { RequestState } from './interfaces/request-state.enum.js';
 
 export class oRequest implements JSONRPCRequest {
   jsonrpc: typeof JSONRPC_VERSION;
   method: string;
   params: RequestParams;
   id: RequestId;
+  state: RequestState = RequestState.PENDING;
 
   constructor(config: Request & { id: RequestId }) {
     this.jsonrpc = JSONRPC_VERSION;
@@ -30,6 +32,10 @@ export class oRequest implements JSONRPCRequest {
       params: this.params,
       id: this.id,
     };
+  }
+
+  setState(state: RequestState): void {
+    this.state = state;
   }
 
   toString() {

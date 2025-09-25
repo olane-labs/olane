@@ -1,4 +1,4 @@
-import { oResponse } from '../../core/lib/o-response.js';
+import { oResponse } from '../../o-connection/o-response.js';
 
 export interface PlanResultInterface {
   success?: boolean;

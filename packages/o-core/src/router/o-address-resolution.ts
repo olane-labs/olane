@@ -1,4 +1,4 @@
-import { oAddress } from '../o-address.js';
+import { oAddress } from './o-address.js';
 import { oAddressResolver } from './o-address-resolver.js';
 
 export class oAddressResolution {

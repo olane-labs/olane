@@ -1,7 +1,7 @@
 import { oAddress } from '../o-address.js';
 import { Logger } from '../utils/logger.js';
 import { oConnection } from './o-connection.js';
-import { oConnectionManagerConfig } from '../interfaces/connection-manager.config.js';
+import { oConnectionManagerConfig } from './interfaces/connection-manager.config.js';
 import { Libp2p, Multiaddr } from '@olane/o-config';
 
 export class oConnectionManager {

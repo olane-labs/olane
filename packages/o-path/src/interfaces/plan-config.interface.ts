@@ -1,4 +1,4 @@
-import { oAddress, oCoreNode } from '../../core/index.js';
+import { oAddress, oCore } from '../../core/index.js';
 import { oPlanContext } from '../plan.context.js';
 
 export interface oPlanConfig {
@@ -11,7 +11,7 @@ export interface oPlanConfig {
   streamTo?: oAddress;
 
   // o-networking information
-  currentNode: oCoreNode;
+  currentNode: oCore;
   caller: oAddress;
   receiver?: oAddress; // if the receiver is not set, we will use the network's default receiver
   promptFunction?: (

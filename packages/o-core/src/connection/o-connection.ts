@@ -4,7 +4,7 @@ import { oAddress } from '../o-address.js';
 import { oRequest } from './o-request.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 import { oResponse } from './o-response.js';
-import { ConnectionSendParams } from '../interfaces/connection-send-params.interface.js';
+import { ConnectionSendParams } from './interfaces/connection-send-params.interface.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class oConnection {

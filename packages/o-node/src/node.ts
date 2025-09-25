@@ -23,7 +23,7 @@ import {
 } from '../core/index.js';
 import { NextHopResolver } from '../core/lib/resolvers/next-hop.resolver.js';
 import { NetworkActivity } from './lib/network-activity.lib.js';
-import { oToolError } from '../error/o-error.js';
+import { oToolError } from '../error/tool.error.js';
 import { oToolErrorCodes } from '../error/enums/codes.error.js';
 import { oAgentPlan } from '../plan/agent.plan.js';
 import { oPlanContext } from '../plan/plan.context.js';

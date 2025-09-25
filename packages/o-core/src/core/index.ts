@@ -1,4 +1,4 @@
-export * from './core.node.js';
+export * from './o-core.js';
 export * from './utils/core.utils.js';
 export * from './o-address.js';
 export * from './interfaces/index.js';
