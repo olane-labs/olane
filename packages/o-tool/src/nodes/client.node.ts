@@ -1,4 +1,4 @@
-import { defaultLibp2pConfig, memory } from '@olane/o-config';
+import { defaultLibp2pConfig } from '@olane/o-config';
 import { CoreConfig, oVirtualNode } from '@olane/o-core';
 
 export class oClientNode extends oVirtualNode {

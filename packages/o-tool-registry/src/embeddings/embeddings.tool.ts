@@ -1,5 +1,5 @@
-import { oTool, oVirtualTool } from '@olane/o-tool';
-import { oAddress, oVirtualNode } from '@olane/o-core';
+import { oVirtualTool } from '@olane/o-tool';
+import { oAddress } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 
 export class EmbeddingsTool extends oVirtualTool {

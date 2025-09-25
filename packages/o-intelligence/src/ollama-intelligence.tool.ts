@@ -1,5 +1,5 @@
-import { oAddress, oRequest, oVirtualNode } from '@olane/o-core';
-import { oTool, oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
+import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 
 interface OllamaChatMessage {
