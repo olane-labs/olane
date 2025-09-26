@@ -17,6 +17,7 @@ import {
   NodeType,
   oCore,
   oRequest,
+  oTransport,
   RestrictedAddresses,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
@@ -25,7 +26,7 @@ import { oNodeConnectionManager } from './connection/o-node-connection.manager.j
 import { oNodeResolver } from './router/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
 
-export abstract class oNode extends oCore {
+export class oNode extends oCore {
   public peerId!: PeerId;
   public p2pNode!: Libp2p;
   public address!: oNodeAddress;
@@ -42,19 +43,23 @@ export abstract class oNode extends oCore {
     return this.config.network || defaultLibp2pConfig;
   }
 
-  initializeRouter(): oNodeRouter {
+  configureTransports(): any[] {
+    return [...(defaultLibp2pConfig.transports || [])];
+  }
+
+  initializeRouter(): void {
     this.hierarchyManager = new oNodeHierarchyManager({
       leaders: this.config.leader ? [this.config.leader] : [],
       parents: this.config.parent ? [this.config.parent] : [],
       children: [],
     });
-    return new oNodeRouter({
+    this.router = new oNodeRouter({
       hierarchyManager: this.hierarchyManager,
     });
   }
 
   get staticAddress(): oNodeAddress {
-    return this.config.staticAddress;
+    return this.config.address as oNodeAddress;
   }
 
   get parentTransports(): oNodeTransport[] {
@@ -264,7 +269,13 @@ export abstract class oNode extends oCore {
 
     const params = await this.configure();
     this.p2pNode = await createNode(params);
-    this.logger.debug('Node initialized!', this.transports);
+
+    this.initializeRouter();
+
+    this.logger.debug(
+      'Node initialized!',
+      this.transports.map((t) => t.toString()),
+    );
     this.address.setTransports(this.transports);
     this.peerId = this.p2pNode.peerId as any;
 
@@ -274,7 +285,7 @@ export abstract class oNode extends oCore {
     });
 
     // initialize address resolution
-    this.addressResolution.addResolver(new oNodeResolver(this.address));
+    this.router.addResolver(new oNodeResolver(this.address));
   }
 
   async teardown(): Promise<void> {

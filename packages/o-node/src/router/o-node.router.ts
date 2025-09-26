@@ -10,8 +10,6 @@ import {
 } from '@olane/o-core';
 
 export class oNodeRouter extends oRouter {
-  public addressResolution: oAddressResolution;
-
   constructor(readonly config: oNodeRouterConfig) {
     super();
     this.addressResolution = new oAddressResolution(

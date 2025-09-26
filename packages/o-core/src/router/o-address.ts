@@ -1,6 +1,6 @@
 import { oObject } from '../core/o-object.js';
 import { oTransport } from '../transports/o-transport.js';
-import { RestrictedAddresses } from './enums/restricted-addresses.enum';
+import { RestrictedAddresses } from './enums/restricted-addresses.enum.js';
 
 export class oAddress extends oObject {
   public transports: oTransport[];

@@ -21,7 +21,6 @@ export abstract class oCore extends oObject {
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
   public connectionManager!: oConnectionManager;
-  public addressResolution!: oAddressResolution;
   public hierarchyManager: oHierarchyManager;
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
@@ -156,7 +155,7 @@ export abstract class oCore extends oObject {
     this.logger.debug('Tearing down node...');
   }
 
-  abstract initializeRouter(): oRouter;
+  abstract initializeRouter(): void;
 
   /**
    * Start the node

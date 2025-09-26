@@ -1,5 +1,5 @@
-import { oAddress } from '../../router/o-address';
-import { oObject } from '../o-object';
+import { oAddress } from '../../router/o-address.js';
+import { oObject } from '../o-object.js';
 
 export interface oHierarchyManagerConfig {
   leaders?: oAddress[];

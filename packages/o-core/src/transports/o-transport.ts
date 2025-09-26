@@ -1,5 +1,5 @@
-import { oObject } from '../core/o-object';
-import { TransportType } from './interfaces/transport-type.enum';
+import { oObject } from '../core/o-object.js';
+import { TransportType } from './interfaces/transport-type.enum.js';
 
 export abstract class oTransport extends oObject {
   public readonly value: any;
