@@ -9,11 +9,11 @@ import { oConnectionConfig } from './interfaces/connection.config.js';
 
 export abstract class oConnection extends oObject {
   public readonly id: string;
-  private readonly address: oAddress;
-  private readonly nextHopAddress: oAddress;
-  private readonly callerAddress: oAddress | undefined;
+  public readonly address: oAddress;
+  public readonly nextHopAddress: oAddress;
+  public readonly callerAddress: oAddress | undefined;
 
-  constructor(private readonly config: oConnectionConfig) {
+  constructor(protected readonly config: oConnectionConfig) {
     super();
     this.id = uuidv4();
     this.address = config.address;

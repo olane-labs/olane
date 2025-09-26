@@ -4,3 +4,5 @@ export * from './o-dependency.js';
 export * from './o-parameter.js';
 export * from './defaults/index.js';
 export * from './graceful-shutdown.js';
+export * from './lib/index.js';
+export * from './o-object.js';

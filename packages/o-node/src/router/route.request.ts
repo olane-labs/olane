@@ -1,5 +1,5 @@
 import { RequestParams } from '@olane/o-protocol';
-import { oRequest } from '../../index.js';
+import { oRequest } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 
 export interface RouteRequest extends oRequest {

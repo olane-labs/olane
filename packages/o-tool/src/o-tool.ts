@@ -214,6 +214,25 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       // translate to o:// addresses
     }
 
+    async applyBridgeTransports(
+      address: oAddress,
+      request: oRequest,
+    ): Promise<oResponse> {
+      throw new oError(
+        oErrorCodes.TRANSPORT_NOT_SUPPORTED,
+        'Bridge transports not implemented',
+      );
+    }
+
+    async matchAgainstMethods(address: oAddress): Promise<boolean> {
+      const methods = await this.myTools();
+      this.logger.debug('Matching against methods: ', methods);
+      const method = address
+        .toString()
+        .replace(this.address.toString() + '/', '');
+      return methods.includes(method || '');
+    }
+
     myTools(obj?: any): string[] {
       return Object.getOwnPropertyNames(obj || this.constructor.prototype)
         .filter((key) => key.startsWith('_tool_'))

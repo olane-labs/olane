@@ -3,11 +3,14 @@ import { oTransport } from '../transports/o-transport.js';
 import { RestrictedAddresses } from './enums/restricted-addresses.enum';
 
 export class oAddress extends oObject {
+  public transports: oTransport[];
+
   constructor(
     public readonly value: string,
-    public transports: Array<oTransport> = [],
+    transports: oTransport[] = [],
   ) {
     super(value);
+    this.transports = transports;
   }
 
   equals(other: oAddress): boolean {

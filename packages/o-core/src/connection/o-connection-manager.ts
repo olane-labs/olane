@@ -2,9 +2,10 @@ import { oAddress } from '../router/o-address.js';
 import { oConnection } from './o-connection.js';
 import { oConnectionManagerConfig } from './interfaces/connection-manager.config.js';
 import { oObject } from '../core/o-object.js';
+import { oConnectionConfig } from './interfaces/connection.config.js';
 
 export abstract class oConnectionManager extends oObject {
-  private cache: Map<string, oConnection> = new Map();
+  protected cache: Map<string, oConnection> = new Map();
 
   constructor(readonly config: oConnectionManagerConfig) {
     super();
@@ -15,11 +16,7 @@ export abstract class oConnectionManager extends oObject {
    * @param address - The address to connect to
    * @returns The connection object
    */
-  abstract connect(config: {
-    address: oAddress;
-    nextHopAddress: oAddress;
-    callerAddress?: oAddress;
-  }): Promise<oConnection>;
+  abstract connect(config: oConnectionConfig): Promise<oConnection>;
 
   isCached(address: oAddress): boolean {
     return this.cache.has(address.toString());
