@@ -1,12 +1,9 @@
 import { oAddress, oConnectionConfig, oConnectionManager } from '@olane/o-core';
-import { Logger } from '@olane/o-core';
 import { oConnection } from '@olane/o-core';
-import { oConnectionManagerConfig } from '@olane/o-core';
-import { Libp2p, Multiaddr } from '@olane/o-config';
-import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config';
-import { oNodeAddress } from '../router/o-node.address';
-import { oNodeConnection } from './o-node-connection';
-import { oNodeConnectionConfig } from './interfaces/o-node-connection.config';
+import { Libp2p } from '@olane/o-config';
+import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
+import { oNodeAddress } from '../router/o-node.address.js';
+import { oNodeConnection } from './o-node-connection.js';
 
 export class oNodeConnectionManager extends oConnectionManager {
   private p2pNode: Libp2p;

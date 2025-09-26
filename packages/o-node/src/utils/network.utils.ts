@@ -1,7 +1,7 @@
 import { Libp2p, Multiaddr } from '@olane/o-config';
-import { oAddress, oObject } from '@olane/o-core';
+import { oObject } from '@olane/o-core';
 import { CID } from 'multiformats';
-import { oNodeAddress } from '../router/o-node.address';
+import { oNodeAddress } from '../router/o-node.address.js';
 
 export class NetworkUtils extends oObject {
   public static async findProviders(

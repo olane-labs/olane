@@ -4,10 +4,8 @@ import {
   defaultLibp2pConfig,
   Libp2p,
   Libp2pConfig,
-  Multiaddr,
 } from '@olane/o-config';
 import { v4 as uuidv4 } from 'uuid';
-import { CID } from 'multiformats';
 import { PeerId } from '@olane/o-config';
 import { oNodeRouter } from './router/o-node.router.js';
 import { oNodeHierarchyManager } from './o-node-hierarchy.manager.js';
@@ -21,7 +19,6 @@ import {
   oRequest,
   RestrictedAddresses,
 } from '@olane/o-core';
-import { NetworkActivity } from './lib/network-activity.lib.js';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
 import { oNodeConnectionManager } from './connection/o-node-connection.manager.js';
@@ -29,7 +26,6 @@ import { oNodeResolver } from './router/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
 
 export abstract class oNode extends oCore {
-  public networkActivity!: NetworkActivity;
   public peerId!: PeerId;
   public p2pNode!: Libp2p;
   public address!: oNodeAddress;
@@ -279,13 +275,6 @@ export abstract class oNode extends oCore {
 
     // initialize address resolution
     this.addressResolution.addResolver(new oNodeResolver(this.address));
-
-    // listen for network events
-    // this.listenForNetworkEvents();
-  }
-
-  listenForNetworkEvents() {
-    this.networkActivity = new NetworkActivity(this.logger, this.p2pNode);
   }
 
   async teardown(): Promise<void> {

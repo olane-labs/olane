@@ -1,4 +1,4 @@
-import { oNodeHierarchyManager } from '../../o-node-hierarchy.manager';
+import { oNodeHierarchyManager } from '../../o-node-hierarchy.manager.js';
 
 export interface oNodeRouterConfig {
   hierarchyManager: oNodeHierarchyManager;

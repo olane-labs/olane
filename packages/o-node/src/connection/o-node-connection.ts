@@ -1,11 +1,5 @@
 import { Connection, Uint8ArrayList, pushable, all } from '@olane/o-config';
-import { oProtocolMethods } from '@olane/o-protocol';
-import {
-  ConnectionSendParams,
-  oConnection,
-  oRequest,
-  oResponse,
-} from '@olane/o-core';
+import { oConnection, oRequest, oResponse } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 export class oNodeConnection extends oConnection {
