@@ -2,7 +2,7 @@ import { oLaneQueryConfig } from './o-lane-query.config.js';
 import { oTaskConfig } from './o-lane-task.config.js';
 import { oConfigureResult } from './configure.result.js';
 
-export interface oPlanResult {
+export interface oLaneResult {
   intents?: string[];
   queries?: oLaneQueryConfig[];
   tasks?: oTaskConfig[];

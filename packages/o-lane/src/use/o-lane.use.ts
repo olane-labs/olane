@@ -14,7 +14,7 @@ import { ObjectUtils } from '../../utils/object.utils.js';
 /**
  * We know what tool we want to use, let's use it.
  */
-export class oUsePlan extends oPlan {
+export class oLaneUse extends oPlan {
   type() {
     return oPlanType.USE;
   }

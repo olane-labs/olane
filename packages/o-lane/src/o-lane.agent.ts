@@ -1,31 +1,23 @@
-import { oAddress } from '../core/index.js';
-import { oPlanResult } from './interfaces/o-lane.result.js';
-import { oPlanConfig } from './interfaces/o-lane.config.js';
-import { oPlan } from './o-lane.js';
-import { oUsePlan } from './use/o-lane.use.js';
+import { oAddress } from '@olane/o-core';
+import { oLaneResult } from './interfaces/o-lane.result.js';
+import { oLaneConfig } from './interfaces/o-lane.config.js';
+import { oLane } from './o-lane.js';
+import { oLaneUse } from './use/o-lane.use.js';
 import { oSearchPlan } from './search/o-lane.search.js';
 import { oLaneQueryConfig } from './interfaces/o-lane-query.config.js';
 import { oTaskConfig } from './interfaces/o-lane-task.config.js';
 
-/**
- * oAgentPlan is responsible for managing the execution of plans.
- * General execution flow:
- * 1. Analyze intent
- * 2. Search for context
- * 3. Use network tools + context to solve intent
- * 4. Back to step 1
- */
-export class oAgentPlan extends oPlan {
+export class oLaneAgent extends oLane {
   private MAX_ITERATIONS = 20;
   private contextIdHash: { [key: string]: boolean } = {};
 
-  constructor(config: oPlanConfig) {
+  constructor(config: oLaneConfig) {
     super(config);
   }
 
-  async doTask(task: oTaskConfig, config: oPlanConfig): Promise<oPlanResult> {
+  async doTask(task: oTaskConfig, config: oLaneConfig): Promise<oLaneResult> {
     this.logger.debug('Doing task...', task);
-    const taskPlan = new oUsePlan({
+    const taskPlan = new oLaneUse({
       ...config,
       intent: this.config.intent,
       context: this.config.context,
@@ -33,7 +25,7 @@ export class oAgentPlan extends oPlan {
       sequence: this.sequence,
     });
     const taskResult = await taskPlan.execute();
-    this.addSequencePlan(taskPlan);
+    this.addLane(taskPlan);
     this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
     if (taskResult.error) {
       this.logger.debug('Task error: ', taskResult.error);
@@ -47,15 +39,15 @@ export class oAgentPlan extends oPlan {
   }
 
   async handleTasks(
-    results: oPlanResult,
-    config: oPlanConfig,
+    results: oLaneResult,
+    config: oLaneConfig,
   ): Promise<oPlanResult[]> {
     this.logger.debug('Handling task...', results);
     const tasks = results.tasks;
     if (!tasks) {
       throw new Error('Invalid task passed to handleTask');
     }
-    const taskResults: oPlanResult[] = [];
+    const taskResults: oLaneResult[] = [];
     for (const task of tasks) {
       if (!task.address) {
         throw new Error('Invalid address passed to handleTask');
@@ -70,13 +62,13 @@ export class oAgentPlan extends oPlan {
 
   async handleSearch(
     queries: oLaneQueryConfig[],
-    config: oPlanConfig,
+    config: oLaneConfig,
   ): Promise<any[]> {
     this.logger.debug('Handling searches...', queries);
     if (queries.length === 0) {
       throw new Error('No queries provided to handleSearch');
     }
-    const results: oPlanResult[] = [];
+    const results: oLaneResult[] = [];
     for (const query of queries) {
       const searchPlan = new oSearchPlan({
         ...config,
@@ -85,7 +77,7 @@ export class oAgentPlan extends oPlan {
         external: query?.provider === 'external',
       });
       const result = await searchPlan.execute();
-      this.addSequencePlan(searchPlan);
+      this.addLane(searchPlan);
       this.logger.debug('Search result: ', result.result);
       results.push(result.result);
     }
@@ -109,17 +101,17 @@ export class oAgentPlan extends oPlan {
   /**
    * The analysis of the intent results in a list of steps and queries to complete the intent.
    */
-  async handleMultipleStep(output: oPlanResult): Promise<oPlanResult> {
+  async handleMultipleStep(output: oLaneResult): Promise<oLaneResult> {
     const results: any[] = [];
     for (const intent of output?.intents || []) {
-      const subPlan = new oAgentPlan({
+      const subPlan = new oLaneAgent({
         ...this.config,
         intent: intent,
         sequence: this.sequence,
         parentId: this.id,
       });
       const response = await subPlan.execute();
-      this.addSequencePlan(subPlan);
+      this.addLane(subPlan);
       results.push(JSON.stringify(response));
     }
     return {
@@ -128,7 +120,7 @@ export class oAgentPlan extends oPlan {
     };
   }
 
-  async loop(): Promise<oPlanResult> {
+  async loop(): Promise<oLaneResult> {
     if (!this.node) {
       throw new Error('Node not set');
     }
@@ -145,7 +137,7 @@ export class oAgentPlan extends oPlan {
       }
 
       // setup the plan config
-      const planConfig: oPlanConfig = {
+      const planConfig: oLaneConfig = {
         ...this.config,
         currentNode: this.node,
         caller: this.node?.address,
@@ -153,15 +145,15 @@ export class oAgentPlan extends oPlan {
       };
 
       // search or resolve the intent with tool usage
-      const plan = new oPlan(planConfig);
+      const plan = new oLane(planConfig);
       const response = await plan.execute();
 
       // all plans are wrappers of AI around current state
-      const planResult = response as oPlanResult;
+      const planResult = response as oLaneResult;
       const { error, result, type } = planResult;
 
       // update the sequence to reflect state change
-      this.addSequencePlan(plan);
+      this.addLane(plan);
 
       // handle the various result types
       const resultType = type;
@@ -225,7 +217,7 @@ export class oAgentPlan extends oPlan {
     throw new Error('Plan failed, reached max iterations');
   }
 
-  async run(): Promise<oPlanResult> {
+  async run(): Promise<oLaneResult> {
     return await this.loop();
   }
 }

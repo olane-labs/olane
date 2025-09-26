@@ -4,7 +4,7 @@ import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
-import { oPlanResult } from './interfaces/o-lane.result.js';
+import { oLaneResult } from './interfaces/o-lane.result.js';
 import { v4 as uuidv4 } from 'uuid';
 import { RegexUtils } from '@olane/o-core';
 
@@ -14,7 +14,7 @@ export class oLane extends oObject {
   public id: string = uuidv4();
   public parentId: string | undefined;
 
-  public result: oPlanResult | undefined;
+  public result: oLaneResult | undefined;
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent}]`);
@@ -49,12 +49,14 @@ export class oLane extends oObject {
   toJSON() {
     return {
       config: this.toCIDInput(),
-      sequence: this.sequence.map((s) => `o://lane/${s.cid?.toString()}`),
+      sequence: this.sequence.map(
+        (s) => `${RestrictedAddresses.LANE}/${s.cid?.toString()}`,
+      ),
       result: this.result,
     };
   }
 
-  addSequencePlan(plan: oLane) {
+  addLane(plan: oLane) {
     this.sequence.push(plan);
     if (this.config.streamTo) {
       this.node
@@ -123,16 +125,19 @@ export class oLane extends oObject {
     );
   }
 
-  async searchPlans(): Promise<any> {
+  async pastLanes(): Promise<any> {
     this.logger.debug('Searching for plans...');
     const cid = await this.toCID();
-    const response = await this.node.use(new oAddress('o://plan'), {
-      method: 'get',
-      params: {
-        key: cid.toString(),
+    const response = await this.node.use(
+      new oAddress(RestrictedAddresses.LANE),
+      {
+        method: 'get',
+        params: {
+          key: cid.toString(),
+        },
       },
-    });
-    this.logger.debug('Search plans response: ', response);
+    );
+    this.logger.debug('Past lanes response: ', response);
 
     const result = response.result;
     const json =
@@ -147,7 +152,7 @@ export class oLane extends oObject {
     this.cid = await this.toCID();
   }
 
-  async run(): Promise<oPlanResult> {
+  async run(): Promise<oLaneResult> {
     this.logger.debug('Running plan...');
 
     const ctxt = this.config.context?.toString() || '';
@@ -170,16 +175,18 @@ export class oLane extends oObject {
     }
     // this.logger.debug('Prompt: ', prompt);
 
-    const response = await this.node.use(new oAddress('o://intelligence'), {
-      method: 'prompt',
-      params: {
-        prompt: prompt,
-        response_format: 'json_object',
+    const response = await this.node.use(
+      new oAddress(RestrictedAddresses.INTELLIGENCE),
+      {
+        method: 'prompt',
+        params: {
+          prompt: prompt,
+          response_format: 'json_object',
+        },
       },
-    });
+    );
 
     const data = response.result.data as any;
-    this.logger.debug('Plan response: ', data);
     const message = data.message;
     if (!message) {
       throw new Error('No message returned from intelligence');
@@ -188,7 +195,7 @@ export class oLane extends oObject {
     return planResult;
   }
 
-  async execute(): Promise<oPlanResult> {
+  async execute(): Promise<oLaneResult> {
     this.logger.debug('Executing...');
     await this.preflight();
 
@@ -198,10 +205,10 @@ export class oLane extends oObject {
 
   async handleNetworkChanges(): Promise<void> {
     const cid = await this.toCID();
-    await this.node.use(new oAddress('o://leader'), {
+    await this.node.use(oAddress.leader(), {
       method: 'save_plan',
       params: {
-        plan: `o://plan/${cid}`,
+        plan: `${RestrictedAddresses.LANE}/${cid}`,
       },
     });
   }
@@ -226,7 +233,7 @@ export class oLane extends oObject {
     // }
   }
 
-  async postflight(response: oPlanResult): Promise<oPlanResult> {
+  async postflight(response: oLaneResult): Promise<oLaneResult> {
     this.logger.debug('Postflight...');
     try {
       await this.storePlan();
