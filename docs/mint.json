@@ -68,9 +68,9 @@
       ]
     },
     {
-      "group": "API Documentation",
+      "group": "Core",
       "pages": [
-        "api-reference/introduction"
+        "packages/o-core/docs"
       ]
     }
   ],
