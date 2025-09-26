@@ -1,8 +1,8 @@
-import { defaultLibp2pConfig, memory } from '@olane/o-config';
-import { CoreConfig, oNode } from '@olane/o-core';
+import { defaultLibp2pConfig } from '@olane/o-config';
+import { oNodeConfig, oNode } from '@olane/o-node';
 
 export class oServerNode extends oNode {
-  constructor(config: CoreConfig) {
+  constructor(config: oNodeConfig) {
     super({
       ...config,
       network: {

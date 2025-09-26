@@ -1,26 +1,31 @@
 import {
   CoreUtils,
   oAddress,
-  oCoreNode,
+  oError,
+  oErrorCodes,
   oRequest,
   oResponse,
-  oToolError,
-  oToolErrorCodes,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { IncomingStreamData, Stream } from '@olane/o-config';
-import { oParameter, oProtocolMethods } from '@olane/o-protocol';
+import {
+  oParameter,
+  oProtocolMethods,
+  oRouterRequest,
+  RequestParams,
+} from '@olane/o-protocol';
 import { RunResult } from './interfaces/run-result.interface.js';
 import { ToolResult } from './interfaces/tool-result.interface.js';
 import { ToolUtils } from './tool.utils.js';
 import { v4 as uuidv4 } from 'uuid';
+import { oNode } from '@olane/o-node';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
  * @param Base - The base class to extend
  * @returns A new class that extends the base class and implements the oTool interface
  */
-export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
+export function oTool<T extends new (...args: any[]) => oNode>(Base: T): T {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);
@@ -82,19 +87,19 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
         const result = await this.execute(request).catch((error) => {
           this.logger.error('Error executing tool: ', error);
           success = false;
-          const responseError: oToolError =
-            error instanceof oToolError
+          const responseError: oError =
+            error instanceof oError
               ? error
-              : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
+              : new oError(oErrorCodes.UNKNOWN, error.message);
           return {
             error: responseError.toJSON(),
           };
         });
 
         if (success) {
-          this.successCount++;
+          this.metrics.successCount++;
         } else {
-          this.errorCount++;
+          this.metrics.errorCount++;
         }
         return ToolUtils.buildResponse(request, result, result?.error);
       }
@@ -109,18 +114,18 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       const result = await this.execute(request, stream).catch((error) => {
         this.logger.error('Error executing tool: ', error, typeof error);
         success = false;
-        const responseError: oToolError =
-          error instanceof oToolError
+        const responseError: oError =
+          error instanceof oError
             ? error
-            : new oToolError(oToolErrorCodes.TOOL_ERROR, error.message);
+            : new oError(oErrorCodes.UNKNOWN, error.message);
         return {
           error: responseError.toJSON(),
         };
       });
       if (success) {
-        this.successCount++;
+        this.metrics.successCount++;
       } else {
-        this.errorCount++;
+        this.metrics.errorCount++;
       }
       // compose the response & add the expected connection + request fields
 
@@ -188,8 +193,8 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
           ' with passed params: ',
           request.params,
         );
-        throw new oToolError(
-          oToolErrorCodes.TOOL_MISSING_PARAMETERS,
+        throw new oError(
+          oErrorCodes.MISSING_PARAMETERS,
           'Missing required parameters',
           {
             parameters: missingParams,
@@ -269,7 +274,7 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       };
     }
 
-    async _tool_route(request: RouteRequest): Promise<any> {
+    async _tool_route(request: oRouterRequest): Promise<any> {
       const { payload } = request.params;
 
       const { address } = request.params;
@@ -277,8 +282,8 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       const destinationAddress = new oAddress(address as string);
 
       // determine the next hop address from the encapsulated address
-      const nextHopAddress =
-        await this.addressResolution.resolve(destinationAddress);
+      const { nextHopAddress, targetAddress } =
+        await this.router.translate(destinationAddress);
 
       this.logger.debug(
         'Next hop address: ',
@@ -287,9 +292,9 @@ export function oTool<T extends new (...args: any[]) => oCoreNode>(Base: T): T {
       );
       // prepare the request for the destination receiver
       let forwardRequest: oRequest = new oRequest({
-        params: payload.params,
-        id: request.id,
-        method: payload.method,
+        params: payload.params as RequestParams,
+        id: request.id as string,
+        method: payload.method as string,
       });
 
       // if the next hop is not a libp2p address, we need to communicate to it another way

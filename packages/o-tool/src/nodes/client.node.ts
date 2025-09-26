@@ -1,8 +1,8 @@
 import { defaultLibp2pConfig } from '@olane/o-config';
-import { CoreConfig, oVirtualNode } from '@olane/o-core';
+import { oNode, oNodeConfig } from '@olane/o-node';
 
-export class oClientNode extends oVirtualNode {
-  constructor(config: CoreConfig) {
+export class oClientNode extends oNode {
+  constructor(config: oNodeConfig) {
     super({
       ...config,
       network: {

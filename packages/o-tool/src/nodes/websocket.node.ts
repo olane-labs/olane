@@ -1,8 +1,8 @@
 import { defaultLibp2pConfig, memory } from '@olane/o-config';
-import { CoreConfig, oNode } from '@olane/o-core';
+import { oNodeConfig, oNode } from '@olane/o-node';
 
 export class oWebsocketNode extends oNode {
-  constructor(config: CoreConfig) {
+  constructor(config: oNodeConfig) {
     super({
       ...config,
       network: {
