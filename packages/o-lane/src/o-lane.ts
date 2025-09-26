@@ -1,10 +1,10 @@
-import { Logger, oAddress, oObject } from '@olane/o-core';
-import { oPlanConfig } from './interfaces/plan-config.interface.js';
+import { Logger, oAddress, oObject, RestrictedAddresses } from '@olane/o-core';
+import { oLaneConfig } from './interfaces/o-lane.config.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
-import { oPlanResult } from './interfaces/plan.result.js';
+import { oPlanResult } from './interfaces/o-lane.result.js';
 import { v4 as uuidv4 } from 'uuid';
 import { RegexUtils } from '@olane/o-core';
 
@@ -16,7 +16,7 @@ export class oLane extends oObject {
 
   public result: oPlanResult | undefined;
 
-  constructor(protected readonly config: oPlanConfig) {
+  constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentId = this.config.parentId;
@@ -89,7 +89,7 @@ export class oLane extends oObject {
       value: JSON.stringify(this.toJSON()),
     };
     this.logger.debug('Storing plan params: ', params);
-    await this.node.use(new oAddress('o://plan'), {
+    await this.node.use(oAddress.lane(), {
       method: 'put',
       params: params,
     });

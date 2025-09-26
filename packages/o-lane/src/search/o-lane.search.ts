@@ -1,6 +1,6 @@
 import { oAddress } from '../../core/o-address.js';
-import { oPlanConfig } from '../interfaces/plan-config.interface.js';
-import { oPlanResult } from '../interfaces/plan.result.js';
+import { oPlanConfig } from '../interfaces/o-lane.config.js';
+import { oPlanResult } from '../interfaces/o-lane.result.js';
 import { oPlan } from '../o-lane.js';
 
 export class oSearchPlan extends oPlan {

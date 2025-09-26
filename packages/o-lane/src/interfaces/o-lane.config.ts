@@ -1,11 +1,11 @@
-import { oAddress, oCore } from '../../core/index.js';
-import { oPlanContext } from '../plan.context.js';
+import { oAddress, oCore } from '@olane/o-core';
+import { oLaneContext } from '../o-lane.context.js';
 
-export interface oPlanConfig {
+export interface oLaneConfig {
   // an oAddress that contains the config for the plan
   intent: string;
 
-  context?: oPlanContext;
+  context?: oLaneContext;
   sequence?: any[];
 
   streamTo?: oAddress;

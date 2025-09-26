@@ -1,4 +1,4 @@
-export class oPlanContext {
+export class oLaneContext {
   private context: string[] = [];
   constructor(context: any) {
     this.context = context;

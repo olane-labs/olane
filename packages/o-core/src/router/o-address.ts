@@ -62,6 +62,14 @@ export class oAddress extends oObject {
     return new oAddress(RestrictedAddresses.LEADER);
   }
 
+  static lane(): oAddress {
+    return new oAddress(RestrictedAddresses.LANE);
+  }
+
+  static registry(): oAddress {
+    return new oAddress(RestrictedAddresses.REGISTRY);
+  }
+
   static isStatic(address: oAddress): boolean {
     return address.value.startsWith(RestrictedAddresses.LEADER) === false;
   }

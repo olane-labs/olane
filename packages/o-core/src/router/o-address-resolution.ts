@@ -1,14 +1,11 @@
 import { oAddress } from './o-address.js';
 import { oAddressResolver } from './o-address-resolver.js';
 import { TransportType } from '../transports/interfaces/transport-type.enum.js';
-import { oHierarchyManager } from '../core/lib/o-hierarchy.manager.js';
+import type { oCore } from '../core/o-core.js';
+import { oObject } from '../core/o-object.js';
 
-export class oAddressResolution {
+export class oAddressResolution extends oObject {
   private readonly resolvers: oAddressResolver[] = [];
-
-  constructor(private readonly hierarchy: oHierarchyManager) {
-    this.hierarchy = hierarchy;
-  }
 
   addResolver(resolver: oAddressResolver) {
     this.resolvers.push(resolver);
@@ -22,10 +19,10 @@ export class oAddressResolution {
     );
   }
 
-  async resolve(address: oAddress): Promise<oAddress> {
+  async resolve(address: oAddress, node: oCore): Promise<oAddress> {
     let resolvedAddress = new oAddress(address.toString(), address.transports);
     for (const resolver of this.resolvers) {
-      resolvedAddress = await resolver.resolve(resolvedAddress, this.hierarchy);
+      resolvedAddress = await resolver.resolve(resolvedAddress, node);
     }
     return resolvedAddress;
   }

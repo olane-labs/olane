@@ -23,7 +23,7 @@ import {
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
 import { oNodeConnectionManager } from './connection/o-node-connection.manager.js';
-import { oNodeResolver } from './router/o-node.resolver.js';
+import { oNodeResolver } from './router/resolvers/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
 
 export class oNode extends oCore {
@@ -62,9 +62,7 @@ export class oNode extends oCore {
       parents: this.config.parent ? [this.config.parent] : [],
       children: [],
     });
-    this.router = new oNodeRouter({
-      hierarchyManager: this.hierarchyManager,
-    });
+    this.router = new oNodeRouter();
   }
 
   get staticAddress(): oNodeAddress {

@@ -1,6 +1,6 @@
 import { oMethod } from '@olane/o-protocol';
-import { oPlanResult } from './plan.result';
-import { oTaskConfig } from './task.config';
+import { oPlanResult } from './o-lane.result';
+import { oTaskConfig } from './o-lane-task.config';
 
 export interface oHandshakeResult {
   tools: string[];

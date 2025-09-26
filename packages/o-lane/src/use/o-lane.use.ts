@@ -1,12 +1,12 @@
 import { oAddress, oDependency, oResponse } from '../../core/index.js';
 import { oPlan } from '../o-lane.js';
-import { oPlanType } from '../interfaces/plan-type.enum.js';
-import { oPlanResult } from '../interfaces/plan.result.js';
+import { oPlanType } from '../interfaces/o-lane-type.enum.js';
+import { oPlanResult } from '../interfaces/o-lane.result.js';
 import { oToolError } from '../../error/tool.error.js';
 import { oToolErrorCodes } from '../../error/enums/codes.error.js';
-import { oPlanContext } from '../plan.context.js';
+import { oLaneContext } from '../o-lane.context.js';
 import { oHandshakeResult } from '../interfaces/handshake.result.js';
-import { oAgentPlan } from '../agent.plan.js';
+import { oAgentPlan } from '../o-lane.agent.js';
 import { CONFIGURE_INSTRUCTIONS } from '../prompts/configure.prompt.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectUtils } from '../../utils/object.utils.js';
@@ -64,7 +64,7 @@ export class oUsePlan extends oPlan {
         ...this.config,
         sequence: this.sequence,
         intent: `This is a configure request, prioritize "Configure Request Instructions". You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
-        context: new oPlanContext([
+        context: new oLaneContext([
           `[Method Metadata Begin]\n${JSON.stringify(methods, null, 2)}\n[Method Metadata End]`,
           `[Method Options Begin]\n${(tools || []).join(', ')}\n[Method Options End]`,
         ]),

@@ -1,11 +1,11 @@
 import { oAddress } from '../core/index.js';
-import { oPlanResult } from './interfaces/plan.result.js';
-import { oPlanConfig } from './interfaces/plan-config.interface.js';
+import { oPlanResult } from './interfaces/o-lane.result.js';
+import { oPlanConfig } from './interfaces/o-lane.config.js';
 import { oPlan } from './o-lane.js';
-import { oUsePlan } from './use/use.plan.js';
-import { oSearchPlan } from './search/search.plan.js';
-import { oQueryConfig } from './interfaces/query.config.js';
-import { oTaskConfig } from './interfaces/task.config.js';
+import { oUsePlan } from './use/o-lane.use.js';
+import { oSearchPlan } from './search/o-lane.search.js';
+import { oLaneQueryConfig } from './interfaces/o-lane-query.config.js';
+import { oTaskConfig } from './interfaces/o-lane-task.config.js';
 
 /**
  * oAgentPlan is responsible for managing the execution of plans.
@@ -69,7 +69,7 @@ export class oAgentPlan extends oPlan {
   }
 
   async handleSearch(
-    queries: oQueryConfig[],
+    queries: oLaneQueryConfig[],
     config: oPlanConfig,
   ): Promise<any[]> {
     this.logger.debug('Handling searches...', queries);

@@ -5,16 +5,16 @@ import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 import {
   oAddress,
   oAddressResolution,
+  oRequest,
   oRouter,
   RouteResponse,
 } from '@olane/o-core';
+import { RequestParams } from '@olane/o-protocol';
+import { oNode } from '../o-node.js';
 
-export class oNodeRouter extends oRouter {
+export class oNodeRouter extends oToolRouter {
   constructor(readonly config: oNodeRouterConfig) {
     super();
-    this.addressResolution = new oAddressResolution(
-      this.config.hierarchyManager,
-    );
   }
 
   private handleExternalAddress(address: oNodeAddress): RouteResponse | null {
@@ -86,4 +86,6 @@ export class oNodeRouter extends oRouter {
 
     return leaderTransports.flat();
   }
+
+  async route(request: oRequest, node?: oNode): Promise<any> {}
 }

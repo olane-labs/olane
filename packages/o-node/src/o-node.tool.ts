@@ -403,23 +403,6 @@ export function oNodeTool<T extends new (...args: any[]) => oNode>(Base: T): T {
       };
     }
 
-    async _tool_child_register(request: oRequest): Promise<any> {
-      const { address }: any = request.params;
-      const childAddress = new oAddress(address);
-      this.childAddresses.push(childAddress);
-      return {
-        message: 'Child node registered with parent!',
-      };
-    }
-
-    async _tool_cancel_request(request: oRequest): Promise<ToolResult> {
-      const { requestId } = request.params;
-      delete this.requests[requestId as string];
-      return {
-        message: 'Request cancelled',
-      };
-    }
-
     async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
       const method = request.method as string;
       this.logger.debug('Calling tool: ' + method);

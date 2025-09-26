@@ -1,10 +1,11 @@
 export enum RestrictedAddresses {
   REGISTRY = 'o://registry',
   LEADER = 'o://leader',
+  LANE = 'o://lane',
 }
 
-export const REGISTRY_ADRESS = RestrictedAddresses.REGISTRY;
-
-export const LEADER_ADRESS = RestrictedAddresses.LEADER;
-
-export const RestrictedAddressesList = [REGISTRY_ADRESS, LEADER_ADRESS];
+export const RestrictedAddressesList = [
+  RestrictedAddresses.REGISTRY,
+  RestrictedAddresses.LEADER,
+  RestrictedAddresses.LANE,
+];
