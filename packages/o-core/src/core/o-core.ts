@@ -1,4 +1,4 @@
-import { oCoreConfig } from './interfaces/core-config.interface.js';
+import { oCoreConfig } from './interfaces/o-core.config.js';
 import { NodeState } from './interfaces/state.enum.js';
 import { oAddress } from '../router/o-address.js';
 import { NodeType } from './interfaces/node-type.enum.js';
