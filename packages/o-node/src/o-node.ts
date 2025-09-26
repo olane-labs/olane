@@ -43,6 +43,15 @@ export class oNode extends oCore {
     return this.config.network || defaultLibp2pConfig;
   }
 
+  get parentPeerId(): string | null {
+    if (!this.parent || this.parent?.transports?.length === 0) {
+      return null;
+    }
+    const transport = this.parent?.transports[0];
+    const peerId = transport.toString().split('/p2p/')[1];
+    return peerId;
+  }
+
   configureTransports(): any[] {
     return [...(defaultLibp2pConfig.transports || [])];
   }

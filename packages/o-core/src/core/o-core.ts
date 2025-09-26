@@ -5,8 +5,7 @@ import { NodeType } from './interfaces/node-type.enum.js';
 import { oConnectionManager } from '../connection/o-connection-manager.js';
 import { oResponse } from '../connection/o-response.js';
 import { oConnection } from '../connection/o-connection.js';
-import { oMethod, oRequest } from '@olane/o-protocol';
-import { oAddressResolution } from '../router/o-address-resolution.js';
+import { oMethod } from '@olane/o-protocol';
 import { oDependency } from './o-dependency.js';
 import { oError } from '../error/o-error.js';
 import { oObject } from './o-object.js';
@@ -37,59 +36,8 @@ export abstract class oCore extends oObject {
     });
   }
 
-  get dependencies(): oDependency[] {
-    return this.config.dependencies?.map((d) => new oDependency(d)) || [];
-  }
-
-  get methods(): { [key: string]: oMethod } {
-    return this.config.methods || {};
-  }
-
-  get description(): string {
-    return this.config.description || '';
-  }
-
-  get staticAddress(): oAddress {
-    return this.config.address;
-  }
-
-  get type(): NodeType {
-    return this.config.type || NodeType.UNKNOWN;
-  }
-
-  get transports(): oTransport[] {
-    return [];
-  }
-
+  // transports
   abstract configureTransports(): any[];
-
-  async initialize(): Promise<void> {}
-
-  async whoami(): Promise<any> {
-    return {
-      address: this.address.toString(),
-      type: this.type,
-      description: this.description,
-      methods: this.methods,
-    };
-  }
-
-  get parent(): oAddress | null {
-    return this.config.parent || null;
-  }
-
-  get parentPeerId(): string | null {
-    if (!this.parent || this.parent?.transports?.length === 0) {
-      return null;
-    }
-    const transport = this.parent?.transports[0];
-    const peerId = transport.toString().split('/p2p/')[1];
-    return peerId;
-  }
-
-  get parentTransports(): oTransport[] {
-    return this.parent?.transports || [];
-  }
 
   /**
    * Use a tool explicitly
@@ -133,6 +81,7 @@ export abstract class oCore extends oObject {
     return response;
   }
 
+  // hierarchy
   addChildNode(node: oCore): void {
     this.logger.debug('Adding virtual node: ' + node.address.toString());
     this.hierarchyManager.addChild(node.address);
@@ -142,20 +91,21 @@ export abstract class oCore extends oObject {
     this.hierarchyManager.removeChild(node.address);
   }
 
-  abstract unregister(): Promise<void>;
-
-  abstract register(): Promise<void>;
-
+  // connection
   abstract connect(
     nextHopAddress: oAddress,
     targetAddress: oAddress,
   ): Promise<oConnection>;
 
-  public async teardown(): Promise<void> {
-    this.logger.debug('Tearing down node...');
-  }
-
+  // router
   abstract initializeRouter(): void;
+
+  // registration
+  abstract unregister(): Promise<void>;
+  abstract register(): Promise<void>;
+
+  // initialize
+  async initialize(): Promise<void> {}
 
   /**
    * Start the node
@@ -197,5 +147,50 @@ export abstract class oCore extends oObject {
       this.state = NodeState.ERROR;
       this.logger.error('Node failed to stop', error);
     }
+  }
+
+  public async teardown(): Promise<void> {
+    this.logger.debug('Tearing down node...');
+  }
+
+  get dependencies(): oDependency[] {
+    return this.config.dependencies?.map((d) => new oDependency(d)) || [];
+  }
+
+  get methods(): { [key: string]: oMethod } {
+    return this.config.methods || {};
+  }
+
+  get description(): string {
+    return this.config.description || '';
+  }
+
+  get staticAddress(): oAddress {
+    return this.config.address;
+  }
+
+  get type(): NodeType {
+    return this.config.type || NodeType.UNKNOWN;
+  }
+
+  get transports(): oTransport[] {
+    return [];
+  }
+
+  get parent(): oAddress | null {
+    return this.config.parent || null;
+  }
+
+  get parentTransports(): oTransport[] {
+    return this.parent?.transports || [];
+  }
+
+  async whoami(): Promise<any> {
+    return {
+      address: this.address.toString(),
+      type: this.type,
+      description: this.description,
+      methods: this.methods,
+    };
   }
 }
