@@ -1,17 +1,15 @@
-import { Logger, oAddress } from '../core/index.js';
+import { Logger, oAddress, oObject } from '@olane/o-core';
 import { oPlanConfig } from './interfaces/plan-config.interface.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oPlanResult } from './interfaces/plan.result.js';
-import { oToolError } from '../error/tool.error.js';
 import { v4 as uuidv4 } from 'uuid';
-import { RegexUtils } from '../utils/index.js';
+import { RegexUtils } from '@olane/o-core';
 
-export class oPlan {
-  protected logger: Logger;
-  public sequence: oPlan[] = [];
+export class oLane extends oObject {
+  public sequence: oLane[] = [];
   public cid: CID | undefined;
   public id: string = uuidv4();
   public parentId: string | undefined;
@@ -19,7 +17,7 @@ export class oPlan {
   public result: oPlanResult | undefined;
 
   constructor(protected readonly config: oPlanConfig) {
-    this.logger = new Logger('oPlan:' + `[${this.config.intent}]`);
+    super('o-lane:' + `[${config.intent}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentId = this.config.parentId;
   }
@@ -51,12 +49,12 @@ export class oPlan {
   toJSON() {
     return {
       config: this.toCIDInput(),
-      sequence: this.sequence.map((s) => `o://plan/${s.cid?.toString()}`),
+      sequence: this.sequence.map((s) => `o://lane/${s.cid?.toString()}`),
       result: this.result,
     };
   }
 
-  addSequencePlan(plan: oPlan) {
+  addSequencePlan(plan: oLane) {
     this.sequence.push(plan);
     if (this.config.streamTo) {
       this.node
@@ -66,19 +64,10 @@ export class oPlan {
             data: plan.result || '',
           },
         })
-        .catch((error) => {
+        .catch((error: any) => {
           this.logger.error('Error sending agent stream: ', error);
         });
     }
-    // console.log(
-    //   `${this.parentId ? '--[Child ' : '['}Cycle ${this.sequence.length} - ${this.id}]\n ${JSON.stringify(
-    //     {
-    //       ...plan.result,
-    //     },
-    //     null,
-    //     2,
-    //   )}\n${this.parentId ? '--[Child ' : '['}Cycle ${this.sequence.length} - ${this.id}]`,
-    // );
   }
 
   async toCID(): Promise<CID> {

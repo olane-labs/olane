@@ -14,6 +14,18 @@ export class oNodeAddress extends oAddress {
     this.transports = transports;
   }
 
+  static fromJSON(json: {
+    value: string;
+    transports: string[] | Multiaddr[];
+  }): oNodeAddress {
+    return new oNodeAddress(
+      json.value,
+      json.transports.map(
+        (t: any) => new oNodeTransport(t as string | Multiaddr),
+      ),
+    );
+  }
+
   get libp2pTransports(): oNodeTransport[] {
     return this.transports.filter((t) => t.type === TransportType.LIBP2P);
   }

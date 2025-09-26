@@ -5,11 +5,11 @@ export class Logger {
   private log: Debugger;
 
   constructor(private readonly name: string) {
-    this.log = debug('olane:' + name);
+    this.log = debug('olane-os:' + name);
   }
 
   setNamespace(name: string) {
-    this.log = debug('olane:' + name);
+    this.log = debug('olane-os:' + name);
   }
 
   debug(...args: any[]) {

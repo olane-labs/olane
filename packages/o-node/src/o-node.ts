@@ -8,7 +8,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { PeerId } from '@olane/o-config';
 import { oNodeRouter } from './router/o-node.router.js';
-import { oNodeHierarchyManager } from './o-node-hierarchy.manager.js';
+import { oNodeHierarchyManager } from './o-node.hierarchy-manager.js';
 import { oNodeConfig } from './interfaces/o-node.config.js';
 import { oNodeTransport } from './router/o-node.transport.js';
 import {

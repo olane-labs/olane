@@ -14,7 +14,7 @@ export class oAddressResolution {
     this.resolvers.push(resolver);
   }
 
-  supportsTransport(address: oAddress): boolean {
+  supportsAddress(address: oAddress): boolean {
     return this.resolvers.some((r) =>
       address.transports.some((t) => {
         return r.transportTypes.some((r: TransportType) => r === t.type);

@@ -12,4 +12,11 @@ export abstract class oTransport extends oObject {
   }
 
   abstract toString(): string;
+
+  toJSON(): any {
+    return {
+      value: this.value,
+      type: this.type,
+    };
+  }
 }

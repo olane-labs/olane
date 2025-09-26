@@ -25,7 +25,7 @@ import { oNode } from '@olane/o-node';
  * @param Base - The base class to extend
  * @returns A new class that extends the base class and implements the oTool interface
  */
-export function oTool<T extends new (...args: any[]) => oNode>(Base: T): T {
+export function oNodeTool<T extends new (...args: any[]) => oNode>(Base: T): T {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);
@@ -308,6 +308,9 @@ export function oTool<T extends new (...args: any[]) => oNode>(Base: T): T {
         return this.applyBridgeTransports(nextHopAddress, forwardRequest);
       }
 
+      // assume the next hop is a libp2p address, so we need to set the transports and dial it
+      nextHopAddress.setTransports(this.getTransports(nextHopAddress));
+
       const isAtDestination = nextHopAddress.value === destinationAddress.value;
 
       // if we are at the destination, let's look for the closest tool that can service the request
@@ -331,14 +334,35 @@ export function oTool<T extends new (...args: any[]) => oNode>(Base: T): T {
         }
       }
 
-      // TODO: send the request to the destination
+      const targetStream = await this.p2pNode.dialProtocol(
+        transports,
+        nextHopAddress.protocol,
+      );
+
+      // if not at destination, we need to forward the request to the target
+      if (!isAtDestination) {
+        forwardRequest = new oRequest(request);
+      } else {
+        this.logger.debug('At destination!');
+      }
+
+      const pushableStream = pushable();
+      pushableStream.push(new TextEncoder().encode(forwardRequest.toString()));
+      pushableStream.end();
+      await targetStream.sink(pushableStream);
+      await pipe(targetStream.source, request.stream.sink);
     }
 
     async _tool_add_child(request: oRequest): Promise<any> {
-      throw new oError(
-        oErrorCodes.NOT_IMPLEMENTED,
-        'Add child not implemented',
+      const { address, transports }: any = request.params;
+      const childAddress = new oAddress(
+        address,
+        transports.map((t: string) => multiaddr(t)),
       );
+      this.childAddresses.push(childAddress);
+      return {
+        message: 'Child node registered with parent!',
+      };
     }
 
     /**

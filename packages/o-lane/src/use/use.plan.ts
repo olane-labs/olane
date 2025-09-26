@@ -1,5 +1,5 @@
 import { oAddress, oDependency, oResponse } from '../../core/index.js';
-import { oPlan } from '../o-plan.js';
+import { oPlan } from '../o-lane.js';
 import { oPlanType } from '../interfaces/plan-type.enum.js';
 import { oPlanResult } from '../interfaces/plan.result.js';
 import { oToolError } from '../../error/tool.error.js';

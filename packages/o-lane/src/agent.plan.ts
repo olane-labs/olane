@@ -1,7 +1,7 @@
 import { oAddress } from '../core/index.js';
 import { oPlanResult } from './interfaces/plan.result.js';
 import { oPlanConfig } from './interfaces/plan-config.interface.js';
-import { oPlan } from './o-plan.js';
+import { oPlan } from './o-lane.js';
 import { oUsePlan } from './use/use.plan.js';
 import { oSearchPlan } from './search/search.plan.js';
 import { oQueryConfig } from './interfaces/query.config.js';

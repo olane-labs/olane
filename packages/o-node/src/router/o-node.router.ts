@@ -1,7 +1,7 @@
 import { oNodeAddress } from './o-node.address.js';
 import { oNodeTransport } from './o-node.transport.js';
 import { oNodeRouterConfig } from './interfaces/o-node-router.config.js';
-import { oNodeHierarchyManager } from '../o-node-hierarchy.manager.js';
+import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 import {
   oAddress,
   oAddressResolution,
