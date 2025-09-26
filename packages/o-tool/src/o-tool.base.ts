@@ -108,39 +108,6 @@ export class oToolBase extends oCore {
     return super.use(address, data);
   }
 
-  async handleStream(streamData: IncomingStreamData): Promise<void> {
-    const { stream } = streamData;
-    const requestConfig: oRequest = await CoreUtils.processStream(stream);
-    const request = new oRequest(requestConfig);
-    let success = true;
-    const result = await this.execute(request, stream).catch((error) => {
-      this.logger.error('Error executing tool: ', error, typeof error);
-      success = false;
-      const responseError: oError =
-        error instanceof oError
-          ? error
-          : new oError(oErrorCodes.UNKNOWN, error.message);
-      return {
-        error: responseError.toJSON(),
-      };
-    });
-    if (success) {
-      this.metrics.successCount++;
-    } else {
-      this.metrics.errorCount++;
-    }
-    // compose the response & add the expected connection + request fields
-
-    const response: oResponse = ToolUtils.buildResponse(
-      request,
-      result,
-      result?.error,
-    );
-
-    // add the request method to the response
-    return CoreUtils.sendResponse(response, streamData.stream);
-  }
-
   async execute(req: oRequest, stream?: Stream): Promise<RunResult> {
     let request = req;
     const requestConfig = req.toJSON();
@@ -218,53 +185,6 @@ export class oToolBase extends oCore {
     }
     // @ts-ignore
     return this[func]();
-  }
-
-  async _tool_route(
-    request: oRouterRequest & { stream?: Stream },
-  ): Promise<any> {
-    const { payload } = request.params;
-    const { address } = request.params;
-
-    const destinationAddress = new oAddress(address as string);
-
-    // determine the next hop address from the encapsulated address
-    const { nextHopAddress, targetAddress } =
-      await this.router.translate(destinationAddress);
-
-    this.logger.debug(
-      'Next hop address: ',
-      nextHopAddress.toString(),
-      nextHopAddress.transports,
-    );
-    // prepare the request for the destination receiver
-    let forwardRequest: oRequest = new oRequest({
-      params: payload.params as RequestParams,
-      id: request.id as string,
-      method: payload.method as string,
-    });
-  }
-
-  async _tool_add_child(request: oRequest): Promise<any> {
-    throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Add child not implemented');
-  }
-
-  async _tool_child_register(request: oRequest): Promise<any> {
-    const { address }: any = request.params;
-    const childAddress = new oAddress(address);
-    this.hierarchyManager.addChild(childAddress);
-    return {
-      message: 'Child node registered with parent!',
-    };
-  }
-
-  // TODO: implement this
-  async _tool_cancel_request(request: oRequest): Promise<ToolResult> {
-    const { requestId } = request.params;
-    // delete this.requestManager.remove(requestId as string);
-    return {
-      message: 'Request cancelled',
-    };
   }
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
@@ -364,24 +284,12 @@ export class oToolBase extends oCore {
     }
   }
 
-  async _tool_index_network(request: oRequest): Promise<ToolResult> {
-    this.logger.debug('Indexing network...');
-    // collect all the information from the child nodes
-    return await this.index();
-  }
-
   async whoami() {
     const metadata = await super.whoami();
     return {
       // @ts-ignore
       tools: this.myTools(),
       description: this.description,
-    };
-  }
-
-  async _tool_hello_world(request: oRequest): Promise<ToolResult> {
-    return {
-      message: 'Hello, world!',
     };
   }
 }

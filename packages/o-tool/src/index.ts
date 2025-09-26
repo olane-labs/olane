@@ -7,3 +7,4 @@ export * from './interfaces/tool-result.interface.js';
 export * from './utils/tool.utils.js';
 export * from './nodes/index.js';
 export * from './router/index.js';
+export * from './o-tool.base.js';

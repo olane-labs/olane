@@ -15,7 +15,6 @@ import {
   CoreUtils,
   NodeState,
   NodeType,
-  oCore,
   oRequest,
   oTransport,
   RestrictedAddresses,
@@ -25,8 +24,9 @@ import { oNodeConnection } from './connection/o-node-connection.js';
 import { oNodeConnectionManager } from './connection/o-node-connection.manager.js';
 import { oNodeResolver } from './router/resolvers/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
+import { oToolBase } from '@olane/o-tool';
 
-export class oNode extends oCore {
+export class oNode extends oToolBase {
   public peerId!: PeerId;
   public p2pNode!: Libp2p;
   public address!: oNodeAddress;
@@ -56,7 +56,7 @@ export class oNode extends oCore {
     return [...(defaultLibp2pConfig.transports || [])];
   }
 
-  initializeRouter(): void {
+  async initializeRouter(): Promise<void> {
     this.hierarchyManager = new oNodeHierarchyManager({
       leaders: this.config.leader ? [this.config.leader] : [],
       parents: this.config.parent ? [this.config.parent] : [],
@@ -277,7 +277,7 @@ export class oNode extends oCore {
     const params = await this.configure();
     this.p2pNode = await createNode(params);
 
-    this.initializeRouter();
+    await this.initializeRouter();
 
     this.logger.debug(
       'Node initialized!',
