@@ -154,8 +154,34 @@ export abstract class oCore extends oObject {
   async initialize(): Promise<void> {}
 
   /**
-   * Start the node
-   * @param parent - The parent node
+   * Starts the node by transitioning through initialization and registration phases.
+   *
+   * This method performs the following operations in sequence:
+   * 1. Validates that the node is in STOPPED state
+   * 2. Sets state to STARTING
+   * 3. Calls initialize() to set up the node's core components
+   * 4. Attempts registration with the network (registration errors are logged but don't fail startup)
+   * 5. Sets state to RUNNING on success
+   *
+   * @throws {Error} If the node is not in STOPPED state or initialization fails
+   * @returns {Promise<void>} Resolves when the node is successfully started and running
+   *
+   * @example
+   * ```typescript
+   * const node = new oNode(config);
+   * try {
+   *   await node.start();
+   *   console.log('Node is now running');
+   * } catch (error) {
+   *   console.error('Failed to start node:', error);
+   * }
+   * ```
+   *
+   * @remarks
+   * - If the node is already running or starting, the method will log a warning and return early
+   * - Registration failures are logged but do not prevent the node from starting
+   * - On any initialization error, the node state is set to ERROR and teardown() is called
+   * - The node must be in STOPPED state before calling this method
    */
   public async start(): Promise<void> {
     if (this.state !== NodeState.STOPPED) {
@@ -179,7 +205,35 @@ export abstract class oCore extends oObject {
   }
 
   /**
-   * Stop the node
+   * Stops the node by performing cleanup and transitioning to a stopped state.
+   *
+   * This method performs the following operations in sequence:
+   * 1. Sets state to STOPPING
+   * 2. Calls teardown() to clean up node resources and connections
+   * 3. Sets state to STOPPED on successful completion
+   *
+   * @throws {Error} If teardown operations fail, the node state will be set to ERROR
+   * @returns {Promise<void>} Resolves when the node is successfully stopped
+   *
+   * @example
+   * ```typescript
+   * const node = new oNode(config);
+   * await node.start();
+   *
+   * // Later, when shutting down
+   * try {
+   *   await node.stop();
+   *   console.log('Node stopped successfully');
+   * } catch (error) {
+   *   console.error('Failed to stop node:', error);
+   * }
+   * ```
+   *
+   * @remarks
+   * - This method can be called from any node state
+   * - If teardown fails, errors are logged and the node state is set to ERROR
+   * - All cleanup operations are performed through the teardown() method
+   * - The method will attempt to stop gracefully even if the node is in an error state
    */
   public async stop(): Promise<void> {
     this.logger.debug('Stop node called...');
