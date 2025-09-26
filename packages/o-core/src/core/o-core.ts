@@ -40,11 +40,57 @@ export abstract class oCore extends oObject {
   abstract configureTransports(): any[];
 
   /**
-   * Use a tool explicitly
-   * @param addressWithLeaderTransports
-   * @param data
-   * @param config
-   * @returns
+   * Sends a request to a remote node in the O-Lane network using the specified address and optional data payload.
+   *
+   * This method handles the complete communication flow:
+   * 1. Validates the target address format
+   * 2. Resolves the routing path through the network
+   * 3. Establishes a connection to the target node
+   * 4. Sends the request payload and waits for response
+   * 5. Handles errors and throws them as oError instances
+   *
+   * @param address - The target node address in O-Lane format (must start with 'o://')
+   * @param data - Optional request data containing method, parameters, and request ID
+   * @param data.method - The method name to invoke on the target node
+   * @param data.params - Key-value pairs of parameters to pass to the method
+   * @param data.id - Unique identifier for the request (for tracking purposes)
+   * @returns Promise that resolves to an oResponse containing the result from the target node
+   * @throws {Error} When the address is invalid (doesn't pass validation)
+   * @throws {oError} When the target node returns an error response
+   *
+   * @example
+   * ```typescript
+   * // Basic usage - call a method on a remote node
+   * const response = await node.use(
+   *   new oAddress('o://calculator/add'),
+   *   {
+   *     method: 'add',
+   *     params: { a: 5, b: 3 },
+   *     id: 'calc-001'
+   *   }
+   * );
+   * console.log(response.result); // { result: 8 }
+   *
+   * // Minimal usage - just specify the address
+   * const response = await node.use(
+   *   new oAddress('o://status/health')
+   * );
+   * console.log(response.result); // { status: 'healthy' }
+   *
+   * // Error handling
+   * try {
+   *   const response = await node.use(
+   *     new oAddress('o://calculator/divide'),
+   *     { method: 'divide', params: { a: 10, b: 0 } }
+   *   );
+   * } catch (error) {
+   *   if (error instanceof oError) {
+   *     console.error(`Node error ${error.code}: ${error.message}`);
+   *   } else {
+   *     console.error('Invalid address or connection error:', error.message);
+   *   }
+   * }
+   * ```
    */
   async use(
     address: oAddress,
