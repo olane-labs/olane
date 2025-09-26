@@ -1,25 +1,53 @@
 import { oNodeAddress } from './o-node.address.js';
 import { oNodeTransport } from './o-node.transport.js';
-import { oNodeRouterConfig } from './interfaces/o-node-router.config.js';
 import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 import {
   oAddress,
-  oAddressResolution,
+  oError,
+  oErrorCodes,
   oRequest,
-  oRouter,
   RouteResponse,
 } from '@olane/o-core';
-import { RequestParams } from '@olane/o-protocol';
-import { oNode } from '../o-node.js';
+import type { oNode } from '../o-node.js';
+import { oToolRouter } from '@olane/o-tool';
+import { pipe, pushable, Stream } from '@olane/o-config';
 
 export class oNodeRouter extends oToolRouter {
-  constructor(readonly config: oNodeRouterConfig) {
+  constructor() {
     super();
   }
 
-  private handleExternalAddress(address: oNodeAddress): RouteResponse | null {
+  async forward(
+    address: oNodeAddress,
+    request: oRequest & { stream: Stream },
+    node?: oNode,
+  ): Promise<any> {
+    // dial the target
+    const targetStream = await node?.p2pNode.dialProtocol(
+      address.libp2pTransports.map((t) => t.toMultiaddr()),
+      address.protocol,
+    );
+
+    if (!targetStream) {
+      throw new oError(
+        oErrorCodes.FAILED_TO_DIAL_TARGET,
+        'Failed to dial target',
+      );
+    }
+
+    const pushableStream = pushable();
+    pushableStream.push(new TextEncoder().encode(request.toString()));
+    pushableStream.end();
+    await targetStream.sink(pushableStream);
+    await pipe(targetStream.source, request.stream.sink);
+  }
+
+  private handleExternalAddress(
+    address: oNodeAddress,
+    node: oNode,
+  ): RouteResponse | null {
     // determine if this is external
-    const isInternal = this.isInternal(address);
+    const isInternal = this.isInternal(address, node);
     if (!isInternal) {
       // external address, so we need to route
       this.logger.debug('Address is external, routing...', address);
@@ -36,15 +64,21 @@ export class oNodeRouter extends oToolRouter {
     return null;
   }
 
-  async translate(address: oNodeAddress): Promise<RouteResponse> {
-    const externalRoute = this.handleExternalAddress(address);
+  async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
+    const externalRoute = this.handleExternalAddress(address, node);
     if (externalRoute) {
       return externalRoute;
     }
 
     const targetAddress = address;
-    const nextHopAddress = await this.addressResolution.resolve(targetAddress);
-    const leaderTransports = this.getTransports(nextHopAddress as oNodeAddress);
+    const nextHopAddress = await this.addressResolution.resolve(
+      targetAddress,
+      node,
+    );
+    const leaderTransports = this.getTransports(
+      nextHopAddress as oNodeAddress,
+      node,
+    );
     nextHopAddress.setTransports(leaderTransports);
 
     return {
@@ -53,12 +87,12 @@ export class oNodeRouter extends oToolRouter {
     };
   }
 
-  isInternal(addressWithTransports: oNodeAddress): boolean {
+  isInternal(addressWithTransports: oNodeAddress, node: oNode): boolean {
     if (addressWithTransports.libp2pTransports?.length > 0) {
       // transports are provided, let's see if they match our known leaders
       const isLeaderRef =
         addressWithTransports.toString() === oAddress.leader().toString();
-      const isOurLeaderRef = this.config.hierarchyManager.leaders.some((l) =>
+      const isOurLeaderRef = node.hierarchyManager.leaders.some((l) =>
         l.equals(addressWithTransports),
       );
       return isLeaderRef || isOurLeaderRef;
@@ -66,7 +100,7 @@ export class oNodeRouter extends oToolRouter {
     return true;
   }
 
-  getTransports(address: oNodeAddress): oNodeTransport[] {
+  getTransports(address: oNodeAddress, node: oNode): oNodeTransport[] {
     const nodeTransports = address.libp2pTransports;
 
     // if the transports are provided, then we can use them
@@ -75,17 +109,15 @@ export class oNodeRouter extends oToolRouter {
     }
 
     // if we are not in a network & no leaders are provided, then we can't resolve the address
-    if (!this.config.hierarchyManager.leaders.length) {
+    if (!node.hierarchyManager.leaders.length) {
       throw new Error('No leader transports provided, cannot resolve address');
     }
 
     // if we are in a network, then we have a leader to reference
     const leaderTransports = (
-      this.config.hierarchyManager as oNodeHierarchyManager
+      node.hierarchyManager as oNodeHierarchyManager
     ).leaders.map((l: oNodeAddress) => l.libp2pTransports);
 
     return leaderTransports.flat();
   }
-
-  async route(request: oRequest, node?: oNode): Promise<any> {}
 }

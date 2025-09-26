@@ -103,8 +103,10 @@ export abstract class oCore extends oObject {
     if (!address.validate()) {
       throw new Error('Invalid address');
     }
-    const { nextHopAddress, targetAddress } =
-      await this.router.translate(address);
+    const { nextHopAddress, targetAddress } = await this.router.translate(
+      address,
+      this,
+    );
 
     const connection = await this.connect(nextHopAddress, targetAddress);
 

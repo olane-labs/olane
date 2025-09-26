@@ -15,12 +15,18 @@ export abstract class oRouter extends oObject {
     this.addressResolution = new oAddressResolution();
   }
 
-  abstract translate(addressWithLeaderTransports: oAddress): Promise<{
+  abstract translate(
+    addressWithLeaderTransports: oAddress,
+    node: oCore,
+  ): Promise<{
     nextHopAddress: oAddress;
     targetAddress: oAddress;
   }>;
 
-  abstract isInternal(addressWithLeaderTransports: oAddress): boolean;
+  abstract isInternal(
+    addressWithLeaderTransports: oAddress,
+    node: oCore,
+  ): boolean;
 
   addResolver(resolver: oAddressResolver): void {
     this.addressResolution.addResolver(resolver);
@@ -30,7 +36,7 @@ export abstract class oRouter extends oObject {
     return this.addressResolution.supportsAddress(address);
   }
 
-  abstract route(request: oRouterRequest, node?: oCore): Promise<any>;
+  abstract route(request: oRouterRequest, node: oCore): Promise<any>;
 
   extractToolRequest(request: oRouterRequest): oRequest {
     const { payload } = request.params;
