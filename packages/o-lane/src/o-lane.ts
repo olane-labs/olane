@@ -7,12 +7,16 @@ import { AGENT_PROMPT } from './prompts/agent.prompt.js';
 import { oLaneResult } from './interfaces/o-lane.result.js';
 import { v4 as uuidv4 } from 'uuid';
 import { RegexUtils } from '@olane/o-core';
+import { oIntent } from './intent/index.js';
+import { oIntentEncoder } from './intent-encoder/index.js';
 
 export class oLane extends oObject {
   public sequence: oLane[] = [];
   public cid: CID | undefined;
   public id: string = uuidv4();
   public parentId: string | undefined;
+  public intent: oIntent;
+  public intentEncoder: oIntentEncoder;
 
   public result: oLaneResult | undefined;
 
@@ -20,18 +24,8 @@ export class oLane extends oObject {
     super('o-lane:' + `[${config.intent}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentId = this.config.parentId;
-  }
-
-  get caller() {
-    return this.config.caller;
-  }
-
-  get receiver() {
-    return this.config.receiver;
-  }
-
-  get node() {
-    return this.config.currentNode;
+    this.intent = new oIntent({ intent: this.config.intent });
+    this.intentEncoder = new oIntentEncoder();
   }
 
   toCIDInput(): any {
@@ -82,7 +76,7 @@ export class oLane extends oObject {
     return cid;
   }
 
-  async storePlan() {
+  async store() {
     this.logger.debug('Storing plan...');
     const cid = await this.toCID();
 
@@ -125,28 +119,6 @@ export class oLane extends oObject {
     );
   }
 
-  async pastLanes(): Promise<any> {
-    this.logger.debug('Searching for plans...');
-    const cid = await this.toCID();
-    const response = await this.node.use(
-      new oAddress(RestrictedAddresses.LANE),
-      {
-        method: 'get',
-        params: {
-          key: cid.toString(),
-        },
-      },
-    );
-    this.logger.debug('Past lanes response: ', response);
-
-    const result = response.result;
-    const json =
-      typeof (result as any).data === 'string'
-        ? JSON.parse((result as any).data)
-        : (result as any).data;
-    return json;
-  }
-
   async preflight(): Promise<void> {
     this.logger.debug('Preflight...');
     this.cid = await this.toCID();
@@ -181,7 +153,6 @@ export class oLane extends oObject {
         method: 'prompt',
         params: {
           prompt: prompt,
-          response_format: 'json_object',
         },
       },
     );
@@ -203,48 +174,225 @@ export class oLane extends oObject {
     return this.postflight(this.result);
   }
 
-  async handleNetworkChanges(): Promise<void> {
-    const cid = await this.toCID();
-    await this.node.use(oAddress.leader(), {
-      method: 'save_plan',
-      params: {
-        plan: `${RestrictedAddresses.LANE}/${cid}`,
-      },
+  async doTask(task: oTaskConfig, config: oLaneConfig): Promise<oLaneResult> {
+    this.logger.debug('Doing task...', task);
+    const taskPlan = new oLaneUse({
+      ...config,
+      intent: this.config.intent,
+      context: this.config.context,
+      receiver: new oAddress(task.address),
+      sequence: this.sequence,
     });
+    const taskResult = await taskPlan.execute();
+    this.addLane(taskPlan);
+    this.logger.debug('Pushed task plan to sequence: ', taskResult.result);
+    if (taskResult.error) {
+      this.logger.debug('Task error: ', taskResult.error);
+      // const errorResult = await this.handleError(taskResult.error, config);
+      // if (errorResult.type === 'result') {
+      //   return errorResult;
+      // }
+      // return this.doTask(task, config);
+    }
+    return taskResult;
   }
 
-  async addReasoning(): Promise<void> {
-    // if (this.result?.reasoning) {
-    //   this.logger.debug('Adding knowledge: ', this.result?.reasoning);
-    //   await this.node.use(new oAddress('o://vector-store'), {
-    //     method: 'add_documents',
-    //     params: {
-    //       documents: [
-    //         {
-    //           pageContent: this.result?.reasoning,
-    //           metadata: {
-    //             address: this.caller?.toString(),
-    //             id: uuidv4(),
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   });
-    // }
+  async handleTasks(
+    results: oLaneResult,
+    config: oLaneConfig,
+  ): Promise<oPlanResult[]> {
+    this.logger.debug('Handling task...', results);
+    const tasks = results.tasks;
+    if (!tasks) {
+      throw new Error('Invalid task passed to handleTask');
+    }
+    const taskResults: oLaneResult[] = [];
+    for (const task of tasks) {
+      if (!task.address) {
+        throw new Error('Invalid address passed to handleTask');
+      }
+
+      // perform task if necessary
+      const result = await this.doTask(task, config);
+      taskResults.push(result);
+    }
+    return taskResults;
+  }
+
+  async handleSearch(
+    queries: oLaneQueryConfig[],
+    config: oLaneConfig,
+  ): Promise<any[]> {
+    this.logger.debug('Handling searches...', queries);
+    if (queries.length === 0) {
+      throw new Error('No queries provided to handleSearch');
+    }
+    const results: oLaneResult[] = [];
+    for (const query of queries) {
+      const searchPlan = new oSearchPlan({
+        ...config,
+        intent: `Searching for context to help with the user intent`,
+        query: query?.query,
+        external: query?.provider === 'external',
+      });
+      const result = await searchPlan.execute();
+      this.addLane(searchPlan);
+      this.logger.debug('Search result: ', result.result);
+      results.push(result.result);
+    }
+    return results.flat();
+  }
+
+  // async handleError(error: any, config: oPlanConfig): Promise<oPlanResult> {
+  //   this.logger.debug('Handling error...', error);
+  //   const errorPlan = new oAgentPlan({
+  //     ...config,
+  //     intent: `If this error is already indicating that the user intent is solved, return a result otherwise solve it. The error is: ${error}`,
+  //     context: this.config.context,
+  //     sequence: this.sequence,
+  //     parentId: this.id,
+  //   });
+  //   const result = await errorPlan.execute();
+  //   this.addSequencePlan(errorPlan);
+  //   return result;
+  // }
+
+  /**
+   * The analysis of the intent results in a list of steps and queries to complete the intent.
+   */
+  async handleMultipleStep(output: oLaneResult): Promise<oLaneResult> {
+    const results: any[] = [];
+    for (const intent of output?.intents || []) {
+      const subPlan = new oLaneAgent({
+        ...this.config,
+        intent: intent,
+        sequence: this.sequence,
+        parentId: this.id,
+      });
+      const response = await subPlan.execute();
+      this.addLane(subPlan);
+      results.push(JSON.stringify(response));
+    }
+    return {
+      result: results,
+      type: 'multiple_step',
+    };
+  }
+
+  async loop(): Promise<oLaneResult> {
+    if (!this.node) {
+      throw new Error('Node not set');
+    }
+
+    let iterations = 0;
+    while (iterations++ < this.MAX_ITERATIONS) {
+      this.logger.debug(
+        'Plan context size: ',
+        this.config.context?.toString()?.length,
+      );
+
+      if (this.config.shouldContinue && !this.config.shouldContinue()) {
+        throw new Error('Cancelled');
+      }
+
+      // setup the plan config
+      const planConfig: oLaneConfig = {
+        ...this.config,
+        currentNode: this.node,
+        caller: this.node?.address,
+        sequence: this.sequence,
+      };
+
+      // search or resolve the intent with tool usage
+      const plan = new oLane(planConfig);
+      const response = await plan.execute();
+
+      // all plans are wrappers of AI around current state
+      const planResult = response as oLaneResult;
+      const { error, result, type } = planResult;
+
+      // update the sequence to reflect state change
+      this.addLane(plan);
+
+      // handle the various result types
+      const resultType = type;
+
+      // if there is an answer, return it
+      if (
+        resultType === 'result' ||
+        resultType === 'error' ||
+        resultType === 'handshake' ||
+        resultType === 'configure'
+      ) {
+        return planResult;
+      }
+      // if there are intents, handle them
+      if (resultType === 'multiple_step') {
+        this.logger.debug('Handling multiple step...', planResult);
+        const multipleStepResult = await this.handleMultipleStep(planResult);
+        this.config.context?.add(JSON.stringify(multipleStepResult));
+      }
+
+      // handle search case
+      if (resultType === 'search' && planResult.queries) {
+        const searchResults = await this.handleSearch(
+          planResult.queries,
+          planConfig,
+        );
+        const filteredSearchResults = searchResults;
+
+        let searchResultContext = `[Search Results Begin]`;
+
+        if (filteredSearchResults.length === 0) {
+          searchResultContext += `No more search results found!\n\n`;
+        }
+
+        // update the context with the search results
+        for (const searchResult of filteredSearchResults) {
+          // internal search results
+          if (searchResult?.metadata) {
+            // add the context data
+            searchResultContext += `Tool Address: ${searchResult?.metadata?.address || 'unknown'}\nTool Data: ${searchResult?.pageContent || 'unknown'}\n\n`;
+          } else {
+            searchResultContext += `External Search Result: ${searchResult?.message || 'unknown'}\n\n`;
+          }
+        }
+
+        searchResultContext += `[Search Results End]`;
+
+        if (filteredSearchResults.length > 0) {
+          this.config.context?.add(searchResultContext);
+        }
+      }
+
+      // if there is a task required, handle it
+      if (resultType === 'task') {
+        await this.handleTasks(planResult, planConfig);
+      }
+    }
+    throw new Error('Plan failed, reached max iterations');
   }
 
   async postflight(response: oLaneResult): Promise<oLaneResult> {
     this.logger.debug('Postflight...');
     try {
-      await this.storePlan();
+      await this.store();
       this.logger.debug('Saving plan...', response);
-
-      // TODO: handle network changes
-
-      await this.addReasoning();
     } catch (error) {
       this.logger.error('Error in postflight: ', error);
     }
     return response;
+  }
+
+  get caller() {
+    return this.config.caller;
+  }
+
+  get receiver() {
+    return this.config.receiver;
+  }
+
+  get node() {
+    return this.config.currentNode;
   }
 }

@@ -6,7 +6,7 @@ import { oToolError } from '../../error/tool.error.js';
 import { oToolErrorCodes } from '../../error/enums/codes.error.js';
 import { oLaneContext } from '../o-lane.context.js';
 import { oHandshakeResult } from '../interfaces/handshake.result.js';
-import { oAgentPlan } from '../o-lane.agent.js';
+import { oAgentPlan } from '../manager/o-lane.manager.js';
 import { CONFIGURE_INSTRUCTIONS } from '../prompts/configure.prompt.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectUtils } from '../../utils/object.utils.js';

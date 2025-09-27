@@ -1,12 +1,14 @@
 import { oRequest } from '@olane/o-core';
-import { oTool } from '@olane/o-tool';
+import { oNodeConfig, oNodeTool } from '@olane/o-node';
+import { oHandshakeResult } from './interfaces';
+import { oCapabilityType } from './capabilities';
 
-export class oLaneTool extends oTool(oNode) {
-  constructor(config: oToolConfig & { address: oAddress }) {
+export class oLaneTool extends oNodeTool {
+  constructor(config: oNodeConfig) {
     super(config);
   }
 
-  async _tool_handshake(handshake: oRequest): Promise<any> {
+  async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
     this.logger.debug(
       'Performing handshake with intent: ',
       handshake.params.intent,
@@ -15,12 +17,11 @@ export class oLaneTool extends oTool(oNode) {
     const mytools = await this.myTools();
 
     return {
-      tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
-      methods: this.methods,
-      successes: [],
-      failures: [],
-      task: undefined,
-      type: 'handshake',
+      result: {
+        tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
+        methods: this.methods,
+      },
+      type: oCapabilityType.HANDSHAKE,
     };
   }
 
