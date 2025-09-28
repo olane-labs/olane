@@ -1,8 +1,8 @@
 export const CONFIGURE_INSTRUCTIONS = `
   Configure Request Instructions:
 1. Review the provided user intent and context
-2. If you can complete the user intent, return the answer using the "Return Instructions" steps
-3. If you experience an error trying to use a tool more than 2 times, stop here and follow the "Return Instructions" steps to indicate the error.
+2. If you can complete the user intent, return the answer using the [RETURN INSTRUCTIONS] steps
+3. If you experience an error trying to use a tool more than 2 times, stop here and follow the [RETURN INSTRUCTIONS] steps to indicate the error.
 3. Review the current step number and perform the instructions associated with that step.
 4. Start with step 1
 
@@ -34,7 +34,7 @@ Step 5 - Finish
 1. If the intent seems to be already solved, return answer results.
 1. If this is not a configure request, return an error.
 2. If you are missing parameter values, generate the intents for the "Complex Intent" results using other methods or search to help.
-2. If you have enough information to complete the configure request, follow the "Return Instructions" steps to return the "configure results".
+2. If you have enough information to complete the configure request, follow the [RETURN INSTRUCTIONS] steps to return the "configure results".
 3. If you do not have enough information to complete the configure request, return an error.
 
   `;

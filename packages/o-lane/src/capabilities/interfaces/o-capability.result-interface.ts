@@ -1,7 +1,7 @@
 import { oCapabilityConfig } from '..';
 import { oCapabilityType } from '../enums/o-capability.type-enum';
 
-export interface oCapabilityResult {
+export interface oCapabilityResultInterface {
   result?: any;
   type: oCapabilityType;
   error?: string;

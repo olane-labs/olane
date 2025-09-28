@@ -1,9 +1,9 @@
 import { oAddress } from '@olane/o-core';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result';
+import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result-interface';
 import { oCapability } from '../capabilities/o-capability';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum';
 import { oCapabilitySearchConfig } from './interfaces/o-capability.search-config';
-import { oCapabilitySearchResult } from './interfaces/o-capability.search-result.js';
+import { oCapabilitySearchResult } from './o-capability.search-result.js';
 
 export class oCapabilitySearch extends oCapability {
   public config!: oCapabilitySearchConfig;

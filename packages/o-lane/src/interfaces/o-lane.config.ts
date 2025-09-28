@@ -20,6 +20,5 @@ export interface oLaneConfig {
   extraInstructions?: string;
   parentLaneId?: string;
 
-  shouldContinue?: () => boolean;
   maxCycles?: number;
 }

@@ -1,8 +1,7 @@
-import { oCapabilityConfig } from '../capabilities/interfaces/o-capability.config.js';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
 import { AGENT_PROMPT } from '../prompts/agent.prompt.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oCapabilityEvaluate extends oCapabilityIntelligence {
   static get type() {
@@ -14,7 +13,7 @@ export class oCapabilityEvaluate extends oCapabilityIntelligence {
   }
 
   async run(): Promise<oCapabilityResult> {
-    const { result } = await this.intelligence(
+    const response = await this.intelligence(
       AGENT_PROMPT(
         this.config.intent.value,
         this.config.laneConfig.context?.toString() || '',
@@ -22,6 +21,6 @@ export class oCapabilityEvaluate extends oCapabilityIntelligence {
         this.config.laneConfig.extraInstructions || '',
       ),
     );
-    return result;
+    return response;
   }
 }

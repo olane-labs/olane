@@ -1,9 +1,9 @@
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result.js';
 import { oIntent } from '../intent/o-intent.js';
 import { oCapabilityMultipleStepConfig } from './interfaces/o-capability.multiple-step-config.js';
 import { oLane } from '../o-lane.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oCapabilityMultipleStep extends oCapabilityIntelligence {
   public config!: oCapabilityMultipleStepConfig;
@@ -33,12 +33,12 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
         sequence: this.config.laneConfig.sequence,
         parentLaneId: this.config.parentLaneId,
       });
-      const response = await subLane.execute();
-      results.concat(response.sequence);
+      await subLane.execute();
+      results.concat(subLane.sequence);
     }
-    return {
+    return new oCapabilityResult({
       result: results,
       type: oCapabilityType.MULTIPLE_STEP,
-    };
+    });
   }
 }

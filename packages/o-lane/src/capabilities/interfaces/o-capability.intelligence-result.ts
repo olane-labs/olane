@@ -1,5 +1,5 @@
-import { oCapabilityResult } from './o-capability.result';
+import { oCapabilityResult } from '../o-capability.result.js';
 
-export interface oCapabilityIntelligenceResult {
-  result: oCapabilityResult;
+export class oCapabilityIntelligenceResult extends oCapabilityResult {
+  result?: oCapabilityResult;
 }

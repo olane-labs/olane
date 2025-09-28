@@ -1,4 +1,9 @@
-import { oAddress, RestrictedAddresses } from '@olane/o-core';
+import {
+  oAddress,
+  oError,
+  oErrorCodes,
+  RestrictedAddresses,
+} from '@olane/o-core';
 import { oCapabilityResult, oCapabilityType } from '../capabilities/index.js';
 import { oCapabilityConfigureConfig } from './interfaces/o-capability.configure-config.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
@@ -45,10 +50,13 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
 
   async run(): Promise<oCapabilityResult> {
     const handshake = await this.handshake();
+    if (!handshake.result) {
+      throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
+    }
     const { tools, methods } = handshake.result;
     const prompt = this.generatePrompt(tools, methods);
-    const { result } = await this.intelligence(prompt);
+    const response = await this.intelligence(prompt);
 
-    return result;
+    return response;
   }
 }

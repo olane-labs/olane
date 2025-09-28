@@ -1,1 +1,3 @@
-export interface oLaneManagerConfig {}
+export interface oLaneManagerConfig {
+  maxLanes?: number;
+}

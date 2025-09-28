@@ -1,8 +1,8 @@
 import { oError } from '@olane/o-core';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
 import { oCapabilityErrorConfig } from './interfaces/o-capability.error-config.js';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oCapabilityError extends oCapabilityIntelligence {
   public config!: oCapabilityErrorConfig;
@@ -22,7 +22,7 @@ export class oCapabilityError extends oCapabilityIntelligence {
   async run(): Promise<oCapabilityResult> {
     const { error } = this.config;
     const prompt = this.generatePrompt(error);
-    const { result } = await this.intelligence(prompt);
-    return result;
+    const response = await this.intelligence(prompt);
+    return response;
   }
 }

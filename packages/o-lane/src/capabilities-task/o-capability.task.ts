@@ -1,22 +1,8 @@
-import {
-  oAddress,
-  ObjectUtils,
-  oError,
-  oErrorCodes,
-  oResponse,
-} from '@olane/o-core';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result';
-import { oCapability } from '../capabilities/o-capability';
-import { oCapabilityTaskConfig } from './interfaces/o-capability.task-config';
-import { oHandshakeResult, oLaneResult } from '../interfaces';
-import { oLane } from '../o-lane';
-import { oIntent } from '../intent';
-import { oLaneContext } from '../o-lane.context';
-import { oProtocolMethods } from '@olane/o-protocol';
-import { oCapabilityConfigure } from '../capabilities-configure/o-capability.configure';
-import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum';
-import { oCapabilityConfigureResult } from '../capabilities-configure/interfaces/o-capability.configure-result';
-import { oCapabilityTaskResult } from './interfaces/o-capability.task-result';
+import { oAddress, oError, oErrorCodes } from '@olane/o-core';
+import { oCapability } from '../capabilities/o-capability.js';
+import { oCapabilityTaskConfig } from './interfaces/o-capability.task-config.js';
+import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilityTaskResult } from './o-capability.task-result.js';
 
 export class oCapabilityTask extends oCapability {
   public config!: oCapabilityTaskConfig;
@@ -73,22 +59,22 @@ export class oCapabilityTask extends oCapability {
         params: params,
       });
 
-      return {
+      return new oCapabilityTaskResult({
         result: `Tool input: ${JSON.stringify(task || {}, null, 2)}\nTool output: ${JSON.stringify(response.result, null, 2)}`,
         type: oCapabilityType.RESULT,
-      };
+      });
     } catch (error: any) {
       this.logger.error('Error executing task capability: ', error);
       if (error instanceof oError) {
-        return {
+        return new oCapabilityTaskResult({
           error: error.toString(),
           type: oCapabilityType.ERROR,
-        };
+        });
       }
-      return {
+      return new oCapabilityTaskResult({
         error: error?.message || error || 'Unknown error',
         type: oCapabilityType.ERROR,
-      };
+      });
     }
   }
 }

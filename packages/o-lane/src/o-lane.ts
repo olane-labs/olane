@@ -18,17 +18,19 @@ import { oCapabilityResult, oCapabilityType } from './capabilities/index.js';
 import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
 
 export class oLane extends oObject {
-  public sequence: oLane[] = [];
+  public sequence: oCapabilityResult[] = [];
   public cid: CID | undefined;
   public id: string = uuidv4();
   public parentLaneId: string | undefined;
   public intentEncoder: oIntentEncoder;
   public MAX_CYCLES: number = 20;
   public status: oLaneStatus = oLaneStatus.PENDING;
-
-  public result: oLaneResult = {
-    sequence: [],
-  };
+  public result: oCapabilityResult = new oCapabilityResult({
+    type: oCapabilityType.UNKNOWN,
+    result: null,
+    config: undefined,
+    error: undefined,
+  });
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent}]`);
@@ -65,14 +67,14 @@ export class oLane extends oObject {
     };
   }
 
-  addLane(plan: oLane) {
-    this.sequence.push(plan);
+  addSequence(result: oCapabilityResult) {
+    this.sequence.push(result);
     if (this.config.streamTo) {
       this.node
         .use(this.config.streamTo, {
           method: 'receive_stream',
           params: {
-            data: plan.result || '',
+            data: result.result || result.error || '',
           },
         })
         .catch((error: any) => {
@@ -120,7 +122,7 @@ export class oLane extends oObject {
         ?.map(
           (s, index) =>
             `[Cycle ${index + 1} Begin ${s.id}]\n
-            Cycle Intent: ${s.config.intent}\n
+            Cycle Intent: ${s.config?.intent}\n
             Cycle Result:\n
             ${JSON.stringify(
               {
@@ -138,7 +140,7 @@ export class oLane extends oObject {
     this.status = oLaneStatus.PREFLIGHT;
   }
 
-  async execute(): Promise<oLaneResult> {
+  async execute(): Promise<oCapabilityResult> {
     this.logger.debug('Executing...');
     this.status = oLaneStatus.RUNNING;
     await this.preflight();
@@ -170,13 +172,13 @@ export class oLane extends oObject {
     throw new oError(oErrorCodes.INVALID_CAPABILITY, 'Unknown capability');
   }
 
-  async loop(): Promise<oLaneResult> {
+  async loop(): Promise<oCapabilityResult> {
     if (!this.node) {
       throw new Error('Node not set');
     }
 
     let iterations = 0;
-    let currentStep: oCapabilityResult = {
+    let currentStep = new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       result: null,
       config: {
@@ -184,7 +186,7 @@ export class oLane extends oObject {
         intent: this.intent,
         node: this.node,
       },
-    };
+    });
 
     while (
       iterations++ < this.MAX_CYCLES &&
@@ -192,15 +194,16 @@ export class oLane extends oObject {
     ) {
       // perform the latest capability
       const result = await this.doCapability(currentStep);
+      this.addSequence(result);
       if (result.type === oCapabilityType.STOP) {
-        break;
+        return result;
       }
       currentStep = result;
     }
     throw new Error('Plan failed, reached max iterations');
   }
 
-  async postflight(response: oLaneResult): Promise<oLaneResult> {
+  async postflight(response: oCapabilityResult): Promise<oCapabilityResult> {
     this.logger.debug('Postflight...');
     this.status = oLaneStatus.POSTFLIGHT;
     try {
