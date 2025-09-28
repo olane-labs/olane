@@ -16,6 +16,10 @@ export abstract class oCapability extends oObject {
     return this.config.node;
   }
 
+  async execute(): Promise<oCapabilityResult> {
+    return this.run();
+  }
+
   get intent(): oIntent {
     return this.config.intent;
   }

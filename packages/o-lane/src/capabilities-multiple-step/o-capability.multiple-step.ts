@@ -1,12 +1,11 @@
-import { oCapabilityConfig } from '../capabilities/interfaces/o-capability.config';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result';
-import { oCapability } from '../capabilities/o-capability';
-import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum';
+import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result.js';
 import { oIntent } from '../intent/o-intent.js';
-import { oCapabilityMultipleStepConfig } from './interfaces/o-capability.multiple-step-config';
-import { oLane } from '../o-lane';
+import { oCapabilityMultipleStepConfig } from './interfaces/o-capability.multiple-step-config.js';
+import { oLane } from '../o-lane.js';
+import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
+import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 
-export class oCapabilityMultipleStep extends oCapability {
+export class oCapabilityMultipleStep extends oCapabilityIntelligence {
   constructor(readonly config: oCapabilityMultipleStepConfig) {
     super(config);
   }
@@ -23,17 +22,17 @@ export class oCapabilityMultipleStep extends oCapability {
     const results: oCapabilityResult[] = [];
     for (const intent of this.intents) {
       const subLane = new oLane({
-        ...this.config,
+        ...this.config.laneConfig,
         intent: intent,
-        sequence: this.sequence,
-        parentId: this.id,
+        sequence: this.config.laneConfig.sequence,
+        parentId: this.config.parentLaneId,
       });
       const response = await subLane.execute();
-      results.push(response);
+      results.concat(response.sequence);
     }
     return {
       result: results,
-      type: 'multiple_step',
+      type: oCapabilityType.MULTIPLE_STEP,
     };
   }
 }
