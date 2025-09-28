@@ -1,14 +1,18 @@
 import { oAddress, oCore } from '@olane/o-core';
 import { oLaneContext } from '../o-lane.context.js';
+import { oCapability } from '../capabilities/o-capability.js';
+import { oIntent } from '../intent/o-intent.js';
 
 export interface oLaneConfig {
   // an oAddress that contains the config for the plan
-  intent: string;
+  intent: oIntent;
 
   context?: oLaneContext;
   sequence?: any[];
 
   streamTo?: oAddress;
+
+  capabilities?: oCapability[];
 
   // o-networking information
   currentNode: oCore;

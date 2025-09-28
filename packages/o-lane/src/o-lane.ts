@@ -9,13 +9,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { RegexUtils } from '@olane/o-core';
 import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
+import { oCapability } from './capabilities/o-capability.js';
 
 export class oLane extends oObject {
   public sequence: oLane[] = [];
   public cid: CID | undefined;
   public id: string = uuidv4();
   public parentId: string | undefined;
-  public intent: oIntent;
   public intentEncoder: oIntentEncoder;
 
   public result: oLaneResult | undefined;
@@ -24,8 +24,11 @@ export class oLane extends oObject {
     super('o-lane:' + `[${config.intent}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentId = this.config.parentId;
-    this.intent = new oIntent({ intent: this.config.intent });
     this.intentEncoder = new oIntentEncoder();
+  }
+
+  get intent(): oIntent {
+    return this.config.intent;
   }
 
   toCIDInput(): any {

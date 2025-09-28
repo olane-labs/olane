@@ -1,10 +1,12 @@
-import { oAddress, oResponse } from '@olane/o-core';
-import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum';
+import { oAddress, oError, oErrorCodes, oResponse } from '@olane/o-core';
 import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result';
 import { oCapability } from '../capabilities/o-capability';
 import { oCapabilityTaskConfig } from './interfaces/o-capability.task-config';
-import { oHandshakeResult } from '../interfaces';
+import { oHandshakeResult, oLaneResult } from '../interfaces';
 import { oLane } from '../o-lane';
+import { oIntent } from '../intent';
+import { oLaneContext } from '../o-lane.context';
+import { oProtocolMethods } from '@olane/o-protocol';
 
 export class oCapabilityTask extends oCapability {
   constructor(readonly config: oCapabilityTaskConfig) {
@@ -17,9 +19,9 @@ export class oCapabilityTask extends oCapability {
 
   async handshake(): Promise<oResponse> {
     return this.node.use(new oAddress(this.task.address), {
-      method: 'handshake',
+      method: oProtocolMethods.HANDSHAKE,
       params: {
-        intent: this.config.intent,
+        intent: this.config.intent.value,
       },
     });
   }
@@ -38,7 +40,9 @@ export class oCapabilityTask extends oCapability {
       const pc = new oLane({
         ...this.config,
         sequence: this.sequence,
-        intent: `This is a configure request, prioritize "Configure Request Instructions". You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
+        intent: new oIntent(
+          `This is a configure request, prioritize "Configure Request Instructions". You have already found the tool to resolve the user's intent: ${this.config.receiver}. Configure the request to use the tool with user intent: ${this.config.intent}`,
+        ),
         context: new oLaneContext([
           `[Method Metadata Begin]\n${JSON.stringify(methods, null, 2)}\n[Method Metadata End]`,
           `[Method Options Begin]\n${(tools || []).join(', ')}\n[Method Options End]`,
@@ -47,9 +51,8 @@ export class oCapabilityTask extends oCapability {
         parentId: this.id,
       });
       const result = await pc.execute();
-      this.addSequencePlan(pc);
       this.logger.debug('Configure result: ', result);
-      const { configure, error: configureError }: oPlanResult = result;
+      const { configure, error: configureError }: oLaneResult = result;
       if (configureError) {
         return {
           error: configureError,
@@ -57,8 +60,8 @@ export class oCapabilityTask extends oCapability {
         };
       }
       if (!configure || !configure.task) {
-        throw new oToolError(
-          oToolErrorCodes.TOOL_ERROR,
+        throw new oError(
+          oErrorCodes.NOT_CONFIGURED,
           'Failed to configure the tool use',
         );
       }
