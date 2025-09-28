@@ -6,8 +6,14 @@ import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligen
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 
 export class oCapabilityMultipleStep extends oCapabilityIntelligence {
-  constructor(readonly config: oCapabilityMultipleStepConfig) {
-    super(config);
+  public config!: oCapabilityMultipleStepConfig;
+
+  get type(): oCapabilityType {
+    return oCapabilityType.MULTIPLE_STEP;
+  }
+
+  static get type() {
+    return oCapabilityType.MULTIPLE_STEP;
   }
 
   get intents(): oIntent[] {
@@ -25,7 +31,7 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
         ...this.config.laneConfig,
         intent: intent,
         sequence: this.config.laneConfig.sequence,
-        parentId: this.config.parentLaneId,
+        parentLaneId: this.config.parentLaneId,
       });
       const response = await subLane.execute();
       results.concat(response.sequence);

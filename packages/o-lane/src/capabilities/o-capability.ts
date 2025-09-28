@@ -6,9 +6,7 @@ import type { oLaneTool } from '../o-lane.tool';
 import { oIntent } from '../intent';
 
 export abstract class oCapability extends oObject {
-  constructor(readonly config: oCapabilityConfig) {
-    super();
-  }
+  public config!: oCapabilityConfig;
 
   abstract run(): Promise<oCapabilityResult>;
 
@@ -16,7 +14,8 @@ export abstract class oCapability extends oObject {
     return this.config.node;
   }
 
-  async execute(): Promise<oCapabilityResult> {
+  async execute(config: oCapabilityConfig): Promise<oCapabilityResult> {
+    this.config = config;
     return this.run();
   }
 
@@ -25,6 +24,10 @@ export abstract class oCapability extends oObject {
   }
 
   get type() {
+    return oCapabilityType.UNKNOWN;
+  }
+
+  static get type() {
     return oCapabilityType.UNKNOWN;
   }
 }

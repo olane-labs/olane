@@ -2,10 +2,17 @@ import { oError } from '@olane/o-core';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
 import { oCapabilityErrorConfig } from './interfaces/o-capability.error-config.js';
 import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result.js';
+import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 
 export class oCapabilityError extends oCapabilityIntelligence {
-  constructor(readonly config: oCapabilityErrorConfig) {
-    super(config);
+  public config!: oCapabilityErrorConfig;
+
+  get type(): oCapabilityType {
+    return oCapabilityType.ERROR;
+  }
+
+  static get type() {
+    return oCapabilityType.ERROR;
   }
 
   generatePrompt(error: oError): string {

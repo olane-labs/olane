@@ -19,51 +19,25 @@ import { oCapabilityConfigureResult } from '../capabilities-configure/interfaces
 import { oCapabilityTaskResult } from './interfaces/o-capability.task-result';
 
 export class oCapabilityTask extends oCapability {
-  constructor(readonly config: oCapabilityTaskConfig) {
-    super(config);
-  }
+  public config!: oCapabilityTaskConfig;
 
   get task() {
     return this.config.task;
   }
 
-  async handshake(): Promise<oResponse> {
-    return this.node.use(new oAddress(this.task.address), {
-      method: oProtocolMethods.HANDSHAKE,
-      params: {
-        intent: this.config.intent.value,
-      },
-    });
+  get type(): oCapabilityType {
+    return oCapabilityType.TASK;
+  }
+
+  static get type() {
+    return oCapabilityType.TASK;
   }
 
   async run(): Promise<oCapabilityTaskResult> {
     try {
       // do MCP handshake to get the method + parameters + dependencies
-      const handshakeResponse = await this.handshake();
 
-      const { result: handshakeResult } = handshakeResponse.result
-        .data as oHandshakeResult;
-      const { tools, methods } = handshakeResult;
-
-      // spawn a new lane (intent workflow) to configure the tool use
-
-      const pc = new oCapabilityConfigure({
-        ...this.config,
-        handshake: handshakeResponse.result.data as oHandshakeResult,
-        receiver: new oAddress(this.task.address),
-      });
-      const result = await pc.execute();
-      this.logger.debug('Configure result: ', result);
-      const {
-        result: task,
-        error: configureError,
-      }: oCapabilityConfigureResult = result;
-      if (configureError) {
-        return {
-          error: configureError,
-          type: oCapabilityType.ERROR,
-        };
-      }
+      const { task } = this.config;
       if (!task || !task.address) {
         throw new oError(
           oErrorCodes.NOT_CONFIGURED,

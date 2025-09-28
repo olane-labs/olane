@@ -6,5 +6,7 @@ export enum oCapabilityType {
   CONFIGURE = 'configure',
   HANDSHAKE = 'handshake',
   RESULT = 'result',
+  EVALUATE = 'evaluate',
+  STOP = 'stop',
   UNKNOWN = 'unknown',
 }

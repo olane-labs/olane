@@ -3,13 +3,20 @@ import { oCapabilityResult, oCapabilityType } from '../capabilities/index.js';
 import { oCapabilityConfigureConfig } from './interfaces/o-capability.configure-config.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
 import { oLaneContext } from '../o-lane.context.js';
-import { oMethod } from '@olane/o-protocol';
+import { oMethod, oProtocolMethods, oResponse } from '@olane/o-protocol';
 import { AGENT_PROMPT } from '../prompts/agent.prompt.js';
 import { CONFIGURE_INSTRUCTIONS } from '../prompts/configure.prompt.js';
+import { oHandshakeResult } from '../interfaces/handshake.result.js';
 
 export class oCapabilityConfigure extends oCapabilityIntelligence {
-  constructor(readonly config: oCapabilityConfigureConfig) {
-    super(config);
+  public config!: oCapabilityConfigureConfig;
+
+  get type(): oCapabilityType {
+    return oCapabilityType.CONFIGURE;
+  }
+
+  static get type() {
+    return oCapabilityType.CONFIGURE;
   }
 
   generatePrompt(tools: string[], methods: { [key: string]: oMethod }): string {
@@ -26,8 +33,18 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
     );
   }
 
+  async handshake(): Promise<oHandshakeResult> {
+    const response = await this.node.use(this.config.receiver, {
+      method: oProtocolMethods.HANDSHAKE,
+      params: {
+        intent: this.config.intent.value,
+      },
+    });
+    return response.result.data as oHandshakeResult;
+  }
+
   async run(): Promise<oCapabilityResult> {
-    const { handshake } = this.config;
+    const handshake = await this.handshake();
     const { tools, methods } = handshake.result;
     const prompt = this.generatePrompt(tools, methods);
     const { result } = await this.intelligence(prompt);
