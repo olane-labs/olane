@@ -1,9 +1,9 @@
 import { oAddress } from '@olane/o-core';
-import { oCapabilityResult } from '../capabilities/interfaces/o-capability.result-interface';
-import { oCapability } from '../capabilities/o-capability';
-import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum';
-import { oCapabilitySearchConfig } from './interfaces/o-capability.search-config';
+import { oCapability } from '../capabilities/o-capability.js';
+import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilitySearchConfig } from './interfaces/o-capability.search-config.js';
 import { oCapabilitySearchResult } from './o-capability.search-result.js';
+import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oCapabilitySearch extends oCapability {
   public config!: oCapabilitySearchConfig;
@@ -61,10 +61,10 @@ export class oCapabilitySearch extends oCapability {
 
     searchResultContext += `[Search Results End]`;
 
-    return {
+    return new oCapabilitySearchResult({
       result: searchResultContext,
       type: oCapabilityType.RESULT,
-    };
+    });
   }
 
   /**
@@ -96,10 +96,10 @@ export class oCapabilitySearch extends oCapability {
     }
 
     searchResultContext += `[Search Results End]`;
-    return {
+    return new oCapabilitySearchResult({
       result: searchResultContext,
       type: oCapabilityType.RESULT,
-    };
+    });
   }
 
   async run(): Promise<oCapabilityResult> {

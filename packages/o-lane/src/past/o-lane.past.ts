@@ -1,6 +1,6 @@
 import { oAddress, RestrictedAddresses } from '@olane/o-core';
-import { oLane } from '../o-lane';
-import { oLaneResult } from '../interfaces/o-lane.result';
+import { oLane } from '../o-lane.js';
+import { oLaneResult } from '../interfaces/o-lane.result.js';
 
 export class oLanePast extends oLane {
   async pastLanes(): Promise<any> {

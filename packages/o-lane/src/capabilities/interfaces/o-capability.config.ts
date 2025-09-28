@@ -1,6 +1,6 @@
-import { oIntent } from '../../intent';
-import { oLaneConfig } from '../../interfaces';
-import type { oLaneTool } from '../../o-lane.tool';
+import { oIntent } from '../../intent/o-intent.js';
+import { oLaneConfig } from '../../interfaces/o-lane.config.js';
+import type { oLaneTool } from '../../o-lane.tool.js';
 
 export interface oCapabilityConfig {
   node: oLaneTool;

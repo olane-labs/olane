@@ -1,14 +1,10 @@
 import { oAddress, oRequest } from '@olane/o-core';
 import { oNodeConfig, oNodeTool } from '@olane/o-node';
 import { oHandshakeResult } from './interfaces/index.js';
-import {
-  oCapabilityResultInterface,
-  oCapabilityType,
-} from './capabilities/index.js';
+import { oCapabilityType } from './capabilities/index.js';
 import { oIntent } from './intent/index.js';
 import { oLaneContext } from './o-lane.context.js';
 import { oLaneManager } from './manager/o-lane.manager.js';
-import { v4 as uuidv4 } from 'uuid';
 import { oCapabilityResult } from './capabilities/o-capability.result.js';
 
 export class oLaneTool extends oNodeTool {

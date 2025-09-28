@@ -1,6 +1,6 @@
-import { oCapabilityType } from './enums/o-capability.type-enum';
-import { oCapabilityConfig } from './interfaces/o-capability.config';
-import { oCapabilityResultInterface } from './interfaces/o-capability.result-interface';
+import { oCapabilityType } from './enums/o-capability.type-enum.js';
+import { oCapabilityConfig } from './interfaces/o-capability.config.js';
+import { oCapabilityResultInterface } from './interfaces/o-capability.result-interface.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class oCapabilityResult implements oCapabilityResultInterface {

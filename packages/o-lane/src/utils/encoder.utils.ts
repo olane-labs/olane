@@ -1,4 +1,4 @@
-import type { oLane } from '../o-lane';
+import type { oLane } from '../o-lane.js';
 
 export class oLaneEncoderUtils {
   static encode(data: oLane): string {

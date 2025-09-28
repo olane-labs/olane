@@ -1,9 +1,9 @@
 import { oObject } from '@olane/o-core';
-import { oCapabilityConfig } from './interfaces/o-capability.config';
-import { oCapabilityType } from './enums/o-capability.type-enum';
+import { oCapabilityConfig } from './interfaces/o-capability.config.js';
+import { oCapabilityType } from './enums/o-capability.type-enum.js';
 import { oCapabilityResult } from './o-capability.result.js';
-import type { oLaneTool } from '../o-lane.tool';
-import { oIntent } from '../intent';
+import type { oLaneTool } from '../o-lane.tool.js';
+import { oIntent } from '../intent/o-intent.js';
 
 export abstract class oCapability extends oObject {
   public config!: oCapabilityConfig;

@@ -9,7 +9,6 @@ import { oLaneConfig } from './interfaces/o-lane.config.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
-import { oLaneResult } from './interfaces/o-lane.result.js';
 import { v4 as uuidv4 } from 'uuid';
 import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
@@ -60,9 +59,7 @@ export class oLane extends oObject {
   toJSON() {
     return {
       config: this.toCIDInput(),
-      sequence: this.sequence.map(
-        (s) => `${RestrictedAddresses.LANE}/${s.cid?.toString()}`,
-      ),
+      sequence: this.sequence,
       result: this.result,
     };
   }

@@ -1,9 +1,4 @@
-import {
-  oAddress,
-  oError,
-  oErrorCodes,
-  RestrictedAddresses,
-} from '@olane/o-core';
+import { oError, oErrorCodes } from '@olane/o-core';
 import { oCapabilityResult, oCapabilityType } from '../capabilities/index.js';
 import { oCapabilityConfigureConfig } from './interfaces/o-capability.configure-config.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';

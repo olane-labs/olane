@@ -1,6 +1,6 @@
 import { oMethod } from '@olane/o-protocol';
-import { oCapabilityType } from '../capabilities';
-import { oCapabilityResult } from '../capabilities/o-capability.result';
+import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
+import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oHandshakeResult extends oCapabilityResult {
   result?: {
