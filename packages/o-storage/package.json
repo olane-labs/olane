@@ -61,7 +61,9 @@
     "@olane/o-config": "^0.6.11",
     "@olane/o-core": "^0.6.11",
     "@olane/o-protocol": "^0.6.11",
-    "@olane/o-tool": "^0.6.11"
+    "@olane/o-tool": "^0.6.11",
+    "@olane/o-lane": "^0.6.11",
+    "@olane/o-node": "^0.6.11"
   },
   "dependencies": {
     "debug": "^4.4.1",

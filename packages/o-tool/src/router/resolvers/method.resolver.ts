@@ -5,6 +5,7 @@ import {
   oCustomTransport,
   oHierarchyManager,
   oTransport,
+  RouteResponse,
 } from '@olane/o-core';
 import { oToolBase } from '../../o-tool.base';
 
@@ -17,15 +18,21 @@ export class oMethodResolver extends oAddressResolver {
     return [new oCustomTransport('/method')];
   }
 
-  async resolve(address: oAddress, node: oCore): Promise<oAddress> {
+  async resolve(address: oAddress, node: oCore): Promise<RouteResponse> {
     const nextHopAddress = oAddress.next(node.address, address);
     const method = nextHopAddress.protocol.split('/').pop();
     if (method) {
-      const methodName = (node as oToolBase).findMethod(method);
+      const methodName = await (node as oToolBase).findMethod(method);
       if (methodName) {
-        return node.address;
+        return {
+          nextHopAddress: node.address,
+          targetAddress: address,
+        };
       }
     }
-    return address;
+    return {
+      nextHopAddress: address,
+      targetAddress: address,
+    };
   }
 }

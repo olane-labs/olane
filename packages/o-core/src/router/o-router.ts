@@ -6,6 +6,7 @@ import { oAddressResolver } from './o-address-resolver';
 import { oRequest } from '../connection/o-request.js';
 import type { oCore } from '../core/o-core.js';
 import { oRouterRequest, RequestParams } from '@olane/o-protocol';
+import { RouteResponse } from './interfaces/route.response.js';
 
 export abstract class oRouter extends oObject {
   public addressResolution!: oAddressResolution;
@@ -18,10 +19,7 @@ export abstract class oRouter extends oObject {
   abstract translate(
     addressWithLeaderTransports: oAddress,
     node: oCore,
-  ): Promise<{
-    nextHopAddress: oAddress;
-    targetAddress: oAddress;
-  }>;
+  ): Promise<RouteResponse>;
 
   abstract isInternal(
     addressWithLeaderTransports: oAddress,

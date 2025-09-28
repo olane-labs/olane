@@ -1,4 +1,4 @@
-import { LocalSearch, oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';

@@ -165,15 +165,19 @@ export class oToolBase extends oCore {
     return result;
   }
 
-  myTools(obj?: any): string[] {
-    return Object.getOwnPropertyNames(obj || this.constructor.prototype)
-      .filter((key) => key.startsWith('_tool_'))
-      .filter((key) => !!key)
-      .map((key) => key.replace('_tool_', ''));
+  myTools(obj?: any): Promise<string[]> {
+    return Promise.resolve(
+      Object.getOwnPropertyNames(obj || this.constructor.prototype)
+        .filter((key) => key.startsWith('_tool_'))
+        .filter((key) => !!key)
+        .map((key) => key.replace('_tool_', '')),
+    );
   }
 
-  findMethod(method: string): string | undefined {
-    return this.myTools().find((key) => key.startsWith('_tool_' + method));
+  async findMethod(method: string): Promise<string | undefined> {
+    return (await this.myTools()).find((key) =>
+      key.startsWith('_tool_' + method),
+    );
   }
 
   myToolParams(tool: string): Record<string, any> {
@@ -288,7 +292,7 @@ export class oToolBase extends oCore {
     const metadata = await super.whoami();
     return {
       // @ts-ignore
-      tools: this.myTools(),
+      tools: await this.myTools(),
       description: this.description,
     };
   }

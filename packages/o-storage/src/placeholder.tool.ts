@@ -1,4 +1,4 @@
-import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oRequest, RegexUtils } from '@olane/o-core';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
 import { PlaceholderPutRequest } from './interfaces/placeholder-put.request.js';

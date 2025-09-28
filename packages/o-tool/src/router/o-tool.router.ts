@@ -15,12 +15,12 @@ export abstract class oToolRouter extends oRouter {
     const destinationAddress = new oAddress(address as string);
 
     // determine the next hop address from the encapsulated address
-    const { nextHopAddress, targetAddress } = await this.translate(
-      destinationAddress,
-      node,
-    );
+    const { nextHopAddress, targetAddress, requestOverride } =
+      await this.translate(destinationAddress, node);
 
     const isSelf = nextHopAddress.equals(destinationAddress);
+
+    const forwardRequest = requestOverride || request;
 
     // at destination, convert the route request to goal request
     let nextHopRequest: oRequest | oRouterRequest = isSelf
@@ -29,7 +29,7 @@ export abstract class oToolRouter extends oRouter {
           id: request.id as string,
           method: payload.method as string,
         })
-      : request;
+      : forwardRequest;
 
     // TODO: send the request to the destination
     return this.forward(nextHopAddress, nextHopRequest, node);
