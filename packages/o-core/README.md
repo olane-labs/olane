@@ -1,24 +1,34 @@
 # @olane/o-core
 
-The foundational runtime package for Olane OS - an agentic operating system that enables AI agents to operate as intelligent, addressable processes.
+The kernel layer of Olane OS - an agentic operating system where AI agents are the users, and you build tool nodes as applications.
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ## What is o-core?
 
-**o-core** is the kernel layer of Olane OS that provides the runtime infrastructure for creating and managing AI agent nodes. Think of it as the operating system layer that handles process management, inter-agent communication (IPC), resource addressing, and routing for intelligent agents.
+**o-core** is the **kernel layer** of Olane OS - the foundational runtime for building tool nodes that AI agents use. Think of it as the Linux kernel: it defines how processes work (lifecycle, IPC, addressing, routing) but doesn't implement specific transport layers.
 
-This is **NOT** a network framework or API library - it's the foundational runtime that makes agent-to-agent communication, resource management, and emergent intelligence possible.
+### The Three-Layer Model
+
+```
+AI Agents (LLMs) → use → Tool Nodes (you build) → run on → Olane OS (o-core)
+```
+
+- **AI Agents (Users)**: GPT-4, Claude, etc. - the intelligent users
+- **Tool Nodes (Applications)**: Domain-specific capabilities you build
+- **o-core (OS Kernel)**: The runtime infrastructure that makes it all work
+
+This is **NOT** a network framework or API library - it's the abstract operating system layer that makes inter-process communication (IPC), resource addressing, and hierarchical organization possible.
 
 ## Key Features
 
-- 🏗️ **Agent Runtime**: Base infrastructure for creating intelligent agent processes
-- 📍 **Hierarchical Addressing**: `o://` protocol for filesystem-like agent addressing
-- 🔀 **Intelligent Routing**: Automatic request routing through agent hierarchies
-- 🔌 **Transport-Agnostic**: Works with any communication layer (libp2p, HTTP, custom)
-- 🌳 **Hierarchy Management**: Built-in parent-child agent relationships
-- 🔄 **Lifecycle Management**: Complete agent state management and graceful shutdown
+- 🏗️ **Tool Node Runtime**: Base infrastructure for creating tool node processes that agents use
+- 📍 **Hierarchical Addressing**: `o://` protocol for filesystem-like tool node addressing
+- 🔀 **Intelligent Routing**: Automatic request routing through tool node hierarchies
+- 🔌 **Transport-Agnostic**: Abstract layer - works with any communication layer (libp2p, HTTP, custom)
+- 🌳 **Hierarchy Management**: Built-in parent-child relationships between tool nodes
+- 🔄 **Lifecycle Management**: Complete process state management and graceful shutdown
 - 📊 **Observable**: Built-in metrics, logging, and request tracking
 - 🛡️ **Fault-Tolerant**: Error handling, graceful degradation, and automatic cleanup
 
@@ -30,19 +40,19 @@ npm install @olane/o-core @olane/o-protocol
 
 ## Quick Start
 
-### Creating Your First Agent Node
+### Creating Your First Tool Node
 
 ```typescript
 import { oCore, oAddress, NodeType, NodeState } from '@olane/o-core';
 import { oRequest, oResponse } from '@olane/o-core';
 
-// Extend oCore to create your agent node
-class MyAgent extends oCore {
+// Extend oCore to create your tool node
+class MyToolNode extends oCore {
   constructor(address: string) {
     super({
       address: new oAddress(address),
-      type: NodeType.AGENT,
-      description: 'My first agent node',
+      type: NodeType.AGENT, // Type remains AGENT for now (legacy naming)
+      description: 'My first tool node',
       methods: {
         greet: {
           name: 'greet',
@@ -83,21 +93,21 @@ class MyAgent extends oCore {
 
   async register(): Promise<void> {
     // Register with parent or leader node
-    console.log('Agent registered');
+    console.log('Tool node registered');
   }
 
   async unregister(): Promise<void> {
     // Cleanup registration
-    console.log('Agent unregistered');
+    console.log('Tool node unregistered');
   }
 }
 
-// Create and start your agent
-const agent = new MyAgent('o://company/customer-service');
-await agent.start();
+// Create and start your tool node
+const toolNode = new MyToolNode('o://company/customer-service');
+await toolNode.start();
 
-// Use the agent
-const response = await agent.use(
+// AI agents can now use this tool node via its o:// address
+const response = await toolNode.use(
   new oAddress('o://company/customer-service'),
   {
     method: 'greet',
@@ -107,22 +117,22 @@ const response = await agent.use(
 
 console.log(response.result); // { message: "Hello, Alice!" }
 
-// Stop the agent gracefully
-await agent.stop();
+// Stop the tool node gracefully
+await toolNode.stop();
 ```
 
-### Inter-Agent Communication
+### Tool Node Communication (IPC)
 
 ```typescript
-// Agent A can communicate with Agent B using addresses
-const agentA = new MyAgent('o://company/sales');
-const agentB = new MyAgent('o://company/analytics');
+// Tool Node A can communicate with Tool Node B using o:// addresses
+const salesTool = new MyToolNode('o://company/sales');
+const analyticsTool = new MyToolNode('o://company/analytics');
 
-await agentA.start();
-await agentB.start();
+await salesTool.start();
+await analyticsTool.start();
 
-// Agent A calls Agent B
-const result = await agentA.use(
+// Sales tool calls analytics tool (inter-process communication)
+const result = await salesTool.use(
   new oAddress('o://company/analytics'),
   {
     method: 'analyze',
@@ -134,10 +144,10 @@ const result = await agentA.use(
 ### Hierarchical Organization
 
 ```typescript
-// Create a parent-child hierarchy
-const parent = new MyAgent('o://company');
-const child1 = new MyAgent('o://company/sales');
-const child2 = new MyAgent('o://company/marketing');
+// Create a parent-child hierarchy of tool nodes
+const parent = new MyToolNode('o://company');
+const child1 = new MyToolNode('o://company/sales');
+const child2 = new MyToolNode('o://company/marketing');
 
 await parent.start();
 await child1.start();
@@ -147,27 +157,27 @@ await child2.start();
 parent.addChildNode(child1);
 parent.addChildNode(child2);
 
-// Children automatically inherit context from parent
+// Child tool nodes automatically inherit context from parent
 // Routing happens automatically through the hierarchy
 ```
 
 ## Core Concepts
 
-### Agent Lifecycle States
+### Tool Node Lifecycle States
 
-Agents transition through the following states:
+Tool nodes (processes) transition through the following states:
 
-- `STOPPED` - Initial state, agent is not running
-- `STARTING` - Agent is initializing
-- `RUNNING` - Agent is active and processing requests
-- `STOPPING` - Agent is shutting down gracefully
-- `ERROR` - Agent encountered an error
+- `STOPPED` - Initial state, tool node is not running
+- `STARTING` - Tool node is initializing
+- `RUNNING` - Tool node is active and processing requests
+- `STOPPING` - Tool node is shutting down gracefully
+- `ERROR` - Tool node encountered an error
 
 ```typescript
-console.log(agent.state); // NodeState.RUNNING
+console.log(toolNode.state); // NodeState.RUNNING
 
-await agent.stop();
-console.log(agent.state); // NodeState.STOPPED
+await toolNode.stop();
+console.log(toolNode.state); // NodeState.STOPPED
 ```
 
 ### The o:// Protocol
@@ -193,12 +203,12 @@ console.log(staticAddr.toString()); // "o://accounting"
 
 ### Request/Response Pattern
 
-All inter-agent communication follows a request/response pattern using JSON-RPC 2.0:
+All inter-process communication (IPC) follows a request/response pattern using JSON-RPC 2.0:
 
 ```typescript
-// Making a request
-const response: oResponse = await agent.use(
-  new oAddress('o://target/agent'),
+// Making a request from one tool node to another
+const response: oResponse = await toolNode.use(
+  new oAddress('o://target/toolnode'),
   {
     method: 'processData',
     params: { key: 'value' },
@@ -208,7 +218,7 @@ const response: oResponse = await agent.use(
 
 // Handling errors
 try {
-  const response = await agent.use(targetAddress, requestData);
+  const response = await toolNode.use(targetAddress, requestData);
   console.log(response.result);
 } catch (error) {
   if (error instanceof oError) {
@@ -221,18 +231,18 @@ try {
 
 ### Metrics and Observability
 
-Every agent tracks metrics automatically:
+Every tool node tracks metrics automatically:
 
 ```typescript
-// Access agent metrics
-console.log(agent.metrics.successCount);
-console.log(agent.metrics.errorCount);
+// Access tool node metrics
+console.log(toolNode.metrics.successCount);
+console.log(toolNode.metrics.errorCount);
 
 // Built-in logging
-agent.logger.debug('Debug message');
-agent.logger.info('Info message');
-agent.logger.warn('Warning message');
-agent.logger.error('Error message');
+toolNode.logger.debug('Debug message');
+toolNode.logger.info('Info message');
+toolNode.logger.warn('Warning message');
+toolNode.logger.error('Error message');
 ```
 
 ## Architecture
@@ -251,7 +261,7 @@ agent.logger.error('Error message');
 ### Key Components
 
 #### 1. Router System (oAddress & oRouter)
-Hierarchical addressing and intelligent routing for agents
+Hierarchical addressing and intelligent routing for tool nodes
 
 ```typescript
 const addr = new oAddress('o://domain/subdomain/resource');
@@ -269,7 +279,7 @@ const { nextHopAddress, targetAddress } = await router.translate(
 **📚 [View detailed Router System documentation →](./src/router/README.md)**
 
 #### 2. Connection System (oConnection & oConnectionManager)
-Inter-Process Communication (IPC) layer for agent-to-agent messaging
+Inter-Process Communication (IPC) layer for tool-node-to-tool-node messaging
 
 ```typescript
 // Connections are cached and reused
@@ -288,12 +298,12 @@ const response = await connection.send({
 **📚 [View detailed Connection System documentation →](./src/connection/README.md)**
 
 #### 3. oHierarchyManager
-Manages parent-child relationships between agents
+Manages parent-child relationships between tool nodes
 
 ```typescript
-agent.hierarchyManager.addChild(childAddress);
-agent.hierarchyManager.removeChild(childAddress);
-console.log(agent.hierarchyManager.children);
+toolNode.hierarchyManager.addChild(childAddress);
+toolNode.hierarchyManager.removeChild(childAddress);
+console.log(toolNode.hierarchyManager.children);
 ```
 
 ## Advanced Usage
@@ -325,7 +335,7 @@ class MyConnection extends oConnection {
   }
 }
 
-class MyAgent extends oCore {
+class MyToolNode extends oCore {
   configureTransports(): any[] {
     return [new MyCustomTransport()];
   }
@@ -391,24 +401,26 @@ async execute(request: oRequest): Promise<any> {
 ```typescript
 import { setupGracefulShutdown } from '@olane/o-core';
 
-const agent = new MyAgent('o://my/agent');
-await agent.start();
+const toolNode = new MyToolNode('o://my/toolnode');
+await toolNode.start();
 
 // Setup graceful shutdown handlers
 setupGracefulShutdown(async () => {
   console.log('Shutting down gracefully...');
-  await agent.stop();
+  await toolNode.stop();
 });
 
-// Agent will automatically stop on SIGINT/SIGTERM
+// Tool node will automatically stop on SIGINT/SIGTERM
 ```
 
 ## API Reference
 
 ### oCore Class
 
+Abstract base class for building tool nodes.
+
 #### Properties
-- `address: oAddress` - The agent's hierarchical address
+- `address: oAddress` - The tool node's hierarchical address
 - `state: NodeState` - Current lifecycle state
 - `metrics: oMetrics` - Performance and usage metrics
 - `hierarchyManager: oHierarchyManager` - Manages child nodes
@@ -416,13 +428,13 @@ setupGracefulShutdown(async () => {
 - `connectionManager: oConnectionManager` - Connection pooling
 
 #### Methods
-- `async start(): Promise<void>` - Start the agent
-- `async stop(): Promise<void>` - Stop the agent gracefully
-- `async use(address, data?): Promise<oResponse>` - Communicate with another agent
-- `async execute(request): Promise<any>` - Execute a request (abstract)
-- `addChildNode(node): void` - Add a child agent
-- `removeChildNode(node): void` - Remove a child agent
-- `async whoami(): Promise<any>` - Get agent information
+- `async start(): Promise<void>` - Start the tool node
+- `async stop(): Promise<void>` - Stop the tool node gracefully
+- `async use(address, data?): Promise<oResponse>` - Communicate with another tool node (IPC)
+- `async execute(request): Promise<any>` - Execute a request (abstract - you implement this)
+- `addChildNode(node): void` - Add a child tool node
+- `removeChildNode(node): void` - Remove a child tool node
+- `async whoami(): Promise<any>` - Get tool node information
 
 ### oAddress Class
 
@@ -477,18 +489,19 @@ npm run lint
 
 o-core enables you to:
 
-1. **Create Specialized AI Agent Nodes** with unique addresses and capabilities
-2. **Build Hierarchical Agent Networks** that discover and communicate organically
-3. **Route Requests Intelligently** through agent hierarchies
-4. **Manage Agent Lifecycles** with automatic cleanup and error handling
-5. **Share Knowledge and Capabilities** across agent networks through addressable resources
+1. **Build Specialized Tool Nodes** with unique o:// addresses and capabilities
+2. **Create Hierarchical Tool Networks** that AI agents discover and use
+3. **Route Requests Intelligently** through tool node hierarchies
+4. **Manage Tool Node Lifecycles** with automatic cleanup and error handling
+5. **Share Knowledge and Capabilities** across tool networks through addressable resources
 
 ## What o-core is NOT
 
-- ❌ **Not a network framework** - It's an operating system for agents
+- ❌ **Not a network framework** - It's the OS kernel for tool nodes
 - ❌ **Not an orchestration tool** - It enables emergent coordination, not explicit workflows
-- ❌ **Not a REST API** - It's a runtime for inter-agent communication (IPC)
-- ❌ **Not a complete solution** - It's a foundation; you implement the specifics
+- ❌ **Not a REST API** - It's a runtime for inter-process communication (IPC)
+- ❌ **Not a complete solution** - It's an abstract foundation; use o-node for production
+- ❌ **Not what you use directly** - Extend it or use higher-level packages (o-node, o-tool, o-lane)
 
 ## Related Packages
 
@@ -528,4 +541,4 @@ ISC © Olane Inc.
 
 ---
 
-**Part of the Olane OS ecosystem** - An agentic operating system for building intelligent, collaborative AI agent networks.
+**Part of the Olane OS ecosystem** - An agentic operating system where AI agents are the users and you build tool nodes as applications.

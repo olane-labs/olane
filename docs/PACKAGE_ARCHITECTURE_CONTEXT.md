@@ -23,41 +23,51 @@
 
 ### What is Olane OS?
 
-**Olane OS is an agentic operating system** that enables AI agents to operate as intelligent, addressable processes. It's NOT a network framework, API library, or orchestration tool - it's a complete runtime system for AI agents.
+**Olane OS is an agentic operating system** where **AI agents are the users**, **tool nodes are the applications**, and **Olane packages provide the runtime infrastructure**. It's NOT a network framework, API library, or orchestration tool - it's a complete operating system for intelligent agents to interact with specialized capabilities.
 
 ### Three-Layer Mental Model
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  APPLICATION LAYER: Your AI Agents              │
-│  - Custom domain agents                          │
-│  - Business logic & workflows                    │
-│  - Agent coordination patterns                   │
+│  USERS: AI Agents                                │
+│  - Generalist reasoning brains (GPT-4, Claude)   │
+│  - Natural language interfaces                   │
+│  - Intent-driven interactions                    │
 └─────────────────────────────────────────────────┘
-                      ⬇ uses
+                      ⬇ use
 ┌─────────────────────────────────────────────────┐
-│  FRAMEWORK LAYER: Olane OS Packages             │
-│  - o-lane: Process management                    │
-│  - o-tool: Tool system                           │
-│  - o-leader: Network coordination                │
-│  - o-node: P2P networking                        │
+│  APPLICATIONS: Tool Nodes & Capabilities         │
+│  - Domain-specific tools (CRM, analytics, etc.)  │
+│  - Business integrations (APIs, databases)       │
+│  - Specialized capabilities (search, compute)    │
 └─────────────────────────────────────────────────┘
-                      ⬇ built on
+                      ⬇ run on
 ┌─────────────────────────────────────────────────┐
-│  KERNEL LAYER: Core Runtime                     │
-│  - o-core: Abstract agent runtime                │
-│  - o-protocol: Type definitions                  │
-│  - o-config: Configuration utilities             │
+│  OPERATING SYSTEM: Olane Runtime                 │
+│  - Process management (o-lane)                   │
+│  - Tool system (o-tool)                          │
+│  - IPC & networking (o-node, o-core)             │
+│  - Coordination (o-leader)                       │
 └─────────────────────────────────────────────────┘
 ```
 
+### Understanding the Layers
+
+**Users (AI Agents)**: The intelligent consumers who interact with the system using natural language. They make requests, express intents, and coordinate with other agents. These are the LLMs (GPT-4, Claude, etc.) that serve as the reasoning brains.
+
+**Applications (Tool Nodes)**: The specialized capabilities and integrations that agents invoke to accomplish tasks. These are the domain-specific tools that developers build - CRM integrations, analytics engines, data pipelines, etc.
+
+**Operating System (Olane)**: The runtime infrastructure that manages processes, handles communication, coordinates agents, and provides the foundation for everything to work together. This is what the Olane packages provide.
+
 ### Key Architectural Principles
 
-1. **Generalist-Specialist Pattern**: One LLM brain, many specialized agents
-2. **Emergent Orchestration**: Workflows discovered, not pre-defined
-3. **Hierarchical Organization**: Filesystem-like addressing (o://)
-4. **Intent-Driven Execution**: Natural language goals, not procedural steps
-5. **Tool Augmentation**: Agents specialized through capabilities, not training
+1. **Agents as Users**: AI agents (LLMs) are the intelligent users of the system, not what you build
+2. **Tool Nodes as Applications**: Developers build specialized tool nodes that agents invoke
+3. **Generalist-Specialist Pattern**: One LLM brain serves many specialized tool nodes
+4. **Emergent Orchestration**: Workflows discovered through agent interactions, not pre-defined
+5. **Hierarchical Organization**: Filesystem-like addressing (o://) for tool node discovery
+6. **Intent-Driven Execution**: Agents use natural language to interact with tool nodes
+7. **Tool Augmentation**: Specialization through capabilities and context, not training
 
 ---
 
@@ -287,15 +297,19 @@ PENDING → PREFLIGHT → RUNNING → POSTFLIGHT → COMPLETED
 
 ---
 
-### Layer 3: Application (Your Domain Agents)
+### Layer 3: Applications (Your Tool Nodes)
 
-This is where you build your specific AI agents using the framework.
+This is where you build domain-specific tool nodes that AI agents use to accomplish tasks.
+
+**What You Build**: Specialized tool nodes with domain capabilities that agents invoke through natural language.
 
 **Examples**:
-- Financial analysis agent (o-lane + domain tools)
-- Customer service agent (o-tool + CRM integrations)
-- Data pipeline agent (o-lane + ETL capabilities)
-- Multi-agent research team (o-leader + specialized agents)
+- Financial analysis tools (revenue calculation, trend analysis, forecasting)
+- CRM integration tools (customer lookup, ticket creation, data synchronization)
+- Data pipeline tools (ETL operations, data validation, transformation)
+- Research tools (web search, document analysis, citation management)
+
+**Remember**: You're building the **applications** (tool nodes) that run on the **OS** (Olane), which are used by **agents** (LLMs) as intelligent users.
 
 ---
 
@@ -316,11 +330,11 @@ This is where you build your specific AI agents using the framework.
 ### Package Dependencies
 
 ```
-Your Application
-    ├── depends on: o-lane (for workflows)
-    ├── depends on: o-tool (for capabilities)
-    ├── depends on: o-leader (for coordination)
-    └── depends on: o-node (for networking)
+Your Tool Node
+    ├── depends on: o-lane (for intent-driven execution)
+    ├── depends on: o-tool (for tool capabilities)
+    ├── depends on: o-leader (for network coordination)
+    └── depends on: o-node (for P2P networking)
             ├── depends on: o-tool
             │       └── depends on: o-core
             └── depends on: o-core
@@ -332,31 +346,31 @@ Your Application
 
 **Use o-core when**:
 - Building custom transport implementations
-- Creating new agent runtimes
-- Research/experimentation with agent architectures
-- Don't need networking (local/single-process)
+- Creating new tool node runtimes
+- Research/experimentation with architectures
+- Don't need networking (local/single-process tool nodes)
 
 **Use o-node when**:
-- Building agents that need real P2P networking
-- Agents on different machines need to communicate
+- Building tool nodes that need real P2P networking
+- Tool nodes on different machines need to communicate
 - Want production-ready libp2p implementation
 - Need peer discovery and NAT traversal
 
 **Use o-tool when**:
-- Creating specialized agent capabilities
+- Creating specialized tool capabilities for agents to use
 - Want convention-based tool registration
 - Need parameter validation
-- Building discoverable tools for vector search
+- Building discoverable tools for agents to find
 
 **Use o-lane when**:
-- Agents need to accomplish complex, multi-step tasks
+- Tool nodes need to accept natural language intents from agents
 - Want emergent workflow discovery
 - Need execution history and audit trails
-- Prefer intent-driven over procedural execution
+- Building autonomous tool nodes
 
 **Use o-leader when**:
-- Building multi-agent systems
-- Agents need to discover each other
+- Building multi-tool networks
+- Tool nodes need to discover each other
 - Want centralized coordination
 - Need network-wide capability indexing
 
@@ -368,18 +382,18 @@ Your Application
 
 **The Problem**: Fine-tuning separate models for each domain is expensive ($$$) and slow.
 
-**The Solution**: One generalist LLM + specialist agents through tool augmentation and context injection.
+**The Solution**: One generalist LLM (agent) + specialized tool nodes through tool augmentation and context injection.
 
 **How Olane Enables This**:
 
 ```
 ┌─────────────────────────────────────────┐
-│  Generalist Model (GPT-4, Claude, etc.) │
-│  "The reasoning brain"                   │
+│  Generalist Agent (GPT-4, Claude, etc.) │
+│  "The intelligent user"                  │
 └─────────────────────────────────────────┘
-              ⬇ serves all
+              ⬇ uses
 ┌─────────────────────────────────────────┐
-│  Specialist Agents (o-tool + o-lane)    │
+│  Specialist Tool Nodes (o-tool + o-lane)│
 │  - Context injection (domain knowledge)  │
 │  - Tool augmentation (capabilities)      │
 │  - Knowledge accumulation (learning)     │
@@ -387,9 +401,9 @@ Your Application
 ```
 
 **Packages Involved**:
-- **o-tool**: Provides tool augmentation system
-- **o-lane**: Injects context into capability loop
-- **o-core**: Base agent infrastructure
+- **o-tool**: Provides tool augmentation system for building tool nodes
+- **o-lane**: Enables tool nodes to accept intents and inject context
+- **o-core**: Base runtime infrastructure
 
 **Result**: 70-90% cost reduction vs separate fine-tuned models
 
@@ -445,9 +459,9 @@ const result = await agent.useSelf({
 
 ### 3. Hierarchical Organization
 
-**The Problem**: Flat agent networks don't reflect organizational structure or domain boundaries.
+**The Problem**: Flat tool networks don't reflect organizational structure or domain boundaries.
 
-**The Solution**: Filesystem-like addressing with automatic context inheritance.
+**The Solution**: Filesystem-like addressing with automatic context inheritance for tool nodes.
 
 **How Olane Enables This**:
 
@@ -462,8 +476,8 @@ o://company                        # Root context: company knowledge
 ```
 
 **Benefits**:
-- Agents inherit domain knowledge from position in hierarchy
-- Natural resource organization
+- Tool nodes inherit domain knowledge from position in hierarchy
+- Natural resource organization for agents to discover
 - Intelligent routing through hierarchy
 - Fault tolerance (automatic failover paths)
 
@@ -475,9 +489,9 @@ o://company                        # Root context: company knowledge
 
 ### 4. Complex & Long-Running Tasks
 
-**The Problem**: AI agents timeout, lose state, or can't handle multi-day workflows.
+**The Problem**: Tool nodes timeout, lose state, or can't handle multi-day workflows when agents make requests.
 
-**The Solution**: Persistent agent processes with checkpointing and recovery.
+**The Solution**: Persistent tool node processes with checkpointing and recovery.
 
 **How Olane Enables This**:
 
@@ -664,15 +678,15 @@ Agent B uses proven approach (75% faster)
 
 ## Cross-Package Workflows
 
-### Workflow 1: Creating a Specialized Agent
+### Workflow 1: Creating a Specialized Tool Node
 
-**Scenario**: Build a financial analysis agent that can analyze sales data.
+**Scenario**: Build a financial analysis tool node that agents can use to analyze sales data.
 
 **Packages Used**: o-node → o-tool → o-lane
 
 ```typescript
 // Step 1: Create tool-enabled network node (o-node + o-tool)
-class FinancialAgent extends oNodeTool {
+class FinancialToolNode extends oNodeTool {
   constructor() {
     super({
       address: new oAddress('o://company/finance/analyst'),
@@ -696,12 +710,12 @@ class FinancialAgent extends oNodeTool {
   }
 }
 
-// Step 3: Start agent (o-node)
-const agent = new FinancialAgent();
-await agent.start(); // Registers with leader, joins network
+// Step 3: Start tool node (o-node)
+const toolNode = new FinancialToolNode();
+await toolNode.start(); // Registers with leader, joins network
 
-// Step 4: Use with intent-driven execution (o-lane)
-const result = await agent.useSelf({
+// Step 4: Agents can use this tool node with natural language (o-lane)
+const result = await toolNode.useSelf({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 revenue and identify growth trends',
@@ -709,24 +723,24 @@ const result = await agent.useSelf({
   }
 });
 
-// Agent autonomously:
-// 1. Evaluates intent
+// Tool node autonomously:
+// 1. Evaluates intent (LLM agent reasoning)
 // 2. Searches for data sources
 // 3. Calls analyze_revenue tool
 // 4. Processes results
 // 5. Generates insights
-// 6. Returns formatted report
+// 6. Returns formatted report to the agent
 ```
 
 **Key Interactions**:
 - o-node: Network connectivity and peer discovery
 - o-tool: Tool registration and validation
-- o-lane: Intent processing and capability loop
-- o-core: Underlying agent runtime
+- o-lane: Intent processing (agent interaction layer)
+- o-core: Underlying runtime infrastructure
 
-### Workflow 2: Multi-Agent Coordination
+### Workflow 2: Multi-Tool Network Coordination
 
-**Scenario**: Coordinate 3 specialist agents to complete complex analysis.
+**Scenario**: Create a network of specialized tool nodes that agents discover and coordinate.
 
 **Packages Used**: o-leader → o-node → o-lane
 
@@ -737,7 +751,7 @@ const leader = new oLeaderNode({
 });
 await leader.start();
 
-// Step 2: Create specialist agents (o-node + o-tool)
+// Step 2: Create specialized tool nodes (o-node + o-tool)
 const dataCollector = new oNodeTool({
   address: new oAddress('o://data-collector'),
   leader: leaderAddress
@@ -757,13 +771,14 @@ await dataCollector.start(); // Auto-registers with leader
 await analyst.start();
 await reporter.start();
 
-// Step 3: Coordinator agent uses intent (o-lane)
+// Step 3: Coordinator tool node that agents interact with (o-lane)
 const coordinator = new oLaneTool({
   address: new oAddress('o://coordinator'),
   leader: leaderAddress
 });
 await coordinator.start();
 
+// Agent sends intent to coordinator tool node
 const result = await coordinator.useSelf({
   method: 'intent',
   params: {
@@ -771,34 +786,34 @@ const result = await coordinator.useSelf({
   }
 });
 
-// o-lane capability loop autonomously:
+// o-lane capability loop autonomously coordinates tool nodes:
 // Cycle 1: EVALUATE → "Need to collect data"
 // Cycle 2: SEARCH → Discovers o://data-collector via registry
-// Cycle 3: TASK → Calls data-collector
+// Cycle 3: TASK → Calls data-collector tool node
 // Cycle 4: EVALUATE → "Have data, need analysis"
-// Cycle 5: SEARCH → Discovers o://analyst
-// Cycle 6: TASK → Calls analyst
+// Cycle 5: SEARCH → Discovers o://analyst tool node
+// Cycle 6: TASK → Calls analyst tool node
 // Cycle 7: EVALUATE → "Have analysis, need report"
-// Cycle 8: SEARCH → Discovers o://reporter
-// Cycle 9: TASK → Calls reporter
-// Cycle 10: STOP → Report complete
+// Cycle 8: SEARCH → Discovers o://reporter tool node
+// Cycle 9: TASK → Calls reporter tool node
+// Cycle 10: STOP → Report complete, returned to agent
 ```
 
 **Key Interactions**:
-- o-leader: Service discovery and registration
-- o-node: P2P communication between agents
-- o-lane: Emergent workflow coordination
+- o-leader: Service discovery and registration for tool nodes
+- o-node: P2P communication between tool nodes
+- o-lane: Emergent workflow coordination across tool network
 - o-tool: Tool discovery via vector search
 
-### Workflow 3: Long-Running Process with Checkpointing
+### Workflow 3: Long-Running Tool Node with Checkpointing
 
-**Scenario**: Monitor system health continuously with recovery.
+**Scenario**: Build a monitoring tool node that agents can use for continuous health monitoring.
 
 **Packages Used**: o-lane → o-core → o-node
 
 ```typescript
-// Step 1: Create monitoring agent with lane capability
-class HealthMonitor extends oLaneTool {
+// Step 1: Create monitoring tool node with lane capability
+class HealthMonitorToolNode extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://monitoring/health'),
@@ -808,10 +823,10 @@ class HealthMonitor extends oLaneTool {
   }
 }
 
-const monitor = new HealthMonitor();
+const monitor = new HealthMonitorToolNode();
 await monitor.start();
 
-// Step 2: Start long-running intent
+// Step 2: Agent sends long-running intent to tool node
 const result = await monitor.useSelf({
   method: 'intent',
   params: {
@@ -821,14 +836,14 @@ const result = await monitor.useSelf({
 });
 
 // o-lane manages:
-// - Persistent execution context
+// - Persistent execution context for the tool node
 // - State saved after each cycle (checkpointing)
-// - If process crashes → restart from last checkpoint
+// - If tool node crashes → restart from last checkpoint
 // - Content-addressed storage of execution history
 // - Streaming progress to alert system
 
 // o-core provides:
-// - Lifecycle management
+// - Lifecycle management for tool node
 // - Graceful shutdown on SIGTERM
 // - Automatic cleanup
 
@@ -1004,16 +1019,16 @@ const result = await monitor.useSelf({
 **Minimal** (Local Development):
 - o-core only (no networking)
 
-**Basic Agent** (Single Agent):
+**Basic Tool Node** (Single Node):
 - o-core + o-node
 
-**Specialized Agent** (Domain Specific):
+**Specialized Tool Node** (Domain Specific):
 - o-core + o-node + o-tool
 
-**Intent-Driven Agent** (Autonomous):
+**Intent-Driven Tool Node** (Accepts Natural Language):
 - o-core + o-node + o-tool + o-lane
 
-**Multi-Agent System** (Coordinated):
+**Multi-Tool Network** (Coordinated Discovery):
 - o-core + o-node + o-tool + o-lane + o-leader
 
 ---
@@ -1024,15 +1039,16 @@ const result = await monitor.useSelf({
 
 | Term | Definition | Package |
 |------|------------|---------|
-| **Agent** | AI-powered autonomous process | o-core |
-| **Intent** | Natural language goal | o-lane |
+| **Agent** | AI user (LLM) that interacts with tool nodes | - |
+| **Tool Node** | Specialized capability node that agents use | o-core |
+| **Intent** | Natural language goal from agent | o-lane |
 | **Capability** | Atomic operation in capability loop | o-lane |
-| **Tool** | Discoverable agent method | o-tool |
+| **Tool** | Discoverable method on a tool node | o-tool |
 | **Lane** | Execution context for resolving intent | o-lane |
 | **Leader** | Root coordinator node | o-leader |
-| **Registry** | Service directory for agents | o-leader |
-| **o:// Address** | Hierarchical agent address | o-core |
-| **IPC** | Inter-agent communication | o-core |
+| **Registry** | Service directory for tool nodes | o-leader |
+| **o:// Address** | Hierarchical tool node address | o-core |
+| **IPC** | Inter-process communication | o-core |
 | **Peer ID** | libp2p node identifier | o-node |
 | **Multiaddress** | libp2p network address | o-node |
 
@@ -1040,13 +1056,13 @@ const result = await monitor.useSelf({
 
 | Term | Definition | Package |
 |------|------------|---------|
-| **Lifecycle** | Agent states (start/stop/run) | o-core |
+| **Lifecycle** | Tool node states (start/stop/run) | o-core |
 | **Capability Loop** | Evaluate→Decide→Execute cycle | o-lane |
 | **Handshake** | Capability negotiation | o-tool |
-| **Join Request** | Agent joining network | o-leader |
-| **Network Indexing** | Crawling agent capabilities | o-leader |
+| **Join Request** | Tool node joining network | o-leader |
+| **Network Indexing** | Crawling tool node capabilities | o-leader |
 | **Tool Discovery** | Vector search for tools | o-tool |
-| **Context Injection** | Adding domain knowledge | o-lane |
+| **Context Injection** | Adding domain knowledge to tool nodes | o-lane |
 | **Knowledge Artifacts** | Stored learnings | o-lane |
 
 ---
@@ -1074,40 +1090,40 @@ const result = await monitor.useSelf({
 
 ### For Developers (Building Phase)
 
-**Goal**: Build their first specialized agent
+**Goal**: Build their first specialized tool node
 
 **Emphasize**:
-- o-tool conventions
-- o-lane intent design
+- o-tool conventions for creating tools
+- o-lane intent handling for agent interactions
 - o-node networking setup
 
 **Packages to Feature**:
 - o-node (getting connected)
-- o-tool (creating tools)
-- o-lane (intent-driven)
+- o-tool (creating tool capabilities)
+- o-lane (accepting intents from agents)
 
 **Content**:
 - Multiple working examples
-- Best practices
+- Best practices for tool node development
 - Troubleshooting guide
 - API reference
 
 ### For Architects (Scaling Phase)
 
-**Goal**: Design multi-agent systems
+**Goal**: Design multi-tool network architectures
 
 **Emphasize**:
-- Hierarchical organization patterns
+- Hierarchical organization patterns for tool nodes
 - Multi-leader federation
 - Network architecture patterns
 - Performance optimization
 
 **Packages to Feature**:
-- o-leader (coordination)
+- o-leader (tool node coordination)
 - o-core (custom implementations)
 
 **Content**:
-- Architecture patterns
+- Architecture patterns for tool networks
 - Advanced configurations
 - Production best practices
 - Monitoring and observability
