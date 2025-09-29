@@ -52,7 +52,13 @@ export class oNodeConnectionManager extends oConnectionManager {
       // this.cache.set(address.toString(), connection);
       return connection;
     } catch (error) {
-      this.logger.error('Error connecting to address: ', error);
+      this.logger.error(
+        `[${callerAddress?.toString() || 'unknown'}] Error connecting to address! Next hop:` +
+          nextHopAddress +
+          ' With Address:' +
+          address.toString(),
+        error,
+      );
       throw error;
     }
   }

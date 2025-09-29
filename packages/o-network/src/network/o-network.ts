@@ -9,8 +9,7 @@ import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeTransport } from '@olane/o-node/dist/src/router/o-node.transport.js';
-import { oNodeAddress } from '@olane/o-node/dist/src/router/o-node.address.js';
+import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
 
 type oNetworkNode = oLaneTool | oLeaderNode;
@@ -111,8 +110,6 @@ export class oNetwork {
   async startNodes(type: NodeType) {
     this.logger.debug('Starting nodes');
 
-    const nodes: oNetworkNode[] = [];
-
     if (!this.config.nodes || this.config.nodes?.length === 0) {
       throw new Error('No nodes found in config, cannot start network');
     }
@@ -131,8 +128,8 @@ export class oNetwork {
         if (!this.rootLeader) {
           this.rootLeader = leaderNode;
         }
-        initCommonTools(leaderNode);
-        nodes.push(leaderNode);
+        await leaderNode.start();
+        await initCommonTools(leaderNode);
         this.leaders.push(leaderNode);
       } else {
         this.logger.debug(
@@ -144,14 +141,12 @@ export class oNetwork {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
-        nodes.push(commonNode);
-        initCommonTools(commonNode);
-        initRegistryTools(commonNode);
+        await commonNode.start();
+        await initCommonTools(commonNode);
+        await initRegistryTools(commonNode);
         this.nodes.push(commonNode);
       }
     }
-
-    await Promise.all(nodes.map((node) => node.start()));
   }
 
   async runSavedPlans() {
@@ -200,7 +195,7 @@ export class oNetwork {
 
     // index the network
     if (!this.config.noIndexNetwork) {
-      await this.use(new oAddress('o://leader'), {
+      await this.use(oAddress.leader(), {
         method: 'index_network',
         params: {},
       });

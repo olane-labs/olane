@@ -1,5 +1,8 @@
+import { CID } from 'multiformats';
 import { oObject } from '../core/o-object.js';
+import { TransportType } from '../transports/index.js';
 import { oTransport } from '../transports/o-transport.js';
+import { CoreUtils } from '../utils/core.utils.js';
 import { RestrictedAddresses } from './enums/restricted-addresses.enum.js';
 
 export class oAddress extends oObject {
@@ -11,6 +14,14 @@ export class oAddress extends oObject {
   ) {
     super(value);
     this.transports = transports;
+  }
+
+  get libp2pTransports(): oTransport[] {
+    return this.transports.filter((t) => t.type === TransportType.LIBP2P) || [];
+  }
+
+  get customTransports(): oTransport[] {
+    return this.transports.filter((t) => t.type === TransportType.CUSTOM) || [];
   }
 
   equals(other: oAddress): boolean {
@@ -46,12 +57,24 @@ export class oAddress extends oObject {
     return 'o://' + this.paths.split('/')[0];
   }
 
+  toStaticAddress(): oAddress {
+    const paths = this.paths.split('/');
+    if (paths.length === 0) {
+      return this;
+    }
+    return new oAddress(`o://${paths[paths.length - 1]}`);
+  }
+
   toString(): string {
     return this.value;
   }
 
   supportsTransport(transport: oTransport): boolean {
     return this.transports.some((t) => t.type === transport.type);
+  }
+
+  async toCID(): Promise<CID> {
+    return await CoreUtils.toCID({ address: this.toString() });
   }
 
   static equals(a: oAddress, b: oAddress): boolean {
@@ -85,8 +108,9 @@ export class oAddress extends oObject {
     }
     // do we need to go back to the leader?
     if (
-      remainingPath === targetAddress.toString() ||
-      oAddress.isStatic(targetAddress)
+      !address.equals(oAddress.leader()) && // if we are a leader, do not got back to self
+      (remainingPath === targetAddress.toString() ||
+        oAddress.isStatic(targetAddress))
     ) {
       return oAddress.leader();
     }

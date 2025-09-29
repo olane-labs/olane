@@ -1,14 +1,14 @@
 import { RegistryMemoryTool } from '@olane/o-leader';
-import { oAddress } from '@olane/o-core';
+import { NodeType, oAddress } from '@olane/o-core';
 import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
 import { oLaneTool } from '@olane/o-lane';
 
-export const initCommonTools = (oNode: oLaneTool) => {
+export const initCommonTools = async (oNode: oLaneTool) => {
   const params = {
     parent: oNode.address,
-    leader: oNode.address,
+    leader: oNode.leader,
   };
   const tools = [
     new RegistryMemoryTool({
@@ -28,8 +28,11 @@ export const initCommonTools = (oNode: oLaneTool) => {
       ...params,
     }),
   ];
-  tools.forEach((tool) => {
-    oNode.addChildNode(tool as any);
-  });
+  await Promise.all(
+    tools.map(async (tool) => {
+      await tool.start();
+      oNode.addChildNode(tool as any);
+    }),
+  );
   return tools;
 };

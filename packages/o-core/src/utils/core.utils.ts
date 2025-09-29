@@ -19,6 +19,21 @@ export class CoreUtils {
     return peerId;
   }
 
+  static buildResponse(request: oRequest, result: any, error: any): oResponse {
+    let success = true;
+    if (error) {
+      success = false;
+    }
+    return new oResponse({
+      id: request.id,
+      data: result,
+      error: result?.error,
+      ...{ success },
+      _requestMethod: request.method,
+      _connectionId: request.params?._connectionId,
+    });
+  }
+
   static async generatePrivateKey(seed: string): Promise<any> {
     // Convert any user phrase to exactly 32 bytes using SHA-256
     const seedBytes = CoreUtils.phraseToSeedBytes(seed);

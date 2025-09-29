@@ -24,7 +24,15 @@ export class oStorageResolver extends oAddressResolver {
 
   async resolve(request: StorageResolveRequest): Promise<RouteResponse> {
     this.logger.debug('Resolving custom storage address: ', request.address);
-    const { address, node } = request;
+    const { address, node, request: resolveRequest } = request;
+
+    if (address === node.address) {
+      return {
+        nextHopAddress: address,
+        targetAddress: address,
+        requestOverride: resolveRequest,
+      };
+    }
     // extract the key from the address
     let key = null;
     let method: string = 'get';
@@ -54,7 +62,7 @@ export class oStorageResolver extends oAddressResolver {
     });
 
     return {
-      nextHopAddress: this.address,
+      nextHopAddress: node.address,
       targetAddress: address,
       requestOverride: req,
     };

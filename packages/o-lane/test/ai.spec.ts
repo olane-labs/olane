@@ -1,6 +1,6 @@
 import { NodeState, oAddress } from '@olane/o-core';
 import { expect } from 'chai';
-import { oLaneTool } from '../src/o-lane.tool';
+import { oLaneTool } from '../src/o-lane.tool.js';
 
 describe('in-process @memory', () => {
   it('should be able to start a single node with no leader', async () => {

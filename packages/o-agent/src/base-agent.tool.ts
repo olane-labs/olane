@@ -3,6 +3,7 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { AGENT_METHODS } from './methods/agent.methods.js';
 import { oAgentConfig } from './interfaces/agent.config.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeAddress } from '@olane/o-node';
 
 export abstract class oAgentTool extends oLaneTool {
   protected respond: (intent: string) => Promise<string>;
@@ -12,7 +13,7 @@ export abstract class oAgentTool extends oLaneTool {
   constructor(config: oAgentConfig) {
     super({
       ...config,
-      address: config?.address || new oAddress('o://agent'),
+      address: config?.address || new oNodeAddress('o://agent'),
       methods: AGENT_METHODS,
     });
     this.respond = config.respond;

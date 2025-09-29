@@ -8,7 +8,7 @@ import {
 } from '@olane/o-core';
 import { IncomingStreamData } from '@olane/o-config';
 import { oNode } from './o-node.js';
-import { oTool, ToolUtils } from '@olane/o-tool';
+import { oTool } from '@olane/o-tool';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -55,7 +55,7 @@ export class oNodeTool extends oTool(oNode) {
     }
     // compose the response & add the expected connection + request fields
 
-    const response: oResponse = ToolUtils.buildResponse(
+    const response: oResponse = CoreUtils.buildResponse(
       request,
       result,
       result?.error,

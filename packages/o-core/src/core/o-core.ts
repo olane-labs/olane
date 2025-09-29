@@ -14,6 +14,9 @@ import { oHierarchyManager } from './lib/o-hierarchy.manager.js';
 import { oRequestManager } from './lib/o-request.manager.js';
 import { oTransport } from '../transports/o-transport.js';
 import { oRouter } from '../router/o-router.js';
+import { CoreUtils } from '../utils/core.utils.js';
+import { oErrorCodes } from '../error/index.js';
+import { oRequest } from '../connection/o-request.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -34,6 +37,14 @@ export abstract class oCore extends oObject {
       leaders: this.config.leader ? [this.config.leader] : [],
       parents: this.config.parent ? [this.config.parent] : [],
     });
+  }
+
+  get isLeader(): boolean {
+    return this.config.type === NodeType.LEADER;
+  }
+
+  get leader(): oAddress | null {
+    return this.isLeader ? this.address : this.config?.leader || null;
   }
 
   // transports
@@ -108,6 +119,10 @@ export abstract class oCore extends oObject {
       this,
     );
 
+    if (nextHopAddress.toStaticAddress().equals(address.toStaticAddress())) {
+      return this.useSelf(data);
+    }
+
     const connection = await this.connect(nextHopAddress, targetAddress);
 
     // communicate the payload to the target node
@@ -127,6 +142,46 @@ export abstract class oCore extends oObject {
     }
 
     return response;
+  }
+
+  abstract execute(request: oRequest): Promise<any>;
+
+  private async useSelf(data?: {
+    method?: string;
+    params?: { [key: string]: any };
+    id?: string;
+  }): Promise<oResponse> {
+    // let's call our own tool
+    this.logger.debug('Calling ourselves, skipping...', data);
+
+    const request = new oRequest({
+      method: data?.method as string,
+      params: {
+        _connectionId: 0,
+        _requestMethod: data?.method,
+        ...(data?.params as any),
+      },
+      id: 0,
+    });
+    let success = true;
+    const result = await this.execute(request).catch((error) => {
+      this.logger.error('Error executing tool: ', error);
+      success = false;
+      const responseError: oError =
+        error instanceof oError
+          ? error
+          : new oError(oErrorCodes.UNKNOWN, error.message);
+      return {
+        error: responseError.toJSON(),
+      };
+    });
+
+    if (success) {
+      this.metrics.successCount++;
+    } else {
+      this.metrics.errorCount++;
+    }
+    return CoreUtils.buildResponse(request, result, result?.error);
   }
 
   // hierarchy
@@ -253,6 +308,13 @@ export abstract class oCore extends oObject {
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
+    for (const child of this.hierarchyManager.children) {
+      this.logger.debug('Stopping child: ' + child.toString());
+      await this.use(child, {
+        method: 'stop',
+        params: {},
+      });
+    }
   }
 
   get dependencies(): oDependency[] {

@@ -1,4 +1,10 @@
-import { NodeType, oAddress, oRequest, oResponse } from '@olane/o-core';
+import {
+  NodeType,
+  oAddress,
+  oRequest,
+  oResponse,
+  RestrictedAddresses,
+} from '@olane/o-core';
 import { START_METHOD } from './methods/start.method.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
@@ -55,7 +61,7 @@ export class oLeaderNode extends oLaneTool {
   async _tool_index_network(request: oRequest): Promise<any> {
     // paginate through all the registered nodes and index them
     const nodes: oResponse = await this.use(
-      new oAddress('o://leader/register'),
+      new oAddress(RestrictedAddresses.REGISTRY),
       {
         method: 'find_all',
         params: {},

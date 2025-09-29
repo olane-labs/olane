@@ -1,8 +1,8 @@
-import { oAddress } from './o-address';
+import { oAddress } from './o-address.js';
 
 import { oObject } from '../core/o-object.js';
-import { oAddressResolution } from './o-address-resolution';
-import { oAddressResolver } from './o-address-resolver';
+import { oAddressResolution } from './o-address-resolution.js';
+import { oAddressResolver } from './o-address-resolver.js';
 import { oRequest } from '../connection/o-request.js';
 import type { oCore } from '../core/o-core.js';
 import { oRouterRequest, RequestParams } from '@olane/o-protocol';

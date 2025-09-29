@@ -15,32 +15,38 @@ export class StorageTool extends StorageProviderTool {
       address: new oAddress('o://storage'),
       description: 'Tool to store and retrieve data from the network',
     });
-    this.addChildNode(
-      new DiskStorageProvider({
-        name: 'disk',
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new MemoryStorageProvider({
-        name: 'memory',
-        address: new oAddress('o://memory'),
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new SecureStorageProvider({
-        name: 'secure',
-        address: new oAddress('o://secure'),
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new PlaceholderTool({
-        name: 'placeholder storage',
-        ...config,
-      }),
-    );
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+    const config = this.config;
+    let node: any = new DiskStorageProvider({
+      name: 'disk',
+      ...config,
+    });
+    await node.start();
+    this.addChildNode(node);
+
+    node = new MemoryStorageProvider({
+      name: 'memory',
+      ...config,
+    });
+    await node.start();
+    this.addChildNode(node);
+
+    node = new SecureStorageProvider({
+      name: 'secure',
+      ...config,
+    });
+    await node.start();
+    this.addChildNode(node);
+
+    node = new PlaceholderTool({
+      name: 'placeholder storage',
+      ...config,
+    });
+    await node.start();
+    this.addChildNode(node);
   }
 
   async _tool_put(request: oRequest): Promise<ToolResult> {

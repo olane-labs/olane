@@ -99,7 +99,8 @@ export class NetworkUtils extends oObject {
       'Advertising to network our static and absolute addresses...',
     );
     // advertise the absolute address to the network with timeout
-    const absoluteAddressCid = await address.toCID();
+    const add = new oNodeAddress(address.toString());
+    const absoluteAddressCid = await add.toCID();
     // Add timeout to prevent hanging
     NetworkUtils.advertiseValueToNetwork(absoluteAddressCid, p2pNode).catch(
       (error: any) => {
@@ -111,7 +112,8 @@ export class NetworkUtils extends oObject {
     );
 
     // advertise the static address to the network with timeout
-    const staticAddressCid = await staticAddress.toCID();
+    const staticAdd = new oNodeAddress(staticAddress.toString());
+    const staticAddressCid = await staticAdd.toCID();
 
     // Add timeout to prevent hanging
     NetworkUtils.advertiseValueToNetwork(staticAddressCid, p2pNode).catch(

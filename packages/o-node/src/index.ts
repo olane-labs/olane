@@ -6,3 +6,4 @@ export * from './connection/index.js';
 export * from './o-node.tool.js';
 export * from './nodes/index.js';
 export * from './interfaces/o-node.tool-config.js';
+export * from './router/index.js';

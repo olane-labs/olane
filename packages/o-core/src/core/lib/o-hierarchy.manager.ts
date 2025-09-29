@@ -20,20 +20,29 @@ export class oHierarchyManager extends oObject {
   }
 
   private deduplicate(addresses: oAddress[]): oAddress[] {
-    const set = new Set(addresses.map((a) => a.toString()));
-    return Array.from(set).map((a) => new oAddress(a));
+    const added: any = {};
+    return addresses.filter((a: oAddress) => {
+      if (added[a.toString()]) {
+        return false;
+      }
+      added[a.toString()] = true;
+      return true;
+    });
   }
 
-  addChild(address: oAddress | string): void {
+  addChild(address: oAddress): void {
     // deduplicate
-    this.children = this.deduplicate([
-      ...this.children,
-      new oAddress(address.toString()),
-    ]);
+    this.logger.debug(
+      `Adding child: ${address.toString()}, transports: ${address.transports.map((t) => t.toString()).join(', ')}`,
+    );
+    this.children = this.deduplicate([...this.children, address]);
   }
 
   getChild(address: oAddress): oAddress | undefined {
-    return this.children.find((a) => a.toString() === address.toString());
+    return this.children.find(
+      (a) =>
+        a.toStaticAddress().toString() === address.toStaticAddress().toString(),
+    );
   }
 
   removeChild(address: oAddress | string): void {
@@ -42,11 +51,8 @@ export class oHierarchyManager extends oObject {
     ]);
   }
 
-  addParent(address: oAddress | string): void {
-    this.parents = this.deduplicate([
-      ...this.parents,
-      new oAddress(address.toString()),
-    ]);
+  addParent(address: oAddress): void {
+    this.parents = this.deduplicate([...this.parents, address]);
   }
 
   removeParent(address: oAddress | string): void {

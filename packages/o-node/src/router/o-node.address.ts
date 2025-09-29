@@ -27,30 +27,11 @@ export class oNodeAddress extends oAddress {
   }
 
   get libp2pTransports(): oNodeTransport[] {
-    return this.transports.filter((t) => t.type === TransportType.LIBP2P);
+    return this.transports.filter((t) => t.type === TransportType.LIBP2P) || [];
   }
 
   get customTransports(): oNodeTransport[] {
-    return this.transports.filter((t) => t.type === TransportType.CUSTOM);
-  }
-
-  validate(): boolean {
-    if (!this.value.startsWith('o://')) {
-      return false;
-    }
-    return true;
-  }
-
-  get paths(): string {
-    return this.value.replace('o://', '');
-  }
-
-  get protocol(): string {
-    return this.value.replace('o://', '/o/');
-  }
-
-  get root(): string {
-    return 'o://' + this.paths.split('/')[0];
+    return this.transports.filter((t) => t.type === TransportType.CUSTOM) || [];
   }
 
   toString(): string {
@@ -63,13 +44,5 @@ export class oNodeAddress extends oAddress {
 
   static fromMultiaddr(ma: Multiaddr): oAddress {
     return new oAddress(ma.toString().replace('/o/', 'o://'));
-  }
-
-  static equals(a: oAddress, b: oAddress): boolean {
-    return a.value === b.value;
-  }
-
-  async toCID(): Promise<CID> {
-    return await CoreUtils.toCID({ address: this.toString() });
   }
 }

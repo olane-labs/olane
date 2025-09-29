@@ -17,6 +17,14 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       const config = args[0] as oToolConfig & { address: oAddress };
     }
 
+    async _tool_stop(request: oRequest): Promise<any> {
+      this.logger.debug('Stopping tool: ', request.params);
+      await this.stop();
+      return {
+        message: 'Tool stopped',
+      };
+    }
+
     async _tool_handshake(handshake: oRequest): Promise<any> {
       this.logger.debug(
         'Performing handshake with intent: ',

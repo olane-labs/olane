@@ -1,14 +1,6 @@
-import {
-  NodeType,
-  oAddress,
-  NetworkStatus,
-  oNetwork,
-  setupGracefulShutdown,
-  NodeState,
-} from '../../src/index.js';
+import { oAddress, NetworkStatus, NodeState } from '../../src/index.js';
 import { expect } from 'chai';
 import dotenv from 'dotenv';
-import { multiaddr } from '@olane/o-config';
 import { defaultNetwork } from '../utils/default.network.js';
 
 dotenv.config();
@@ -41,16 +33,15 @@ describe('basic-usage @initialize', async () => {
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
     // configure the intelligence tool
-    await entryNode.use(new oAddress('o://intelligence'), {
-        method: 'configure',
-        params: {
-          modelProvider: 'anthropic',
-          hostingProvider: 'olane',
-          accessToken: 'test',
-          address: 'o://leader/intelligence'
-        }
-      }
-    );
+    // await entryNode.use(new oAddress('o://intelligence'), {
+    //   method: 'configure',
+    //   params: {
+    //     modelProvider: 'anthropic',
+    //     hostingProvider: 'olane',
+    //     accessToken: 'test',
+    //     address: 'o://leader/intelligence',
+    //   },
+    // });
     // use the intelligence tool
     const response2 = await entryNode.use(new oAddress('o://perplexity'), {
       method: 'completion',

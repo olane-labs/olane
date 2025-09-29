@@ -11,7 +11,6 @@ import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
 import { RunResult } from './interfaces/run-result.interface.js';
 import { ToolResult } from './interfaces/tool-result.interface.js';
-import { ToolUtils } from './utils/tool.utils.js';
 import { v4 as uuidv4 } from 'uuid';
 import { MethodUtils } from './utils/method.utils.js';
 
@@ -54,52 +53,6 @@ export class oToolBase extends oCore {
   }
   register(): Promise<void> {
     throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Register not implemented');
-  }
-
-  async use(
-    address: oAddress,
-    data?: {
-      [key: string]: unknown;
-    },
-  ): Promise<oResponse> {
-    // check if we call ourselves
-    if (
-      address.toString() === this.address.toString() ||
-      address.toString() === this.staticAddress.toString()
-    ) {
-      // let's call our own tool
-      this.logger.debug('Calling ourselves, skipping...', data);
-
-      const request = new oRequest({
-        method: data?.method as string,
-        params: {
-          _connectionId: 0,
-          _requestMethod: data?.method,
-          ...(data?.params as any),
-        },
-        id: 0,
-      });
-      let success = true;
-      const result = await this.execute(request).catch((error) => {
-        this.logger.error('Error executing tool: ', error);
-        success = false;
-        const responseError: oError =
-          error instanceof oError
-            ? error
-            : new oError(oErrorCodes.UNKNOWN, error.message);
-        return {
-          error: responseError.toJSON(),
-        };
-      });
-
-      if (success) {
-        this.metrics.successCount++;
-      } else {
-        this.metrics.errorCount++;
-      }
-      return ToolUtils.buildResponse(request, result, result?.error);
-    }
-    return super.use(address, data);
   }
 
   async execute(req: oRequest, stream?: Stream): Promise<RunResult> {
@@ -187,7 +140,7 @@ export class oToolBase extends oCore {
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
-    this.logger.debug('Calling tool: ' + method);
+    this.logger.debug('Calling tool: ' + method, request.params);
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore

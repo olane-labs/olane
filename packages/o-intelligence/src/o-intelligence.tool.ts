@@ -277,36 +277,36 @@ export class IntelligenceTool extends oLaneTool {
       parent: null,
       leader: null,
     });
+    await anthropicTool.start();
     this.addChildNode(anthropicTool);
-    anthropicTool.start();
     const openaiTool = new OpenAIIntelligenceTool({
       ...config,
       parent: null,
       leader: null,
     });
+    await openaiTool.start();
     this.addChildNode(openaiTool);
-    openaiTool.start();
     const ollamaTool = new OllamaIntelligenceTool({
       ...config,
       parent: null,
       leader: null,
     });
+    await ollamaTool.start();
     this.addChildNode(ollamaTool);
-    ollamaTool.start();
     const perplexityTool = new PerplexityIntelligenceTool({
       ...config,
       parent: null,
       leader: null,
     });
+    await perplexityTool.start();
     this.addChildNode(perplexityTool);
-    perplexityTool.start();
 
     const grokTool = new GrokIntelligenceTool({
       ...config,
       parent: null,
       leader: null,
     });
+    await grokTool.start();
     this.addChildNode(grokTool);
-    grokTool.start();
   }
 }

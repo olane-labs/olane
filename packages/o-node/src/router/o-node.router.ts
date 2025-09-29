@@ -2,6 +2,7 @@ import { oNodeAddress } from './o-node.address.js';
 import { oNodeTransport } from './o-node.transport.js';
 import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 import {
+  NodeType,
   oAddress,
   oError,
   oErrorCodes,
@@ -73,6 +74,12 @@ export class oNodeRouter extends oToolRouter {
     const targetAddress = address;
     const { nextHopAddress, requestOverride } =
       await this.addressResolution.resolve({ address, node });
+    this.logger.debug(
+      'Translated address: ' +
+        address.toString() +
+        ' to ' +
+        nextHopAddress.toString(),
+    );
     const leaderTransports = this.getTransports(
       nextHopAddress as oNodeAddress,
       node,
@@ -100,23 +107,24 @@ export class oNodeRouter extends oToolRouter {
   }
 
   getTransports(address: oNodeAddress, node: oNode): oNodeTransport[] {
-    const nodeTransports = address.libp2pTransports;
+    this.logger.debug(
+      `[${node.address}]: ` +
+        'Get transports for address: ' +
+        address.toString(),
+    );
+    const nodeTransports = address?.libp2pTransports || [];
 
     // if the transports are provided, then we can use them
-    if (nodeTransports.length > 0) {
+    if (nodeTransports?.length > 0) {
+      this.logger.debug('Using provided transports...');
       return nodeTransports;
     }
 
     // if we are not in a network & no leaders are provided, then we can't resolve the address
-    if (!node.hierarchyManager.leaders.length) {
+    if (!node.leader) {
       throw new Error('No leader transports provided, cannot resolve address');
     }
 
-    // if we are in a network, then we have a leader to reference
-    const leaderTransports = (
-      node.hierarchyManager as oNodeHierarchyManager
-    ).leaders.map((l: oNodeAddress) => l.libp2pTransports);
-
-    return leaderTransports.flat();
+    return node.leader.libp2pTransports;
   }
 }

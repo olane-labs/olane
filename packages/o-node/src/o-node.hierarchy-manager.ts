@@ -18,4 +18,8 @@ export class oNodeHierarchyManager extends oHierarchyManager {
     this.children = config.children || [];
     this.parents = config.parents || [];
   }
+
+  get leader(): oNodeAddress | null {
+    return this.leaders.length > 0 ? this.leaders[0] : null;
+  }
 }

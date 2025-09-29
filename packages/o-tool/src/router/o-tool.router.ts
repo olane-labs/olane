@@ -18,7 +18,9 @@ export abstract class oToolRouter extends oRouter {
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.translate(destinationAddress, node);
 
-    const isSelf = nextHopAddress.equals(destinationAddress);
+    const isSelf = nextHopAddress
+      .toStaticAddress()
+      .equals(destinationAddress.toStaticAddress());
 
     const forwardRequest = requestOverride || request;
 

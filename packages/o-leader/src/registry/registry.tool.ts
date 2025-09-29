@@ -1,6 +1,6 @@
 import { ToolResult } from '@olane/o-tool';
 import { oRegistrationParams } from '@olane/o-protocol';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, RestrictedAddresses } from '@olane/o-core';
 import { REGISTRY_PARAMS } from './methods/registry.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
@@ -12,7 +12,7 @@ export abstract class RegistryTool extends oLaneTool {
   constructor(config: oNodeToolConfig) {
     super({
       ...config,
-      address: new oAddress('o://registry'),
+      address: new oAddress(RestrictedAddresses.REGISTRY),
       methods: REGISTRY_PARAMS,
       description: 'Network registry of tools and their respective addresses',
     });

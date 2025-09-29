@@ -39,6 +39,10 @@ export class oNode extends oToolBase {
     this.config = config;
   }
 
+  get leader(): oNodeAddress | null {
+    return this.isLeader ? this.address : this.config?.leader || null;
+  }
+
   get networkConfig(): Libp2pConfig {
     return this.config.network || defaultLibp2pConfig;
   }
@@ -88,7 +92,7 @@ export class oNode extends oToolBase {
       this.logger.debug('No leader found, skipping unregistration');
       return;
     }
-    const address = new oNodeAddress('o://register');
+    const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
 
     // attempt to unregister from the network
     const params = {
@@ -116,7 +120,10 @@ export class oNode extends oToolBase {
       this.logger.debug('Registering node with leader...', this.config.leader);
     }
 
-    const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
+    const address = new oNodeAddress(
+      RestrictedAddresses.REGISTRY,
+      this.config?.leader?.libp2pTransports,
+    );
 
     const params = {
       method: 'commit',
