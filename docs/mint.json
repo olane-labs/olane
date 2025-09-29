@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Olane Documentation",
+  "name": "o-core: Agentic Operating System",
   "logo": {
     "dark": "/assets/logo-white.png",
     "light": "/assets/logo-white.png"
@@ -27,8 +27,12 @@
   },
   "tabs": [
     {
-      "name": "API Reference",
-      "url": "api-reference"
+      "name": "API Reference", 
+      "url": "api"
+    },
+    {
+      "name": "Examples",
+      "url": "examples"
     }
   ],
   "anchors": [
@@ -54,23 +58,121 @@
       "pages": [
         "introduction",
         "quickstart",
-        "development"
+        "installation"
       ]
     },
     {
-      "group": "Essentials",
+      "group": "Generalist-Specialist Architecture",
       "pages": [
-        "essentials/markdown",
-        "essentials/code",
-        "essentials/images",
-        "essentials/settings",
-        "essentials/navigation"
+        "architecture/overview",
+        "architecture/quickstart",
+        "architecture/generalist-model-brain",
+        "architecture/specialist-agent-layer",
+        "architecture/hierarchical-organization",
+        "architecture/context-specialization",
+        "architecture/tool-augmented-agents",
+        "architecture/specialization-flywheel",
+        "architecture/best-practices"
       ]
     },
     {
-      "group": "Core",
+      "group": "Emergent Intelligence",
       "pages": [
-        "packages/o-core/docs"
+        "emergent/overview",
+        "emergent/quickstart",
+        "emergent/rooms-with-tips",
+        "emergent/knowledge-artifacts",
+        "emergent/cross-agent-learning",
+        "emergent/vs-langgraph",
+        "emergent/best-practices"
+      ]
+    },
+    {
+      "group": "Cost Optimization",
+      "pages": [
+        "cost/overview",
+        "cost/quickstart",
+        "cost/generalist-vs-specialist-costs",
+        "cost/model-sharing-strategies",
+        "cost/resource-optimization",
+        "cost/advanced-optimization",
+        "cost/best-practices"
+      ]
+    },
+    {
+      "group": "Complex Tasks",
+      "pages": [
+        "tasks/overview",
+        "tasks/quickstart",
+        "tasks/multi-agent-coordination",
+        "tasks/long-running-processes",
+        "tasks/fault-tolerance",
+        "tasks/advanced-coordination",
+        "tasks/best-practices"
+      ]
+    },
+    {
+      "group": "Agent Specialization",
+      "pages": [
+        "specialization/overview",
+        "specialization/quickstart",
+        "specialization/context-injection",
+        "specialization/tool-integration",
+        "specialization/domain-expertise",
+        "specialization/hierarchical-context-inheritance",
+        "specialization/knowledge-accumulation",
+        "specialization/collaborative-specialization",
+        "specialization/best-practices"
+      ]
+    },
+    {
+      "group": "Developer Resources",
+      "pages": [
+        "resources/testing-agents",
+        "resources/debugging-guide",
+        "resources/building-specialist-agents",
+        "resources/context-management",
+        "resources/hierarchical-design-patterns",
+        "resources/tool-development",
+        "resources/performance-profiling",
+        "resources/sample-projects",
+        "resources/community-support"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/authentication",
+        "api/agents/ocore-runtime",
+        "api/agents/lifecycle-management",
+        "api/agents/inter-agent-communication",
+        "api/specialization/context-injection",
+        "api/specialization/tool-integration",
+        "api/specialization/knowledge-artifacts",
+        "api/filesystem/oaddress-system",
+        "api/filesystem/resource-discovery",
+        "api/filesystem/hierarchical-routing",
+        "api/emergent/room-discovery",
+        "api/emergent/cross-agent-learning",
+        "api/system/error-handling",
+        "api/system/metrics-telemetry",
+        "api/configuration/agent-config",
+        "api/utilities/agent-helpers"
+      ]
+    },
+    {
+      "group": "Migration & Support",
+      "pages": [
+        "migration/from-langgraph",
+        "migration/from-crewai",
+        "migration/from-autogen",
+        "migration/monolithic-to-specialist",
+        "comparison/generalist-vs-specialist",
+        "comparison/cost-analysis",
+        "help/common-issues",
+        "help/error-reference",
+        "help/troubleshooting",
+        "help/community"
       ]
     }
   ],
