@@ -1,7 +1,8 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
 interface GeminiContent {
   role: 'user' | 'model';
@@ -118,7 +119,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
   private baseUrl!: string;
   private defaultModel!: string;
 
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://gemini'),

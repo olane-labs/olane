@@ -1,6 +1,4 @@
-import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oResponse } from '@olane/o-core';
-import { oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
@@ -15,10 +13,11 @@ import { HostModelProvider } from './enums/host-model-provider.enum.js';
 import { multiaddr } from '@olane/o-config';
 import { PromptRequest } from './interfaces/prompt.request.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
 export class IntelligenceTool extends oLaneTool {
   private roundRobinIndex = 0;
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://intelligence'),

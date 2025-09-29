@@ -3,7 +3,7 @@ import { StorageProviderTool } from './storage-provider.tool.js';
 import { oAddress, oRequest } from '@olane/o-core';
 import { STORAGE_PARAMS } from '../methods/storage.methods.js';
 import { GetDataResponse } from '../interfaces/get-data.response.js';
-import { oNodeConfig } from '@olane/o-node';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
 export class MemoryStorageProvider extends StorageProviderTool {
   private storage: Map<string, string>;

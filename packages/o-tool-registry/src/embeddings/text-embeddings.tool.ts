@@ -2,9 +2,10 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 import { TEXT_EMBEDDINGS_PARAMS } from './methods/text-embeddings.method.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export abstract class TextEmbeddingsTool extends oLaneTool {
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://embeddings-text'),

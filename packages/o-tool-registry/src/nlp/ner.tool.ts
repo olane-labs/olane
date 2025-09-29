@@ -2,9 +2,10 @@ import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { NLP_PARAMS } from './methods/nlp.methods.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export class NERTool extends oLaneTool {
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://ner'),

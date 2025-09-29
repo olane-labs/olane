@@ -58,7 +58,7 @@ export class oToolBase extends oCore {
 
   async use(
     address: oAddress,
-    data: {
+    data?: {
       [key: string]: unknown;
     },
   ): Promise<oResponse> {
@@ -71,11 +71,11 @@ export class oToolBase extends oCore {
       this.logger.debug('Calling ourselves, skipping...', data);
 
       const request = new oRequest({
-        method: data.method as string,
+        method: data?.method as string,
         params: {
           _connectionId: 0,
-          _requestMethod: data.method,
-          ...(data.params as any),
+          _requestMethod: data?.method,
+          ...(data?.params as any),
         },
         id: 0,
       });

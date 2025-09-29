@@ -1,14 +1,15 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
 import { StorageProviderTool } from './providers/storage-provider.tool.js';
 import { GetDataResponse } from './interfaces/get-data.response.js';
 import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
 import { PlaceholderTool } from './placeholder.tool.js';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export class StorageTool extends StorageProviderTool {
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://storage'),

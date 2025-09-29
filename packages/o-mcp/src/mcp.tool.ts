@@ -1,13 +1,15 @@
-import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oError, oErrorCodes, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export class McpTool extends oLaneTool {
   private mcpClient: Client;
 
-  constructor(config: oToolConfig & { address: oAddress; mcpClient: Client }) {
+  constructor(
+    config: oNodeToolConfig & { address: oAddress; mcpClient: Client },
+  ) {
     super({
       ...config,
       address: config.address,

@@ -1,12 +1,12 @@
-import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oRequest, RegexUtils } from '@olane/o-core';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
 import { PlaceholderPutRequest } from './interfaces/placeholder-put.request.js';
 import { PlaceholderPutResponse } from './interfaces/placeholder-put.response.js';
 import { PLACEHOLDER_STORAGE_PARAMS } from './methods/placeholder-storage.methods.js';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export class PlaceholderTool extends MemoryStorageProvider {
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://placeholder'),
