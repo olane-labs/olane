@@ -119,7 +119,9 @@ export abstract class oCore extends oObject {
       this,
     );
 
-    if (nextHopAddress.toStaticAddress().equals(address.toStaticAddress())) {
+    if (
+      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
+    ) {
       return this.useSelf(data);
     }
 
@@ -146,7 +148,7 @@ export abstract class oCore extends oObject {
 
   abstract execute(request: oRequest): Promise<any>;
 
-  private async useSelf(data?: {
+  async useSelf(data?: {
     method?: string;
     params?: { [key: string]: any };
     id?: string;

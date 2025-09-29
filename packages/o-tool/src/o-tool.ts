@@ -96,6 +96,22 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
     async _tool_route(
       request: oRouterRequest & { stream?: Stream },
     ): Promise<any> {
+      this.logger.debug('Routing request...', request.params);
+      if (
+        request.params.address === this.address.toString() ||
+        request.params.address === this.staticAddress.toString()
+      ) {
+        this.logger.debug('Route to self, calling tool...');
+        const { payload }: any = request.params;
+        return this.callMyTool(
+          new oRequest({
+            method: payload.method,
+            params: payload.params,
+            id: request.id,
+          }),
+          request.stream,
+        );
+      }
       return this.router.route(request, this);
     }
 

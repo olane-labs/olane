@@ -12,17 +12,47 @@ import {
 import type { oNode } from '../o-node.js';
 import { oToolRouter } from '@olane/o-tool';
 import { pipe, pushable, Stream } from '@olane/o-config';
+import { oRouterRequest, RequestParams } from '@olane/o-protocol';
 
 export class oNodeRouter extends oToolRouter {
   constructor() {
     super();
   }
 
-  async forward(
+  protected async forward(
     address: oNodeAddress,
-    request: oRequest & { stream: Stream },
-    node?: oNode,
+    request: oRouterRequest,
+    node: oNode,
   ): Promise<any> {
+    if (!request.stream) {
+      throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
+    }
+    const stream = request.stream;
+
+    let nextHopRequest: oRequest | oRouterRequest = request;
+
+    // next hop is the destination address
+    if (
+      address
+        ?.toStaticAddress()
+        .equals(new oAddress(request?.params?.address).toStaticAddress())
+    ) {
+      // reached destination, so change from route to actual request
+      const { payload } = request.params;
+      const params = payload.params as RequestParams;
+      nextHopRequest = new oRequest({
+        method: payload.method as string,
+        params: {
+          ...params,
+        },
+        id: request.id,
+      });
+      this.logger.debug(
+        'Forward: reached destination, changing to actual request',
+        nextHopRequest,
+      );
+    }
+
     // dial the target
     const targetStream = await node?.p2pNode.dialProtocol(
       address.libp2pTransports.map((t) => t.toMultiaddr()),
@@ -36,11 +66,13 @@ export class oNodeRouter extends oToolRouter {
       );
     }
 
+    this.logger.debug('Forward: sending request to target...');
+
     const pushableStream = pushable();
-    pushableStream.push(new TextEncoder().encode(request.toString()));
+    pushableStream.push(new TextEncoder().encode(nextHopRequest.toString()));
     pushableStream.end();
     await targetStream.sink(pushableStream);
-    await pipe(targetStream.source, request.stream.sink);
+    await pipe(targetStream.source, stream?.sink);
   }
 
   private handleExternalAddress(

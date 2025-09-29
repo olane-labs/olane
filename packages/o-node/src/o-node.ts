@@ -237,6 +237,7 @@ export class oNode extends oToolBase {
         parentAddress,
         this.address,
       ) as oNodeAddress;
+      this.logger.debug('Encapsulated address: ' + this.address.toString());
     }
 
     return params;

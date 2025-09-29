@@ -2,7 +2,7 @@ import { oAddress, oCore, oRequest, oRouter } from '@olane/o-core';
 import { oRouterRequest, RequestParams } from '@olane/o-protocol';
 
 export abstract class oToolRouter extends oRouter {
-  abstract forward(
+  protected abstract forward(
     address: oAddress,
     request: oRequest | oRouterRequest,
     node?: oCore,
@@ -18,22 +18,7 @@ export abstract class oToolRouter extends oRouter {
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.translate(destinationAddress, node);
 
-    const isSelf = nextHopAddress
-      .toStaticAddress()
-      .equals(destinationAddress.toStaticAddress());
-
-    const forwardRequest = requestOverride || request;
-
-    // at destination, convert the route request to goal request
-    let nextHopRequest: oRequest | oRouterRequest = isSelf
-      ? new oRequest({
-          params: payload.params as RequestParams,
-          id: request.id as string,
-          method: payload.method as string,
-        })
-      : forwardRequest;
-
     // TODO: send the request to the destination
-    return this.forward(nextHopAddress, nextHopRequest, node);
+    return this.forward(nextHopAddress, request, node);
   }
 }

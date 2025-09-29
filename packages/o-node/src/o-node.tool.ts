@@ -62,6 +62,6 @@ export class oNodeTool extends oTool(oNode) {
     );
 
     // add the request method to the response
-    return CoreUtils.sendResponse(response, streamData.stream);
+    return CoreUtils.sendResponse(response, stream);
   }
 }
