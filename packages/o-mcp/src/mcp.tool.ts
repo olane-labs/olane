@@ -1,9 +1,10 @@
-import { oToolConfig, oVirtualTool } from '@olane/o-tool';
-import { oAddress, oRequest, oToolError, oToolErrorCodes } from '@olane/o-core';
+import { oToolConfig } from '@olane/o-tool';
+import { oAddress, oError, oErrorCodes, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { oLaneTool } from '@olane/o-lane';
 
-export class McpTool extends oVirtualTool {
+export class McpTool extends oLaneTool {
   private mcpClient: Client;
 
   constructor(config: oToolConfig & { address: oAddress; mcpClient: Client }) {
@@ -40,15 +41,14 @@ export class McpTool extends oVirtualTool {
         });
         this.logger.debug('MCP tool result: ', result);
         if (result.isError) {
-          throw new oToolError(
-            oToolErrorCodes.TOOL_ERROR,
+          throw new oError(
+            oErrorCodes.UNKNOWN,
             JSON.stringify((result as any).content),
           );
         }
         return result.content;
       };
     });
-    await this.startChildren();
   }
 
   async myTools() {

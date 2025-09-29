@@ -62,7 +62,8 @@
     "@olane/o-intelligence": "^0.6.7",
     "@olane/o-leader": "^0.6.11",
     "@olane/o-protocol": "^0.6.11",
-    "@olane/o-tool": "^0.6.11"
+    "@olane/o-tool": "^0.6.11",
+    "@olane/o-lane": "^0.6.11"
   },
   "dependencies": {
     "debug": "^4.4.1",

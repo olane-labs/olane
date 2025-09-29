@@ -1,6 +1,7 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -110,7 +111,7 @@ interface OllamaGenerateResponse {
   eval_duration?: number;
 }
 
-export class OllamaIntelligenceTool extends oVirtualTool {
+export class OllamaIntelligenceTool extends oLaneTool {
   static defaultModel = 'llama3.2:latest';
   static defaultUrl = 'http://localhost:11434';
 

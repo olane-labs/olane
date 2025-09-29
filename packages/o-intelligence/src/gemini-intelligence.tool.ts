@@ -1,6 +1,7 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
 interface GeminiContent {
   role: 'user' | 'model';
@@ -112,7 +113,7 @@ interface GeminiListModelsResponse {
   models: GeminiModel[];
 }
 
-export class GeminiIntelligenceTool extends oVirtualTool {
+export class GeminiIntelligenceTool extends oLaneTool {
   private apiKey: string = process.env.GEMINI_API_KEY || '';
   private baseUrl!: string;
   private defaultModel!: string;

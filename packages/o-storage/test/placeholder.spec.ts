@@ -4,8 +4,8 @@ import { oLeaderNode, RegistryMemoryTool } from '@olane/o-leader';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { StorageTool } from '../src/index.js';
 import { bigfile } from './data/bigfile.js';
-import { oVirtualTool } from '@olane/o-tool';
 import dotenv from 'dotenv';
+import { oLaneTool } from '@olane/o-lane';
 
 dotenv.config();
 
@@ -13,7 +13,7 @@ const leader = new oLeaderNode({
   parent: null,
   leader: null,
 });
-const node = new oVirtualTool({
+const node = new oLaneTool({
   parent: null,
   leader: null,
   address: new oAddress('o://node'),

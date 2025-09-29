@@ -2,8 +2,8 @@ import { oAddress } from './o-address.js';
 import { oObject } from '../core/o-object.js';
 import { oTransport } from '../transports/o-transport.js';
 import { TransportType } from '../transports/interfaces/transport-type.enum.js';
-import type { oCore } from '../core/o-core.js';
 import { RouteResponse } from './interfaces/route.response.js';
+import { ResolveRequest } from './interfaces/resolve.request.js';
 
 export abstract class oAddressResolver extends oObject {
   constructor(protected readonly address: oAddress) {
@@ -18,10 +18,10 @@ export abstract class oAddressResolver extends oObject {
     return this.customTransports.map((transport) => transport.type);
   }
 
-  async resolve(address: oAddress, node: oCore): Promise<RouteResponse> {
+  async resolve(request: ResolveRequest): Promise<RouteResponse> {
     return {
-      nextHopAddress: address,
-      targetAddress: address,
+      nextHopAddress: request.address,
+      targetAddress: request.address,
     };
   }
 }

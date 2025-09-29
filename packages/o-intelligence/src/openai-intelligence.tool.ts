@@ -1,6 +1,7 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
 interface OpenAIChatMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
@@ -115,7 +116,7 @@ interface OpenAIListModelsResponse {
   data: OpenAIModel[];
 }
 
-export class OpenAIIntelligenceTool extends oVirtualTool {
+export class OpenAIIntelligenceTool extends oLaneTool {
   private baseUrl: string = 'https://api.openai.com/v1';
   private defaultModel: string = 'gpt-5-mini';
   private organization?: string;

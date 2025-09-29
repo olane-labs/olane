@@ -1,18 +1,13 @@
-import {
-  LEADER_ADRESS,
-  NodeType,
-  oAddress,
-  oRequest,
-  oResponse,
-} from '@olane/o-core';
-import { oServerTool, oToolConfig } from '@olane/o-tool';
+import { NodeType, oAddress, oRequest, oResponse } from '@olane/o-core';
+import { oToolConfig } from '@olane/o-tool';
 import { START_METHOD } from './methods/start.method.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export class oLeaderNode extends oServerTool {
+export class oLeaderNode extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
-      address: new oAddress(LEADER_ADRESS),
+      address: oAddress.leader(),
       type: NodeType.LEADER,
       methods: {
         start: START_METHOD,

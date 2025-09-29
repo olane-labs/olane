@@ -1,9 +1,10 @@
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { oRegistrationParams } from '@olane/o-protocol';
 import { oAddress, oRequest } from '@olane/o-core';
 import { REGISTRY_PARAMS } from './methods/registry.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export abstract class RegistryTool extends oVirtualTool {
+export abstract class RegistryTool extends oLaneTool {
   protected readonly registry: Map<string, oRegistrationParams> = new Map();
   protected readonly protocolMapping: Map<string, string[]> = new Map();
 

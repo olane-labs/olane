@@ -3,10 +3,11 @@ import {
   oAddress,
   TransportType,
   oRequest,
+  oCustomTransport,
 } from '@olane/o-core';
-import type { RouteResponse } from '@olane/o-core';
-import { oLaneTool } from '@olane/o-lane';
+import type { oTransport, RouteResponse } from '@olane/o-core';
 import { v4 as uuidv4 } from 'uuid';
+import { StorageResolveRequest } from './storage.resolve-request.js';
 
 export class oStorageResolver extends oAddressResolver {
   constructor(protected readonly address: oAddress) {
@@ -17,12 +18,13 @@ export class oStorageResolver extends oAddressResolver {
     return [TransportType.CUSTOM];
   }
 
-  get transports(): string[] {
-    return ['/storage'];
+  get customTransports(): oTransport[] {
+    return [new oCustomTransport('/storage')];
   }
 
-  async resolve(address: oAddress, node: oLaneTool): Promise<RouteResponse> {
-    this.logger.debug('Resolving custom storage address: ', address);
+  async resolve(request: StorageResolveRequest): Promise<RouteResponse> {
+    this.logger.debug('Resolving custom storage address: ', request.address);
+    const { address, node } = request;
     // extract the key from the address
     let key = null;
     let method: string = 'get';

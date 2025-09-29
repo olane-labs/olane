@@ -1,4 +1,4 @@
-import { oToolConfig, oVirtualTool } from '@olane/o-tool';
+import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oResponse } from '@olane/o-core';
 import { oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
@@ -14,8 +14,9 @@ import { ConfigureRequest } from './interfaces/configure.request.js';
 import { HostModelProvider } from './enums/host-model-provider.enum.js';
 import { multiaddr } from '@olane/o-config';
 import { PromptRequest } from './interfaces/prompt.request.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export class IntelligenceTool extends oVirtualTool {
+export class IntelligenceTool extends oLaneTool {
   private roundRobinIndex = 0;
   constructor(config: oToolConfig) {
     super({
@@ -38,41 +39,6 @@ export class IntelligenceTool extends oVirtualTool {
         },
       ],
     });
-    this.addChildNode(
-      new AnthropicIntelligenceTool({
-        ...config,
-        parent: null,
-        leader: null,
-      }),
-    );
-    this.addChildNode(
-      new OpenAIIntelligenceTool({
-        ...config,
-        parent: null,
-        leader: null,
-      }),
-    );
-    this.addChildNode(
-      new OllamaIntelligenceTool({
-        ...config,
-        parent: null,
-        leader: null,
-      }),
-    );
-    this.addChildNode(
-      new PerplexityIntelligenceTool({
-        ...config,
-        parent: null,
-        leader: null,
-      }),
-    );
-    this.addChildNode(
-      new GrokIntelligenceTool({
-        ...config,
-        parent: null,
-        leader: null,
-      }),
-    );
   }
 
   async getSecureValue(key: string): Promise<string | null> {
@@ -224,48 +190,6 @@ export class IntelligenceTool extends oVirtualTool {
       apiKey: apiKey,
     };
   }
-  async getHostingProvider(): Promise<{
-    modelProvider: LLMProviders;
-    provider: HostModelProvider;
-    options: any;
-  }> {
-    let provider = HostModelProvider.LOCAL;
-    const hostingProviderStored = await this.getSecureValue(
-      IntelligenceStorageKeys.HOSTING_PROVIDER_PREFERENCE,
-    );
-    if (hostingProviderStored) {
-      provider = hostingProviderStored as HostModelProvider;
-    }
-    let token = null;
-    const accessTokenStored = await this.getSecureValue(
-      IntelligenceStorageKeys.ACCESS_TOKEN,
-    );
-    if (accessTokenStored) {
-      token = accessTokenStored;
-    }
-    const addressStored = await this.getSecureValue(
-      IntelligenceStorageKeys.OLANE_ADDRESS,
-    );
-    let address = 'o://leader/auth/intelligence';
-    if (addressStored) {
-      address = addressStored as string;
-    }
-    const modelProviderStored = await this.getSecureValue(
-      IntelligenceStorageKeys.MODEL_PROVIDER_PREFERENCE,
-    );
-    let modelProvider = modelProviderStored as LLMProviders;
-    if (!modelProvider) {
-      modelProvider = LLMProviders.ANTHROPIC;
-    }
-    return {
-      provider: provider,
-      modelProvider: modelProvider,
-      options: {
-        token: token,
-        address: address,
-      },
-    };
-  }
 
   async chooseIntelligence(request: PromptRequest): Promise<{
     choice: oAddress;
@@ -326,82 +250,9 @@ export class IntelligenceTool extends oVirtualTool {
     };
   }
 
-  async attemptUseOlaneIntelligence(
-    request: PromptRequest,
-  ): Promise<ToolResult | null> {
-    const { prompt } = request.params;
-    const { provider: hostingProvider, options, modelProvider } =
-      await this.getHostingProvider();
-
-    // forward to olane
-    if (hostingProvider === HostModelProvider.OLANE) {
-      const response = await this.use(
-        new oAddress(options.address + '/' + modelProvider, [
-          multiaddr(
-            process.env.OLANE_ADDRESS ||
-              '/dns4/leader.olane.com/tcp/4000/tls/ws',
-          ),
-        ]),
-        {
-          method: 'completion',
-          params: {
-            token: options.token,
-            messages: [
-              {
-                role: 'user',
-                content: prompt,
-              },
-            ],
-          },
-        },
-      );
-      return response.result.data as ToolResult;
-    }
-    return null;
-  }
-
-  async _tool_route(request: any): Promise<ToolResult> {
-    const { provider: hostingProvider, options } =
-      await this.getHostingProvider();
-
-    const { address, payload, } = request.params;
-
-    // forward to olane sub-tool
-    if (hostingProvider === HostModelProvider.OLANE) {
-      this.logger.debug('Forwarding to olane sub-tool: ', address);
-      const destinationAddress = new oAddress(address);
-      const pieces = destinationAddress.paths.split(this.staticAddress.paths);
-      const subAddress = pieces[pieces.length - 1];
-      const response = await this.use(
-        new oAddress(options.address + subAddress, [
-          multiaddr(
-            process.env.OLANE_ADDRESS ||
-              '/dns4/leader.olane.com/tcp/4000/tls/ws',
-          ),
-        ]),
-        {
-          method: payload.method,
-          params: {
-            ...payload.params,
-            token: options.token,
-          },
-        },
-      );
-      return response.result.data as ToolResult;
-    }
-
-    return super._tool_route(request);
-  }
-
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
     const { prompt } = request.params;
-
-    // attempt to forward to a remote intelligence tool
-    const olaneResult = await this.attemptUseOlaneIntelligence(request);
-    if (olaneResult) {
-      return olaneResult;
-    }
 
     const intelligence = await this.chooseIntelligence(request);
     const response = await this.use(intelligence.choice, {
@@ -417,5 +268,46 @@ export class IntelligenceTool extends oVirtualTool {
       },
     });
     return response.result.data as ToolResult;
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+    const config = this.config;
+    const anthropicTool = new AnthropicIntelligenceTool({
+      ...config,
+      parent: null,
+      leader: null,
+    });
+    this.addChildNode(anthropicTool);
+    anthropicTool.start();
+    const openaiTool = new OpenAIIntelligenceTool({
+      ...config,
+      parent: null,
+      leader: null,
+    });
+    this.addChildNode(openaiTool);
+    openaiTool.start();
+    const ollamaTool = new OllamaIntelligenceTool({
+      ...config,
+      parent: null,
+      leader: null,
+    });
+    this.addChildNode(ollamaTool);
+    ollamaTool.start();
+    const perplexityTool = new PerplexityIntelligenceTool({
+      ...config,
+      parent: null,
+      leader: null,
+    });
+    this.addChildNode(perplexityTool);
+    perplexityTool.start();
+
+    const grokTool = new GrokIntelligenceTool({
+      ...config,
+      parent: null,
+      leader: null,
+    });
+    this.addChildNode(grokTool);
+    grokTool.start();
   }
 }

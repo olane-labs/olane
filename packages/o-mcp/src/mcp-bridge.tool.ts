@@ -1,12 +1,13 @@
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest, oToolError } from '@olane/o-core';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool.js';
 import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export class McpBridgeTool extends oVirtualTool {
+export class McpBridgeTool extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
@@ -34,7 +35,7 @@ export class McpBridgeTool extends oVirtualTool {
     });
 
     return {
-      result: response.result.data.message,
+      result: (response.result.data as any).message,
     };
   }
 
@@ -64,7 +65,7 @@ export class McpBridgeTool extends oVirtualTool {
       return {
         message:
           'Successfully added MCP server with ' +
-          this.childNodes.length +
+          this.hierarchyManager.getChildren().length +
           ' tools',
       };
     } catch (e: any) {
@@ -128,7 +129,7 @@ export class McpBridgeTool extends oVirtualTool {
       },
     });
     return {
-      result: response.result.data.message,
+      result: (response.result.data as any).message,
     };
   }
 
@@ -149,7 +150,7 @@ export class McpBridgeTool extends oVirtualTool {
       parent: this.address,
     });
     this.addChildNode(mcpTool);
-    await this.startChildren();
+    await mcpTool.start();
     await mcpTool.setupTools();
 
     await this.use(new oAddress(mcpTool.address.toString()), {
