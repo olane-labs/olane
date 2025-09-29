@@ -1,0 +1,353 @@
+---
+title: "Welcome to Olane OS"
+description: "An agentic operating system that enables AI agents to operate as intelligent, autonomous processes"
+---
+
+## What is Olane OS?
+
+**Olane OS is an operating system for AI agents.** Just as traditional operating systems manage processes, memory, and resources for applications, Olane OS provides the runtime infrastructure for AI agents to operate as intelligent, addressable processes that communicate, coordinate, and learn from each other.
+
+This is **not** a network framework, API library, or orchestration tool—it's a complete runtime system that fundamentally changes how you build with AI agents.
+
+<CardGroup cols={2}>
+  <Card title="70-90% Cost Reduction" icon="chart-line-down">
+    One generalist LLM serves multiple specialist agents—no expensive fine-tuning needed
+  </Card>
+  <Card title="Emergent Intelligence" icon="brain-circuit">
+    Agents discover optimal workflows through execution, not pre-defined graphs
+  </Card>
+  <Card title="Hierarchical Organization" icon="sitemap">
+    Filesystem-like addressing with automatic context inheritance and intelligent routing
+  </Card>
+  <Card title="Self-Organizing Networks" icon="network-wired">
+    Multi-agent systems that discover and coordinate autonomously
+  </Card>
+</CardGroup>
+
+## Why Olane OS?
+
+### The Problem with Current AI Agent Systems
+
+Building production AI agent systems today requires:
+
+- **Fine-tuning separate models** for each domain ($$$$ and slow)
+- **Pre-defining workflow graphs** that can't adapt (LangGraph, etc.)
+- **Manual orchestration** that breaks as systems scale
+- **Reinventing infrastructure** for every new agent
+
+### The Olane OS Solution
+
+Olane OS introduces three architectural innovations:
+
+<AccordionGroup>
+  <Accordion title="Generalist-Specialist Architecture" icon="users-gear">
+    **One LLM brain, many specialized agents.** Instead of fine-tuning separate models, use a single generalist model (GPT-4, Claude, etc.) as the reasoning brain for all agents. Specialization happens through:
+    
+    - **Context Injection**: Domain-specific knowledge
+    - **Tool Augmentation**: Specialized capabilities  
+    - **Knowledge Accumulation**: Learning from interactions
+    
+    **Result**: 70-90% cost reduction vs separate fine-tuned models
+  </Accordion>
+
+  <Accordion title="Emergent vs Explicit Orchestration" icon="diagram-project">
+    **Agents discover workflows, not follow them.** Unlike LangGraph's pre-defined state graphs, Olane OS agents autonomously determine optimal execution paths through a capability-based loop:
+    
+    - Agents **evaluate** their current state and intent
+    - Agents **decide** which capability to use next
+    - Agents **learn** from execution history
+    - Workflows **emerge** from agent intelligence
+    
+    **Result**: Workflows that improve over time through collective learning
+  </Accordion>
+
+  <Accordion title="Hierarchical Organization" icon="folder-tree">
+    **Filesystem-like addressing for agents.** The `o://` protocol provides:
+    
+    - Natural resource organization (`o://company/finance/reporting`)
+    - Automatic context inheritance from hierarchical position
+    - Intelligent routing through agent hierarchies
+    - Built-in fault tolerance and failover paths
+    
+    **Result**: Intuitive agent organization that mirrors business structure
+  </Accordion>
+</AccordionGroup>
+
+## Quick Example
+
+Here's how you create an intelligent agent that can autonomously accomplish complex tasks:
+
+```typescript
+import { oLaneTool, oIntent } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+// Create a specialized agent with custom tools
+class AnalyticsAgent extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/analytics'),
+      description: 'Data analysis specialist agent'
+    });
+  }
+
+  // Add domain-specific tools
+  async _tool_fetch_sales_data(request) {
+    // Your data fetching logic
+    return { data: salesData, period: 'Q4' };
+  }
+
+  async _tool_analyze_trends(request) {
+    // Your analysis logic
+    return { trends: analysis, insights: insights };
+  }
+}
+
+// Start the agent
+const agent = new AnalyticsAgent();
+await agent.start();
+
+// Give it a natural language intent - agent figures out how to execute
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 sales trends and identify top-performing regions'
+  }
+});
+
+// Agent autonomously:
+// 1. Evaluates the intent
+// 2. Decides to fetch sales data
+// 3. Calls _tool_fetch_sales_data
+// 4. Analyzes the data
+// 5. Generates insights
+// 6. Returns formatted results
+
+console.log(result.result);
+// "Q4 sales analysis complete. Top regions: Northeast (+25%), West (+18%)..."
+```
+
+**What just happened?**
+
+1. You created a specialized agent with domain tools
+2. You gave it a natural language goal (intent)
+3. The agent **autonomously discovered** the optimal execution path
+4. No workflow graphs, no state machines, no manual orchestration
+
+## Core Capabilities
+
+### For Individual Agents
+
+<CardGroup cols={2}>
+  <Card title="Tool Augmentation" icon="wrench" href="/concepts/tools/overview">
+    Convention-based system for adding specialized capabilities to agents
+  </Card>
+  <Card title="Intent Execution" icon="bullseye-arrow" href="/concepts/lanes/overview">
+    Transform natural language goals into autonomous multi-step workflows
+  </Card>
+  <Card title="Context Injection" icon="message-dots" href="/concepts/lanes/context-injection">
+    Provide domain knowledge and conversation history to agents
+  </Card>
+  <Card title="Execution Tracking" icon="list-timeline" href="/concepts/lanes/execution-sequences">
+    Complete audit trails of agent decisions and actions
+  </Card>
+</CardGroup>
+
+### For Multi-Agent Systems
+
+<CardGroup cols={2}>
+  <Card title="P2P Networking" icon="network-wired" href="/concepts/networks/p2p-networking">
+    Agents communicate over libp2p with automatic peer discovery
+  </Card>
+  <Card title="Service Discovery" icon="magnifying-glass" href="/concepts/networks/registries">
+    Agents find each other dynamically through registries
+  </Card>
+  <Card title="Hierarchical Routing" icon="route" href="/concepts/addressing/routing">
+    Intelligent request routing through agent hierarchies
+  </Card>
+  <Card title="Coordination Patterns" icon="users" href="/use-cases/multi-agent/coordination-patterns">
+    Self-organizing networks without manual orchestration
+  </Card>
+</CardGroup>
+
+## How It Works
+
+Olane OS is organized in three layers:
+
+```
+┌─────────────────────────────────────────────────┐
+│  YOUR AGENTS: Domain-specific AI agents         │
+│  - Customer service, analytics, automation      │
+└─────────────────────────────────────────────────┘
+                      ⬇ built with
+┌─────────────────────────────────────────────────┐
+│  FRAMEWORK: Olane OS Packages                   │
+│  - o-lane: Process management & workflows       │
+│  - o-tool: Tool augmentation system             │
+│  - o-node: P2P networking                       │
+│  - o-leader: Network coordination               │
+└─────────────────────────────────────────────────┘
+                      ⬇ powered by
+┌─────────────────────────────────────────────────┐
+│  KERNEL: Core Runtime                           │
+│  - o-core: Agent runtime & IPC                  │
+│  - o-protocol: Type definitions                 │
+└─────────────────────────────────────────────────┘
+```
+
+### The Agentic Process Model
+
+Just as an operating system manages processes, Olane OS manages **agentic processes**:
+
+1. **Agents are processes** with unique addresses (`o://company/dept/agent`)
+2. **IPC (Inter-Process Communication)** happens via the `o://` protocol
+3. **Resource management** through hierarchical addressing
+4. **Process coordination** through emergent orchestration
+5. **State persistence** with checkpointing and recovery
+
+## Common Use Cases
+
+<AccordionGroup>
+  <Accordion title="Build Specialist Agents (without fine-tuning)" icon="user-gear">
+    Create domain-specific agents by adding tools and context to a generalist model. Perfect for:
+    - Customer service agents with CRM integrations
+    - Financial analysis agents with market data tools
+    - DevOps agents with infrastructure tools
+    
+    [Learn more →](/use-cases/specialist-agents/overview)
+  </Accordion>
+
+  <Accordion title="Autonomous Multi-Step Workflows" icon="diagram-next">
+    Replace LangGraph's explicit orchestration with intent-driven execution. Ideal for:
+    - Data processing pipelines that adapt to data
+    - Report generation workflows that discover optimal paths
+    - Automation tasks that improve over time
+    
+    [Learn more →](/use-cases/workflows/overview)
+  </Accordion>
+
+  <Accordion title="Multi-Agent Coordination" icon="users">
+    Build self-organizing agent networks without manual wiring. Use for:
+    - Research teams with specialized analyst agents
+    - Customer onboarding with multiple specialist agents
+    - Complex analysis requiring coordinated expertise
+    
+    [Learn more →](/use-cases/multi-agent/overview)
+  </Accordion>
+
+  <Accordion title="Long-Running Agent Tasks" icon="clock">
+    Persistent agent processes that run for hours or days with automatic recovery. Great for:
+    - Continuous monitoring and alerting
+    - Multi-day research and analysis
+    - Background automation tasks
+    
+    [Learn more →](/use-cases/long-running/overview)
+  </Accordion>
+</AccordionGroup>
+
+## Key Differentiators
+
+### vs LangGraph
+
+| Feature | LangGraph | Olane OS |
+|---------|-----------|----------|
+| **Workflow Definition** | Pre-defined state graphs | Emergent discovery |
+| **Orchestration** | Explicit, manual | Autonomous, adaptive |
+| **Multi-Agent** | Manual coordination | Self-organizing |
+| **Learning** | Static workflows | Improves over time |
+| **Specialization** | Separate models | One model, many specialists |
+
+[See detailed comparison →](/comparison/vs-langgraph)
+
+### vs CrewAI
+
+| Feature | CrewAI | Olane OS |
+|---------|--------|----------|
+| **Agent Communication** | Message passing | Hierarchical IPC |
+| **Coordination** | Pre-defined roles | Emergent coordination |
+| **Networking** | Application-level | P2P infrastructure |
+| **Addressing** | Name-based | Hierarchical (`o://`) |
+
+[See detailed comparison →](/comparison/vs-crewai)
+
+## What You'll Learn
+
+This documentation follows a progressive disclosure pattern—start simple, go deep when you need to:
+
+<Steps>
+  <Step title="Get Started (5 minutes)">
+    Install Olane OS and create your first agent
+    
+    [→ Quickstart](/quickstart)
+  </Step>
+  
+  <Step title="Core Concepts (15 minutes)">
+    Understand agents, tools, intents, and the capability loop
+    
+    [→ Architecture Overview](/concepts/architecture-overview)
+  </Step>
+  
+  <Step title="Build Use Cases (30 minutes)">
+    Implement specialist agents, workflows, or multi-agent systems
+    
+    [→ Use Cases](/use-cases/specialist-agents/overview)
+  </Step>
+  
+  <Step title="Production Deployment">
+    Testing, monitoring, scaling, and production best practices
+    
+    [→ Development Guide](/dev/testing-overview)
+  </Step>
+</Steps>
+
+## Real-World Examples
+
+<CardGroup cols={2}>
+  <Card title="Financial Analysis Agent" icon="chart-line" href="/examples/financial-analyst">
+    Specialized agent that analyzes market data and generates reports autonomously
+  </Card>
+  <Card title="Customer Service Network" icon="headset" href="/examples/customer-service">
+    Multi-agent system where specialists handle different customer inquiries
+  </Card>
+  <Card title="Data Pipeline Automation" icon="database" href="/examples/data-pipeline">
+    Long-running agents that process data streams with automatic recovery
+  </Card>
+  <Card title="Research Coordination" icon="book" href="/examples/research-team">
+    Team of agents that coordinate on complex research tasks
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="5-Minute Quickstart" icon="rocket" href="/quickstart">
+    Build your first agent in minutes
+  </Card>
+  <Card title="Choose Your Use Case" icon="compass" href="/use-cases/specialist-agents/overview">
+    Find the best starting point for your needs
+  </Card>
+  <Card title="Explore Packages" icon="box" href="/packages/overview">
+    Understand the Olane OS package ecosystem
+  </Card>
+</CardGroup>
+
+## Join the Community
+
+<CardGroup cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/olane-labs">
+    Star the repo and contribute
+  </Card>
+  <Card title="Community Forum" icon="comments" href="https://olane.com/community">
+    Ask questions and share solutions
+  </Card>
+  <Card title="Twitter/X" icon="x-twitter" href="https://x.com/olane">
+    Follow for updates and examples
+  </Card>
+</CardGroup>
+
+---
+
+**Ready to build?** Start with the [Quickstart Guide →](/quickstart)
+
+**Need help deciding?** See [Package Selection Guide →](/packages/choosing-packages)
+
+**Migrating from another framework?** Check [Migration Guides →](/migration/overview)

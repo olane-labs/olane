@@ -2,7 +2,7 @@
 
 ## Project Context
 
-**Olane OS (o-core)** is an **agentic operating system** that enables AI agents to operate as intelligent processes using the `o://` protocol for hierarchical addressing and resource management. This is NOT a network framework - it's an operating system for AI agents.
+**Olane OS (o-core)** is an **agentic operating system** that enables AI agents to operate as intelligent processes using the `o://` protocol for hierarchical addressing and resource management. This is an operating system for AI agents, powered by a network framework.
 
 ## Key Architectural Concepts
 
@@ -13,7 +13,7 @@
     - **Context Injection**: Domain-specific knowledge and business context
     - **Tool Augmentation**: Specialized capabilities and integrations
     - **Knowledge Accumulation**: Learning from interactions via knowledge artifacts
-- **Cost Benefits**: 70-90% cost reduction vs separate fine-tuned models
+- **Cost Benefits**:TODO% cost reduction vs separate fine-tuned models
 
 ### **Emergent Intelligence vs Explicit Orchestration**
 
@@ -45,7 +45,7 @@
 - Persistent agent processes maintain state across hours/days
 - Automatic checkpointing and recovery from failures
 - Intelligent task decomposition across specialized agents
-- 99.8% reliability with fault tolerance
+- TODO% reliability with fault tolerance
 
 ### **2. Intelligence Reuse**
 
@@ -57,16 +57,15 @@
 ### **3. Cost Optimization**
 
 - Single generalist model serves multiple specialists
-- 70-90% lower per-request costs vs large models
+- TODO% lower per-request costs vs large models
 - Resource sharing and intelligent load balancing
-- 62% operational cost savings
+- TODO% operational cost savings
 
 ### **4. Scalable Implementation**
 
 - Self-organizing agent networks
 - No infrastructure configuration needed
 - Automatic scaling through organic discovery
-- 78% reduction in development complexity
 
 ## Documentation Strategy (Stripe-Inspired)
 
