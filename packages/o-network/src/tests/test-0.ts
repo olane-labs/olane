@@ -21,7 +21,7 @@ dotenv.config();
         parent: null,
       },
     ],
-    plans: [],
+    lanes: [],
     noIndexNetwork: true,
   });
 

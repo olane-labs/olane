@@ -1,8 +1,8 @@
-import { oVirtualTool } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
+import { oLaneTool } from '@olane/o-lane';
 import { oToolConfig } from '@olane/o-tool';
 
-export class EmbeddingsTool extends oVirtualTool {
+export class EmbeddingsTool extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

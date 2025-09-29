@@ -1,9 +1,10 @@
-import { oVirtualTool, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 import { VECTOR_STORE_PARAMS } from './methods/vector-store.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export abstract class VectorMemoryStorageTool extends oVirtualTool {
+export abstract class VectorMemoryStorageTool extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

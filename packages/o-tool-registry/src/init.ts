@@ -1,12 +1,11 @@
-import { oNode } from '@olane/o-core';
 import { NERTool } from './nlp/ner.tool.js';
 import { HuggingfaceTextEmbeddingsTool } from './embeddings/index.js';
 import { LangchainMemoryVectorStoreTool } from './vector-store/index.js';
-import { oVirtualTool } from '@olane/o-tool';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { McpBridgeTool } from '@olane/o-mcp';
+import { oLaneTool } from '@olane/o-lane';
 
-export const initRegistryTools = (oNode: oVirtualTool): void => {
+export const initRegistryTools = (oNode: oLaneTool): void => {
   const params = {
     parent: oNode.address,
     leader: oNode.address,

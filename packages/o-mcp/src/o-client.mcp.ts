@@ -1,16 +1,8 @@
 import {
-  Server,
-  ServerOptions,
-} from '@modelcontextprotocol/sdk/server/index.js';
-import {
   Client,
   ClientOptions,
 } from '@modelcontextprotocol/sdk/client/index.js';
-import {
-  JSONRPCMessage,
-  Implementation,
-  isJSONRPCRequest,
-} from '@modelcontextprotocol/sdk/types.js';
+import { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { IntentValue, IntentWrappingTransport } from './o-transport.mcp';

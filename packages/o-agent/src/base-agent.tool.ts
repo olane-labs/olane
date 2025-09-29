@@ -1,9 +1,10 @@
-import { oVirtualTool, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { AGENT_METHODS } from './methods/agent.methods.js';
 import { oAgentConfig } from './interfaces/agent.config.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export abstract class oAgentTool extends oVirtualTool {
+export abstract class oAgentTool extends oLaneTool {
   protected respond: (intent: string) => Promise<string>;
   protected answer: (intent: string) => Promise<string>;
   protected receiveStream: (data: any) => Promise<any>;

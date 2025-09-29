@@ -72,7 +72,7 @@ export class oNodeRouter extends oToolRouter {
 
     const targetAddress = address;
     const { nextHopAddress, requestOverride } =
-      await this.addressResolution.resolve(targetAddress, node);
+      await this.addressResolution.resolve({ address, node });
     const leaderTransports = this.getTransports(
       nextHopAddress as oNodeAddress,
       node,

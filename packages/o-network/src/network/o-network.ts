@@ -3,15 +3,17 @@ import { NetworkConfigInterface } from './interfaces/network.interface.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
-import { Logger, oAddress, oNode, oResponse } from '@olane/o-core';
+import { Logger, oAddress, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
-import { multiaddr } from '@olane/o-config';
 import { ConfigManager } from '../utils/config.js';
-import { oServerTool } from '@olane/o-tool';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeTransport } from '@olane/o-node/dist/src/router/o-node.transport.js';
+import { oNodeAddress } from '@olane/o-node/dist/src/router/o-node.address.js';
+import { oNodeConfig } from '@olane/o-node';
 
-type oNetworkNode = oServerTool | oLeaderNode;
+type oNetworkNode = oLaneTool | oLeaderNode;
 export class oNetwork {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
   private nodes: oNetworkNode[] = []; // clones of node for scale
@@ -27,7 +29,7 @@ export class oNetwork {
     this.config = config;
   }
 
-  entryNode(): oServerTool | oLeaderNode {
+  entryNode(): oLaneTool | oLeaderNode {
     const node = this.nodes[this.roundRobinIndex];
     this.roundRobinIndex = (this.roundRobinIndex + 1) % this.nodes.length;
     return node;
@@ -80,10 +82,7 @@ export class oNetwork {
           ...networkConfig,
           nodes: (networkConfig.nodes || []).map((node) => ({
             ...node,
-            address: new oAddress(
-              node.address.value,
-              node.address.transports.map((t) => multiaddr(t)),
-            ),
+            address: new oNodeAddress(node.address.value),
           })),
           network: {
             ...networkConfig.network,
@@ -128,7 +127,7 @@ export class oNetwork {
         const leaderNode = new oLeaderNode({
           ...node,
           networkName: networkName,
-        });
+        } as oNodeConfig);
         if (!this.rootLeader) {
           this.rootLeader = leaderNode;
         }
@@ -139,7 +138,7 @@ export class oNetwork {
         this.logger.debug(
           'Starting non-leader node: ' + node.address.toString(),
         );
-        const commonNode = new oServerTool({
+        const commonNode = new oLaneTool({
           ...node,
           address: node.address,
           leader: this.rootLeader?.address || null,
@@ -156,7 +155,7 @@ export class oNetwork {
   }
 
   async runSavedPlans() {
-    const plans = Array.from(new Set(this.config?.plans || []));
+    const plans = Array.from(new Set(this.config?.lanes || []));
     for (const plan of plans) {
       this.logger.debug('Running saved plan: ' + plan);
       await this.use(new oAddress(plan), {
@@ -182,7 +181,7 @@ export class oNetwork {
     // return leader.use(oAddress, params);
   }
 
-  async start(): Promise<{ peerId: string; transports: string[] }> {
+  async start(): Promise<{ peerId: string; transports: oTransport[] }> {
     this.logger.debug('Starting o-network');
     this.status = NetworkStatus.STARTING;
 

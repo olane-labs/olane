@@ -5,6 +5,5 @@ export * from './interfaces/run-params.interface.js';
 export * from './interfaces/run-tool.interface.js';
 export * from './interfaces/tool-result.interface.js';
 export * from './utils/tool.utils.js';
-export * from './nodes/index.js';
 export * from './router/index.js';
 export * from './o-tool.base.js';

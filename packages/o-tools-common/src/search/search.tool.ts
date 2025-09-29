@@ -1,9 +1,10 @@
-import { oToolConfig, oVirtualTool } from '@olane/o-tool';
+import { oToolConfig } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { SEARCH_PARAMS } from './parameters/search.parameters.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export class SearchTool extends oVirtualTool {
+export class SearchTool extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,

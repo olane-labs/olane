@@ -1,12 +1,11 @@
 import { RegistryMemoryTool } from '@olane/o-leader';
-import { oAddress, oNode } from '@olane/o-core';
+import { oAddress } from '@olane/o-core';
 import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
-import { EncryptedPlanStorageTool } from './plan/encrypted-plan-storage.tool.js';
-import { oVirtualTool } from '@olane/o-tool';
+import { oLaneTool } from '@olane/o-lane';
 
-export const initCommonTools = (oNode: oVirtualTool) => {
+export const initCommonTools = (oNode: oLaneTool) => {
   const params = {
     parent: oNode.address,
     leader: oNode.address,
@@ -26,11 +25,6 @@ export const initCommonTools = (oNode: oVirtualTool) => {
     }),
     new SearchTool({
       name: 'search',
-      ...params,
-    }),
-    new EncryptedPlanStorageTool({
-      name: 'plan',
-      address: new oAddress('o://plan'),
       ...params,
     }),
   ];

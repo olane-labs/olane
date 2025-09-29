@@ -1,4 +1,4 @@
-import { CoreConfig } from '@olane/o-core';
+import { oNodeConfig } from '@olane/o-node';
 
 export interface NetworkConfigInterface {
   configFilePath?: string;
@@ -11,8 +11,8 @@ export interface NetworkConfigInterface {
     networkId?: string;
     port?: number;
   };
-  nodes?: CoreConfig[];
-  plans?: string[];
+  nodes?: oNodeConfig[];
+  lanes?: string[];
   noIndexNetwork?: boolean;
   inProgress?: string[];
 }

@@ -21,7 +21,7 @@ export const defaultNetwork = new oNetwork({
       parent: null,
     },
   ],
-  plans: [],
+  lanes: [],
   // noIndexNetwork: true,
 });
 

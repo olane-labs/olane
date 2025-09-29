@@ -1,5 +1,6 @@
 import { defaultLibp2pConfig } from '@olane/o-config';
-import { oNode, oNodeConfig } from '@olane/o-node';
+import { oNode } from '../o-node.js';
+import { oNodeConfig } from '../interfaces/o-node.config.js';
 
 export class oClientNode extends oNode {
   constructor(config: oNodeConfig) {

@@ -1,10 +1,10 @@
 import { NodeState, oAddress } from '@olane/o-core';
-import { oVirtualTool } from '@olane/o-tool';
+import { oLaneTool } from '@olane/o-lane';
 import { expect } from 'chai';
 
 describe('in-process @memory', () => {
   it('should be able to start a single node with no leader', async () => {
-    const node = new oVirtualTool({
+    const node = new oLaneTool({
       address: new oAddress('o://test'),
       leader: null,
       parent: null,

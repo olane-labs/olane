@@ -1,9 +1,10 @@
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { oToolConfig, ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { EncryptionService } from './lib/encryption.js';
 import { ENCRYPTION_PARAMS } from './methods/encryption.methods.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export class EncryptionTool extends oVirtualTool {
+export class EncryptionTool extends oLaneTool {
   private encryptionService: EncryptionService;
 
   constructor(config: oToolConfig) {

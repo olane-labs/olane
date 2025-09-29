@@ -32,7 +32,7 @@ export const defaultNetworkConfig = (port: number): NetworkConfigInterface => {
         parent: null,
       },
     ],
-    plans: [],
+    lanes: [],
     inProgress: [],
   };
 };

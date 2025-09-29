@@ -1,9 +1,9 @@
-import { oVirtualTool } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 import { TEXT_EMBEDDINGS_PARAMS } from './methods/text-embeddings.method.js';
+import { oLaneTool } from '@olane/o-lane';
 
-export abstract class TextEmbeddingsTool extends oVirtualTool {
+export abstract class TextEmbeddingsTool extends oLaneTool {
   constructor(config: oToolConfig) {
     super({
       ...config,
