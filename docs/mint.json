@@ -27,7 +27,7 @@
   },
   "tabs": [
     {
-      "name": "API Reference", 
+      "name": "Runtime Reference", 
       "url": "api"
     },
     {
@@ -140,20 +140,40 @@
       ]
     },
     {
-      "group": "API Reference",
+      "group": "Core Runtime",
       "pages": [
-        "api/authentication",
         "api/agents/ocore-runtime",
         "api/agents/lifecycle-management",
-        "api/agents/inter-agent-communication",
+        "api/agents/inter-agent-communication"
+      ]
+    },
+    {
+      "group": "Agent Specialization Runtime",
+      "pages": [
         "api/specialization/context-injection",
         "api/specialization/tool-integration",
-        "api/specialization/knowledge-artifacts",
+        "api/specialization/knowledge-artifacts"
+      ]
+    },
+    {
+      "group": "o:// Protocol & Addressing",
+      "pages": [
         "api/filesystem/oaddress-system",
         "api/filesystem/resource-discovery",
-        "api/filesystem/hierarchical-routing",
+        "api/filesystem/hierarchical-routing"
+      ]
+    },
+    {
+      "group": "Emergent Intelligence System",
+      "pages": [
         "api/emergent/room-discovery",
-        "api/emergent/cross-agent-learning",
+        "api/emergent/cross-agent-learning"
+      ]
+    },
+    {
+      "group": "System Components",
+      "pages": [
+        "api/authentication",
         "api/system/error-handling",
         "api/system/metrics-telemetry",
         "api/configuration/agent-config",
