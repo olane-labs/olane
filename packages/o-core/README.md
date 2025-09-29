@@ -189,9 +189,11 @@ const staticAddr = address1.toStaticAddress();
 console.log(staticAddr.toString()); // "o://accounting"
 ```
 
+**📖 For complete details on address resolution, routing algorithms, and custom resolvers, see the [Router System documentation](./src/router/README.md).**
+
 ### Request/Response Pattern
 
-All inter-agent communication follows a request/response pattern:
+All inter-agent communication follows a request/response pattern using JSON-RPC 2.0:
 
 ```typescript
 // Making a request
@@ -214,6 +216,8 @@ try {
   }
 }
 ```
+
+**📖 Learn more about JSON-RPC messaging, request states, and connection lifecycle in the [Connection System documentation](./src/connection/README.md).**
 
 ### Metrics and Observability
 
@@ -246,20 +250,15 @@ agent.logger.error('Error message');
 
 ### Key Components
 
-#### 1. oAddress
-Hierarchical addressing system for agent resources
+#### 1. Router System (oAddress & oRouter)
+Hierarchical addressing and intelligent routing for agents
 
 ```typescript
 const addr = new oAddress('o://domain/subdomain/resource');
 addr.validate();           // Check if address is valid
 addr.toStaticAddress();   // Convert to static address
 addr.toCID();             // Convert to Content ID
-```
 
-#### 2. oRouter
-Abstract routing layer for intelligent request routing
-
-```typescript
 // Router determines the next hop in the network
 const { nextHopAddress, targetAddress } = await router.translate(
   address,
@@ -267,8 +266,10 @@ const { nextHopAddress, targetAddress } = await router.translate(
 );
 ```
 
-#### 3. oConnectionManager
-Manages connections between agents with caching
+**📚 [View detailed Router System documentation →](./src/router/README.md)**
+
+#### 2. Connection System (oConnection & oConnectionManager)
+Inter-Process Communication (IPC) layer for agent-to-agent messaging
 
 ```typescript
 // Connections are cached and reused
@@ -276,9 +277,17 @@ const connection = await connectionManager.connect({
   nextHop: nextHopAddress,
   target: targetAddress
 });
+
+// Send data over the connection
+const response = await connection.send({
+  address: 'o://target/service',
+  payload: { key: 'value' }
+});
 ```
 
-#### 4. oHierarchyManager
+**📚 [View detailed Connection System documentation →](./src/connection/README.md)**
+
+#### 3. oHierarchyManager
 Manages parent-child relationships between agents
 
 ```typescript
@@ -289,10 +298,10 @@ console.log(agent.hierarchyManager.children);
 
 ## Advanced Usage
 
-### Custom Transport Implementation
+### Custom Transport & Connection Implementation
 
 ```typescript
-import { oTransport, TransportType } from '@olane/o-core';
+import { oTransport, TransportType, oConnection, oConnectionConfig } from '@olane/o-core';
 
 class MyCustomTransport extends oTransport {
   constructor() {
@@ -304,12 +313,26 @@ class MyCustomTransport extends oTransport {
   }
 }
 
+// Custom connection implementation
+class MyConnection extends oConnection {
+  async transmit(request: oRequest): Promise<oResponse> {
+    // Implement your connection logic
+    const response = await fetch(this.nextHopAddress.toString(), {
+      method: 'POST',
+      body: request.toString()
+    });
+    return new oResponse(await response.json());
+  }
+}
+
 class MyAgent extends oCore {
   configureTransports(): any[] {
     return [new MyCustomTransport()];
   }
 }
 ```
+
+**📖 For connection pooling, retry logic, middleware, and transport-specific implementations, see the [Connection System documentation](./src/connection/README.md).**
 
 ### Custom Router Implementation
 
@@ -335,6 +358,8 @@ class MyRouter extends oRouter {
   }
 }
 ```
+
+**📖 For advanced routing patterns, custom resolvers, and hierarchical routing strategies, see the [Router System documentation](./src/router/README.md).**
 
 ### Error Handling
 
@@ -472,6 +497,13 @@ o-core enables you to:
 - `@olane/o-tool` - Tool system for agent capabilities
 - `@olane/o-storage` - Storage layer for agent state
 - `@olane/o-network-cli` - CLI for managing agent networks
+
+## Component Documentation
+
+For in-depth documentation on specific o-core components, see:
+
+- **[Router System](./src/router/README.md)** - Deep dive into the `o://` protocol, address resolution, routing logic, and custom resolvers
+- **[Connection System](./src/connection/README.md)** - Complete guide to IPC, JSON-RPC messaging, connection pooling, and transport implementations
 
 ## Documentation
 
