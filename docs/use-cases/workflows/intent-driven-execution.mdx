@@ -1,0 +1,1229 @@
+---
+title: "Intent-Driven Execution"
+description: "Master designing natural language intents that enable agents to discover optimal execution paths autonomously"
+---
+
+## What you'll learn
+
+- How to design effective intents that guide agent behavior
+- Best practices for intent structure and specificity
+- How intents interact with the capability loop
+- Debugging techniques for intent execution
+- Common patterns and anti-patterns
+
+## Overview
+
+**Intent-driven execution** is the core mechanism that enables autonomous workflows in Olane OS. Instead of programming explicit steps, you provide agents with natural language expressions of **what you want to accomplish**, and the agent determines **how to accomplish it** through the capability loop.
+
+This approach transforms rigid procedural code into adaptive, learning-capable workflows.
+
+## What is an Intent?
+
+An **intent** is a natural language expression of a goal or desired outcome. It's what you want the agent to achieve, not how to achieve it.
+
+```typescript
+import { oIntent } from '@olane/o-lane';
+
+// Create an intent
+const intent = new oIntent({ 
+  intent: 'Analyze customer feedback from last month and identify improvement areas' 
+});
+
+// Execute the intent
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: intent.value,
+    context: 'Previous analysis showed declining satisfaction scores'
+  }
+});
+```
+
+### Intent vs Instructions
+
+The key difference between intents and traditional instructions:
+
+<Tabs>
+  <Tab title="❌ Instructions (Don't Do This)">
+```typescript
+// Procedural instructions - too prescriptive
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: `Step 1: Query the feedback database using SQL
+             Step 2: Filter results to last 30 days
+             Step 3: Run sentiment analysis on each record
+             Step 4: Group by sentiment score
+             Step 5: Calculate percentages
+             Step 6: Format as JSON report`
+  }
+});
+```
+
+**Problems:**
+- Assumes specific tools exist (SQL database)
+- No flexibility if steps fail
+- Can't adapt to better approaches
+- Agent can't learn optimal paths
+  </Tab>
+
+  <Tab title="✅ Intent (Do This)">
+```typescript
+// Outcome-focused intent - adaptive
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze customer feedback from last month and identify top 3 improvement areas'
+  }
+});
+```
+
+**Benefits:**
+- Agent discovers available data sources
+- Adapts if primary source unavailable
+- Learns optimal analysis approach
+- Can use new tools as they become available
+  </Tab>
+</Tabs>
+
+## The Intent Execution Lifecycle
+
+When you provide an intent, here's what happens:
+
+<Steps>
+  <Step title="Intent Reception">
+Agent receives the intent and creates a new lane (execution context)
+
+```typescript
+// Lane created with unique ID
+Lane ID: bafy2bzacedxi7...
+Status: PENDING
+Intent: "Analyze customer feedback..."
+```
+  </Step>
+
+  <Step title="Preflight Phase">
+Agent prepares for execution by gathering available capabilities and context
+
+```typescript
+// Available capabilities registered
+Capabilities: [EVALUATE, TASK, SEARCH, CONFIGURE, ERROR, MULTIPLE_STEP]
+Tools: [feedback-api, sentiment-analyzer, report-generator]
+Context: "Previous analysis showed declining satisfaction..."
+```
+  </Step>
+
+  <Step title="Capability Loop">
+Agent enters the evaluate-plan-execute cycle
+
+```typescript
+Cycle 1: EVALUATE → "Need to find feedback data source"
+Cycle 2: SEARCH → Found o://data/feedback
+Cycle 3: TASK → Fetched 247 records
+Cycle 4: EVALUATE → "Analyze sentiment"
+Cycle 5: TASK → Sentiment analysis complete
+Cycle 6: EVALUATE → "Identify themes"
+Cycle 7: TASK → Top 3 themes identified
+Cycle 8: STOP → Intent resolved
+```
+  </Step>
+
+  <Step title="Postflight Phase">
+Agent stores execution history and returns results
+
+```typescript
+Status: COMPLETED
+Cycles: 8
+Result: {
+  top_improvement_areas: [
+    "Response time (45% of negative feedback)",
+    "Feature requests (32%)",
+    "Billing issues (23%)"
+  ]
+}
+```
+  </Step>
+</Steps>
+
+## Designing Effective Intents
+
+### 1. Be Outcome-Focused
+
+State **what** you want accomplished, not **how** to accomplish it.
+
+<CodeGroup>
+```typescript ✅ Good - Outcome Focused
+// Clear goal, agent determines approach
+await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Generate monthly sales report with regional breakdowns'
+  }
+});
+```
+
+```typescript ❌ Bad - Too Prescriptive
+// Dictates implementation details
+await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Connect to PostgreSQL, run SELECT * FROM sales WHERE date >= CURRENT_DATE - 30, group by region, format as PDF'
+  }
+});
+```
+</CodeGroup>
+
+**Why outcome-focused works better:**
+- Agent can use any available data source (SQL, API, file, etc.)
+- Adapts if specific tools are unavailable
+- Learns optimal paths through experimentation
+- Future-proof as new tools become available
+
+### 2. Provide Appropriate Specificity
+
+Balance between too vague and too specific.
+
+<Tabs>
+  <Tab title="Too Vague ❌">
+```typescript
+// Agent won't know what to do
+intent: 'Do some analysis'
+intent: 'Help with customer stuff'
+intent: 'Make things better'
+```
+
+**Problems:** No clear goal, no success criteria, agent will waste cycles trying to interpret.
+  </Tab>
+
+  <Tab title="Too Specific ❌">
+```typescript
+// Overly constrains agent behavior
+intent: 'Query sales table with customer_id=12345, join with orders table on id field, calculate SUM(amount) where status="completed", return as JSON with 2 decimal places'
+```
+
+**Problems:** Assumes specific schema, can't adapt, not reusable.
+  </Tab>
+
+  <Tab title="Just Right ✅">
+```typescript
+// Clear goal with appropriate detail
+intent: 'Calculate total completed order value for customer 12345'
+```
+
+**Benefits:** Clear objective, flexible implementation, reusable pattern.
+  </Tab>
+</Tabs>
+
+### 3. Include Relevant Context
+
+Provide context that helps the agent make better decisions.
+
+```typescript
+// Without context - agent may miss important constraints
+await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Send notification to customer'
+  }
+});
+
+// With context - agent understands business rules
+await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Send notification to customer about order delay',
+    context: `Customer tier: Premium (SLA: 2-hour response)
+              Previous contact: 1 hour ago (automated)
+              Notification preference: Email + SMS for urgent issues
+              Current time: 8:30 PM (after business hours)`
+  }
+});
+```
+
+The context helps the agent:
+- Choose appropriate notification channels (email + SMS for premium)
+- Understand urgency (SLA requires response)
+- Respect preferences (use both channels for urgent issues)
+- Adjust messaging for time of day
+
+### 4. Set Clear Success Criteria
+
+Help the agent understand when the intent is complete.
+
+<CodeGroup>
+```typescript ✅ Implicit Success Criteria
+// Completion is obvious from the intent
+intent: 'Create user account for email john@company.com'
+// Success: Account created and confirmed
+```
+
+```typescript ✅ Explicit Success Criteria
+// Complex intent with clear end state
+intent: `Onboard new customer: 
+         - Account created with correct tier
+         - Welcome email sent and opened
+         - CSM assigned and notified
+         - Kickoff call scheduled within 48 hours`
+// Success: All 4 conditions met
+```
+
+```typescript ✅ Measurable Outcomes
+// Intent with quantifiable results
+intent: 'Improve API response time to under 200ms average'
+// Success: Measurable metric reached
+```
+</CodeGroup>
+
+## Intent Patterns
+
+### Pattern 1: Single Task Intent
+
+Simple, atomic operations.
+
+```typescript
+// Data retrieval
+intent: 'Fetch customer details for user ID 67890'
+
+// Data creation
+intent: 'Create new project named "Q4 Initiative" with default settings'
+
+// Simple analysis
+intent: 'Calculate conversion rate for last week'
+
+// Status check
+intent: 'Check if payment processing service is healthy'
+```
+
+**When to use:** Clear, single-step operations with obvious completion.
+
+### Pattern 2: Sequential Multi-Step Intent
+
+Multiple dependent steps in logical order.
+
+```typescript
+// Steps naturally follow each other
+intent: `Process new order:
+         1. Validate inventory availability
+         2. Calculate shipping cost
+         3. Charge payment method
+         4. Create shipment
+         5. Send confirmation email`
+
+// Agent executes in order, handling failures at each step
+```
+
+**When to use:** Steps have clear dependencies and must execute in sequence.
+
+### Pattern 3: Conditional Intent
+
+Agent makes decisions based on conditions.
+
+```typescript
+// Built-in decision logic
+intent: 'Monitor server health and alert if CPU usage exceeds 80% for more than 5 minutes'
+
+// Agent evaluates condition each cycle:
+// IF condition met → Send alert
+// IF condition not met → Continue monitoring
+```
+
+**When to use:** Intent requires evaluation and conditional behavior.
+
+### Pattern 4: Research & Synthesis Intent
+
+Agent gathers information from multiple sources.
+
+```typescript
+// Multi-source research
+intent: `Research competitor pricing:
+         - Identify top 5 competitors
+         - Collect current pricing data
+         - Compare features at each tier
+         - Generate comparison matrix`
+
+// Agent discovers sources, gathers data, synthesizes results
+```
+
+**When to use:** Information gathering across multiple sources or domains.
+
+### Pattern 5: Coordination Intent
+
+Multiple agents or systems need to work together.
+
+```typescript
+// Multi-agent coordination
+intent: `Generate comprehensive customer 360 report:
+         - Sales history and trends
+         - Support ticket analysis
+         - Product usage patterns
+         - Health score calculation`
+
+// Agent coordinates with specialist agents for each domain
+```
+
+**When to use:** Requires expertise from multiple specialized agents.
+
+### Pattern 6: Continuous Monitoring Intent
+
+Long-running processes that execute repeatedly.
+
+```typescript
+// Ongoing monitoring
+intent: 'Watch for new customer signups and trigger onboarding workflow within 10 minutes'
+
+// Agent runs continuously:
+// EVALUATE → Check for new signups
+// IF found → Trigger onboarding
+// WAIT → Pause before next check
+// REPEAT
+```
+
+**When to use:** Background processes, monitoring, scheduled tasks.
+
+## Context Injection
+
+Context provides the agent with domain knowledge and conversation history.
+
+### Types of Context
+
+<Tabs>
+  <Tab title="Conversation Context">
+```typescript
+import { oLaneContext } from '@olane/o-lane';
+
+// Previous conversation history
+const context = new oLaneContext([
+  '[Previous Conversation]',
+  'User: What were our sales last quarter?',
+  'Agent: Q3 sales were $1.2M, up 15% from Q2.',
+  'User: Show me regional breakdown.',
+  'Agent: US: $800K, EU: $300K, APAC: $100K.',
+  '[End Previous Conversation]'
+]);
+
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Now show me Q4 projections by region',
+    context: context.toString()
+  }
+});
+
+// Agent understands "by region" refers to US, EU, APAC from context
+```
+  </Tab>
+
+  <Tab title="Domain Knowledge Context">
+```typescript
+// Business rules and domain knowledge
+const domainContext = new oLaneContext([
+  '[Business Rules]',
+  '- Premium customers get priority support (SLA: 2 hours)',
+  '- Standard customers: 24-hour response time',
+  '- All refunds require manager approval over $100',
+  '- Financial data requires role: finance_viewer or higher',
+  '[End Business Rules]'
+]);
+
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Process refund request for premium customer, amount $150',
+    context: domainContext.toString()
+  }
+});
+
+// Agent knows to:
+// 1. Process with priority (premium customer)
+// 2. Request manager approval (over $100)
+```
+  </Tab>
+
+  <Tab title="Execution Context">
+```typescript
+// Previous execution results
+const executionContext = new oLaneContext([
+  '[Previous Execution Results]',
+  'Data Source: api/v2/customers',
+  'Records Fetched: 1,247',
+  'Processing Time: 3.2s',
+  'Cache Hit Rate: 78%',
+  '[End Previous Results]'
+]);
+
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Fetch updated customer data using the same source',
+    context: executionContext.toString()
+  }
+});
+
+// Agent knows to use api/v2/customers (successful in previous run)
+```
+  </Tab>
+
+  <Tab title="Constraint Context">
+```typescript
+// Operational constraints
+const constraints = new oLaneContext([
+  '[Constraints]',
+  '- Max execution time: 30 seconds',
+  '- Budget limit: $0.50 per execution',
+  '- Rate limit: 100 requests per minute',
+  '- Data freshness: Must be from last 24 hours',
+  '[End Constraints]'
+]);
+
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze customer behavior patterns',
+    context: constraints.toString()
+  }
+});
+
+// Agent optimizes execution to stay within constraints
+```
+  </Tab>
+</Tabs>
+
+### Context Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep Context Relevant" icon="filter">
+Only include information that helps the agent complete the intent.
+
+```typescript
+// ❌ Too much irrelevant context
+context: `[Full 300-line chat history including unrelated topics]`
+
+// ✅ Relevant context only
+context: `[Relevant History]
+Previous query: Sales by region for Q3
+Result: US: $800K, EU: $300K, APAC: $100K
+[End History]`
+```
+  </Accordion>
+
+  <Accordion title="Structure Context Clearly" icon="list">
+Use clear markers and formatting for easy parsing.
+
+```typescript
+// ✅ Well-structured context
+const context = new oLaneContext([
+  '[Customer Profile]',
+  'Tier: Premium',
+  'Account Age: 2 years',
+  'Support Tickets: 3 open, 47 resolved',
+  '[End Customer Profile]',
+  '',
+  '[Current Issue]',
+  'Type: Billing inquiry',
+  'Priority: High',
+  'Created: 2 hours ago',
+  '[End Current Issue]'
+]);
+```
+  </Accordion>
+
+  <Accordion title="Update Context as Needed" icon="arrows-rotate">
+Keep context fresh as conversations evolve.
+
+```typescript
+// Conversation flow with evolving context
+let context = new oLaneContext(['[Start of conversation]']);
+
+// After first intent
+const result1 = await agent.useSelf({...});
+context = new oLaneContext([
+  ...context.contexts,
+  `[Previous: ${result1.result}]`
+]);
+
+// Second intent with updated context
+const result2 = await agent.useSelf({
+  intent: 'Follow up on previous analysis',
+  context: context.toString()
+});
+```
+  </Accordion>
+
+  <Accordion title="Separate Context Types" icon="layer-group">
+Keep different types of context organized.
+
+```typescript
+const conversationCtx = new oLaneContext([/* chat history */]);
+const domainCtx = new oLaneContext([/* business rules */]);
+const constraintCtx = new oLaneContext([/* operational limits */]);
+
+// Combine relevant contexts for each intent
+const combinedContext = new oLaneContext([
+  ...conversationCtx.contexts,
+  ...domainCtx.contexts,
+  ...constraintCtx.contexts
+]);
+```
+  </Accordion>
+</AccordionGroup>
+
+## Debugging Intent Execution
+
+### Analyzing Execution History
+
+Every intent execution generates detailed history. Use it to debug and optimize.
+
+```typescript
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze sales trends'
+  }
+});
+
+// 1. Check cycle count
+console.log(`Cycles used: ${result.cycles}`);
+// High cycle count (>15) may indicate:
+// - Intent too complex
+// - Agent struggling to find tools
+// - Inefficient capability choices
+
+// 2. Review execution sequence
+console.log('Execution path:');
+result.sequence.forEach((step, index) => {
+  console.log(`Cycle ${index + 1}: ${step.type}`);
+  if (step.reasoning) {
+    console.log(`  Reasoning: ${step.reasoning}`);
+  }
+  if (step.error) {
+    console.log(`  ERROR: ${step.error}`);
+  }
+});
+
+// 3. Identify patterns
+const pathSummary = result.sequence.map(s => s.type).join(' → ');
+console.log(`Path: ${pathSummary}`);
+// Example: EVALUATE → SEARCH → TASK → EVALUATE → STOP
+// Look for:
+// - Repeated EVALUATE (agent uncertain)
+// - Many SEARCH cycles (can't find tools)
+// - ERROR cycles (execution failures)
+
+// 4. Analyze timing
+result.sequence.forEach((step, index) => {
+  if (step.timestamp) {
+    const duration = index > 0 
+      ? step.timestamp - result.sequence[index-1].timestamp 
+      : 0;
+    console.log(`Cycle ${index + 1}: ${step.type} (${duration}ms)`);
+  }
+});
+```
+
+### Common Issues and Solutions
+
+<AccordionGroup>
+  <Accordion title="High Cycle Count" icon="rotate">
+**Symptom:** Intent uses 15+ cycles consistently
+
+**Causes:**
+- Intent too complex for single execution
+- Agent can't find appropriate tools
+- Evaluation loops (agent uncertain)
+
+**Solutions:**
+```typescript
+// 1. Break into smaller intents
+// Before: Complex multi-part intent
+intent: 'Analyze sales, process refunds, update inventory, generate reports'
+
+// After: Separate intents
+const sales = await agent.useSelf({ 
+  intent: 'Analyze sales trends' 
+});
+const refunds = await agent.useSelf({ 
+  intent: 'Process pending refunds' 
+});
+// More efficient and debuggable
+
+// 2. Add context to guide agent
+context: `Available tools: sales-api, analytics-service
+         Data location: api/v2/sales
+         Expected format: JSON with daily aggregates`
+
+// 3. Increase max cycles for genuinely complex tasks
+maxCycles: 30 // For complex multi-step workflows
+```
+  </Accordion>
+
+  <Accordion title="Intent Not Resolving" icon="circle-xmark">
+**Symptom:** Agent completes but doesn't achieve goal
+
+**Causes:**
+- Intent too vague
+- Missing necessary tools
+- Insufficient context
+
+**Solutions:**
+```typescript
+// 1. Make intent more specific
+// Before: Vague
+intent: 'Do some customer analysis'
+
+// After: Specific with clear outcome
+intent: 'Calculate average customer lifetime value for premium tier customers who joined in Q4'
+
+// 2. Verify tools are available
+const tools = await agent.useSelf({ method: 'handshake' });
+console.log('Available tools:', tools.result.tools);
+// Ensure necessary tools are registered
+
+// 3. Add detailed context
+context: `Goal: Calculate CLV metric
+         Formula: (Average Order Value) × (Purchase Frequency) × (Customer Lifespan)
+         Data source: customers table, orders table
+         Filter: tier = 'premium' AND created_at >= '2024-10-01'`
+```
+  </Accordion>
+
+  <Accordion title="Repeated SEARCH Cycles" icon="magnifying-glass">
+**Symptom:** Many consecutive SEARCH capability cycles
+
+**Causes:**
+- Required tools not indexed
+- Tool descriptions unclear
+- Search query too specific
+
+**Solutions:**
+```typescript
+// 1. Ensure tools are properly registered and indexed
+class MyTool extends oToolBase {
+  constructor() {
+    super({
+      address: new oAddress('o://my-tool'),
+      // Clear, searchable description
+      description: 'Analyzes customer sales data and calculates trends, forecasts, and aggregates',
+      methods: {
+        analyze: {
+          name: 'analyze',
+          description: 'Analyze sales trends over time period',
+          parameters: {/* ... */}
+        }
+      }
+    });
+  }
+}
+
+// 2. Use tool discovery to verify indexing
+const discovery = await agent.use(
+  new oAddress('o://leader'),
+  {
+    method: 'search',
+    params: { query: 'sales analysis' }
+  }
+);
+console.log('Discoverable tools:', discovery.result);
+
+// 3. Provide tool hints in context
+context: `Available tools for this task:
+         - o://analytics/sales (sales data analysis)
+         - o://reports/generator (report creation)`
+```
+  </Accordion>
+
+  <Accordion title="Frequent ERROR Cycles" icon="triangle-exclamation">
+**Symptom:** Multiple ERROR capability executions
+
+**Causes:**
+- Tool failures (API down, rate limits)
+- Invalid parameters
+- Data quality issues
+
+**Solutions:**
+```typescript
+// 1. Add error handling context
+context: `Error handling:
+         - If sales-api fails, use backup-api
+         - If rate limited, wait 60s and retry
+         - If data missing, return partial results with warning`
+
+// 2. Review error details in execution history
+result.sequence.forEach(step => {
+  if (step.type === 'ERROR') {
+    console.log('Error details:', step.error);
+    console.log('Recovery attempted:', step.recovery);
+  }
+});
+
+// 3. Implement graceful degradation
+intent: 'Generate sales report with data from primary source, use backup if primary unavailable, proceed with partial data if needed'
+```
+  </Accordion>
+
+  <Accordion title="Hitting Max Cycles" icon="ban">
+**Symptom:** Lane throws "reached max iterations" error
+
+**Causes:**
+- Intent genuinely complex
+- Agent stuck in evaluation loop
+- Missing stop condition
+
+**Solutions:**
+```typescript
+// 1. Increase max cycles for complex intents
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Comprehensive customer analysis across multiple dimensions',
+    maxCycles: 50 // Increase from default 20
+  }
+});
+
+// 2. Break into sub-intents
+// Use MULTIPLE_STEP capability or manual orchestration
+const step1 = await agent.useSelf({ 
+  intent: 'Gather customer data' 
+});
+const step2 = await agent.useSelf({ 
+  intent: 'Analyze gathered data',
+  context: `Data: ${step1.result}`
+});
+
+// 3. Review execution loop pattern
+// If agent is stuck, add explicit success criteria
+intent: 'Analyze customers until you have identified at least 3 clear segments, then stop'
+```
+  </Accordion>
+</AccordionGroup>
+
+## Optimization Techniques
+
+### 1. Intent Caching and Reuse
+
+Learn from successful executions to speed up future runs.
+
+```typescript
+// First execution: Agent explores available tools
+const result1 = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Generate monthly sales report'
+  }
+});
+// Cycles: 12 (exploring, discovering tools)
+
+// Store successful execution pattern
+const successfulPath = result1.sequence.map(s => ({
+  type: s.type,
+  config: s.config
+}));
+
+// Future executions can reference successful patterns
+// The agent learns optimal paths through lane storage
+// and knowledge accumulation
+```
+
+### 2. Progressive Intent Refinement
+
+Start broad, refine based on results.
+
+```typescript
+// Step 1: Broad exploration
+const discovery = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'What customer data is available for analysis?'
+  }
+});
+
+// Step 2: Refined intent based on discovery
+const analysis = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze customer purchase patterns using the data sources you just discovered',
+    context: `Available sources: ${discovery.result.sources.join(', ')}`
+  }
+});
+```
+
+### 3. Parallel Intent Execution
+
+For independent tasks, use parallel execution.
+
+```typescript
+// Sequential (slow)
+const sales = await agent.useSelf({ intent: 'Fetch sales data' });
+const support = await agent.useSelf({ intent: 'Fetch support data' });
+const usage = await agent.useSelf({ intent: 'Fetch usage data' });
+
+// Parallel (fast)
+const [sales, support, usage] = await Promise.all([
+  agent.useSelf({ intent: 'Fetch sales data' }),
+  agent.useSelf({ intent: 'Fetch support data' }),
+  agent.useSelf({ intent: 'Fetch usage data' })
+]);
+
+// Then aggregate
+const summary = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Create customer 360 summary',
+    context: `Sales: ${sales.result}
+              Support: ${support.result}
+              Usage: ${usage.result}`
+  }
+});
+```
+
+### 4. Streaming for Long-Running Intents
+
+Get real-time progress updates.
+
+```typescript
+// Create progress receiver
+class ProgressReceiver extends oLaneTool {
+  async _tool_receive_stream(request: oRequest) {
+    console.log('Progress update:', request.params.data);
+    // Update UI, log progress, etc.
+    return { received: true };
+  }
+}
+
+const receiver = new ProgressReceiver({
+  address: new oAddress('o://progress')
+});
+await receiver.start();
+
+// Execute with streaming
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Process 10,000 customer records',
+    streamTo: 'o://progress' // Real-time updates
+  }
+});
+
+// You see progress as agent works:
+// Progress update: { cycle: 1, action: "Starting data fetch..." }
+// Progress update: { cycle: 2, action: "Fetched 10,000 records" }
+// Progress update: { cycle: 3, action: "Processing batch 1/10..." }
+```
+
+## Testing Intent Execution
+
+### Unit Testing Individual Intents
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { oLaneTool, oIntent } from '@olane/o-lane';
+
+describe('Intent Execution Tests', () => {
+  let agent: oLaneTool;
+
+  beforeEach(async () => {
+    agent = new oLaneTool({
+      address: new oAddress('o://test-agent')
+    });
+    await agent.start();
+  });
+
+  afterEach(async () => {
+    await agent.stop();
+  });
+
+  it('should execute simple intent', async () => {
+    const result = await agent.useSelf({
+      method: 'intent',
+      params: {
+        intent: 'Calculate 2 + 2'
+      }
+    });
+
+    expect(result.result).toContain('4');
+    expect(result.cycles).toBeLessThan(5);
+  });
+
+  it('should handle intent with context', async () => {
+    const result = await agent.useSelf({
+      method: 'intent',
+      params: {
+        intent: 'What is the customer tier?',
+        context: '[Customer Profile]\nTier: Premium\n[End Profile]'
+      }
+    });
+
+    expect(result.result).toContain('Premium');
+  });
+
+  it('should respect max cycles', async () => {
+    await expect(
+      agent.useSelf({
+        method: 'intent',
+        params: {
+          intent: 'Infinitely complex task',
+          maxCycles: 3
+        }
+      })
+    ).rejects.toThrow('reached max iterations');
+  });
+});
+```
+
+### Integration Testing with Multiple Agents
+
+```typescript
+describe('Multi-Agent Intent Execution', () => {
+  let coordinator: oLaneTool;
+  let specialist: oLaneTool;
+
+  beforeEach(async () => {
+    // Setup leader
+    const leader = new oLeaderNode({
+      address: new oAddress('o://leader')
+    });
+    await leader.start();
+
+    // Setup specialist
+    specialist = new MySpecialistTool({
+      address: new oAddress('o://specialist'),
+      leader: new oAddress('o://leader')
+    });
+    await specialist.start();
+
+    // Setup coordinator
+    coordinator = new oLaneTool({
+      address: new oAddress('o://coordinator'),
+      leader: new oAddress('o://leader')
+    });
+    await coordinator.start();
+  });
+
+  it('should coordinate across agents', async () => {
+    const result = await coordinator.useSelf({
+      method: 'intent',
+      params: {
+        intent: 'Get specialized analysis from available specialists'
+      }
+    });
+
+    // Coordinator should discover and use specialist
+    expect(result.sequence.some(s => 
+      s.type === 'SEARCH' && s.result.includes('specialist')
+    )).toBe(true);
+  });
+});
+```
+
+## Best Practices Summary
+
+<CardGroup cols={2}>
+  <Card title="Intent Design" icon="bullseye">
+✅ Focus on outcomes, not steps
+✅ Provide appropriate specificity
+✅ Include relevant context
+✅ Set clear success criteria
+✅ Use natural language
+
+❌ Don't prescribe implementation
+❌ Don't assume specific tools
+❌ Don't combine unrelated tasks
+❌ Don't use technical jargon unnecessarily
+  </Card>
+
+  <Card title="Context Management" icon="layer-group">
+✅ Keep context relevant and focused
+✅ Structure with clear markers
+✅ Update as conversation evolves
+✅ Separate different context types
+✅ Include business rules when needed
+
+❌ Don't dump entire chat history
+❌ Don't include irrelevant information
+❌ Don't mix unrelated contexts
+❌ Don't forget to update context
+  </Card>
+
+  <Card title="Debugging" icon="bug">
+✅ Review execution sequences
+✅ Analyze cycle counts
+✅ Check capability patterns
+✅ Monitor timing and performance
+✅ Store execution history
+
+❌ Don't ignore high cycle counts
+❌ Don't skip execution analysis
+❌ Don't assume failures are random
+❌ Don't delete debugging information
+  </Card>
+
+  <Card title="Optimization" icon="gauge-high">
+✅ Learn from successful executions
+✅ Use parallel execution when possible
+✅ Stream long-running operations
+✅ Break complex intents into steps
+✅ Monitor and optimize hot paths
+
+❌ Don't optimize prematurely
+❌ Don't ignore agent learning
+❌ Don't block on long operations
+❌ Don't use same approach for all intents
+  </Card>
+</CardGroup>
+
+## Real-World Examples
+
+### Example 1: Customer Support Automation
+
+```typescript
+// Intent: Intelligent ticket routing
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Route this support ticket to the appropriate specialist',
+    context: `
+[Ticket Details]
+Subject: Can't connect to API
+Description: Getting 401 errors on all endpoints since this morning
+Customer: Acme Corp (Enterprise tier)
+Priority: High
+[End Ticket]
+
+[Business Rules]
+- Enterprise customers get immediate specialist assignment
+- API/integration issues go to DevOps team
+- High priority requires notification within 15 minutes
+[End Rules]
+    `
+  }
+});
+
+// Agent autonomously:
+// 1. Identifies issue type (API/integration)
+// 2. Checks customer tier (Enterprise = priority)
+// 3. Searches for DevOps specialists
+// 4. Assigns to available specialist
+// 5. Sends immediate notification (within SLA)
+// 6. Logs ticket routing decision
+```
+
+### Example 2: Data Pipeline Processing
+
+```typescript
+// Intent: Adaptive data processing
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Process incoming transaction data and update analytics dashboard',
+    context: `
+[Data Constraints]
+- Must be processed within 5 minutes of arrival
+- Data format may vary (JSON, CSV, XML)
+- Invalid records should be logged but not fail processing
+- Dashboard update required even with partial data
+[End Constraints]
+
+[Previous Execution]
+- Primary database: Available (latency: 45ms)
+- Backup database: Available (latency: 120ms)
+- Processing time: 2.3 minutes average
+[End Previous]
+    `
+  }
+});
+
+// Agent adapts to:
+// - Different data formats (auto-detects and parses)
+// - Database availability (uses primary, falls back to backup)
+// - Data quality issues (logs invalid, continues processing)
+// - Time constraints (optimizes for 5-minute SLA)
+```
+
+### Example 3: Business Intelligence
+
+```typescript
+// Intent: Comprehensive analysis
+const result = await agent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Generate executive dashboard showing key business metrics with insights',
+    context: `
+[Required Metrics]
+1. Revenue (current vs previous period)
+2. Customer acquisition (count and cost)
+3. Churn rate and reasons
+4. Product usage trends
+5. Support ticket volume and resolution time
+[End Required]
+
+[Presentation]
+- Format: Executive summary + detailed sections
+- Include: Trend arrows, percentage changes, key insights
+- Highlight: Anything outside normal range (±20%)
+[End Presentation]
+    `
+  }
+});
+
+// Agent orchestrates:
+// - Parallel data fetching from multiple sources
+// - Calculation of metrics and comparisons
+// - Trend analysis and anomaly detection
+// - Report generation with visualizations
+// - Insight extraction using AI analysis
+```
+
+## Next Steps
+
+<Steps>
+  <Step title="Try the Quickstart">
+Build your first intent-driven workflow
+
+[Workflows Quickstart →](/use-cases/workflows/quickstart)
+  </Step>
+
+  <Step title="Understand the Capability Loop">
+Deep dive into how intents become actions
+
+[Capability Loop →](/concepts/lanes/capability-loop)
+  </Step>
+
+  <Step title="Learn About Emergent Coordination">
+Enable agents to discover optimal workflows
+
+[Emergent Coordination →](/use-cases/workflows/emergent-coordination)
+  </Step>
+
+  <Step title="Test Your Workflows">
+Implement robust testing for intent execution
+
+[Testing Workflows →](/use-cases/workflows/testing)
+  </Step>
+</Steps>
+
+## Related Documentation
+
+<CardGroup cols={3}>
+  <Card title="Intents Reference" icon="bullseye" href="/concepts/lanes/intents">
+Complete API reference for oIntent
+  </Card>
+
+  <Card title="Context Injection" icon="layer-group" href="/concepts/lanes/context-injection">
+Advanced context management techniques
+  </Card>
+
+  <Card title="Capability Loop" icon="rotate" href="/concepts/lanes/capability-loop">
+How the evaluate-plan-execute cycle works
+  </Card>
+
+  <Card title="Testing Guide" icon="flask" href="/use-cases/workflows/testing">
+Test intent execution with mocks
+  </Card>
+
+  <Card title="Debugging" icon="bug" href="/dev/debugging">
+Debug complex intent execution
+  </Card>
+
+  <Card title="Performance" icon="gauge-high" href="/dev/performance-profiling">
+Optimize intent execution performance
+  </Card>
+</CardGroup>

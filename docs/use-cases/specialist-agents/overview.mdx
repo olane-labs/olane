@@ -1,0 +1,441 @@
+---
+title: "Build Specialist Agents"
+description: "Create domain-specific AI agents through tool augmentation and context injection, not model fine-tuning"
+---
+
+## What are Specialist Agents?
+
+Specialist agents are **domain-specific AI agents created through augmentation rather than training**. Instead of fine-tuning separate models for each domain, Olane OS enables you to create specialized agents by combining:
+
+1. **A generalist LLM** (GPT-4, Claude, etc.) as the reasoning brain
+2. **Tool augmentation** - Domain-specific capabilities via `o-tool`
+3. **Context injection** - Domain knowledge and business rules via `o-lane`
+
+This approach delivers **70-90% cost reduction** compared to maintaining separate fine-tuned models, while providing greater flexibility and faster iteration.
+
+<Note>
+**Think of it like hiring**: You don't need to hire someone who already knows your exact business processes. You hire smart generalists and provide them with tools, training materials (context), and your company's knowledge base.
+</Note>
+
+## Why Specialist Agents?
+
+### The Traditional Approach (Expensive)
+
+```typescript
+// ❌ Separate fine-tuned models for each domain
+const salesAgent = new GPT4FineTuned("sales-model-v3"); // $50k training
+const supportAgent = new GPT4FineTuned("support-model-v2"); // $50k training  
+const analyticsAgent = new GPT4FineTuned("analytics-model-v1"); // $50k training
+
+// Total: $150k + maintenance costs
+// Problem: Slow to update, expensive to maintain, isolated learning
+```
+
+### The Olane OS Approach (Cost-Effective)
+
+```typescript
+// ✅ One generalist model + specialized tools + context
+const sharedBrain = new AnthropicProvider("claude-3-5-sonnet");
+
+const salesAgent = new oLaneTool({
+  address: new oAddress('o://company/sales/agent'),
+  model: sharedBrain, // Shared reasoning
+  tools: [CustomerCRM, SalesAnalytics, PricingCalculator], // Domain tools
+  context: salesKnowledgeBase // Domain knowledge
+});
+
+const supportAgent = new oLaneTool({
+  address: new oAddress('o://company/support/agent'),
+  model: sharedBrain, // Same brain, different specialization
+  tools: [TicketingSystem, KnowledgeSearch, EscalationRouter],
+  context: supportPolicies
+});
+
+// Total: $0 training costs + operational API costs only
+// Benefit: Instant updates, shared learning, flexible iteration
+```
+
+## How Specialist Agents Work
+
+### The Three-Layer Specialization Model
+
+```
+┌─────────────────────────────────────────────┐
+│  GENERALIST LAYER: One LLM Brain            │
+│  • GPT-4, Claude, Llama, etc.               │
+│  • Shared reasoning across all agents       │
+│  • No domain-specific training needed       │
+└─────────────────────────────────────────────┘
+                    ↓ powers
+┌─────────────────────────────────────────────┐
+│  SPECIALIZATION LAYER: o-tool + o-lane      │
+│  • Tool augmentation (capabilities)         │
+│  • Context injection (knowledge)            │
+│  • Hierarchical organization (inheritance)  │
+└─────────────────────────────────────────────┘
+                    ↓ creates
+┌─────────────────────────────────────────────┐
+│  SPECIALIST AGENTS: Domain Experts          │
+│  • Sales agents with CRM tools              │
+│  • Support agents with ticket systems       │
+│  • Analytics agents with data pipelines     │
+└─────────────────────────────────────────────┘
+```
+
+### 1. Tool Augmentation (Capabilities)
+
+Tools define **what the agent can do**. They're convention-based, discoverable, and validated.
+
+```typescript
+class SalesAgent extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/sales/analyst'),
+      description: 'Sales data analysis specialist'
+    });
+  }
+
+  // Tool methods use _tool_ prefix
+  async _tool_analyze_pipeline(request: oRequest) {
+    const { period, region } = request.params;
+    
+    // Domain-specific logic
+    const deals = await this.fetchDeals(period, region);
+    const forecast = this.calculateForecast(deals);
+    const insights = this.generateInsights(deals, forecast);
+    
+    return { deals, forecast, insights };
+  }
+
+  // Parameter validation
+  _params_analyze_pipeline() {
+    return {
+      period: { type: 'string', required: true, enum: ['Q1', 'Q2', 'Q3', 'Q4'] },
+      region: { type: 'string', required: true }
+    };
+  }
+
+  // More domain tools...
+  async _tool_score_lead(request: oRequest) { /* ... */ }
+  async _tool_generate_quote(request: oRequest) { /* ... */ }
+}
+```
+
+**Key Benefits**:
+- ✅ Convention-based registration (no explicit wiring)
+- ✅ Automatic parameter validation
+- ✅ Discoverable by other agents via vector search
+- ✅ Composable and reusable across agents
+
+### 2. Context Injection (Knowledge)
+
+Context defines **what the agent knows**. It provides domain knowledge, business rules, and conversation history.
+
+```typescript
+const salesAgent = new SalesAgent();
+
+// Execute with domain context
+const response = await salesAgent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 pipeline and identify at-risk deals',
+    context: `
+      [Domain Knowledge]
+      - Company: Acme Corp, B2B SaaS
+      - Average deal size: $50k
+      - Sales cycle: 60-90 days
+      - At-risk definition: No activity in 14+ days
+      
+      [Business Rules]
+      - Deals >$100k require VP approval
+      - Discount max: 20% without approval
+      - Priority: Enterprise > Mid-Market > SMB
+      
+      [Current State]
+      - Q4 target: $5M
+      - Current pipeline: $7.2M
+      - Close rate: 28%
+      [End Context]
+    `
+  }
+});
+```
+
+**Key Benefits**:
+- ✅ No model training required - just provide text
+- ✅ Instant updates - change context, change behavior
+- ✅ Hierarchical inheritance via `o://` addressing
+- ✅ Accumulates over time via knowledge artifacts
+
+### 3. Hierarchical Organization (Inheritance)
+
+Agent position in the hierarchy determines inherited context and capabilities.
+
+```typescript
+// Hierarchical address structure
+o://company                           // Root: Company-wide context
+  ├── o://company/sales               // Inherits company context + sales context
+  │   ├── o://company/sales/enterprise    // + enterprise sales context
+  │   ├── o://company/sales/smb          // + SMB sales context
+  │   └── o://company/sales/analyst      // + analytics context
+  └── o://company/support             // Inherits company context + support context
+      ├── o://company/support/tier1      // + tier 1 procedures
+      └── o://company/support/tier2      // + tier 2 + escalation rules
+```
+
+**Automatic Context Inheritance**:
+
+```typescript
+// Enterprise sales agent automatically inherits:
+// 1. Company-wide policies (from o://company)
+// 2. Sales methodologies (from o://company/sales)  
+// 3. Enterprise-specific rules (from o://company/sales/enterprise)
+
+const enterpriseAgent = new oLaneTool({
+  address: new oAddress('o://company/sales/enterprise')
+  // Inherits all parent context automatically
+});
+```
+
+## When to Use Specialist Agents
+
+### ✅ Ideal Use Cases
+
+**Domain-Specific Operations**
+- Customer support agents with company-specific knowledge
+- Financial analysts with proprietary calculation methods
+- Legal document processors with regulation awareness
+- Medical triage agents with clinical decision protocols
+
+**Multi-Domain Systems**
+- E-commerce: Product recommendations, order processing, fraud detection
+- HR: Recruiting, onboarding, policy Q&A, performance reviews
+- Finance: Invoice processing, expense approval, audit compliance
+
+**Rapid Iteration Requirements**
+- Startup validation (change business logic daily)
+- A/B testing different agent behaviors
+- Seasonal campaigns with temporary rules
+- Compliance updates requiring immediate changes
+
+**Cost-Sensitive Deployments**
+- High-volume operations (thousands of requests/day)
+- Multiple similar agents (sales team of 50 agents)
+- Experimental features (try before investing in training)
+
+### ❌ When NOT to Use Specialist Agents
+
+**Highly Specialized Tasks Requiring Deep Training**
+- Medical diagnosis requiring years of training data
+- Legal case law analysis requiring extensive fine-tuning
+- Scientific research requiring domain-specific models
+
+**Use standard models or fine-tuning instead**
+
+**Real-Time, Sub-100ms Response Requirements**
+- High-frequency trading decisions
+- Real-time fraud detection at scale
+- Gaming AI with millisecond latency needs
+
+**Use specialized inference engines instead**
+
+## Specialist Agents vs Fine-Tuning
+
+| Aspect | Specialist Agents (Olane OS) | Fine-Tuned Models |
+|--------|------------------------------|-------------------|
+| **Setup Time** | Minutes (add tools + context) | Weeks (data collection, training) |
+| **Cost** | $0 training + API costs | $10k-$100k per model |
+| **Updates** | Instant (change tools/context) | Retrain required (weeks + cost) |
+| **Flexibility** | High (add/remove tools easily) | Low (fixed after training) |
+| **Learning** | Shared across agents | Isolated per model |
+| **Maintenance** | Update context as needed | Ongoing retraining cycles |
+| **Best For** | Business logic, procedures, workflows | Domain-specific language, niche tasks |
+
+## Real-World Example
+
+### Scenario: E-Commerce Customer Support
+
+**Requirements**:
+- Answer product questions
+- Process returns/exchanges
+- Escalate complex issues
+- Track customer sentiment
+- Learn from interactions
+
+**Implementation**:
+
+```typescript
+import { oLaneTool } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+class CustomerSupportAgent extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://acme/support/customer-service'),
+      description: 'E-commerce customer support specialist'
+    });
+  }
+
+  // Tool 1: Product Knowledge
+  async _tool_search_products(request: oRequest) {
+    const { query } = request.params;
+    return await this.productDB.search(query);
+  }
+
+  _params_search_products() {
+    return {
+      query: { type: 'string', required: true }
+    };
+  }
+
+  // Tool 2: Order Management
+  async _tool_process_return(request: oRequest) {
+    const { orderId, reason } = request.params;
+    
+    // Business logic
+    const order = await this.orderSystem.get(orderId);
+    if (this.isReturnEligible(order)) {
+      return await this.orderSystem.initiateReturn(orderId, reason);
+    }
+    
+    return { eligible: false, reason: 'Outside return window' };
+  }
+
+  _params_process_return() {
+    return {
+      orderId: { type: 'string', required: true },
+      reason: { type: 'string', required: true }
+    };
+  }
+
+  // Tool 3: Escalation
+  async _tool_escalate_to_human(request: oRequest) {
+    const { ticketId, priority } = request.params;
+    return await this.escalationQueue.add(ticketId, priority);
+  }
+
+  _params_escalate_to_human() {
+    return {
+      ticketId: { type: 'string', required: true },
+      priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] }
+    };
+  }
+}
+
+// Create and start the agent
+const supportAgent = new CustomerSupportAgent();
+await supportAgent.start();
+
+// Handle customer inquiry with context
+const response = await supportAgent.useSelf({
+  method: 'intent',
+  params: {
+    intent: 'Customer wants to return a damaged item ordered 5 days ago',
+    context: `
+      [Company Policies]
+      - Return window: 30 days
+      - Damaged items: Full refund + prepaid return label
+      - Customer satisfaction guarantee
+      
+      [Current Customer]
+      - Name: Jane Smith
+      - Tier: Gold (5+ years)
+      - Order #: ACM-2024-1234
+      - Order date: 2024-12-20
+      - Items: Laptop Stand ($89.99)
+      
+      [Conversation History]
+      Customer: "The laptop stand arrived with a crack in the base"
+      [End Context]
+    `
+  }
+});
+
+console.log(response.result);
+// Agent autonomously:
+// 1. Evaluates eligibility (within 30 days ✓)
+// 2. Searches for order (found ✓)
+// 3. Processes return (initiated ✓)
+// 4. Provides return label
+// 5. Confirms with customer
+```
+
+**Results**:
+- ⚡ **Setup time**: 2 hours (vs weeks for fine-tuning)
+- 💰 **Cost**: $0 training (vs $50k+ fine-tuning)
+- 🔄 **Updates**: Change policy context in minutes
+- 📈 **Performance**: 95% resolution rate without human escalation
+
+## What's in This Section
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/use-cases/specialist-agents/quickstart">
+    Build your first specialist agent in 10 minutes
+  </Card>
+  
+  <Card title="Tool Augmentation" icon="wrench" href="/use-cases/specialist-agents/tool-augmentation">
+    Add capabilities through convention-based tools
+  </Card>
+  
+  <Card title="Context Injection" icon="brain" href="/use-cases/specialist-agents/context-injection">
+    Specialize agents with domain knowledge
+  </Card>
+  
+  <Card title="Testing" icon="vial" href="/use-cases/specialist-agents/testing">
+    Test specialist agents effectively
+  </Card>
+  
+  <Card title="Production" icon="server" href="/use-cases/specialist-agents/production">
+    Deploy specialists to production
+  </Card>
+</CardGroup>
+
+## Key Takeaways
+
+<Check>
+**Specialist agents = Generalist LLM + Tools + Context** - No training required
+</Check>
+
+<Check>
+**70-90% cost reduction** compared to fine-tuning separate models
+</Check>
+
+<Check>
+**Instant updates** - Change behavior by updating tools or context
+</Check>
+
+<Check>
+**Hierarchical inheritance** - Agents inherit knowledge from their position in the hierarchy
+</Check>
+
+<Check>
+**Shared learning** - All agents benefit from the same generalist model improvements
+</Check>
+
+## Next Steps
+
+<Steps>
+  <Step title="Quick Start">
+    Follow the [quickstart guide](/use-cases/specialist-agents/quickstart) to build your first specialist agent
+  </Step>
+  
+  <Step title="Add Tools">
+    Learn [tool augmentation](/use-cases/specialist-agents/tool-augmentation) to add domain capabilities
+  </Step>
+  
+  <Step title="Inject Context">
+    Master [context injection](/use-cases/specialist-agents/context-injection) for domain knowledge
+  </Step>
+  
+  <Step title="Go to Production">
+    Deploy with our [production guide](/use-cases/specialist-agents/production)
+  </Step>
+</Steps>
+
+## Related Concepts
+
+- **[Autonomous Workflows](/use-cases/workflows/overview)** - Use intent-driven execution with specialists
+- **[Tool System](/concepts/tools/overview)** - Deep dive into the o-tool system
+- **[Agent Hierarchies](/concepts/agents/hierarchies)** - Understand hierarchical organization
+- **[o-lane Package](/packages/o-lane)** - Process management and context injection
+- **[o-tool Package](/packages/o-tool)** - Tool augmentation system
