@@ -1,8 +1,8 @@
 # @olane/o-tool
 
-> Base class for building specialized AI agent tools in Olane OS
+> Tool augmentation system for Olane OS - build specialized tool nodes (applications) that AI agents use
 
-Transform generalist LLMs into specialist agents through tool augmentation. `o-tool` provides the foundation for creating discoverable, validated, and hierarchically-organized agent capabilities.
+The tool system layer of Olane OS. Transform generalist LLMs into specialists through tool augmentation and context injection - create discoverable, validated capabilities without fine-tuning models.
 
 [![npm version](https://img.shields.io/npm/v/@olane/o-tool.svg)](https://www.npmjs.com/package/@olane/o-tool)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)

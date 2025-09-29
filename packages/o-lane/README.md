@@ -95,7 +95,12 @@ After executing an intent, you'll receive:
 
 ### The Agent Process Manager
 
-Think of `o-lane` as the **process manager for AI agents** in Olane OS. Just as an operating system manages processes (forking, executing, monitoring), o-lane manages agentic workflows - but instead of explicit instructions, it uses **intent-driven execution**.
+Think of `o-lane` as the **process manager for tool nodes (applications)** in Olane OS. It enables your tool nodes to accept natural language intents from AI agents (LLMs) and autonomously resolve them through emergent workflows.
+
+**Key Concept**: 
+- **AI Agents (Users)**: GPT-4, Claude, etc. - the intelligent users who send intents
+- **Tool Nodes (Applications)**: What you build with o-lane - specialized capabilities that process intents
+- **o-lane**: The runtime that enables tool nodes to execute intent-driven workflows
 
 **Key Innovation: Emergent vs Explicit Orchestration**
 

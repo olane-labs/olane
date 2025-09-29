@@ -1,53 +1,82 @@
 # @olane/o-node
 
-Production-ready, libp2p-based implementation of Olane OS - enabling AI agents to communicate over peer-to-peer networks with built-in discovery, routing, and fault tolerance.
+The production distribution layer of Olane OS - build tool nodes that AI agents use, with real P2P networking via libp2p.
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-node.svg)](https://www.npmjs.com/package/@olane/o-node)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ## What is o-node?
 
-**o-node** is the **concrete, production-ready implementation** of [@olane/o-core](../o-core) that uses [libp2p](https://libp2p.io/) for peer-to-peer networking. While o-core defines the abstract agent operating system, o-node makes it work with real networking, peer discovery, and distributed communication.
+**o-node** is the **production-ready distribution layer** of Olane OS - like Ubuntu is to the Linux kernel. While [@olane/o-core](../o-core) defines the abstract kernel, o-node is the actual working OS that uses [libp2p](https://libp2p.io/) for real peer-to-peer networking, discovery, and distributed communication.
 
-Think of o-core as the kernel specification, and o-node as the actual Linux distribution - ready to run your AI agents in production.
+### The Three-Layer Model
+
+```
+┌─────────────────────────────────────────────┐
+│  USERS: AI Agents (LLMs)                    │
+│  - GPT-4, Claude, Gemini, etc.              │
+│  - Natural language interfaces              │
+│  - Intelligent reasoning brains             │
+└─────────────────────────────────────────────┘
+                    ⬇ use
+┌─────────────────────────────────────────────┐
+│  APPLICATIONS: Tool Nodes (you build)       │
+│  - Domain-specific capabilities             │
+│  - Business integrations (APIs, DBs)        │
+│  - Specialized tools and services           │
+└─────────────────────────────────────────────┘
+                    ⬇ run on
+┌─────────────────────────────────────────────┐
+│  OPERATING SYSTEM: Olane Runtime (o-node)   │
+│  - P2P networking (libp2p)                  │
+│  - Tool node discovery                      │
+│  - IPC & routing                            │
+│  - Process management                       │
+└─────────────────────────────────────────────┘
+```
+
+**Key Insight**: You build **tool nodes** (specialized applications) using o-node, which **AI agents** (LLMs) use as intelligent users to accomplish tasks.
 
 ## Key Features
 
 - 🌐 **Peer-to-Peer Networking** - Built on libp2p for true decentralized communication
-- 🔍 **Automatic Discovery** - DHT-based peer discovery and routing
+- 🔍 **Automatic Discovery** - DHT-based tool node discovery and routing
 - 🔒 **Secure by Default** - Encrypted connections with connection gating
 - 🚀 **Production Ready** - Battle-tested libp2p stack with NAT traversal
 - 🏗️ **Multiple Node Types** - Server, client, and WebSocket-optimized variants
 - 📡 **Network Registration** - Automatic registration with leader nodes
-- 🔄 **Persistent Identity** - Seed-based peer IDs for consistent agent identity
+- 🔄 **Persistent Identity** - Seed-based peer IDs for consistent tool node identity
 - 🛡️ **Hierarchical Security** - Parent-child access control built-in
+- 🧠 **Generalist-Specialist Architecture** - One LLM brain serves many specialized tool nodes
 
 ## Relationship to o-core
 
 ```
 ┌─────────────────────────────────────┐
 │      o-node (This Package)          │
-│   Production libp2p Implementation  │
+│   Production Distribution Layer     │
 │                                     │
-│  • Real P2P networking              │
-│  • Peer discovery & routing         │
+│  • Real P2P networking (libp2p)     │
+│  • Tool node discovery & routing    │
 │  • Network registration             │
-│  • Ready-to-use node variants       │
+│  • Ready-to-use variants            │
 └─────────────────────────────────────┘
               ⬇ implements
 ┌─────────────────────────────────────┐
 │          @olane/o-core              │
-│      Abstract Agent Runtime         │
+│         Abstract Kernel             │
 │                                     │
 │  • Abstract base classes            │
 │  • Router & connection interfaces   │
 │  • Transport-agnostic design        │
-│  • Core agent lifecycle             │
+│  • Core lifecycle management        │
 └─────────────────────────────────────┘
 ```
 
-**Use o-node when:** Building AI agents that need real networking  
-**Use o-core when:** Building custom transport implementations or frameworks
+**Think of it as**: o-core is the **Linux kernel**, o-node is the **Ubuntu distribution**
+
+**Use o-node when:** Building tool nodes that AI agents will use (production systems)  
+**Use o-core when:** Building custom transport implementations or experimental architectures
 
 ## Installation
 
@@ -57,19 +86,19 @@ npm install @olane/o-node @olane/o-core @olane/o-protocol @olane/o-config @olane
 
 ## Quick Start
 
-### Creating Your First P2P Agent
+### Creating Your First P2P Tool Node
 
 ```typescript
 import { oServerNode, oNodeAddress } from '@olane/o-node';
 import { NodeType, oRequest } from '@olane/o-core';
 
 // Create a server node (listens for connections)
-class MyAgent extends oServerNode {
+class MyToolNode extends oServerNode {
   constructor(address: string) {
     super({
       address: new oNodeAddress(address),
       type: NodeType.AGENT,
-      description: 'My first P2P agent',
+      description: 'My first tool node for AI agents',
       leader: null, // We'll be our own network for now
       parent: null,
       methods: {
@@ -84,13 +113,13 @@ class MyAgent extends oServerNode {
     });
   }
 
-  // Implement your agent's logic
+  // Implement your tool node's logic
   async execute(request: oRequest): Promise<any> {
     const { method, params } = request;
     
     if (method === 'greet') {
       return { 
-        message: `Hello, ${params.name}! I'm a P2P agent.`,
+        message: `Hello, ${params.name}! I'm a tool node that AI agents can use.`,
         peerId: this.peerId.toString()
       };
     }
@@ -99,36 +128,36 @@ class MyAgent extends oServerNode {
   }
 }
 
-// Start the agent
-const agent = new MyAgent('o://my-agent');
-await agent.start();
+// Start the tool node
+const toolNode = new MyToolNode('o://my-tool');
+await toolNode.start();
 
-console.log('Agent running at:', agent.transports);
-console.log('Peer ID:', agent.peerId.toString());
+console.log('Tool node running at:', toolNode.transports);
+console.log('Peer ID:', toolNode.peerId.toString());
 
-// Call ourselves (local test)
-const response = await agent.use(
-  agent.address,
+// AI agents can now use this tool node via its o:// address
+const response = await toolNode.use(
+  toolNode.address,
   { method: 'greet', params: { name: 'World' } }
 );
 
 console.log(response.result);
-// { message: "Hello, World! I'm a P2P agent.", peerId: "..." }
+// { message: "Hello, World! I'm a tool node that AI agents can use.", peerId: "..." }
 
-await agent.stop();
+await toolNode.stop();
 ```
 
-### Creating a Network of Agents
+### Creating a Network of Tool Nodes
 
 ```typescript
 import { oServerNode, oNodeAddress } from '@olane/o-node';
 import { NodeType } from '@olane/o-core';
 
-// 1. Create a leader node (network coordinator)
+// 1. Create a leader node (network coordinator for tool nodes)
 const leader = new oServerNode({
   address: new oNodeAddress('o://leader'),
   type: NodeType.LEADER,
-  description: 'Network leader',
+  description: 'Network coordinator',
   leader: null,
   parent: null
 });
@@ -136,53 +165,54 @@ const leader = new oServerNode({
 await leader.start();
 console.log('Leader started:', leader.transports[0].toString());
 
-// 2. Create child agents that connect to the leader
-const agent1 = new oServerNode({
-  address: new oNodeAddress('o://agent1'),
+// 2. Create tool nodes that connect to the leader
+const salesTool = new oServerNode({
+  address: new oNodeAddress('o://sales-tool'),
   type: NodeType.AGENT,
-  description: 'Child agent 1',
+  description: 'Sales analysis tool for AI agents',
   leader: new oNodeAddress('o://leader', leader.transports),
   parent: new oNodeAddress('o://leader', leader.transports)
 });
 
-const agent2 = new oServerNode({
-  address: new oNodeAddress('o://agent2'),
+const analyticsTool = new oServerNode({
+  address: new oNodeAddress('o://analytics-tool'),
   type: NodeType.AGENT,
-  description: 'Child agent 2',
+  description: 'Data analytics tool for AI agents',
   leader: new oNodeAddress('o://leader', leader.transports),
   parent: new oNodeAddress('o://leader', leader.transports)
 });
 
-await agent1.start();
-await agent2.start();
+await salesTool.start();
+await analyticsTool.start();
 
-// 3. Agents can now communicate through the network!
-const response = await agent1.use(
-  new oNodeAddress('o://agent2'),
-  { method: 'ping', params: {} }
+// 3. Tool nodes can now communicate (and AI agents can discover them)!
+const response = await salesTool.use(
+  new oNodeAddress('o://analytics-tool'),
+  { method: 'analyze', params: { data: 'sales-data' } }
 );
 
-console.log('Agent1 → Agent2 communication successful!');
+console.log('Tool node IPC successful! AI agents can now use these tools.');
 ```
 
-### Persistent Agent Identity with Seeds
+### Persistent Tool Node Identity with Seeds
 
 ```typescript
 import { oServerNode, oNodeAddress } from '@olane/o-node';
 
-// Create an agent with a seed for consistent peer ID
-const agent = new oServerNode({
-  address: new oNodeAddress('o://my-service'),
+// Create a tool node with a seed for consistent peer ID
+const toolNode = new oServerNode({
+  address: new oNodeAddress('o://my-service-tool'),
   type: NodeType.AGENT,
   leader: leaderAddress,
   parent: leaderAddress,
-  seed: 'my-secure-seed-string' // Same seed = same peer ID
+  seed: 'my-secure-seed-string' // Same seed = same peer ID every restart
 });
 
-await agent.start();
+await toolNode.start();
 
 // This peer ID will be the same every time with this seed
-console.log('Consistent Peer ID:', agent.peerId.toString());
+// Critical for tool nodes that agents depend on finding reliably
+console.log('Consistent Peer ID:', toolNode.peerId.toString());
 
 // Important: Secure your seed in production!
 // Use environment variables or secure key management
@@ -991,4 +1021,4 @@ ISC © Olane Inc.
 
 ---
 
-**Part of the Olane OS ecosystem** - Production-ready libp2p implementation for building peer-to-peer AI agent networks.
+**Part of the Olane OS ecosystem** - The production distribution layer where you build tool nodes that AI agents use. An agentic operating system where AI agents are the users, tool nodes are the applications, and Olane provides the runtime.

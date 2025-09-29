@@ -1,22 +1,31 @@
 # Router System - Intelligent Address Resolution & Routing
 
-The router system in o-core is the **DNS-like layer** for Olane OS that handles intelligent routing of agent-to-agent communication through hierarchical address spaces. Think of it as the routing table and path resolution system for an operating system, but for AI agents.
+The router system in o-core is the **DNS-like layer** for Olane OS that handles intelligent routing of inter-process communication (IPC) between tool nodes through hierarchical address spaces. Think of it as the routing table and path resolution system for an operating system—enabling tool node processes to find and communicate with each other.
 
 ## Overview
 
 The router system provides:
 
-- **Hierarchical Addressing** (`o://` protocol) - Filesystem-like addressing for agents
-- **Intelligent Routing** - Automatic next-hop determination based on network topology
+- **Hierarchical Addressing** (`o://` protocol) - Filesystem-like addressing for tool nodes
+- **Intelligent Routing** - Automatic next-hop determination based on tool node hierarchy
 - **Address Resolution** - Pluggable resolver system for custom address handling
 - **Transport Management** - Support for multiple transport protocols (libp2p, HTTP, custom)
 - **Static & Dynamic Addresses** - Both absolute and relative addressing modes
+
+### Understanding the Context
+
+In Olane OS:
+- **AI Agents (LLMs)** are the intelligent users
+- **Tool Nodes** are the specialized applications you build that agents use
+- **The Router System** enables tool nodes to communicate with each other (IPC)
+
+This documentation focuses on how tool nodes address and route requests to other tool nodes.
 
 ## Core Components
 
 ### 1. oAddress - The Addressing System
 
-The `oAddress` class implements the `o://` protocol for hierarchical agent addressing.
+The `oAddress` class implements the `o://` protocol for hierarchical tool node addressing.
 
 ```typescript
 import { oAddress } from '@olane/o-core';
@@ -86,7 +95,7 @@ console.log(nextHop.toString()); // "o://company/finance"
 
 ### 2. oRouter - The Abstract Router
 
-The `oRouter` class is the base for implementing routing logic in agent nodes.
+The `oRouter` class is the base for implementing routing logic in tool node processes.
 
 ```typescript
 import { oRouter, oAddress, RouteResponse } from '@olane/o-core';
@@ -234,21 +243,21 @@ class CacheResolver extends oAddressResolver {
 
 ### Hierarchical Routing
 
-Routing follows the agent hierarchy automatically:
+Routing follows the tool node hierarchy automatically:
 
 ```typescript
-// Hierarchy: o://company → o://company/finance → o://company/finance/accounting
+// Tool node hierarchy: o://company → o://company/finance → o://company/finance/accounting
 
 const node = new oAddress('o://company/finance');
 const target = new oAddress('o://company/finance/accounting');
 
 // Routing direction: child
-// o://company/finance → o://company/finance/accounting
+// o://company/finance → o://company/finance/accounting (direct to child tool node)
 
 const target2 = new oAddress('o://company/legal');
 
 // Routing direction: up to parent, then down to sibling
-// o://company/finance → o://company → o://company/legal
+// o://company/finance → o://company → o://company/legal (via parent tool node)
 ```
 
 ### Internal vs External Routing
@@ -361,7 +370,7 @@ class DynamicResolver extends oAddressResolver {
 
 ### Request Modification During Resolution
 
-Resolvers can modify requests:
+Resolvers can modify requests as they pass through the resolution chain:
 
 ```typescript
 class AuthResolver extends oAddressResolver {
@@ -437,14 +446,14 @@ System-reserved addresses for special purposes:
 
 ```typescript
 enum RestrictedAddresses {
-  REGISTRY = 'o://registry',      // Agent registry service
+  REGISTRY = 'o://registry',      // Tool node registry service
   LEADER = 'o://leader',          // Network leader node
-  LANE = 'o://lane',             // Lane coordinator
+  LANE = 'o://lane',             // Lane coordinator (process manager)
   INTELLIGENCE = 'o://intelligence' // Intelligence service
 }
 ```
 
-These addresses have special routing behavior and should not be used for regular agents.
+These addresses have special routing behavior and are reserved for system services. Do not use them for your tool nodes.
 
 ## Best Practices
 
@@ -611,8 +620,8 @@ class DebugRouter extends oRouter {
 
 - **oConnectionManager** - Handles actual connections to next-hop addresses
 - **oTransport** - Transport layer implementations
-- **oHierarchyManager** - Manages parent-child relationships
-- **oCore** - Uses router for all inter-agent communication
+- **oHierarchyManager** - Manages parent-child relationships between tool nodes
+- **oCore** - Uses router for all inter-process communication (IPC) between tool nodes
 
 ## Examples
 
@@ -620,4 +629,13 @@ See the [resolvers/](./resolvers/) directory for example resolver implementation
 
 ---
 
-The router system is the intelligent routing layer that enables organic agent discovery and communication through hierarchical address spaces - a key innovation in making Olane OS an operating system for AI agents rather than just a network framework.
+## Summary
+
+The router system is the intelligent routing layer that enables:
+
+1. **Hierarchical Organization** - Tool nodes organized in filesystem-like structures
+2. **Automatic Routing** - Tool nodes discover and communicate without manual configuration
+3. **Context Inheritance** - Tool nodes inherit domain knowledge from their hierarchical position
+4. **Fault Tolerance** - Natural failover paths through the hierarchy
+
+This routing infrastructure is what makes Olane OS an **operating system for tool nodes** (with AI agents as the intelligent users) rather than just a network framework. Tool nodes can address each other using the `o://` protocol, and the router handles the complexity of finding efficient paths through the hierarchy—just like an OS handles process-to-process communication.
