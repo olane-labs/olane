@@ -62,137 +62,186 @@
       ]
     },
     {
-      "group": "Generalist-Specialist Architecture",
+      "group": "Build Specialist Agents",
       "pages": [
-        "architecture/overview",
-        "architecture/quickstart",
-        "architecture/generalist-model-brain",
-        "architecture/specialist-agent-layer",
-        "architecture/hierarchical-organization",
-        "architecture/context-specialization",
-        "architecture/tool-augmented-agents",
-        "architecture/specialization-flywheel",
-        "architecture/best-practices"
+        "use-cases/specialist-agents/overview",
+        "use-cases/specialist-agents/quickstart",
+        "use-cases/specialist-agents/tool-augmentation",
+        "use-cases/specialist-agents/context-injection",
+        "use-cases/specialist-agents/testing",
+        "use-cases/specialist-agents/production"
       ]
     },
     {
-      "group": "Emergent Intelligence",
+      "group": "Autonomous Workflows",
       "pages": [
-        "emergent/overview",
-        "emergent/quickstart",
-        "emergent/rooms-with-tips",
-        "emergent/knowledge-artifacts",
-        "emergent/cross-agent-learning",
-        "emergent/vs-langgraph",
-        "emergent/best-practices"
+        "use-cases/workflows/overview",
+        "use-cases/workflows/quickstart",
+        "use-cases/workflows/intent-driven-execution",
+        "use-cases/workflows/emergent-coordination",
+        "use-cases/workflows/testing",
+        "use-cases/workflows/monitoring"
       ]
     },
     {
-      "group": "Cost Optimization",
+      "group": "Multi-Agent Systems",
       "pages": [
-        "cost/overview",
-        "cost/quickstart",
-        "cost/generalist-vs-specialist-costs",
-        "cost/model-sharing-strategies",
-        "cost/resource-optimization",
-        "cost/advanced-optimization",
-        "cost/best-practices"
+        "use-cases/multi-agent/overview",
+        "use-cases/multi-agent/quickstart",
+        "use-cases/multi-agent/network-setup",
+        "use-cases/multi-agent/agent-discovery",
+        "use-cases/multi-agent/coordination-patterns",
+        "use-cases/multi-agent/testing",
+        "use-cases/multi-agent/scaling"
       ]
     },
     {
-      "group": "Complex Tasks",
+      "group": "Long-Running Processes",
       "pages": [
-        "tasks/overview",
-        "tasks/quickstart",
-        "tasks/multi-agent-coordination",
-        "tasks/long-running-processes",
-        "tasks/fault-tolerance",
-        "tasks/advanced-coordination",
-        "tasks/best-practices"
+        "use-cases/long-running/overview",
+        "use-cases/long-running/quickstart",
+        "use-cases/long-running/persistence",
+        "use-cases/long-running/checkpointing",
+        "use-cases/long-running/fault-tolerance",
+        "use-cases/long-running/testing"
       ]
     },
     {
-      "group": "Agent Specialization",
+      "group": "Core Concepts",
       "pages": [
-        "specialization/overview",
-        "specialization/quickstart",
-        "specialization/context-injection",
-        "specialization/tool-integration",
-        "specialization/domain-expertise",
-        "specialization/hierarchical-context-inheritance",
-        "specialization/knowledge-accumulation",
-        "specialization/collaborative-specialization",
-        "specialization/best-practices"
+        "concepts/architecture-overview",
+        "concepts/generalist-vs-specialist",
+        "concepts/emergent-vs-explicit"
       ]
     },
     {
-      "group": "Developer Resources",
+      "group": "Agents",
       "pages": [
-        "resources/testing-agents",
-        "resources/debugging-guide",
-        "resources/building-specialist-agents",
-        "resources/context-management",
-        "resources/hierarchical-design-patterns",
-        "resources/tool-development",
-        "resources/performance-profiling",
-        "resources/sample-projects",
-        "resources/community-support"
+        "concepts/agents/overview",
+        "concepts/agents/lifecycle",
+        "concepts/agents/creating-agents",
+        "concepts/agents/hierarchies",
+        "concepts/agents/specialization"
       ]
     },
     {
-      "group": "Core Runtime",
+      "group": "Tools & Capabilities",
       "pages": [
-        "api/agents/ocore-runtime",
-        "api/agents/lifecycle-management",
-        "api/agents/inter-agent-communication"
+        "concepts/tools/overview",
+        "concepts/tools/creating-tools",
+        "concepts/tools/conventions",
+        "concepts/tools/parameter-validation",
+        "concepts/tools/discovery",
+        "concepts/tools/built-in-tools"
       ]
     },
     {
-      "group": "Agent Specialization Runtime",
+      "group": "Addressing & Communication",
       "pages": [
-        "api/specialization/context-injection",
-        "api/specialization/tool-integration",
-        "api/specialization/knowledge-artifacts"
+        "concepts/addressing/overview",
+        "concepts/addressing/o-protocol",
+        "concepts/addressing/address-format",
+        "concepts/addressing/hierarchical-paths",
+        "concepts/addressing/routing",
+        "concepts/communication/ipc",
+        "concepts/communication/request-response",
+        "concepts/communication/streaming",
+        "concepts/communication/error-handling"
       ]
     },
     {
-      "group": "o:// Protocol & Addressing",
+      "group": "Execution & Workflows",
       "pages": [
-        "api/filesystem/oaddress-system",
-        "api/filesystem/resource-discovery",
-        "api/filesystem/hierarchical-routing"
+        "concepts/lanes/overview",
+        "concepts/lanes/intents",
+        "concepts/lanes/capabilities",
+        "concepts/lanes/capability-loop",
+        "concepts/lanes/execution-sequences",
+        "concepts/lanes/context-injection",
+        "concepts/lanes/checkpointing"
       ]
     },
     {
-      "group": "Emergent Intelligence System",
+      "group": "Networks & Coordination",
       "pages": [
-        "api/emergent/room-discovery",
-        "api/emergent/cross-agent-learning"
+        "concepts/networks/overview",
+        "concepts/networks/p2p-networking",
+        "concepts/networks/leader-nodes",
+        "concepts/networks/peer-discovery",
+        "concepts/networks/registries",
+        "concepts/networks/joining-networks",
+        "concepts/networks/network-patterns"
       ]
     },
     {
-      "group": "System Components",
+      "group": "Development",
       "pages": [
-        "api/authentication",
-        "api/system/error-handling",
-        "api/system/metrics-telemetry",
-        "api/configuration/agent-config",
-        "api/utilities/agent-helpers"
+        "dev/testing-overview",
+        "dev/testing-agents",
+        "dev/testing-workflows",
+        "dev/testing-networks",
+        "dev/debugging",
+        "dev/error-handling",
+        "dev/performance-profiling"
       ]
     },
     {
-      "group": "Migration & Support",
+      "group": "Packages",
       "pages": [
+        "packages/overview",
+        "packages/choosing-packages",
+        "packages/o-core",
+        "packages/o-node",
+        "packages/o-tool",
+        "packages/o-lane",
+        "packages/o-leader",
+        "packages/o-protocol",
+        "packages/o-config"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/overview",
+        "api/agents",
+        "api/tools",
+        "api/lanes",
+        "api/addressing",
+        "api/communication",
+        "api/networks",
+        "api/error-codes"
+      ]
+    },
+    {
+      "group": "Advanced Guides",
+      "pages": [
+        "guides/knowledge-accumulation",
+        "guides/hierarchical-organization",
+        "guides/fault-tolerance",
+        "guides/cost-optimization"
+      ]
+    },
+    {
+      "group": "Migration & Comparison",
+      "pages": [
+        "migration/overview",
         "migration/from-langgraph",
         "migration/from-crewai",
         "migration/from-autogen",
         "migration/monolithic-to-specialist",
-        "comparison/generalist-vs-specialist",
-        "comparison/cost-analysis",
-        "help/common-issues",
-        "help/error-reference",
-        "help/troubleshooting",
-        "help/community"
+        "comparison/vs-langgraph",
+        "comparison/vs-crewai",
+        "comparison/vs-autogen"
+      ]
+    },
+    {
+      "group": "Support",
+      "pages": [
+        "support/troubleshooting",
+        "support/common-issues",
+        "support/error-reference",
+        "support/faq",
+        "support/community"
       ]
     }
   ],
