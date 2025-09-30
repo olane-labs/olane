@@ -19,6 +19,12 @@ export class oHierarchyManager extends oObject {
     this.parents = config.parents || [];
   }
 
+  clear(): void {
+    this.leaders = [];
+    this.children = [];
+    this.parents = [];
+  }
+
   private deduplicate(addresses: oAddress[]): oAddress[] {
     const added: any = {};
     return addresses.filter((a: oAddress) => {

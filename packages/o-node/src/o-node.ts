@@ -310,9 +310,9 @@ export class oNode extends oToolBase {
   }
 
   async teardown(): Promise<void> {
+    await super.teardown();
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }
-    return super.teardown();
   }
 }

@@ -19,7 +19,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
 
     async _tool_stop(request: oRequest): Promise<any> {
       this.logger.debug('Stopping tool: ', request.params);
-      await this.stop();
+      this.stop();
       return {
         message: 'Tool stopped',
       };

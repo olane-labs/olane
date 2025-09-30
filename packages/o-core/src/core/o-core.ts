@@ -191,6 +191,36 @@ export abstract class oCore extends oObject {
     return CoreUtils.buildResponse(request, result, result?.error);
   }
 
+  async useChild(
+    childAddress: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+  ): Promise<oResponse> {
+    this.logger.debug('Using child: ' + childAddress.transports);
+    const connection = await this.connect(childAddress, childAddress);
+
+    // communicate the payload to the target node
+    const response = await connection.send({
+      address: childAddress?.toString() || '',
+      payload: data || {},
+      id: data?.id,
+    });
+
+    // if there is an error, throw it to continue to bubble up
+    if (response.result.error) {
+      this.logger.error(
+        'response.result.error',
+        JSON.stringify(response.result.error, null, 2),
+      );
+      throw oError.fromJSON(response.result.error);
+    }
+
+    return response;
+  }
+
   // hierarchy
   addChildNode(node: oCore): void {
     this.logger.debug('Adding virtual node: ' + node.address.toString());
@@ -301,6 +331,10 @@ export abstract class oCore extends oObject {
    */
   public async stop(): Promise<void> {
     this.logger.debug('Stop node called...');
+    if (this.state !== NodeState.RUNNING) {
+      this.logger.warn('Node is not running, skipping stop');
+      return;
+    }
     this.state = NodeState.STOPPING;
     try {
       await this.teardown();
@@ -315,13 +349,22 @@ export abstract class oCore extends oObject {
 
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
+    this.state = NodeState.STOPPING;
     for (const child of this.hierarchyManager.children) {
       this.logger.debug('Stopping child: ' + child.toString());
-      // await this.use(child, {
-      //   method: 'stop',
-      //   params: {},
-      // });
+      await this.useChild(child, {
+        method: 'stop',
+        params: {},
+      }).catch((error) => {
+        if (error.message === 'No data received') {
+          // ignore
+        } else {
+          this.logger.error('Potential error stopping child', error);
+        }
+      });
+      this.logger.debug('Child stopped: ' + child.toString());
     }
+    this.hierarchyManager.clear();
   }
 
   get dependencies(): oDependency[] {
