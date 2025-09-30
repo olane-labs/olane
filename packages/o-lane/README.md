@@ -53,7 +53,7 @@ await agent.start();
 
 ```typescript
 // Agent receives an intent and autonomously determines how to execute it
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze the sales data and create a summary report',
@@ -514,7 +514,7 @@ Extends `oNodeTool` with lane execution capabilities.
 Perform capability negotiation with other agents.
 
 ```typescript
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'handshake',
   params: { intent: 'Discover capabilities' }
 });
@@ -526,7 +526,7 @@ const result = await agent.useSelf({
 Main entry point for intent resolution.
 
 ```typescript
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'intent',
   params: {
     intent: 'Your natural language goal here',
@@ -699,7 +699,7 @@ const agent = new oLaneTool({
 await agent.start();
 
 // Resolve an intent
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Find the latest sales report and summarize key metrics'
@@ -787,7 +787,7 @@ const receiver = new StreamReceiver({
 await receiver.start();
 
 // Execute intent with streaming
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Process large dataset',
@@ -816,7 +816,7 @@ const context = new oLaneContext([
   '[End Previous Conversation]'
 ]);
 
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Calculate Q4 projections',
@@ -831,7 +831,7 @@ const response = await agent.useSelf({
 
 ```typescript
 // Complex intent requiring multiple capabilities
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze customer feedback from last month, identify common themes, and create action items'
@@ -950,7 +950,7 @@ const combinedContext = new oLaneContext([
   ...domainContext.contexts
 ]);
 
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Generate Q4 sales report',
@@ -1027,7 +1027,7 @@ const tracker = new ProgressTracker({
 await tracker.start();
 
 // Long-running task with progress updates
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: {
     intent: 'Process 10,000 customer records',
@@ -1044,7 +1044,7 @@ Access historical lane executions:
 import { oAddress } from '@olane/o-core';
 
 // Execute and store lane
-const response = await agent.useSelf({
+const response = await agent.use({
   method: 'intent',
   params: { intent: 'Analyze sales data' }
 });

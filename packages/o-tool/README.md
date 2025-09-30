@@ -60,7 +60,7 @@ const calculator = new CalculatorTool();
 await calculator.start();
 
 // Use the tool
-const response = await calculator.useSelf({
+const response = await calculator.use({
   method: 'add',
   params: { a: 5, b: 3 }
 });
@@ -134,7 +134,7 @@ Parameter validation happens automatically before tool execution:
 ```typescript
 // Missing required parameters trigger clear errors
 try {
-  await tool.useSelf({ method: 'add', params: { a: 5 } });
+  await tool.use({ method: 'add', params: { a: 5 } });
 } catch (error) {
   // Error: Missing required parameters: ["b"]
   console.log(error.message);
@@ -295,7 +295,7 @@ Tools automatically integrate with Olane's vector store for semantic discovery:
 
 ```typescript
 // Index your tool for agent discovery
-await tool.useSelf({ method: 'index_network' });
+await tool.use({ method: 'index_network' });
 
 // Agents can now discover your tool semantically
 const results = await this.use(new oAddress('o://vector-store'), {

@@ -430,7 +430,7 @@ const workflow = new StateGraph({
 **Olane (Emergent)**:
 ```typescript
 // Just provide the intent
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 sales and create report'
@@ -715,7 +715,7 @@ const toolNode = new FinancialToolNode();
 await toolNode.start(); // Registers with leader, joins network
 
 // Step 4: Agents can use this tool node with natural language (o-lane)
-const result = await toolNode.useSelf({
+const result = await toolNode.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 revenue and identify growth trends',
@@ -779,7 +779,7 @@ const coordinator = new oLaneTool({
 await coordinator.start();
 
 // Agent sends intent to coordinator tool node
-const result = await coordinator.useSelf({
+const result = await coordinator.use({
   method: 'intent',
   params: {
     intent: 'Coordinate team to analyze customer satisfaction'
@@ -827,7 +827,7 @@ const monitor = new HealthMonitorToolNode();
 await monitor.start();
 
 // Step 2: Agent sends long-running intent to tool node
-const result = await monitor.useSelf({
+const result = await monitor.use({
   method: 'intent',
   params: {
     intent: 'Monitor API endpoints every 5 minutes and alert on failures',

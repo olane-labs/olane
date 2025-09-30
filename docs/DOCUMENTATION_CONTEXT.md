@@ -357,7 +357,7 @@ const analyst = new FinancialAnalyst();
 await analyst.start();
 
 // 5. Show the call
-const result = await analyst.useSelf({
+const result = await analyst.use({
   method: 'analyze_revenue',
   params: { quarter: 'Q4' }
 });
@@ -382,7 +382,7 @@ await analyst.stop();
 await this.use(parentAddress, { method: 'child_register' });
 
 // Stream progress for long-running analysis tasks
-const response = await agent.useSelf({
+const response = await agent.use({
   streamTo: progressTrackerAddress
 });
 
@@ -426,7 +426,7 @@ Minimum viable example to prove it works:
 // Simplest possible working code
 const agent = new oLaneTool(config);
 await agent.start();
-const result = await agent.useSelf({ method: 'intent', params: { intent: 'test' }});
+const result = await agent.use({ method: 'intent', params: { intent: 'test' }});
 ```
 
 #### 2. **Understand Deeply (Core Concepts)**

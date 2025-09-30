@@ -127,7 +127,7 @@ class Agent extends oLaneTool {
 await agent.start();
 
 // Test it
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'hello_world'
 });
 

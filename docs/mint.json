@@ -62,48 +62,13 @@
       ]
     },
     {
-      "group": "Build Specialist Agents",
+      "group": "Understanding Olane OS",
       "pages": [
-        "use-cases/specialist-agents/overview",
-        "use-cases/specialist-agents/quickstart",
-        "use-cases/specialist-agents/tool-augmentation",
-        "use-cases/specialist-agents/context-injection",
-        "use-cases/specialist-agents/testing",
-        "use-cases/specialist-agents/production"
-      ]
-    },
-    {
-      "group": "Autonomous Workflows",
-      "pages": [
-        "use-cases/workflows/overview",
-        "use-cases/workflows/quickstart",
-        "use-cases/workflows/intent-driven-execution",
-        "use-cases/workflows/emergent-coordination",
-        "use-cases/workflows/testing",
-        "use-cases/workflows/monitoring"
-      ]
-    },
-    {
-      "group": "Multi-Agent Systems",
-      "pages": [
-        "use-cases/multi-agent/overview",
-        "use-cases/multi-agent/quickstart",
-        "use-cases/multi-agent/network-setup",
-        "use-cases/multi-agent/agent-discovery",
-        "use-cases/multi-agent/coordination-patterns",
-        "use-cases/multi-agent/testing",
-        "use-cases/multi-agent/scaling"
-      ]
-    },
-    {
-      "group": "Long-Running Processes",
-      "pages": [
-        "use-cases/long-running/overview",
-        "use-cases/long-running/quickstart",
-        "use-cases/long-running/persistence",
-        "use-cases/long-running/checkpointing",
-        "use-cases/long-running/fault-tolerance",
-        "use-cases/long-running/testing"
+        "understanding/what-is-olane",
+        "understanding/three-layer-model",
+        "understanding/terminology",
+        "understanding/what-olane-is-not",
+        "understanding/when-to-use"
       ]
     },
     {
@@ -115,13 +80,13 @@
       ]
     },
     {
-      "group": "Agents",
+      "group": "Tool Nodes",
       "pages": [
-        "concepts/agents/overview",
-        "concepts/agents/lifecycle",
-        "concepts/agents/creating-agents",
-        "concepts/agents/hierarchies",
-        "concepts/agents/specialization"
+        "concepts/tool-nodes/overview",
+        "concepts/tool-nodes/lifecycle",
+        "concepts/tool-nodes/creating-tool-nodes",
+        "concepts/tool-nodes/hierarchies",
+        "concepts/tool-nodes/specialization"
       ]
     },
     {
@@ -174,15 +139,37 @@
       ]
     },
     {
-      "group": "Development",
+      "group": "Autonomous Workflows",
       "pages": [
-        "dev/testing-overview",
-        "dev/testing-agents",
-        "dev/testing-workflows",
-        "dev/testing-networks",
-        "dev/debugging",
-        "dev/error-handling",
-        "dev/performance-profiling"
+        "use-cases/workflows/overview",
+        "use-cases/workflows/quickstart",
+        "use-cases/workflows/intent-driven-execution",
+        "use-cases/workflows/emergent-coordination",
+        "use-cases/workflows/testing",
+        "use-cases/workflows/monitoring"
+      ]
+    },
+    {
+      "group": "Multi-Tool-Node Networks",
+      "pages": [
+        "use-cases/multi-tool-node/overview",
+        "use-cases/multi-tool-node/quickstart",
+        "use-cases/multi-tool-node/network-setup",
+        "use-cases/multi-tool-node/tool-node-discovery",
+        "use-cases/multi-tool-node/coordination-patterns",
+        "use-cases/multi-tool-node/testing",
+        "use-cases/multi-tool-node/scaling"
+      ]
+    },
+    {
+      "group": "Long-Running Processes",
+      "pages": [
+        "use-cases/long-running/overview",
+        "use-cases/long-running/quickstart",
+        "use-cases/long-running/persistence",
+        "use-cases/long-running/checkpointing",
+        "use-cases/long-running/fault-tolerance",
+        "use-cases/long-running/testing"
       ]
     },
     {
@@ -200,16 +187,15 @@
       ]
     },
     {
-      "group": "API Reference",
+      "group": "Development",
       "pages": [
-        "api/overview",
-        "api/agents",
-        "api/tools",
-        "api/lanes",
-        "api/addressing",
-        "api/communication",
-        "api/networks",
-        "api/error-codes"
+        "dev/testing-overview",
+        "dev/testing-tool-nodes",
+        "dev/testing-workflows",
+        "dev/testing-networks",
+        "dev/debugging",
+        "dev/error-handling",
+        "dev/performance-profiling"
       ]
     },
     {
@@ -222,13 +208,26 @@
       ]
     },
     {
+      "group": "API Reference",
+      "pages": [
+        "api/overview",
+        "api/tool-nodes",
+        "api/tools",
+        "api/lanes",
+        "api/addressing",
+        "api/communication",
+        "api/networks",
+        "api/error-codes"
+      ]
+    },
+    {
       "group": "Migration & Comparison",
       "pages": [
         "migration/overview",
         "migration/from-langgraph",
         "migration/from-crewai",
         "migration/from-autogen",
-        "migration/monolithic-to-specialist",
+        "migration/monolithic-to-specialist-tool-nodes",
         "comparison/vs-langgraph",
         "comparison/vs-crewai",
         "comparison/vs-autogen"

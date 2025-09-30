@@ -296,7 +296,7 @@ const agent = new FinancialAgent();
 await agent.start();
 
 // Direct tool call
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'analyze_revenue',
   params: {
     quarter: 4,
@@ -362,7 +362,7 @@ const agent = new FinancialAgent();
 await agent.start();
 
 // Intent-driven execution
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 revenue and provide forecast for Q1 2025',
@@ -398,7 +398,7 @@ async function main() {
 
   // Test Case 1: Direct tool call
   console.log('\n=== Test 1: Direct Tool Call ===');
-  const directResult = await agent.useSelf({
+  const directResult = await agent.use({
     method: 'analyze_revenue',
     params: {
       quarter: 4,
@@ -410,7 +410,7 @@ async function main() {
 
   // Test Case 2: Intent-driven execution
   console.log('\n=== Test 2: Intent-Driven ===');
-  const intentResult = await agent.useSelf({
+  const intentResult = await agent.use({
     method: 'intent',
     params: {
       intent: 'Compare Q3 and Q4 revenue and explain differences'
@@ -420,7 +420,7 @@ async function main() {
 
   // Test Case 3: Complex multi-step intent
   console.log('\n=== Test 3: Complex Analysis ===');
-  const complexResult = await agent.useSelf({
+  const complexResult = await agent.use({
     method: 'intent',
     params: {
       intent: 'Analyze full year 2024 revenue trends and forecast 2025 Q1-Q2'
@@ -702,7 +702,7 @@ describe('Intent Execution', () => {
   });
 
   it('should resolve simple revenue analysis intent', async () => {
-    const result = await agent.useSelf({
+    const result = await agent.use({
       method: 'intent',
       params: {
         intent: 'Analyze Q4 2024 revenue',
@@ -716,7 +716,7 @@ describe('Intent Execution', () => {
   });
 
   it('should use domain context in responses', async () => {
-    const result = await agent.useSelf({
+    const result = await agent.use({
       method: 'intent',
       params: {
         intent: 'Forecast next quarter revenue'
@@ -729,7 +729,7 @@ describe('Intent Execution', () => {
   });
 
   it('should handle multi-step intents', async () => {
-    const result = await agent.useSelf({
+    const result = await agent.use({
       method: 'intent',
       params: {
         intent: 'Compare Q3 and Q4 revenue, then forecast Q1 2025'
@@ -813,7 +813,7 @@ describe('End-to-End: Annual Analysis', () => {
     // Step 1: Analyze each quarter
     const quarters = [];
     for (let q = 1; q <= 4; q++) {
-      const result = await agent.useSelf({
+      const result = await agent.use({
         method: 'analyze_revenue',
         params: mockRevenueData[`q${q}_2024`]
       });
@@ -821,7 +821,7 @@ describe('End-to-End: Annual Analysis', () => {
     }
 
     // Step 2: Generate annual summary
-    const summary = await agent.useSelf({
+    const summary = await agent.use({
       method: 'intent',
       params: {
         intent: 'Summarize 2024 performance and forecast 2025',
@@ -847,7 +847,7 @@ describe('Performance', () => {
   it('should respond to tool calls within 2 seconds', async () => {
     const start = Date.now();
     
-    await agent.useSelf({
+    await agent.use({
       method: 'analyze_revenue',
       params: mockRevenueData.q4_2024
     });
@@ -858,7 +858,7 @@ describe('Performance', () => {
 
   it('should handle concurrent requests', async () => {
     const requests = Array(10).fill(null).map((_, i) =>
-      agent.useSelf({
+      agent.use({
         method: 'analyze_revenue',
         params: mockRevenueData.q4_2024
       })
@@ -907,7 +907,7 @@ describe('Performance', () => {
   <Accordion title="Test context application">
     ```typescript
     it('should apply domain guidelines', async () => {
-      const result = await agent.useSelf({
+      const result = await agent.use({
         method: 'intent',
         params: { intent: 'Analyze revenue' }
       });
@@ -1188,7 +1188,7 @@ const agent = new FinancialSpecialist();
 await agent.start();
 
 // Natural language intent → specialized behavior
-await agent.useSelf({
+await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 revenue and forecast Q1'
@@ -1567,7 +1567,7 @@ const tools = await agent.listTools();
 Index tools in vector store for semantic search:
 
 ```typescript
-await agent.useSelf({
+await agent.use({
   method: 'index_network',
   params: {
     vectorStore: yourVectorStore,
@@ -1693,14 +1693,14 @@ const calculator = new CalculatorAgent();
 await calculator.start();
 
 // Direct tool call
-const sum = await calculator.useSelf({
+const sum = await calculator.use({
   method: 'add',
   params: { a: 5, b: 3 }
 });
 console.log(sum); // { result: 8, operation: 'addition' }
 
 // Intent-driven
-const result = await calculator.useSelf({
+const result = await calculator.use({
   method: 'intent',
   params: {
     intent: 'Calculate 10 divided by 2'
@@ -1857,7 +1857,7 @@ class AnalysisAgent extends oLaneTool {
 const agent = new AnalysisAgent();
 await agent.start();
 
-const result = await agent.useSelf({
+const result = await agent.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 revenue'
@@ -1885,7 +1885,7 @@ const result = await agent.useSelf({
   <Tab title="Olane">
     ```typescript
     // Emergent sequence through intent
-    await agent.useSelf({
+    await agent.use({
       method: 'intent',
       params: {
         intent: 'Complete multi-step analysis'
@@ -1943,7 +1943,7 @@ const result = await agent.useSelf({
   <Tab title="Olane">
     ```typescript
     // Automatic discovery and routing
-    await coordinator.useSelf({
+    await coordinator.use({
       method: 'intent',
       params: {
         intent: 'Analyze data and create report'
@@ -2000,7 +2000,7 @@ console.log(lane.sequence); // All execution steps
   <Tab title="Olane Testing">
     ```typescript
     it('should complete analysis', async () => {
-      const result = await agent.useSelf({
+      const result = await agent.use({
         method: 'intent',
         params: { intent: 'Analyze test data' }
       });

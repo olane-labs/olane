@@ -252,7 +252,7 @@ toolNode.logger.error('Error message');
 `oCore` is an abstract base class that provides:
 
 - **Lifecycle Management**: `start()`, `stop()`, `initialize()`, `teardown()`
-- **Communication**: `use()`, `useSelf()`, `connect()`
+- **Communication**: `use()`, `use()`, `connect()`
 - **Routing**: `router`, `initializeRouter()`
 - **Hierarchy**: `addChildNode()`, `removeChildNode()`, `hierarchyManager`
 - **State Management**: `state`, `NodeState` enum
