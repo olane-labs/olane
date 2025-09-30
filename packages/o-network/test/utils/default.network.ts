@@ -1,9 +1,5 @@
-import {
-  NodeType,
-  oAddress,
-  oNetwork,
-  setupGracefulShutdown,
-} from '../../src/index.js';
+import { NodeType, oAddress, setupGracefulShutdown } from '@olane/o-core';
+import { oNetwork } from '../../src/index.js';
 
 export const defaultNetwork = new oNetwork({
   // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),

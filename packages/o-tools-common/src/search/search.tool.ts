@@ -30,10 +30,4 @@ export class SearchTool extends oLaneTool {
     });
     return response.result.data as any;
   }
-
-  async index() {
-    return {
-      summary: 'Search tool',
-    };
-  }
 }

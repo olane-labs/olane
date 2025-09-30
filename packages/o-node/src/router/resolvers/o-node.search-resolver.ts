@@ -21,21 +21,13 @@ export class oSearchResolver extends oAddressResolver {
 
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
     const { address, node, request: resolveRequest } = request;
-    if (
-      !node ||
-      address.transports.length > 0 ||
-      address.value === RestrictedAddresses.REGISTRY
-    ) {
+    if (address.transports.length > 0) {
       return {
         nextHopAddress: address,
         targetAddress: address,
         requestOverride: resolveRequest,
       };
     }
-    node.logger.debug(
-      '[oSearchResolver] Resolving address: ',
-      address.toString(),
-    );
     // search the leader registry for the address
     const registrySearchResults = await node.use(
       new oAddress(RestrictedAddresses.REGISTRY),
@@ -68,11 +60,6 @@ export class oSearchResolver extends oAddressResolver {
           : childAddress?.transports || targetTransports,
       );
       targetAddress.setTransports(targetTransports);
-      node.logger.debug(
-        'nextHopAddress and targetAddress',
-        nextHopAddress,
-        targetAddress,
-      );
       return {
         nextHopAddress: nextHopAddress,
         targetAddress: targetAddress,

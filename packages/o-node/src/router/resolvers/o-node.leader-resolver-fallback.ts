@@ -22,7 +22,19 @@ export class oLeaderResolverFallback extends oAddressResolver {
 
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
     const { address, node, request: resolveRequest } = request;
-    if (!node || address.transports.length > 0) {
+    // check to see if something odd was attempted where the leader transports were applied to a different address
+    if (
+      node.leader &&
+      address.transports.some((t) => node.leader?.transports.includes(t))
+    ) {
+      return {
+        nextHopAddress: node.leader as oNodeAddress,
+        targetAddress: address,
+        requestOverride: resolveRequest,
+      };
+    }
+    // if already has transports, return the address
+    if (address.transports.length > 0) {
       return {
         nextHopAddress: address,
         targetAddress: address,

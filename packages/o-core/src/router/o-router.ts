@@ -5,9 +5,8 @@ import { oAddressResolution } from './o-address-resolution.js';
 import { oAddressResolver } from './o-address-resolver.js';
 import { oRequest } from '../connection/o-request.js';
 import type { oCore } from '../core/o-core.js';
-import { oRouterRequest, RequestParams } from '@olane/o-protocol';
 import { RouteResponse } from './interfaces/route.response.js';
-import { oTransport } from '../transports/o-transport.js';
+import { oRouterRequest } from './o-request.router.js';
 
 export abstract class oRouter extends oObject {
   public addressResolution!: oAddressResolution;

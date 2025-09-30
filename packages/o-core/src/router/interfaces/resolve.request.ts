@@ -1,9 +1,9 @@
-import { oRequest } from '../../connection/o-request.js';
 import { oCore } from '../../core/o-core.js';
 import { oAddress } from '../o-address.js';
+import { oRouterRequest } from '../o-request.router.js';
 
 export interface ResolveRequest {
   address: oAddress;
-  node?: oCore;
-  request?: oRequest;
+  node: oCore;
+  request?: oRouterRequest;
 }

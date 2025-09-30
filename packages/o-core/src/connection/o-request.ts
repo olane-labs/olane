@@ -6,8 +6,9 @@ import {
   RequestParams,
 } from '@olane/o-protocol';
 import { RequestState } from './interfaces/request-state.enum.js';
+import { oObject } from '../core/o-object.js';
 
-export class oRequest implements JSONRPCRequest {
+export class oRequest extends oObject implements JSONRPCRequest {
   jsonrpc: typeof JSONRPC_VERSION;
   method: string;
   params: RequestParams;
@@ -15,6 +16,9 @@ export class oRequest implements JSONRPCRequest {
   state: RequestState = RequestState.PENDING;
 
   constructor(config: Request & { id: RequestId }) {
+    super(
+      `Request:${config.id}${config.params?._callerAddress ? `Origin:${config.params._callerAddress}` : ''}`,
+    );
     this.jsonrpc = JSONRPC_VERSION;
     this.method = config.method;
     this.params = config.params;

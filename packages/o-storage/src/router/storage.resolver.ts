@@ -5,7 +5,7 @@ import {
   oRequest,
   oCustomTransport,
 } from '@olane/o-core';
-import type { oTransport, RouteResponse } from '@olane/o-core';
+import type { oRouterRequest, oTransport, RouteResponse } from '@olane/o-core';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageResolveRequest } from './storage.resolve-request.js';
 
@@ -64,7 +64,7 @@ export class oStorageResolver extends oAddressResolver {
     return {
       nextHopAddress: node.address,
       targetAddress: address,
-      requestOverride: req,
+      requestOverride: req as oRouterRequest,
     };
   }
 }

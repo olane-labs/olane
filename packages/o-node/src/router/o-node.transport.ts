@@ -17,4 +17,8 @@ export class oNodeTransport extends oTransport {
   toString(): string {
     return this.value.toString();
   }
+
+  toPeerId(): string {
+    return this.value.toString().split('/p2p/')[1];
+  }
 }

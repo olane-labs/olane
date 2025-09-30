@@ -1,10 +1,3 @@
-import {
-  NodeType,
-  oAddress,
-  NetworkStatus,
-  oNetwork,
-  setupGracefulShutdown,
-} from '../../src/index.js';
 import { expect } from 'chai';
 import dotenv from 'dotenv';
 import { multiaddr } from '@olane/o-config';

@@ -1,7 +1,8 @@
-import { oAddress, NetworkStatus, NodeState } from '../../src/index.js';
+import { oAddress, NodeState } from '@olane/o-core';
 import { expect } from 'chai';
 import dotenv from 'dotenv';
 import { defaultNetwork } from '../utils/default.network.js';
+import { NetworkStatus } from '../../src/index.js';
 
 dotenv.config();
 

@@ -1,8 +1,8 @@
-import { oRequest } from '../../connection/o-request.js';
 import { oAddress } from '../o-address.js';
+import { oRouterRequest } from '../o-request.router.js';
 
 export interface RouteResponse {
   nextHopAddress: oAddress;
   targetAddress: oAddress;
-  requestOverride?: oRequest;
+  requestOverride?: oRouterRequest;
 }

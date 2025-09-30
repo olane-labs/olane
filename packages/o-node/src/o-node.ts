@@ -15,6 +15,7 @@ import {
   CoreUtils,
   NodeState,
   NodeType,
+  oAddress,
   oRequest,
   RestrictedAddresses,
 } from '@olane/o-core';
@@ -52,8 +53,8 @@ export class oNode extends oToolBase {
     if (!this.parent || this.parent?.transports?.length === 0) {
       return null;
     }
-    const transport = this.parent?.transports[0];
-    const peerId = transport.toString().split('/p2p/')[1];
+    const transport = this.parent?.transports[0] as oNodeTransport;
+    const peerId = transport.toPeerId();
     return peerId;
   }
 
@@ -75,7 +76,7 @@ export class oNode extends oToolBase {
   }
 
   get parentTransports(): oNodeTransport[] {
-    return this.hierarchyManager.parents?.map((p) => p.transports).flat() || [];
+    return this.config.parent?.transports || [];
   }
 
   get transports(): oNodeTransport[] {
@@ -121,10 +122,7 @@ export class oNode extends oToolBase {
       this.logger.debug('Registering node with leader...', this.config.leader);
     }
 
-    const address = new oNodeAddress(
-      RestrictedAddresses.REGISTRY,
-      this.config?.leader?.libp2pTransports,
-    );
+    const address = oAddress.registry();
 
     const params = {
       method: 'commit',
@@ -166,13 +164,7 @@ export class oNode extends oToolBase {
       ...this.networkConfig,
       transports: this.configureTransports(),
       connectionManager: {
-        ...(this.networkConfig.connectionManager || {
-          minConnections: 10, // Keep at least 10 connections
-          maxConnections: 100, // Allow up to 100 connections
-          pollInterval: 2000, // Check connections every 2 seconds
-          autoDialInterval: 10000, // Auto-dial new peers every 10 seconds
-          dialTimeout: 30000, // 30 second dial timeout
-        }),
+        ...(this.networkConfig.connectionManager || {}),
       },
       listeners: (
         this.config.network?.listeners ||
@@ -197,9 +189,14 @@ export class oNode extends oToolBase {
     // this is a child node of the network, so communication is heavily restricted
     if (this.parentTransports.length > 0) {
       // peer discovery is only allowed through the parent transports
+      const transports =
+        this.parentTransports.map((t) => t.toMultiaddr().toString()) || [];
+      this.logger.debug('Parent transports: ', transports);
       params.peerDiscovery = [
         bootstrap({
-          list: [...this.parentTransports.map((t) => t.toString())],
+          list: transports.concat(
+            this.leader?.libp2pTransports.map((t) => t.toString()) || [],
+          ),
         }),
         ...(defaultLibp2pConfig.peerDiscovery || []),
       ];
@@ -210,6 +207,15 @@ export class oNode extends oToolBase {
         denyInboundEncryptedConnection: (peerId, maConn) => {
           // deny all inbound connections unless they are from a parent transport
           if (this.parentPeerId === peerId.toString()) {
+            return false;
+          }
+          if (
+            this.hierarchyManager.children.some((c) =>
+              c.libp2pTransports.some(
+                (t) => t.toPeerId() === peerId.toString(),
+              ),
+            )
+          ) {
             return false;
           }
           // allow leader inbounds

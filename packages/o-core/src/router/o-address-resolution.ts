@@ -4,8 +4,8 @@ import { TransportType } from '../transports/interfaces/transport-type.enum.js';
 import type { oCore } from '../core/o-core.js';
 import { oObject } from '../core/o-object.js';
 import { RouteResponse } from './interfaces/route.response.js';
-import { oRequest } from '../connection/o-request.js';
 import { ResolveRequest } from './interfaces/resolve.request.js';
+import { oRouterRequest } from './o-request.router.js';
 
 export class oAddressResolution extends oObject {
   private readonly resolvers: oAddressResolver[] = [];
@@ -28,23 +28,28 @@ export class oAddressResolution extends oObject {
       request.address.transports,
     );
 
-    let requestOverride: oRequest | undefined = request.request;
+    let targetAddress = request.address;
+    let requestOverride: oRouterRequest | undefined = request.request;
 
     for (const resolver of this.resolvers) {
-      const { nextHopAddress, requestOverride: resolverRequestOverride } =
-        await resolver.resolve({
-          address: resolvedAddress,
-          node: request.node,
-          request: requestOverride,
-        });
+      const {
+        nextHopAddress,
+        targetAddress: resolverTargetAddress,
+        requestOverride: resolverRequestOverride,
+      } = await resolver.resolve({
+        address: resolvedAddress,
+        node: request.node,
+        request: requestOverride,
+      });
       requestOverride = resolverRequestOverride || requestOverride;
+      targetAddress = resolverTargetAddress || targetAddress;
       resolvedAddress = nextHopAddress;
     }
 
     return {
       nextHopAddress: resolvedAddress,
-      targetAddress: request.address,
-      requestOverride,
+      targetAddress: targetAddress,
+      requestOverride: requestOverride,
     };
   }
 }

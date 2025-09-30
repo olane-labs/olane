@@ -102,14 +102,18 @@ export class NetworkUtils extends oObject {
     const add = new oNodeAddress(address.toString());
     const absoluteAddressCid = await add.toCID();
     // Add timeout to prevent hanging
-    NetworkUtils.advertiseValueToNetwork(absoluteAddressCid, p2pNode).catch(
-      (error: any) => {
+    NetworkUtils.advertiseValueToNetwork(absoluteAddressCid, p2pNode)
+      .then((d) => {
         NetworkUtils.log(
-          'Failed to advertise absolute address (this is normal for isolated nodes):',
+          `${address.toString()} - Successfully advertised absolute address`,
+        );
+      })
+      .catch((error: any) => {
+        NetworkUtils.log(
+          `${address.toString()} - Failed to advertise absolute address (this is normal for isolated nodes):`,
           error.message,
         );
-      },
-    );
+      });
 
     // advertise the static address to the network with timeout
     const staticAdd = new oNodeAddress(staticAddress.toString());

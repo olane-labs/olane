@@ -1,8 +1,13 @@
-import { oAddress, oError, oErrorCodes, oRequest } from '@olane/o-core';
+import {
+  oAddress,
+  oError,
+  oErrorCodes,
+  oRequest,
+  oRouterRequest,
+} from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { oToolBase } from './o-tool.base.js';
 import { ToolResult } from './interfaces/tool-result.interface.js';
-import { oRouterRequest } from '@olane/o-protocol';
 import { Stream } from '@olane/o-config';
 
 /**
@@ -96,7 +101,6 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
     async _tool_route(
       request: oRouterRequest & { stream?: Stream },
     ): Promise<any> {
-      this.logger.debug('Routing request...', request.params);
       if (
         request.params.address === this.address.toString() ||
         request.params.address === this.staticAddress.toString()

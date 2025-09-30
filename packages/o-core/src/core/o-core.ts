@@ -114,6 +114,7 @@ export abstract class oCore extends oObject {
     if (!address.validate()) {
       throw new Error('Invalid address');
     }
+    this.logger.debug('Using address: ', address.toString());
 
     if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(data);

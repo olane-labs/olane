@@ -7,15 +7,15 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { IncomingStreamData } from '@olane/o-config';
-import { oNode } from './o-node.js';
 import { oTool } from '@olane/o-tool';
+import { oServerNode } from './nodes/server.node.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
  * @param Base - The base class to extend
  * @returns A new class that extends the base class and implements the oTool interface
  */
-export class oNodeTool extends oTool(oNode) {
+export class oNodeTool extends oTool(oServerNode) {
   async handleProtocol(address: oAddress) {
     this.logger.debug('Handling protocol: ' + address.protocol);
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this));

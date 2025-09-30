@@ -5,12 +5,13 @@ import {
   oError,
   oErrorCodes,
   oRequest,
+  oRouterRequest,
   RouteResponse,
 } from '@olane/o-core';
 import type { oNode } from '../o-node.js';
 import { oToolRouter } from '@olane/o-tool';
 import { pipe, pushable, Stream } from '@olane/o-config';
-import { oRouterRequest, RequestParams } from '@olane/o-protocol';
+import { RequestParams } from '@olane/o-protocol';
 
 export class oNodeRouter extends oToolRouter {
   constructor() {
@@ -25,6 +26,7 @@ export class oNodeRouter extends oToolRouter {
     if (!request.stream) {
       throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
     }
+
     const stream = request.stream;
 
     let nextHopRequest: oRequest | oRouterRequest = new oRequest({
@@ -64,13 +66,6 @@ export class oNodeRouter extends oToolRouter {
           'Failed to dial target',
         );
       }
-
-      node.logger.debug(
-        'Forward: sending request to target...',
-        address.protocol,
-        address.libp2pTransports.map((t) => t.toString()),
-        nextHopRequest.toString(),
-      );
 
       const pushableStream = pushable();
       pushableStream.push(new TextEncoder().encode(nextHopRequest.toString()));
@@ -113,17 +108,8 @@ export class oNodeRouter extends oToolRouter {
       return externalRoute;
     }
 
-    const targetAddress = address;
-    const { nextHopAddress, requestOverride } =
+    const { nextHopAddress, targetAddress, requestOverride } =
       await this.addressResolution.resolve({ address, node });
-    this.logger.debug(
-      'Translated address: ' +
-        address.toString() +
-        ' to ' +
-        nextHopAddress.toString() +
-        ' from node ' +
-        node.address.toString(),
-    );
 
     return {
       nextHopAddress,
@@ -133,7 +119,10 @@ export class oNodeRouter extends oToolRouter {
   }
 
   isInternal(addressWithTransports: oNodeAddress, node: oNode): boolean {
-    if (addressWithTransports.libp2pTransports?.length > 0) {
+    if (
+      addressWithTransports.paths.indexOf(oAddress.leader().paths) !== -1 && // if the address has a leader
+      addressWithTransports.libp2pTransports?.length > 0
+    ) {
       // transports are provided, let's see if they match our known leaders
       const isLeaderRef =
         addressWithTransports.toString() === oAddress.leader().toString();

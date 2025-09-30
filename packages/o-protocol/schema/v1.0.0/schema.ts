@@ -118,7 +118,7 @@ export interface oAddress {
   protocol: string;
 }
 
-export interface oRouterRequest extends JSONRPCRequest {
+export interface oRouterRequestInterface extends JSONRPCRequest {
   method: oProtocolMethods.ROUTE;
   params: RequestParams & {
     address: string;
