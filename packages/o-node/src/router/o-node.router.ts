@@ -1,6 +1,4 @@
 import { oNodeAddress } from './o-node.address.js';
-import { oNodeTransport } from './o-node.transport.js';
-import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 import {
   NodeType,
   oAddress,
@@ -29,7 +27,11 @@ export class oNodeRouter extends oToolRouter {
     }
     const stream = request.stream;
 
-    let nextHopRequest: oRequest | oRouterRequest = request;
+    let nextHopRequest: oRequest | oRouterRequest = new oRequest({
+      method: request.method,
+      params: request.params,
+      id: request.id,
+    });
 
     // next hop is the destination address
     if (
@@ -47,32 +49,40 @@ export class oNodeRouter extends oToolRouter {
         },
         id: request.id,
       });
-      this.logger.debug(
-        'Forward: reached destination, changing to actual request',
-        nextHopRequest,
-      );
     }
 
     // dial the target
-    const targetStream = await node?.p2pNode.dialProtocol(
-      address.libp2pTransports.map((t) => t.toMultiaddr()),
-      address.protocol,
-    );
-
-    if (!targetStream) {
-      throw new oError(
-        oErrorCodes.FAILED_TO_DIAL_TARGET,
-        'Failed to dial target',
+    try {
+      const targetStream = await node?.p2pNode.dialProtocol(
+        address.libp2pTransports.map((t) => t.toMultiaddr()),
+        address.protocol,
       );
+
+      if (!targetStream) {
+        throw new oError(
+          oErrorCodes.FAILED_TO_DIAL_TARGET,
+          'Failed to dial target',
+        );
+      }
+
+      node.logger.debug(
+        'Forward: sending request to target...',
+        address.protocol,
+        address.libp2pTransports.map((t) => t.toString()),
+        nextHopRequest.toString(),
+      );
+
+      const pushableStream = pushable();
+      pushableStream.push(new TextEncoder().encode(nextHopRequest.toString()));
+      pushableStream.end();
+      await targetStream.sink(pushableStream);
+      await pipe(targetStream.source, stream?.sink);
+    } catch (error: any) {
+      if (error?.name === 'UnsupportedProtocolError') {
+        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
+      }
+      throw error;
     }
-
-    this.logger.debug('Forward: sending request to target...');
-
-    const pushableStream = pushable();
-    pushableStream.push(new TextEncoder().encode(nextHopRequest.toString()));
-    pushableStream.end();
-    await targetStream.sink(pushableStream);
-    await pipe(targetStream.source, stream?.sink);
   }
 
   private handleExternalAddress(
@@ -110,13 +120,10 @@ export class oNodeRouter extends oToolRouter {
       'Translated address: ' +
         address.toString() +
         ' to ' +
-        nextHopAddress.toString(),
+        nextHopAddress.toString() +
+        ' from node ' +
+        node.address.toString(),
     );
-    const leaderTransports = this.getTransports(
-      nextHopAddress as oNodeAddress,
-      node,
-    );
-    nextHopAddress.setTransports(leaderTransports);
 
     return {
       nextHopAddress,
@@ -136,27 +143,5 @@ export class oNodeRouter extends oToolRouter {
       return isLeaderRef || isOurLeaderRef;
     }
     return true;
-  }
-
-  getTransports(address: oNodeAddress, node: oNode): oNodeTransport[] {
-    this.logger.debug(
-      `[${node.address}]: ` +
-        'Get transports for address: ' +
-        address.toString(),
-    );
-    const nodeTransports = address?.libp2pTransports || [];
-
-    // if the transports are provided, then we can use them
-    if (nodeTransports?.length > 0) {
-      this.logger.debug('Using provided transports...');
-      return nodeTransports;
-    }
-
-    // if we are not in a network & no leaders are provided, then we can't resolve the address
-    if (!node.leader) {
-      throw new Error('No leader transports provided, cannot resolve address');
-    }
-
-    return node.leader.libp2pTransports;
   }
 }

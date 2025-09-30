@@ -16,7 +16,6 @@ import {
   NodeState,
   NodeType,
   oRequest,
-  oTransport,
   RestrictedAddresses,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
@@ -25,6 +24,8 @@ import { oNodeConnectionManager } from './connection/o-node-connection.manager.j
 import { oNodeResolver } from './router/resolvers/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
 import { oToolBase } from '@olane/o-tool';
+import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
+import { oLeaderResolverFallback } from './router/index.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -301,6 +302,11 @@ export class oNode extends oToolBase {
 
     // initialize address resolution
     this.router.addResolver(new oNodeResolver(this.address));
+
+    // setup a fallback resolver for non-leader nodes
+    if (this.isLeader === false) {
+      this.router.addResolver(new oLeaderResolverFallback(this.address));
+    }
   }
 
   async teardown(): Promise<void> {

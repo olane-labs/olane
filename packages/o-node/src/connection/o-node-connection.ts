@@ -1,5 +1,11 @@
 import { Connection, Uint8ArrayList, pushable, all } from '@olane/o-config';
-import { oConnection, oRequest, oResponse } from '@olane/o-core';
+import {
+  oConnection,
+  oError,
+  oErrorCodes,
+  oRequest,
+  oResponse,
+} from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 export class oNodeConnection extends oConnection {
@@ -28,24 +34,31 @@ export class oNodeConnection extends oConnection {
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
-    const stream = await this.p2pConnection.newStream(
-      this.nextHopAddress.protocol,
-    );
+    try {
+      const stream = await this.p2pConnection.newStream(
+        this.nextHopAddress.protocol,
+      );
 
-    // Create a pushable stream
-    const pushableStream = pushable();
-    pushableStream.push(new TextEncoder().encode(request.toString()));
-    pushableStream.end();
+      // Create a pushable stream
+      const pushableStream = pushable();
+      pushableStream.push(new TextEncoder().encode(request.toString()));
+      pushableStream.end();
 
-    // Send the data
-    await stream.sink(pushableStream);
-    const res = await this.read(stream.source);
+      // Send the data
+      await stream.sink(pushableStream);
+      const res = await this.read(stream.source);
 
-    // process the response
-    const response = new oResponse({
-      ...res.result,
-    });
-    return response;
+      // process the response
+      const response = new oResponse({
+        ...res.result,
+      });
+      return response;
+    } catch (error: any) {
+      if (error?.name === 'UnsupportedProtocolError') {
+        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
+      }
+      throw error;
+    }
   }
 
   async close() {

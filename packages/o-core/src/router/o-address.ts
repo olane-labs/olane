@@ -109,7 +109,7 @@ export class oAddress extends oObject {
     // do we need to go back to the leader?
     if (
       !address.equals(oAddress.leader()) && // if we are a leader, do not got back to self
-      (remainingPath === targetAddress.toString() ||
+      (remainingPath === targetAddress.protocol ||
         oAddress.isStatic(targetAddress))
     ) {
       return oAddress.leader();

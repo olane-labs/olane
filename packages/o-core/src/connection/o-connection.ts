@@ -41,6 +41,7 @@ export abstract class oConnection extends oObject {
       params: {
         _connectionId: this.id,
         _requestMethod: method,
+        _callerAddress: this.callerAddress?.value,
         ...params,
       },
       id: params.id || uuidv4(),

@@ -114,6 +114,11 @@ export abstract class oCore extends oObject {
     if (!address.validate()) {
       throw new Error('Invalid address');
     }
+
+    if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
+      return this.useSelf(data);
+    }
+
     const { nextHopAddress, targetAddress } = await this.router.translate(
       address,
       this,
@@ -312,10 +317,10 @@ export abstract class oCore extends oObject {
     this.logger.debug('Tearing down node...');
     for (const child of this.hierarchyManager.children) {
       this.logger.debug('Stopping child: ' + child.toString());
-      await this.use(child, {
-        method: 'stop',
-        params: {},
-      });
+      // await this.use(child, {
+      //   method: 'stop',
+      //   params: {},
+      // });
     }
   }
 

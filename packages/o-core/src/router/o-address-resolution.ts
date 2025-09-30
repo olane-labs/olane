@@ -37,9 +37,6 @@ export class oAddressResolution extends oObject {
           node: request.node,
           request: requestOverride,
         });
-      this.logger.debug(
-        `[${request.node?.address}]: Resolved address: ${request.address.toString()} to ${nextHopAddress.toString()}`,
-      );
       requestOverride = resolverRequestOverride || requestOverride;
       resolvedAddress = nextHopAddress;
     }

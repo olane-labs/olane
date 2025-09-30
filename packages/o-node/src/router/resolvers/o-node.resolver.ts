@@ -35,17 +35,21 @@ export class oNodeResolver extends oAddressResolver {
         requestOverride: request as oRequest,
       };
     }
-    const childAddress = node?.hierarchyManager.getChild(address);
-    this.logger.debug(
-      `[${node?.address}]: Children: ${node?.hierarchyManager.children.map((c) => c.toString()).join(', ')}`,
-    );
-    this.logger.debug(
-      `[${node?.address}]: Resolving address: ${address.toString()} and child address: ${childAddress?.toString()}`,
-    );
-    this.logger.debug(
-      'Child transports: ' +
-        childAddress?.transports.map((t) => t.toString()).join(', '),
-    );
+    // get the next node & check for child address existence
+    const remainingPath = address.paths.replace(node.address.paths + '/', '');
+    // ensure this is going down in the hierarchy
+    if (remainingPath === address.paths && node.isLeader === false) {
+      return {
+        nextHopAddress: node.address as oNodeAddress,
+        targetAddress: address as oNodeAddress,
+        requestOverride: request as oRequest,
+      };
+    }
+
+    // next term resolver
+    const parts = remainingPath.split('/');
+    const nextNode = new oNodeAddress(`o://${parts.shift()}`);
+    const childAddress = node?.hierarchyManager.getChild(nextNode);
 
     // get the child address from hierarchy (which includes transports)
     if (childAddress) {

@@ -22,4 +22,9 @@ export abstract class RegistryTool extends oLaneTool {
   abstract _tool_search(request: oRequest): Promise<ToolResult>;
   abstract _tool_find_all(request: oRequest): Promise<ToolResult>;
   abstract _tool_remove(request: oRequest): Promise<ToolResult>;
+  async index() {
+    return {
+      summary: 'Registry tool',
+    };
+  }
 }

@@ -142,6 +142,7 @@ export class oNetwork {
           parent: this.rootLeader?.address || null,
         });
         await commonNode.start();
+        this.rootLeader?.addChildNode(commonNode);
         await initCommonTools(commonNode);
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);
