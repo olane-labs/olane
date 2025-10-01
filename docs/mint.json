@@ -116,6 +116,7 @@
       "group": "Tools & Capabilities",
       "pages": [
         "concepts/tools/overview",
+        "concepts/tools/mcp-integration",
         "concepts/tools/creating-tools",
         "concepts/tools/conventions",
         "concepts/tools/parameter-validation",

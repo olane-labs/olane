@@ -1,0 +1,837 @@
+---
+title: "MCP Integration"
+description: "Bridge Model Context Protocol servers into Olane networks as first-class tool nodes"
+---
+
+## Overview
+
+The `@olane/o-mcp` package bridges Model Context Protocol (MCP) servers into Olane OS networks, making MCP tools discoverable and invokable like native Olane tools. MCP servers become first-class nodes with o:// addresses, participate in network discovery, and work seamlessly with both human and AI agents.
+
+**TL;DR**: Run any MCP server (local or remote) as an Olane node. Its tools become discoverable across your network and callable by any agent.
+
+## Why bridge MCP servers?
+
+MCP has a rich ecosystem of server implementations - filesystem access, database queries, API integrations, and more. Instead of reimplementing these capabilities as native Olane tools, bridge existing MCP servers directly into your network.
+
+<CardGroup cols={2}>
+  <Card title="Leverage Ecosystem" icon="plug" color="#0D9373">
+    Use hundreds of existing MCP servers without rewriting
+  </Card>
+  <Card title="Network Discovery" icon="magnifying-glass" color="#0D9373">
+    MCP tools become discoverable via Olane's registry
+  </Card>
+  <Card title="Agent-Agnostic" icon="users" color="#0D9373">
+    Human and AI agents access MCP tools identically
+  </Card>
+  <Card title="Distributed Access" icon="network-wired" color="#0D9373">
+    Share MCP servers across your entire network
+  </Card>
+</CardGroup>
+
+## How it works
+
+The MCP bridge creates Olane nodes that wrap MCP server connections:
+
+```
+┌─────────────────────────────────────────────────┐
+│  MCP Bridge Node (o://mcp)                      │
+│  - Manages MCP server connections               │
+│  - Creates child nodes for each server          │
+│  - Handles server lifecycle                     │
+└─────────────────────────────────────────────────┘
+                    ⬇ creates
+┌─────────────────────────────────────────────────┐
+│  MCP Server Nodes (o://filesystem, etc.)        │
+│  - One node per MCP server                      │
+│  - Wraps MCP client connection                  │
+│  - Dynamically registers MCP tools              │
+└─────────────────────────────────────────────────┘
+                    ⬇ exposes
+┌─────────────────────────────────────────────────┐
+│  MCP Tools (_tool_read_file, etc.)              │
+│  - Each MCP tool becomes an Olane tool          │
+│  - Parameter schemas preserved                  │
+│  - Callable like native Olane tools             │
+└─────────────────────────────────────────────────┘
+```
+
+### The bridge process
+
+1. **MCP Bridge Node** starts and listens for add server requests
+2. **Connection** establishes to MCP server (stdio or HTTP)
+3. **Tool Discovery** queries MCP server for available tools
+4. **Dynamic Registration** creates `_tool_` methods for each MCP tool
+5. **Network Registration** registers the new node with leader
+6. **Agent Access** agents discover and use tools via o:// address
+
+## Installation
+
+```bash
+npm install @olane/o-mcp
+```
+
+## Quick start
+
+<Steps>
+  <Step title="Start the MCP bridge">
+    ```typescript
+    import { McpBridgeTool } from '@olane/o-mcp';
+    import { oAddress } from '@olane/o-core';
+
+    const bridge = new McpBridgeTool({
+      address: new oAddress('o://mcp'),
+      leader: new oAddress('o://leader')
+    });
+    
+    await bridge.start();
+    console.log('MCP bridge ready at o://mcp');
+    ```
+  </Step>
+
+  <Step title="Add an MCP server">
+    ```typescript
+    // Add local MCP server (stdio)
+    await bridge.use({
+      method: 'add_local_server',
+      params: {
+        name: 'filesystem',
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+      }
+    });
+    
+    console.log('MCP server available at o://filesystem');
+    ```
+  </Step>
+
+  <Step title="Use MCP tools">
+    ```typescript
+    // Discover and call MCP tools
+    const filesystem = await oAddress.resolve('o://filesystem');
+    
+    const result = await filesystem.use({
+      method: 'read_file',
+      params: { path: '/workspace/data.json' }
+    });
+    
+    console.log(result);
+    ```
+  </Step>
+</Steps>
+
+## Adding MCP servers
+
+The bridge supports both local (stdio) and remote (HTTP) MCP servers.
+
+### Local MCP servers (stdio)
+
+Use for MCP servers that run as command-line processes:
+
+<CodeGroup>
+```typescript Filesystem Server
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'filesystem',
+    command: 'npx',
+    args: [
+      '-y',
+      '@modelcontextprotocol/server-filesystem',
+      '/workspace'
+    ]
+  }
+});
+// Creates node at o://filesystem
+```
+
+```typescript Custom Server
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'database',
+    command: 'node',
+    args: [
+      './mcp-servers/database-server.js',
+      '--db', 'postgres://localhost/mydb'
+    ]
+  }
+});
+// Creates node at o://database
+```
+
+```typescript Python Server
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'data-analysis',
+    command: 'python',
+    args: [
+      '-m', 'mcp_server_analysis',
+      '--data-dir', './data'
+    ]
+  }
+});
+// Creates node at o://data-analysis
+```
+</CodeGroup>
+
+**Parameters:**
+- `name` (string, required): Name for the node (becomes o://name)
+- `command` (string, required): Command to execute
+- `args` (string[], required): Command arguments
+
+### Remote MCP servers (HTTP)
+
+Use for MCP servers exposed via HTTP:
+
+<CodeGroup>
+```typescript Basic HTTP
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'https://mcp.example.com'
+  }
+});
+// Creates node at o://mcp-{timestamp}
+```
+
+```typescript With Authentication
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'https://api.example.com/mcp',
+    headers: {
+      'Authorization': 'Bearer your-api-key',
+      'X-API-Version': '2024-01'
+    }
+  }
+});
+```
+
+```typescript Internal Service
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'http://internal-mcp-server:8080',
+    headers: {
+      'X-Internal-Token': process.env.INTERNAL_TOKEN
+    }
+  }
+});
+```
+</CodeGroup>
+
+**Parameters:**
+- `mcpServerUrl` (string, required): HTTP(S) URL of MCP server
+- `headers` (object, optional): HTTP headers for authentication/config
+
+## Tool mapping
+
+MCP tools are automatically mapped to Olane tools:
+
+### Schema conversion
+
+```typescript
+// MCP tool definition
+{
+  name: "read_file",
+  description: "Read a file from the filesystem",
+  inputSchema: {
+    type: "object",
+    properties: {
+      path: {
+        type: "string",
+        description: "Path to the file"
+      }
+    },
+    required: ["path"]
+  }
+}
+
+// Becomes Olane tool
+class McpFilesystemNode extends oLaneTool {
+  async _tool_read_file(request: oRequest) {
+    // Forwards to MCP server
+    return await this.mcpClient.callTool({
+      name: 'read_file',
+      arguments: request.params
+    });
+  }
+
+  _params_read_file() {
+    return {
+      path: {
+        type: 'string',
+        required: true,
+        description: 'Path to the file'
+      }
+    };
+  }
+}
+```
+
+### Return value handling
+
+```typescript
+// MCP returns content array
+{
+  content: [
+    {
+      type: "text",
+      text: "File contents here..."
+    }
+  ]
+}
+
+// Bridge extracts and returns content
+// Agents receive: "File contents here..."
+```
+
+## Discovery and usage
+
+MCP tools work identically to native Olane tools:
+
+### Discovery by agents
+
+```typescript
+// Find all MCP nodes
+const nodes = await leader.search({ type: 'TOOL' });
+const mcpNodes = nodes.filter(n => n.address.startsWith('o://filesystem'));
+
+// Get tools from MCP node
+const filesystem = await oAddress.resolve('o://filesystem');
+const tools = await filesystem.use({ method: 'get_tools' });
+
+console.log(tools);
+// ['read_file', 'write_file', 'list_directory', ...]
+```
+
+### Direct invocation
+
+```typescript
+// Call MCP tool directly
+const result = await filesystem.use({
+  method: 'read_file',
+  params: { path: '/workspace/config.json' }
+});
+```
+
+### Agent workflows
+
+```typescript
+// AI agents use MCP tools in autonomous workflows
+const agent = new oLaneTool({
+  address: new oAddress('o://assistant')
+});
+
+await agent.use({
+  method: 'intent',
+  params: {
+    intent: 'Read all JSON files in /workspace/data and summarize their contents'
+  }
+});
+
+// Agent autonomously:
+// 1. Discovers o://filesystem node
+// 2. Calls list_directory tool
+// 3. Calls read_file for each JSON file
+// 4. Synthesizes summary
+```
+
+### Human workflows
+
+```bash
+# CLI access to MCP tools
+$ olane discover o://filesystem
+
+# Available tools:
+# - read_file (path)
+# - write_file (path, content)
+# - list_directory (path)
+
+$ olane call o://filesystem read_file --path "/workspace/data.json"
+
+# Result:
+# { "users": [...], "config": {...} }
+```
+
+## Advanced patterns
+
+### Multiple MCP servers
+
+```typescript
+// Build a multi-server network
+const bridge = new McpBridgeTool({ /* ... */ });
+await bridge.start();
+
+// Add filesystem access
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'filesystem',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+  }
+});
+
+// Add database access
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'postgres',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-postgres']
+  }
+});
+
+// Add web search
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'https://search-mcp.example.com',
+    headers: { 'Authorization': `Bearer ${process.env.SEARCH_API_KEY}` }
+  }
+});
+
+// Now agents can coordinate across all three
+const agent = new oLaneTool({ /* ... */ });
+await agent.use({
+  method: 'intent',
+  params: {
+    intent: 'Search for research papers, download PDFs to workspace, and store metadata in database'
+  }
+});
+```
+
+### Hierarchical organization
+
+```typescript
+// Organize MCP servers under a common parent
+const mcpBridge = new McpBridgeTool({
+  address: new oAddress('o://integrations/mcp')
+});
+
+// All MCP servers become children
+// o://integrations/mcp/filesystem
+// o://integrations/mcp/database
+// o://integrations/mcp/search
+
+// Discover all MCP integrations
+const mcpTools = await leader.search({
+  addressPrefix: 'o://integrations/mcp'
+});
+```
+
+### Dynamic server management
+
+```typescript
+// Search for MCP servers by functionality
+const searchResult = await bridge.use({
+  method: 'search',
+  params: {
+    functionality: 'web scraping and HTML parsing'
+  }
+});
+
+// Returns information about relevant MCP servers
+console.log(searchResult.result);
+// "Found @modelcontextprotocol/server-puppeteer..."
+
+// Validate a URL before adding
+const validation = await bridge.use({
+  method: 'validate_url',
+  params: {
+    mcpServerUrl: 'https://github.com/user/custom-mcp-server'
+  }
+});
+
+// Add if valid
+if (validation.result.includes('valid')) {
+  await bridge.use({
+    method: 'add_remote_server',
+    params: { mcpServerUrl: 'https://custom-mcp-server.com' }
+  });
+}
+```
+
+## Architecture comparison
+
+Understanding the relationship between MCP and Olane:
+
+| Aspect | MCP Alone | Olane Alone | MCP + Olane Bridge |
+|--------|-----------|-------------|-------------------|
+| **Purpose** | Tool protocol for LLMs | Agent operating system | Best of both ecosystems |
+| **Transport** | stdio, HTTP | P2P networking (libp2p) | MCP wrapped in Olane |
+| **Discovery** | Static config files | Dynamic network registry | MCP tools indexed in registry |
+| **Target Users** | LLM applications | Human & AI agents | Both |
+| **Coordination** | Single client manages | Distributed agents coordinate | Agents discover MCP tools |
+| **Scale** | Single machine | Distributed network | MCP tools across network |
+| **Addressing** | Server name | Hierarchical (o://) | MCP server at o://name |
+| **Network Effects** | Limited to one app | Multi-agent workflows | MCP joins multi-agent workflows |
+
+## Real-world example
+
+Complete setup for a data analysis workflow:
+
+<CodeGroup>
+```typescript Setup: MCP Bridge Network
+import { McpBridgeTool } from '@olane/o-mcp';
+import { oLaneTool } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+// 1. Start MCP bridge
+const bridge = new McpBridgeTool({
+  address: new oAddress('o://mcp'),
+  leader: new oAddress('o://leader')
+});
+await bridge.start();
+
+// 2. Add filesystem MCP server
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'filesystem',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-filesystem', './data']
+  }
+});
+
+// 3. Add database MCP server
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'database',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-postgres']
+  }
+});
+
+// 4. Add web research MCP server
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'https://research-mcp.example.com',
+    headers: { 'Authorization': `Bearer ${process.env.RESEARCH_KEY}` }
+  }
+});
+
+console.log('MCP network ready');
+```
+
+```typescript Usage: Data Analysis Agent
+// Create an agent that uses MCP tools
+const analyst = new oLaneTool({
+  address: new oAddress('o://analyst'),
+  laneContext: {
+    domain: 'Data Analysis',
+    expertise: ['Data processing', 'Research', 'Reporting']
+  }
+});
+await analyst.start();
+
+// Agent discovers and uses MCP tools autonomously
+const result = await analyst.use({
+  method: 'intent',
+  params: {
+    intent: `
+      1. Research latest trends in AI agent architectures
+      2. Download relevant papers to ./data/research
+      3. Extract key findings and store in database
+      4. Generate summary report
+    `
+  }
+});
+
+// Agent execution:
+// → Discovers o://research-mcp (web research)
+// → Calls search_papers tool
+// → Discovers o://filesystem (file operations)
+// → Calls write_file for each paper
+// → Discovers o://database (data storage)
+// → Calls insert_records with findings
+// → Generates final report
+
+console.log(result);
+```
+
+```typescript Usage: Human via CLI
+# Humans access the same MCP tools
+$ olane discover
+
+# Available nodes:
+# - o://filesystem (MCP: filesystem operations)
+# - o://database (MCP: postgres queries)
+# - o://research-mcp (MCP: web research)
+
+# Read a file through MCP
+$ olane call o://filesystem read_file \
+  --path "./data/research/paper1.pdf"
+
+# Query database through MCP
+$ olane call o://database query \
+  --sql "SELECT * FROM findings WHERE topic='agents'"
+
+# Search for research through MCP
+$ olane call o://research-mcp search_papers \
+  --query "agentic operating systems"
+```
+</CodeGroup>
+
+## Error handling
+
+The bridge handles MCP-specific errors and translates them to Olane errors:
+
+```typescript
+try {
+  await filesystem.use({
+    method: 'read_file',
+    params: { path: '/nonexistent/file.txt' }
+  });
+} catch (error) {
+  // MCP error is wrapped in Olane oError
+  console.error(error.code);    // oErrorCodes.UNKNOWN
+  console.error(error.message); // Original MCP error message
+}
+```
+
+## Performance considerations
+
+<AccordionGroup>
+  <Accordion title="Connection overhead">
+    Each MCP server maintains a persistent connection (stdio or HTTP). For local servers, this is minimal. For remote servers, consider network latency.
+    
+    **Best Practice**: Colocate remote MCP servers with your Olane network for lower latency.
+  </Accordion>
+  
+  <Accordion title="Tool discovery caching">
+    MCP tools are discovered once at connection time and cached. Changes to MCP server tools require restarting the bridge node.
+    
+    **Best Practice**: Version your MCP servers and restart bridge nodes when updating.
+  </Accordion>
+  
+  <Accordion title="Concurrent requests">
+    The bridge can handle multiple concurrent tool calls to the same MCP server. MCP servers must be designed for concurrent access.
+    
+    **Best Practice**: Verify your MCP servers are thread-safe before production use.
+  </Accordion>
+  
+  <Accordion title="Resource limits">
+    stdio MCP servers spawn processes. Too many can exhaust system resources.
+    
+    **Best Practice**: Monitor process counts and use remote MCP servers for high-scale deployments.
+  </Accordion>
+</AccordionGroup>
+
+## Security considerations
+
+<Warning>
+  **MCP servers have access to system resources**. Only bridge trusted MCP servers and validate their capabilities before adding them to production networks.
+</Warning>
+
+### Access control
+
+```typescript
+// Restrict MCP server access via hierarchical context
+const bridge = new McpBridgeTool({
+  address: new oAddress('o://company/integrations/mcp'),
+  // Inherits company-level security policies
+});
+
+// Add MCP server with restricted access
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'filesystem-readonly',
+    command: 'npx',
+    args: [
+      '-y',
+      '@modelcontextprotocol/server-filesystem',
+      '/data',
+      '--readonly'  // MCP server flag
+    ]
+  }
+});
+```
+
+### Credential management
+
+```typescript
+// Never hardcode credentials
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: process.env.MCP_SERVER_URL,
+    headers: {
+      'Authorization': `Bearer ${process.env.MCP_API_KEY}`
+    }
+  }
+});
+
+// Use secrets management
+import { getSecret } from './secrets';
+
+await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: await getSecret('MCP_URL'),
+    headers: {
+      'Authorization': `Bearer ${await getSecret('MCP_KEY')}`
+    }
+  }
+});
+```
+
+## Limitations
+
+<AccordionGroup>
+  <Accordion title="MCP Resources and Prompts">
+    Currently, only MCP **tools** are bridged. MCP resources and prompts are not supported.
+    
+    **Workaround**: Create native Olane tools that wrap MCP resource/prompt access.
+  </Accordion>
+  
+  <Accordion title="Streaming responses">
+    MCP streaming responses are not yet supported through the bridge.
+    
+    **Status**: Planned for future release.
+  </Accordion>
+  
+  <Accordion title="Dynamic tool updates">
+    MCP tools are discovered once at connection. Dynamic tool changes require bridge restart.
+    
+    **Workaround**: Implement hot-reload by monitoring MCP server changes and recreating connections.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### MCP server won't connect
+
+```typescript
+// Check if command is accessible
+$ npx -y @modelcontextprotocol/server-filesystem /workspace
+# Should start without errors
+
+// Check server output
+await bridge.use({
+  method: 'add_local_server',
+  params: {
+    name: 'filesystem',
+    command: 'npx',
+    args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+  }
+}).catch(err => {
+  console.error('Connection failed:', err.message);
+  // Common: "Command not found" → Install MCP server
+  // Common: "Permission denied" → Check file permissions
+});
+```
+
+### Tools not appearing
+
+```typescript
+// Verify MCP server exposes tools
+const filesystem = await oAddress.resolve('o://filesystem');
+const whoami = await filesystem.use({ method: 'whoami' });
+console.log(whoami.tools);
+// Should show MCP tool definitions
+
+// If empty, MCP server may not be advertising tools correctly
+```
+
+### Performance issues
+
+```bash
+# Monitor MCP server processes
+$ ps aux | grep mcp
+
+# Check Olane metrics
+$ olane metrics o://filesystem
+# Look for high latency or error rates
+```
+
+## Migration guide
+
+### From direct MCP usage
+
+<Tabs>
+  <Tab title="Before (Direct MCP)">
+    ```typescript
+    // Using MCP directly in application
+    import { Client } from '@modelcontextprotocol/sdk/client';
+    import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio';
+
+    const transport = new StdioClientTransport({
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+    });
+
+    const client = new Client({ name: 'my-app', version: '1.0.0' });
+    await client.connect(transport);
+
+    // Call tool
+    const result = await client.callTool({
+      name: 'read_file',
+      arguments: { path: '/workspace/data.json' }
+    });
+    ```
+  </Tab>
+  
+  <Tab title="After (Olane Bridge)">
+    ```typescript
+    // Bridge MCP into Olane network
+    import { McpBridgeTool } from '@olane/o-mcp';
+
+    const bridge = new McpBridgeTool({ /* ... */ });
+    await bridge.start();
+
+    await bridge.use({
+      method: 'add_local_server',
+      params: {
+        name: 'filesystem',
+        command: 'npx',
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+      }
+    });
+
+    // Now any agent can use it
+    const filesystem = await oAddress.resolve('o://filesystem');
+    const result = await filesystem.use({
+      method: 'read_file',
+      params: { path: '/workspace/data.json' }
+    });
+    
+    // Benefits:
+    // ✅ Discoverable by all agents
+    // ✅ Network-wide access
+    // ✅ Works with human and AI agents
+    // ✅ Participates in workflows
+    ```
+  </Tab>
+</Tabs>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="o-mcp API Reference" icon="book" href="/packages/o-mcp">
+    Complete package documentation
+  </Card>
+  <Card title="Tools Overview" icon="wrench" href="/concepts/tools/overview">
+    Learn about Olane's tool system
+  </Card>
+  <Card title="Creating Custom Tools" icon="hammer" href="/concepts/tools/creating-tools">
+    Build native Olane tools
+  </Card>
+  <Card title="Tool Discovery" icon="magnifying-glass" href="/concepts/tools/discovery">
+    How agents find tools
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Tools Overview](/concepts/tools/overview) - Understanding Olane tools
+- **Package**: [o-tool Reference](/packages/o-tool) - Native tool system
+- **Package**: [o-mcp Reference](/packages/o-mcp) - Complete API documentation
+- **External**: [Model Context Protocol](https://modelcontextprotocol.io) - MCP specification
+- **External**: [MCP Servers](https://github.com/modelcontextprotocol/servers) - Official MCP servers
+

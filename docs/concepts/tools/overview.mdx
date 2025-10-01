@@ -1,57 +1,27 @@
 ---
 title: "Tools Overview"
-description: "Discoverable capabilities that agents can invoke - like MCP server tools for your nodes"
+description: "Individual executable methods that make node capabilities discoverable and invokable by any agent"
 ---
 
 ## Overview
 
-**Tools** are individual executable methods on nodes that agents (human or AI) can discover and invoke. They're Olane OS's equivalent to MCP (Model Context Protocol) server tools - discoverable, validated functions that extend what agents can do.
+**Tools** are individual executable methods on nodes that make capabilities discoverable and invokable by agents. They're how you expose functionality in Olane OS - whether to human agents (via CLI, UI) or AI agents (via LLMs).
 
-**TL;DR**: Tools are to nodes what MCP server tools are to LLM applications. They make capabilities discoverable, validated, and invokable by any agent.
+**TL;DR**: Tools turn node methods into discoverable, validated capabilities that any agent can find and use. Think: functions with schemas, automatic validation, and network-wide discovery.
 
-## The MCP parallel
+## Mental model: Like MCP tools, but agent-agnostic
 
-If you're familiar with MCP (Model Context Protocol), tools in Olane OS work the same way:
-
-<CardGroup cols={2}>
-  <Card title="MCP Server Tools" icon="server" color="#6366f1">
-    Functions that LLMs can discover and call
-  </Card>
-  <Card title="Olane Node Tools" icon="wrench" color="#0D9373">
-    Functions that agents (human or AI) can discover and call
-  </Card>
-</CardGroup>
-
-### MCP Server Tool
+If you're familiar with MCP (Model Context Protocol), think of Olane tools similarly: **discoverable, validated functions that agents can invoke**. The key difference is that Olane tools serve both human agents (CLI, UI) and AI agents (LLMs) through the same interface.
 
 ```typescript
-// MCP server tool example
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === "get_weather") {
-    return {
-      content: [{
-        type: "text",
-        text: JSON.stringify({ temp: 72, conditions: "sunny" })
-      }]
-    };
-  }
-});
-```
-
-### Olane Node Tool
-
-```typescript
-// Equivalent Olane node tool
+// A tool in Olane OS
 class WeatherNode extends oNodeTool {
-  // Discoverable, validated tool
+  // Discoverable method with _tool_ prefix
   async _tool_get_weather(request: oRequest) {
-    return { 
-      temp: 72, 
-      conditions: "sunny" 
-    };
+    return { temp: 72, conditions: "sunny" };
   }
 
-  // Parameter schema (like MCP tool definition)
+  // Parameter schema for validation
   _params_get_weather() {
     return {
       location: { type: 'string', required: true }
@@ -60,9 +30,9 @@ class WeatherNode extends oNodeTool {
 }
 ```
 
-**Key Similarity**: Both provide a standard way for intelligent agents to discover and invoke capabilities with parameter validation.
-
-**Key Difference**: Olane tools are agent-agnostic - they work with human agents (CLI, UI) and AI agents (LLMs) through the same interface.
+<Note>
+  If you're using MCP servers, Olane can bridge them into your network. See [MCP Integration](/concepts/tools/mcp-integration) to learn how.
+</Note>
 
 ## Why tools exist
 
@@ -843,27 +813,6 @@ const alerts = await weather.use({
 ```
 </CodeGroup>
 
-## Tools vs MCP: Key differences
-
-While tools are similar to MCP server tools, there are important differences:
-
-| Aspect | MCP Server Tools | Olane Node Tools |
-|--------|------------------|------------------|
-| **Target** | LLM applications only | Human and AI agents |
-| **Transport** | stdio, HTTP | P2P networking (libp2p) |
-| **Discovery** | Static config | Dynamic registry + DHT |
-| **Addressing** | Server name | Hierarchical (`o://`) |
-| **Coordination** | Client manages | Emergent via leader |
-| **Scale** | Single machine | Distributed network |
-| **Validation** | Client-side | Server-side automatic |
-
-<Check>
-  **Use MCP when**: Building LLM-specific desktop applications (Claude Desktop, etc.)
-</Check>
-
-<Check>
-  **Use Olane tools when**: Building agent-agnostic systems that scale across networks and serve both human and AI agents
-</Check>
 
 ## Best practices
 
@@ -1029,6 +978,12 @@ While tools are similar to MCP server tools, there are important differences:
   <Card title="Tool Discovery" icon="magnifying-glass" href="/concepts/tools/discovery">
     How agents find and use tools
   </Card>
+  <Card title="MCP Integration" icon="bridge" href="/concepts/tools/mcp-integration">
+    Bridge MCP servers into Olane
+  </Card>
+  <Card title="Built-in Tools" icon="toolbox" href="/concepts/tools/built-in-tools">
+    System tools reference
+  </Card>
 </CardGroup>
 
 ## Related resources
@@ -1036,5 +991,7 @@ While tools are similar to MCP server tools, there are important differences:
 - **Concept**: [Tools, Nodes, and Applications](/concepts/tools-nodes-applications) - Architectural levels
 - **Concept**: [Simple vs Complex Nodes](/concepts/tool-nodes/overview) - When to use which
 - **Package**: [o-tool Reference](/packages/o-tool) - Complete API documentation
+- **Package**: [o-mcp Reference](/packages/o-mcp) - MCP bridge package
 - **Guide**: [Built-in Tools](/concepts/tools/built-in-tools) - System tools reference
+- **External**: [Model Context Protocol](https://modelcontextprotocol.io) - MCP specification
 
