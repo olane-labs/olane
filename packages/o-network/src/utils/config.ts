@@ -2,39 +2,40 @@ import fs from 'fs-extra';
 import path from 'path';
 import {
   DEFAULT_CONFIG_PATH,
-  DEFAULT_NETWORKS_PATH,
+  DEFAULT_INSTANCE_PATH,
   DEFAULT_CONFIG_FILE,
 } from '@olane/o-core';
-import { NetworkConfigInterface, NetworkStatus } from '../network/index.js';
+import { OlaneOSSystemStatus } from '../o-olane-os/enum/o-os.status-enum.js';
+import { OlaneOSConfig } from '../o-olane-os/index.js';
 
-export interface NetworkConfig {
+export interface OlaneOSInstanceConfig {
   name: string;
   version: string;
   description: string;
   port: number;
-  status: NetworkStatus;
+  status: OlaneOSSystemStatus;
   path?: string;
   createdAt?: string;
   pid?: number;
   peerId?: string;
   transports?: string[];
-  oNetworkConfig?: NetworkConfigInterface;
+  oNetworkConfig?: OlaneOSConfig;
 }
 
 export interface CLIConfig {
-  networksPath: string;
+  instancesPath: string;
 }
 
 export const CONFIG_FILE_NAME = 'config.json';
 
 export class ConfigManager {
   private static configPath = DEFAULT_CONFIG_PATH;
-  private static networksPath = DEFAULT_NETWORKS_PATH;
+  private static instancesPath = DEFAULT_INSTANCE_PATH;
   private static configFile = DEFAULT_CONFIG_FILE;
 
   static async initialize(): Promise<void> {
     await fs.ensureDir(ConfigManager.configPath);
-    await fs.ensureDir(ConfigManager.networksPath);
+    await fs.ensureDir(ConfigManager.instancesPath);
 
     if (!(await fs.pathExists(ConfigManager.configFile))) {
       await this.writeConfig(this.getDefaultConfig());
@@ -43,7 +44,7 @@ export class ConfigManager {
 
   static getDefaultConfig(): CLIConfig {
     return {
-      networksPath: ConfigManager.networksPath,
+      instancesPath: ConfigManager.instancesPath,
     };
   }
 
@@ -64,18 +65,20 @@ export class ConfigManager {
     await fs.writeJson(ConfigManager.configFile, config, { spaces: 2 });
   }
 
-  static async getNetworkConfigFromPath(
+  static async getOSConfigFromPath(
     path: string,
-  ): Promise<NetworkConfig | null> {
+  ): Promise<OlaneOSInstanceConfig | null> {
     if (await fs.pathExists(path)) {
       return await fs.readJson(path);
     }
     return null;
   }
 
-  static async getNetworkConfig(name: string): Promise<NetworkConfig | null> {
+  static async getOSConfig(
+    name: string,
+  ): Promise<OlaneOSInstanceConfig | null> {
     const configPath = path.join(
-      ConfigManager.networksPath,
+      ConfigManager.instancesPath,
       name,
       CONFIG_FILE_NAME,
     );
@@ -85,28 +88,28 @@ export class ConfigManager {
     return null;
   }
 
-  static async saveNetworkConfig(config: NetworkConfig): Promise<void> {
-    const networkPath = path.join(ConfigManager.networksPath, config.name);
-    await fs.ensureDir(networkPath);
-    await fs.writeJson(path.join(networkPath, CONFIG_FILE_NAME), config, {
+  static async saveOSConfig(config: OlaneOSInstanceConfig): Promise<void> {
+    const osPath = path.join(ConfigManager.instancesPath, config.name);
+    await fs.ensureDir(osPath);
+    await fs.writeJson(path.join(osPath, CONFIG_FILE_NAME), config, {
       spaces: 2,
     });
   }
 
-  static async listNetworks(): Promise<NetworkConfig[]> {
+  static async listOSInstances(): Promise<OlaneOSInstanceConfig[]> {
     try {
       await this.initialize();
-      const networks: NetworkConfig[] = [];
-      const networkNames = await fs.readdir(ConfigManager.networksPath);
+      const osInstances: OlaneOSInstanceConfig[] = [];
+      const osInstanceNames = await fs.readdir(ConfigManager.instancesPath);
 
-      for (const networkName of networkNames) {
-        const config = await this.getNetworkConfig(networkName);
+      for (const osInstanceName of osInstanceNames) {
+        const config = await this.getOSConfig(osInstanceName);
         if (config) {
-          networks.push(config);
+          osInstances.push(config);
         }
       }
 
-      return networks;
+      return osInstances;
     } catch (error) {
       // if the default path for config does not exist, return an empty array
       if (error instanceof Error && error.message.includes('ENOENT')) {
@@ -116,10 +119,10 @@ export class ConfigManager {
     }
   }
 
-  static async deleteNetwork(name: string): Promise<void> {
-    const networkPath = path.join(ConfigManager.networksPath, name);
-    if (await fs.pathExists(networkPath)) {
-      await fs.remove(networkPath);
+  static async deleteOSInstance(name: string): Promise<void> {
+    const osInstancePath = path.join(ConfigManager.instancesPath, name);
+    if (await fs.pathExists(osInstancePath)) {
+      await fs.remove(osInstancePath);
     }
   }
 }

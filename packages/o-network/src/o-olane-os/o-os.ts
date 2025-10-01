@@ -1,9 +1,9 @@
-import { NetworkStatus } from './interfaces/network-status.enum.js';
-import { NetworkConfigInterface } from './interfaces/network.interface.js';
+import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
+import { OlaneOSConfig } from './interfaces/o-os.config.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
-import { Logger, oAddress, oTransport } from '@olane/o-core';
+import { Logger, oAddress, oObject, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
@@ -12,19 +12,17 @@ import { oLaneTool } from '@olane/o-lane';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
 
-type oNetworkNode = oLaneTool | oLeaderNode;
-export class oNetwork {
+type OlaneOSNode = oLaneTool | oLeaderNode;
+export class OSLocal extends oObject {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
-  private nodes: oNetworkNode[] = []; // clones of node for scale
+  private nodes: OlaneOSNode[] = []; // clones of node for scale
   public rootLeader: oLeaderNode | null = null; // the root leader node
-  private logger: Logger;
-  public status!: NetworkStatus;
-  private config: NetworkConfigInterface;
+  public status!: OlaneOSSystemStatus;
+  private config: OlaneOSConfig;
   private roundRobinIndex: number = 0;
-  private inFlightRequests: any[] = [];
 
-  constructor(config: NetworkConfigInterface) {
-    this.logger = new Logger('oNetwork');
+  constructor(config: OlaneOSConfig) {
+    super();
     this.config = config;
   }
 
@@ -41,9 +39,9 @@ export class oNetwork {
     }
   }
 
-  async addNode(node: oNetworkNode) {
-    if (this.status !== NetworkStatus.RUNNING) {
-      throw new Error('Network is not running, cannot add node');
+  async addNode(node: OlaneOSNode) {
+    if (this.status !== OlaneOSSystemStatus.RUNNING) {
+      throw new Error('OS instance is not running, cannot add node');
     }
     // TODO: how do we handle multiple leaders?
     // TODO: how do we handle multiple nodes?
@@ -71,21 +69,21 @@ export class oNetwork {
         this.logger.debug('Config file contents: ' + config);
         if (config?.length === 0) {
           // no contents, let's create a new config
-          throw new Error('No config file found, cannot start network');
+          throw new Error('No config file found, cannot start OS instance');
         }
 
         const json = JSON.parse(config) as any;
         this.logger.debug('Config file parsed: ' + json);
-        const networkConfig = json.oNetworkConfig as NetworkConfigInterface;
+        const osConfig = json.oNetworkConfig as OlaneOSConfig;
         this.config = {
-          ...networkConfig,
-          nodes: (networkConfig.nodes || []).map((node) => ({
+          ...osConfig,
+          nodes: (osConfig.nodes || []).map((node) => ({
             ...node,
             address: new oNodeAddress(node.address.value),
           })),
           network: {
-            ...networkConfig.network,
-            port: networkConfig.network?.port || 4999,
+            ...osConfig.network,
+            port: osConfig.network?.port || 4999,
           },
           configFilePath: this.config.configFilePath, // persist the config file path
         };
@@ -98,12 +96,12 @@ export class oNetwork {
     }
   }
 
-  async getNetworkName() {
+  async getOSInstanceName() {
     if (this.config.configFilePath) {
-      const networkConfig = await ConfigManager.getNetworkConfigFromPath(
+      const osConfig = await ConfigManager.getOSConfigFromPath(
         this.config.configFilePath,
       );
-      return networkConfig?.name;
+      return osConfig?.name;
     }
   }
 
@@ -111,11 +109,11 @@ export class oNetwork {
     this.logger.debug('Starting nodes');
 
     if (!this.config.nodes || this.config.nodes?.length === 0) {
-      throw new Error('No nodes found in config, cannot start network');
+      throw new Error('No nodes found in config, cannot start OS instance');
     }
 
     const filtered = this.config.nodes.filter((node) => node.type === type);
-    const networkName: string | undefined = await this.getNetworkName();
+    const osInstanceName: string | undefined = await this.getOSInstanceName();
 
     // check the config for any leaders
     for (const node of filtered) {
@@ -123,7 +121,7 @@ export class oNetwork {
         this.logger.debug('Starting leader: ' + node.address.toString());
         const leaderNode = new oLeaderNode({
           ...node,
-          networkName: networkName,
+          systemName: osInstanceName,
         } as oNodeConfig);
         if (!this.rootLeader) {
           this.rootLeader = leaderNode;
@@ -167,34 +165,26 @@ export class oNetwork {
     }
     this.logger.debug('Using address: ' + oAddress.toString());
     return entryNode.use(oAddress, params);
-    // TODO: experiment with this (the wrong way to enter the network)
-    // const leader = this.leaders.find(
-    //   (leader) => leader.type === NodeType.LEADER,
-    // );
-    // if (!leader) {
-    //   throw new Error('Leader not found');
-    // }
-    // return leader.use(oAddress, params);
   }
 
   async start(): Promise<{ peerId: string; transports: oTransport[] }> {
-    this.logger.debug('Starting o-network');
-    this.status = NetworkStatus.STARTING;
+    this.logger.debug('Starting OS instance');
+    this.status = OlaneOSSystemStatus.STARTING;
 
     // initialize config folder
     await this.loadConfig();
-    this.logger.debug('o-network config loaded');
+    this.logger.debug('OS instance config loaded');
 
-    // start leaders (and consequentially, the rest of the network)
+    // start leaders (and consequentially, the rest of the OS instance)
     await this.startNodes(NodeType.LEADER);
     this.logger.debug('Leaders started...');
     await this.startNodes(NodeType.NODE);
     this.logger.debug('Nodes started...');
     await this.runSavedPlans();
     this.logger.debug('Saved plans run...');
-    this.logger.debug('o-network started...');
+    this.logger.debug('OS instance started...');
 
-    // index the network
+    // index the OS instance
     if (!this.config.noIndexNetwork) {
       await this.use(oAddress.leader(), {
         method: 'index_network',
@@ -202,7 +192,7 @@ export class oNetwork {
       });
     }
 
-    this.status = NetworkStatus.RUNNING;
+    this.status = OlaneOSSystemStatus.RUNNING;
     return {
       peerId: this.rootLeader?.peerId.toString() || '',
       transports: this.rootLeader?.transports || [],
@@ -210,8 +200,8 @@ export class oNetwork {
   }
 
   async stop() {
-    this.logger.debug('Stopping o-network');
-    this.status = NetworkStatus.STOPPING;
+    this.logger.debug('Stopping OS instance');
+    this.status = OlaneOSSystemStatus.STOPPING;
 
     const stopPromises: Promise<void>[] = [];
 
@@ -281,17 +271,17 @@ export class oNetwork {
       // Wait for all stop operations to complete
       await Promise.all(stopPromises);
 
-      this.logger.debug('o-network stopped successfully');
+      this.logger.debug('OS instance stopped successfully');
     } catch (error) {
-      this.logger.error('Error while stopping o-network:', error);
+      this.logger.error('Error while stopping OS instance:', error);
     } finally {
-      this.status = NetworkStatus.STOPPED;
+      this.status = OlaneOSSystemStatus.STOPPED;
       this.roundRobinIndex = 0;
     }
   }
 
   async restart() {
-    this.logger.debug('Restarting o-network');
+    this.logger.debug('Restarting OS instance');
     await this.stop();
     await this.start();
   }

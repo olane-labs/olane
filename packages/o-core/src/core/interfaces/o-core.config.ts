@@ -16,5 +16,5 @@ export interface oCoreConfig {
   dependencies?: oDependency[];
   methods?: { [key: string]: oMethod };
   cwd?: string;
-  networkName?: string;
+  systemName?: string;
 }

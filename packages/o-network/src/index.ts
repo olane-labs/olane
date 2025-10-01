@@ -1,2 +1,2 @@
-export * from './network/index.js';
+export * from './o-olane-os/index.js';
 export * from './utils/config.js';

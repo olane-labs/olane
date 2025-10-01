@@ -1,6 +1,6 @@
 import { oNodeConfig } from '@olane/o-node';
 
-export interface NetworkConfigInterface {
+export interface OlaneOSConfig {
   configFilePath?: string;
   network?: {
     name?: string;

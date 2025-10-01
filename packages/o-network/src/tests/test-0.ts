@@ -1,11 +1,11 @@
-import { oNetwork } from '../network';
+import { OSLocal } from '../o-os';
 import { NodeType, oAddress, setupGracefulShutdown } from '@olane/o-core';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 (async () => {
-  const network = new oNetwork({
+  const network = new OSLocal({
     // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),
     nodes: [
       {
@@ -40,7 +40,7 @@ dotenv.config();
   );
 
   await network.start();
-  console.log('Network started!!!--------------------------------');
+  console.log('OSLocal started!!!--------------------------------');
 
   await network.use(new oAddress('o://vector-store'), {
     method: 'add_documents',

@@ -1,4 +1,4 @@
-export enum NetworkStatus {
+export enum OlaneOSSystemStatus {
   STARTING = 'starting',
   RUNNING = 'running',
   STOPPING = 'stopping',
