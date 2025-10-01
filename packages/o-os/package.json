@@ -19,6 +19,7 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
+    "test:benchmarks": "npm test -- test/benchmarks/benchmark.spec.ts",
     "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
