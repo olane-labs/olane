@@ -4,6 +4,7 @@ import { oRouterRequest } from '../o-request.router.js';
 
 export interface ResolveRequest {
   address: oAddress;
+  targetAddress: oAddress;
   node: oCore;
   request?: oRouterRequest;
 }

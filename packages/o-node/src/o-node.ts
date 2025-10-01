@@ -119,7 +119,7 @@ export class oNode extends oToolBase {
       this.logger.warn('No leaders found, skipping registration');
       return;
     } else {
-      this.logger.debug('Registering node with leader...', this.config.leader);
+      this.logger.debug('Registering node with leader...');
     }
 
     const address = oAddress.registry();
@@ -273,7 +273,6 @@ export class oNode extends oToolBase {
         }
         throw error;
       });
-    this.logger.debug('Successfully connected to: ', nextHopAddress.toString());
     if (!connection) {
       throw new Error('Connection failed');
     }

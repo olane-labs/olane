@@ -28,7 +28,7 @@ export class oAddressResolution extends oObject {
       request.address.transports,
     );
 
-    let targetAddress = request.address;
+    let targetAddress = resolvedAddress;
     let requestOverride: oRouterRequest | undefined = request.request;
 
     for (const resolver of this.resolvers) {
@@ -38,6 +38,7 @@ export class oAddressResolution extends oObject {
         requestOverride: resolverRequestOverride,
       } = await resolver.resolve({
         address: resolvedAddress,
+        targetAddress: targetAddress,
         node: request.node,
         request: requestOverride,
       });

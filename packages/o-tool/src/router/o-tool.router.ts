@@ -5,6 +5,7 @@ import {
   oRouter,
   oRouterRequest,
 } from '@olane/o-core';
+import { JSONRPC_VERSION } from '@olane/o-protocol';
 
 export abstract class oToolRouter extends oRouter {
   protected abstract forward(
@@ -24,10 +25,17 @@ export abstract class oToolRouter extends oRouter {
       await this.translate(destinationAddress, node);
 
     const finalRequest = requestOverride || request;
+    const req = new oRouterRequest({
+      method: request.method,
+      params: request.params,
+      id: request.id,
+      jsonrpc: JSONRPC_VERSION,
+      stream: request.stream,
+    });
     if (finalRequest && targetAddress) {
       finalRequest.params.address = targetAddress.toString();
     }
     // TODO: send the request to the destination
-    return this.forward(nextHopAddress, finalRequest, node);
+    return this.forward(nextHopAddress, req, node);
   }
 }

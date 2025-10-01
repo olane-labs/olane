@@ -21,7 +21,7 @@ export class oLeaderResolverFallback extends oAddressResolver {
   }
 
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
-    const { address, node, request: resolveRequest } = request;
+    const { address, node, request: resolveRequest, targetAddress } = request;
     // check to see if something odd was attempted where the leader transports were applied to a different address
     if (
       node.leader &&
@@ -29,7 +29,7 @@ export class oLeaderResolverFallback extends oAddressResolver {
     ) {
       return {
         nextHopAddress: node.leader as oNodeAddress,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: resolveRequest,
       };
     }
@@ -37,14 +37,14 @@ export class oLeaderResolverFallback extends oAddressResolver {
     if (address.transports.length > 0) {
       return {
         nextHopAddress: address,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: resolveRequest,
       };
     }
 
     return {
       nextHopAddress: node.leader as oNodeAddress,
-      targetAddress: address,
+      targetAddress: targetAddress,
       requestOverride: resolveRequest,
     };
   }

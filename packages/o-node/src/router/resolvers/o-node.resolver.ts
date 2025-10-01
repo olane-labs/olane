@@ -19,16 +19,19 @@ export class oNodeResolver extends oAddressResolver {
   }
 
   async resolve(routeRequest: ResolveRequest): Promise<oNodeRouterResponse> {
-    const { address, node, request } = routeRequest;
+    const { address, node, request, targetAddress } = routeRequest;
 
     // get the next node & check for child address existence
-    const remainingPath = address.paths.replace(node.address.paths + '/', '');
+    const remainingPath = targetAddress.paths.replace(
+      node.address.paths + '/',
+      '',
+    );
 
     // ensure this is going down in the hierarchy
-    if (remainingPath === address.paths && node.isLeader === false) {
+    if (remainingPath === targetAddress.paths && node.isLeader === false) {
       return {
         nextHopAddress: address as oNodeAddress,
-        targetAddress: address as oNodeAddress,
+        targetAddress: targetAddress as oNodeAddress,
         requestOverride: request as oRouterRequest,
       };
     }
@@ -42,17 +45,14 @@ export class oNodeResolver extends oAddressResolver {
     if (childAddress) {
       return {
         nextHopAddress: childAddress as oNodeAddress,
-        targetAddress:
-          childAddress.value === address.value
-            ? (childAddress as oNodeAddress) // update the address to the child absolute address
-            : (address as oNodeAddress),
+        targetAddress: targetAddress as oNodeAddress,
         requestOverride: request as oRouterRequest,
       };
     }
 
     return {
       nextHopAddress: address as oNodeAddress,
-      targetAddress: address as oNodeAddress,
+      targetAddress: targetAddress as oNodeAddress,
       requestOverride: request,
     };
   }

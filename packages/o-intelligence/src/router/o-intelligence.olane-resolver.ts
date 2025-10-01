@@ -19,11 +19,11 @@ export class oIntelligenceOlaneResolver extends oIntelligenceResolver {
   }
 
   async resolve(resolveRequest: ResolveRequest): Promise<RouteResponse> {
-    const { address, node, request } = resolveRequest;
-    if (!request || !node) {
+    const { address, node, request, targetAddress } = resolveRequest;
+    if (!request) {
       return {
         nextHopAddress: address,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: request,
       };
     }
@@ -42,13 +42,13 @@ export class oIntelligenceOlaneResolver extends oIntelligenceResolver {
       ]);
       return {
         nextHopAddress: nextAddress,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: request,
       };
     }
     return {
       nextHopAddress: address,
-      targetAddress: address,
+      targetAddress: targetAddress,
       requestOverride: request,
     };
   }

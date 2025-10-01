@@ -254,7 +254,9 @@ export class IntelligenceTool extends oLaneTool {
     const { prompt } = request.params;
 
     const intelligence = await this.chooseIntelligence(request);
-    const response = await this.use(intelligence.choice, {
+    this.logger.debug('Using intelligence: ', intelligence.choice.toString());
+    const child = this.hierarchyManager.getChild(intelligence.choice);
+    const response = await this.useChild(child || intelligence.choice, {
       method: 'completion',
       params: {
         apiKey: intelligence.apiKey,

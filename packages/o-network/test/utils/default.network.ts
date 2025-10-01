@@ -7,12 +7,14 @@ export const defaultNetwork = new oNetwork({
     {
       type: NodeType.LEADER,
       address: new oAddress('o://leader'),
+      description: 'Leader for testing',
       leader: null,
       parent: null,
     },
     {
       type: NodeType.NODE,
       address: new oAddress('o://node'),
+      description: 'Node for testing',
       leader: null,
       parent: null,
     },

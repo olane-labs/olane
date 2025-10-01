@@ -109,7 +109,11 @@ export class oNodeRouter extends oToolRouter {
     }
 
     const { nextHopAddress, targetAddress, requestOverride } =
-      await this.addressResolution.resolve({ address, node });
+      await this.addressResolution.resolve({
+        address,
+        node,
+        targetAddress: address,
+      });
 
     return {
       nextHopAddress,

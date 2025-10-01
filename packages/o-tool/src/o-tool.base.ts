@@ -211,6 +211,10 @@ export class oToolBase extends oCore {
       const { message }: { message: string } = data;
       const json = JSON.parse(message);
       summary = json.summary;
+      // update the description to avoid re-indexing
+      if (summary) {
+        this.config.description = summary;
+      }
     }
 
     try {

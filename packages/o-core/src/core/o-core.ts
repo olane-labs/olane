@@ -200,7 +200,6 @@ export abstract class oCore extends oObject {
       id?: string;
     },
   ): Promise<oResponse> {
-    this.logger.debug('Using child: ' + childAddress.transports);
     const connection = await this.connect(childAddress, childAddress);
 
     // communicate the payload to the target node
