@@ -1,0 +1,657 @@
+---
+title: "Tools, Nodes, and Applications"
+description: "Understanding the three levels of granularity in Olane OS architecture"
+---
+
+## Overview
+
+Olane OS has three levels of architectural granularity: **tools** (individual methods), **nodes** (single processes), and **applications** (coordinated multi-node systems). Understanding these levels is essential for designing scalable, maintainable systems.
+
+**TL;DR**: Tools are functions, nodes are services, applications are platforms. Choose based on your scale and coordination needs.
+
+## The three levels
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  LEVEL 1: Tool                                           │
+│  • Individual executable method                          │
+│  • Convention: _tool_ prefix                             │
+│  • Example: _tool_analyze_revenue()                      │
+│  • Atomic operation                                      │
+└──────────────────────────────────────────────────────────┘
+                        ⬇ combined into
+┌──────────────────────────────────────────────────────────┐
+│  LEVEL 2: Node                                           │
+│  • Process running on Olane OS                           │
+│  • Contains one or more tools                            │
+│  • Has an o:// address                                   │
+│  • Example: o://company/finance/analyst                  │
+│  • Single-purpose capability unit                        │
+└──────────────────────────────────────────────────────────┘
+                        ⬇ coordinated into
+┌──────────────────────────────────────────────────────────┐
+│  LEVEL 3: Application                                    │
+│  • Multiple nodes working together                       │
+│  • Coordinated via agents and o-leader                   │
+│  • Complete business capability                          │
+│  • Example: Full CRM system (sales + support + analytics)│
+│  • Multi-purpose platform                                │
+└──────────────────────────────────────────────────────────┘
+```
+
+## Level 1: Tools
+
+A **tool** is an individual executable method on a node that performs a single operation.
+
+### Characteristics
+
+<CardGroup cols={2}>
+  <Card title="Prefixed" icon="tag" color="#0D9373">
+    Named with `_tool_` prefix
+  </Card>
+  <Card title="Atomic" icon="atom" color="#0D9373">
+    Performs one specific operation
+  </Card>
+  <Card title="Discoverable" icon="magnifying-glass" color="#0D9373">
+    Has parameter schema via `_params_` method
+  </Card>
+  <Card title="Directly Callable" icon="phone" color="#0D9373">
+    Invoked by agents (human or AI)
+  </Card>
+</CardGroup>
+
+### Example
+
+<CodeGroup>
+```typescript Tool Definition
+class FinancialNode extends oNodeTool {
+  // This is a TOOL - a single executable method
+  async _tool_calculate_revenue(request: oRequest) {
+    const { startDate, endDate } = request.params;
+    
+    // Calculate revenue for date range
+    const revenue = await this.sumTransactions(startDate, endDate);
+    
+    return { 
+      revenue: 150000, 
+      currency: 'USD',
+      period: { startDate, endDate }
+    };
+  }
+
+  // Parameter schema for the tool
+  _params_calculate_revenue() {
+    return {
+      startDate: { type: 'string', required: true },
+      endDate: { type: 'string', required: true }
+    };
+  }
+}
+```
+
+```typescript Human Agent (CLI)
+# Human invokes tool via CLI
+$ olane call o://finance/analyst calculate_revenue \
+  --startDate "2024-01-01" \
+  --endDate "2024-03-31"
+
+# Result
+{
+  "revenue": 150000,
+  "currency": "USD",
+  "period": {
+    "startDate": "2024-01-01",
+    "endDate": "2024-03-31"
+  }
+}
+```
+
+```typescript AI Agent (Programmatic)
+// AI agent calls tool programmatically
+const result = await financialNode.use({
+  method: 'calculate_revenue',
+  params: {
+    startDate: '2024-01-01',
+    endDate: '2024-03-31'
+  }
+});
+
+console.log(result);
+// { revenue: 150000, currency: 'USD', ... }
+```
+</CodeGroup>
+
+<Note>
+  **Real-World Analogy**: A tool is like a single function in a library (e.g., `Array.map()` in JavaScript).
+</Note>
+
+## Level 2: Nodes
+
+A **node** is a process running on Olane OS that contains one or more related tools. Nodes come in two varieties: **simple** and **complex**.
+
+### 2A: Simple Nodes
+
+**Simple nodes** contain 1-5 related tools and are called directly by agents.
+
+#### Characteristics
+
+<CardGroup cols={2}>
+  <Card title="Few Tools" icon="list" color="#0D9373">
+    1-5 related operations
+  </Card>
+  <Card title="Single Domain" icon="bullseye" color="#0D9373">
+    Focused capability
+  </Card>
+  <Card title="Direct Calls" icon="arrow-right" color="#0D9373">
+    Agents call tools directly
+  </Card>
+  <Card title="Fast Response" icon="bolt" color="#0D9373">
+    Typically {'<'} 30 seconds
+  </Card>
+</CardGroup>
+
+#### Example: Currency Converter
+
+<CodeGroup>
+```typescript Simple Node
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+class CurrencyConverterNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://utilities/currency-converter')
+    });
+  }
+
+  // Tool 1: Convert currency
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params;
+    const rate = await this.getExchangeRate(from, to);
+    return { 
+      result: amount * rate, 
+      from, 
+      to,
+      rate 
+    };
+  }
+
+  // Tool 2: Get exchange rate
+  async _tool_get_rate(request: oRequest) {
+    const { from, to } = request.params;
+    return { 
+      rate: await this.getExchangeRate(from, to),
+      timestamp: Date.now()
+    };
+  }
+
+  // Tool 3: List supported currencies
+  async _tool_list_currencies(request: oRequest) {
+    return { 
+      currencies: ['USD', 'EUR', 'GBP', 'JPY'],
+      count: 4
+    };
+  }
+
+  private async getExchangeRate(from: string, to: string): Promise<number> {
+    // Fetch from exchange rate API
+    return 1.18; // EUR to USD example
+  }
+}
+```
+</CodeGroup>
+
+<Note>
+  **When to Use**: Single, well-defined domain where agents know which tool to call.
+</Note>
+
+---
+
+### 2B: Complex Nodes
+
+**Complex nodes** contain 5-20+ tools and accept natural language intents, autonomously deciding which tools to use.
+
+#### Characteristics
+
+<CardGroup cols={2}>
+  <Card title="Many Tools" icon="toolbox" color="#0D9373">
+    5-20+ operations
+  </Card>
+  <Card title="Intent-Driven" icon="brain" color="#0D9373">
+    Accepts natural language
+  </Card>
+  <Card title="Autonomous" icon="robot" color="#0D9373">
+    Uses o-lane capability loop
+  </Card>
+  <Card title="Multi-Step" icon="stairs" color="#0D9373">
+    Coordinates multiple tools
+  </Card>
+</CardGroup>
+
+#### Example: Financial Analyst
+
+<CodeGroup>
+```typescript Complex Node
+import { oLaneTool } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+class FinancialAnalystNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/finance/analyst'),
+      laneContext: {
+        domain: 'Financial Analysis',
+        expertise: ['Revenue', 'Expenses', 'Forecasting']
+      }
+    });
+  }
+
+  // Internal tools (5-20+ tools)
+  async _tool_calculate_revenue(request: oRequest) { /* ... */ }
+  async _tool_calculate_expenses(request: oRequest) { /* ... */ }
+  async _tool_calculate_margin(request: oRequest) { /* ... */ }
+  async _tool_identify_trends(request: oRequest) { /* ... */ }
+  async _tool_generate_report(request: oRequest) { /* ... */ }
+  // ... 10 more tools
+}
+```
+
+```typescript Agent Sends Intent
+// Agent (human or AI) sends high-level intent
+const result = await analystNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 2024 financial performance and generate executive summary'
+  }
+});
+
+// Node AUTONOMOUSLY:
+// 1. EVALUATE: "I need revenue, expenses, and trends"
+// 2. TASK: Call _tool_calculate_revenue
+// 3. TASK: Call _tool_calculate_expenses
+// 4. TASK: Call _tool_identify_trends
+// 5. EVALUATE: "I have data, need to calculate margins"
+// 6. TASK: Call _tool_calculate_margin
+// 7. EVALUATE: "Ready to generate report"
+// 8. TASK: Call _tool_generate_report
+// 9. STOP: Return report to agent
+```
+</CodeGroup>
+
+<Note>
+  **Real-World Analogy**: A complex node is like GitHub Copilot - you give it a high-level intent, and it figures out the steps autonomously.
+</Note>
+
+<Check>
+  **When to Use**: Complex domain where agents shouldn't need to know all tools, or multi-step workflows require internal decision-making.
+</Check>
+
+## Level 3: Applications
+
+An **application** is multiple nodes working together to provide a complete business capability.
+
+### Characteristics
+
+<CardGroup cols={2}>
+  <Card title="Multiple Nodes" icon="network-wired" color="#0D9373">
+    3+ coordinated processes
+  </Card>
+  <Card title="Distributed" icon="diagram-project" color="#0D9373">
+    Each node has distinct responsibility
+  </Card>
+  <Card title="Discovered" icon="magnifying-glass-location" color="#0D9373">
+    Uses o-leader for registry
+  </Card>
+  <Card title="Enterprise Scale" icon="building" color="#0D9373">
+    Complete platform capability
+  </Card>
+</CardGroup>
+
+### Example: Complete CRM Platform
+
+<CodeGroup>
+```typescript Application Architecture
+// APPLICATION: Complete CRM Platform
+// Composed of multiple specialized nodes
+
+// Node 1: Customer Data Service (Simple Node)
+class CustomerDataNode extends oNodeTool {
+  // o://crm/customers
+  async _tool_get_customer(request) { /* ... */ }
+  async _tool_update_customer(request) { /* ... */ }
+  async _tool_search_customers(request) { /* ... */ }
+}
+
+// Node 2: Sales Pipeline Service (Simple Node)
+class SalesPipelineNode extends oNodeTool {
+  // o://crm/sales
+  async _tool_create_deal(request) { /* ... */ }
+  async _tool_update_deal_stage(request) { /* ... */ }
+  async _tool_forecast_revenue(request) { /* ... */ }
+}
+
+// Node 3: Support Ticket Service (Simple Node)
+class SupportTicketNode extends oNodeTool {
+  // o://crm/support
+  async _tool_create_ticket(request) { /* ... */ }
+  async _tool_assign_ticket(request) { /* ... */ }
+  async _tool_resolve_ticket(request) { /* ... */ }
+}
+
+// Node 4: Analytics Service (Complex Node)
+class CRMAnalyticsNode extends oLaneTool {
+  // o://crm/analytics
+  async _tool_customer_lifetime_value(request) { /* ... */ }
+  async _tool_churn_analysis(request) { /* ... */ }
+  async _tool_sales_performance(request) { /* ... */ }
+}
+```
+
+```typescript Pattern 1: Direct Coordination
+// Agent discovers and coordinates nodes directly
+
+// Step 1: Search for customer
+const customer = await customerDataNode.use({
+  method: 'get_customer',
+  params: { id: 'cust_123' }
+});
+
+// Step 2: Create support ticket
+const ticket = await supportTicketNode.use({
+  method: 'create_ticket',
+  params: {
+    customerId: customer.id,
+    issue: 'Billing inquiry'
+  }
+});
+
+// Step 3: Analyze customer value
+const analysis = await analyticsNode.use({
+  method: 'intent',
+  params: {
+    intent: `Analyze lifetime value for customer ${customer.id}`
+  }
+});
+```
+
+```typescript Pattern 2: Coordinator Node
+// Optional: Coordinator node manages other nodes
+
+class CRMCoordinatorNode extends oLaneTool {
+  // o://crm/coordinator
+  
+  constructor() {
+    super({
+      address: new oAddress('o://crm/coordinator')
+    });
+  }
+}
+
+// Agent sends intent to coordinator
+const result = await crmCoordinator.use({
+  method: 'intent',
+  params: {
+    intent: 'Customer cust_123 has billing issue. Create ticket with context.'
+  }
+});
+
+// Coordinator AUTONOMOUSLY:
+// 1. Discovers o://crm/customers and gets data
+// 2. Discovers o://crm/analytics and analyzes value
+// 3. Discovers o://crm/support and creates ticket
+// 4. Returns comprehensive result
+```
+</CodeGroup>
+
+<Note>
+  **Real-World Analogy**: An application is like Salesforce - multiple services (customers, sales, support, analytics) working together as a complete platform.
+</Note>
+
+## When to build what
+
+Use this decision tree to choose the right architectural level:
+
+### Decision Tree
+
+```
+Start: What are you building?
+│
+├─ Do you have ONE clear domain?
+│  │
+│  ├─ Are there 1-5 related operations?
+│  │  └─ ✅ Build SIMPLE NODE
+│  │
+│  ├─ Are there 5-20+ operations?
+│  │  │
+│  │  ├─ Do agents know which tool to call?
+│  │  │  └─ ✅ Build SIMPLE NODE (with many tools)
+│  │  │
+│  │  └─ Should it handle intents autonomously?
+│  │     └─ ✅ Build COMPLEX NODE (with o-lane)
+│  │
+│  └─ Is the domain massive (20+ operations)?
+│     └─ 🤔 Consider splitting into APPLICATION
+│
+└─ Do you have MULTIPLE domains?
+   │
+   ├─ Are they loosely related?
+   │  └─ ✅ Build separate SIMPLE NODES
+   │
+   └─ Do they need tight coordination?
+      │
+      ├─ Can one domain coordinate the others?
+      │  └─ ✅ Build APPLICATION with COORDINATOR pattern
+      │
+      └─ Are they equal peers?
+         └─ ✅ Build APPLICATION with direct agent coordination
+```
+
+### Quick Reference Table
+
+| Scenario | Build What | Packages | Coordination |
+|----------|-----------|----------|--------------|
+| 1-5 related tools, simple operations | Simple Node | `o-node` + `o-tool` | Direct tool calls |
+| 5-20+ tools, agents call directly | Simple Node | `o-node` + `o-tool` | Direct tool calls |
+| 5-20+ tools, intent-driven | Complex Node | `o-node` + `o-tool` + `o-lane` | Agent sends intents |
+| Multiple domains, loose coupling | Multiple Simple Nodes | `o-node` + `o-tool` + `o-leader` | Agent discovers each |
+| Multiple domains, tight coordination | Application with Coordinator | All packages | Coordinator orchestrates |
+| Enterprise platform, many teams | Application (distributed) | All packages | Agent or coordinator orchestrates |
+
+## Architectural patterns
+
+### Pattern 1: Monolithic Node
+
+Best for small domains and single team ownership.
+
+```
+┌─────────────────────────────────────┐
+│   Single Node                       │
+│   o://finance                       │
+│                                     │
+│   Tools:                            │
+│   • calculate_revenue               │
+│   • calculate_expenses              │
+│   • generate_report                 │
+│   • forecast_budget                 │
+│   • analyze_trends                  │
+│                                     │
+│   All logic in one process          │
+└─────────────────────────────────────┘
+```
+
+<AccordionGroup>
+  <Accordion title="Pros">
+    - Simplest to build and deploy
+    - No network coordination overhead
+    - Consistent state management
+    - Fast inter-tool communication
+  </Accordion>
+  
+  <Accordion title="Cons">
+    - Scaling limitations (all tools scale together)
+    - Tight coupling
+    - Single point of failure
+    - Can't distribute across teams
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Pattern 2: Decomposed Application
+
+Best for large domains and multiple teams.
+
+```
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│  Node            │    │  Node            │    │  Node            │
+│  o://fin/revenue │    │  o://fin/expense │    │  o://fin/report  │
+│                  │    │                  │    │                  │
+│  Tools:          │    │  Tools:          │    │  Tools:          │
+│  • calculate     │    │  • calculate     │    │  • generate      │
+│  • forecast      │    │  • categorize    │    │  • format        │
+│                  │    │  • analyze       │    │  • distribute    │
+└──────────────────┘    └──────────────────┘    └──────────────────┘
+                    ⬆ Agent coordinates ⬆
+```
+
+<AccordionGroup>
+  <Accordion title="Pros">
+    - Independent scaling
+    - Team ownership boundaries
+    - Fault isolation
+    - Technology diversity
+  </Accordion>
+  
+  <Accordion title="Cons">
+    - Network coordination complexity
+    - Service discovery overhead
+    - Potential latency
+    - More deployment complexity
+  </Accordion>
+</AccordionGroup>
+
+---
+
+### Pattern 3: Coordinator + Specialists
+
+Best for complex domains with clear coordinator role.
+
+```
+                    ┌──────────────────────────┐
+                    │  Coordinator Node        │
+                    │  o://finance/coordinator │
+                    │  (accepts intents)       │
+                    └──────────────────────────┘
+                              ⬇ discovers & calls
+        ┌──────────────────┬──────────────────┬──────────────────┐
+        ⬇                  ⬇                  ⬇                  ⬇
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Revenue Node  │  │ Expense Node  │  │ Forecast Node │  │ Report Node   │
+│ o://fin/rev   │  │ o://fin/exp   │  │ o://fin/fcst  │  │ o://fin/rpt   │
+└───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘
+```
+
+<AccordionGroup>
+  <Accordion title="Pros">
+    - Best of both worlds
+    - Agent only talks to coordinator
+    - Specialists can be simple nodes
+    - Clear separation of concerns
+    - Unified interface for external agents
+  </Accordion>
+  
+  <Accordion title="Cons">
+    - Coordinator becomes complex
+    - Additional hop for every operation
+    - Coordinator can be bottleneck
+    - More infrastructure to manage
+  </Accordion>
+</AccordionGroup>
+
+## Real-world examples
+
+### Simple Nodes
+
+| Olane Node | Real-World Equivalent | Use Case |
+|------------|----------------------|----------|
+| Currency Converter | Unix `bc` calculator | Simple utility functions |
+| Email Sender | SMTP service | Single-purpose service |
+| Data Validator | JSON Schema validator | Validation operations |
+| Rate Limiter | Redis rate limit service | Request throttling |
+
+### Complex Nodes
+
+| Olane Node | Real-World Equivalent | Use Case |
+|------------|----------------------|----------|
+| Financial Analyst | Bloomberg Terminal | Complex analysis with many tools |
+| Data Pipeline Manager | Apache Airflow | Multi-step workflow coordination |
+| Content Generator | Adobe Creative Suite | Multiple related creative tools |
+| Security Scanner | Burp Suite | Integrated security testing |
+
+### Applications
+
+| Olane Application | Real-World Equivalent | Use Case |
+|-------------------|----------------------|----------|
+| CRM Platform | Salesforce | Complete business system |
+| E-commerce System | Shopify | Multi-service platform |
+| DevOps Platform | AWS | Distributed cloud services |
+| Analytics Suite | Google Analytics 360 | End-to-end data platform |
+
+## Comparison: The key distinctions
+
+| Aspect | Tool | Simple Node | Complex Node | Application |
+|--------|------|-------------|--------------|-------------|
+| **Granularity** | Single function | Single process | Single process | Multiple processes |
+| **Addressable** | No (method on node) | Yes (`o://` address) | Yes (`o://` address) | Yes (multiple addresses) |
+| **Tools Count** | N/A (is a tool) | 1-5 | 5-20+ | Varies (across nodes) |
+| **Intelligence** | None (executes) | None (direct calls) | Autonomous (o-lane) | Coordinated (agents + leader) |
+| **Invocation** | Direct method call | Direct tool call | Intent or tool call | Intent to coordinator or discovery + calls |
+| **Packages** | `o-tool` | `o-node` + `o-tool` | `o-node` + `o-tool` + `o-lane` | `o-leader` + multiple nodes |
+| **Complexity** | 🟢 Simple | 🟢 Simple | 🟡 Medium | 🔴 Complex |
+| **Examples** | `calculate()` | Currency converter | Financial analyst | Complete CRM |
+| **Scope** | One operation | One capability | One domain | Multiple domains |
+
+## Mental model
+
+Think of it like software architecture:
+
+<CardGroup cols={2}>
+  <Card title="Tool = Function" icon="code" color="#0D9373">
+    Individual executable method
+  </Card>
+  <Card title="Simple Node = Microservice" icon="server" color="#0D9373">
+    Service with a few endpoints
+  </Card>
+  <Card title="Complex Node = Smart Service" icon="brain" color="#0D9373">
+    Service with its own intelligence
+  </Card>
+  <Card title="Application = Platform" icon="building" color="#0D9373">
+    Complete system (multiple services)
+  </Card>
+</CardGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Build Simple Node" icon="rocket" href="/concepts/tool-nodes/simple-nodes">
+    Learn simple node architecture
+  </Card>
+  <Card title="Build Complex Node" icon="brain" href="/concepts/tool-nodes/complex-nodes">
+    Learn intent-driven nodes
+  </Card>
+  <Card title="Package Combinations" icon="box" href="/packages/package-combinations">
+    Choose the right packages
+  </Card>
+  <Card title="Network Patterns" icon="network-wired" href="/concepts/networks/network-patterns">
+    Multi-node coordination
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Simple vs Complex Nodes](/concepts/tool-nodes/overview)
+- **Guide**: [Building Tool Nodes](/concepts/tool-nodes/overview)
+- **Package**: [o-node Reference](/packages/o-node)
+- **Package**: [o-lane Reference](/packages/o-lane)
+- **Package**: [o-leader Reference](/packages/o-leader)
+
