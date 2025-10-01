@@ -1,0 +1,786 @@
+---
+title: "Use Cases Overview"
+description: "Real-world scenarios where Olane OS excels: autonomous workflows, multi-tool coordination, long-running processes, and cost-effective AI"
+---
+
+## Overview
+
+Olane OS is designed for building **intent-driven, agent-accessible applications** that adapt and learn. This page explores the key scenarios where Olane OS provides exceptional value compared to traditional approaches.
+
+**TL;DR**: Use Olane OS when you need agents (human or AI) to coordinate multiple tools, handle complex workflows that evolve, run long-duration tasks reliably, or achieve AI capabilities cost-effectively.
+
+<CardGroup cols={2}>
+  <Card title="Autonomous Workflows" icon="robot" color="#0D9373" href="/use-cases/autonomous-workflows">
+    Agents coordinate multi-step processes without hardcoded orchestration
+  </Card>
+  <Card title="Multi-Tool Networks" icon="network-wired" color="#0D9373" href="/use-cases/multi-tool-networks">
+    Coordinate 5-50+ specialized tools through dynamic discovery
+  </Card>
+  <Card title="Long-Running Processes" icon="clock" color="#0D9373" href="/use-cases/long-running-processes">
+    Fault-tolerant tasks that run hours or days with automatic recovery
+  </Card>
+  <Card title="Cost Optimization" icon="piggy-bank" color="#0D9373" href="/use-cases/cost-optimization">
+    70-90% AI cost reduction with single generalist LLM
+  </Card>
+</CardGroup>
+
+## Quick decision guide {#decision-guide}
+
+Use this guide to determine if Olane OS is right for your use case:
+
+```
+Does your application involve multiple tools or steps?
+│
+├─ NO → Consider simpler frameworks
+│       (single function, REST API)
+│
+└─ YES → Do workflows change frequently or vary by scenario?
+         │
+         ├─ NO → Consider traditional orchestration
+         │       (Temporal, Step Functions for static workflows)
+         │
+         └─ YES → Do you need AI capabilities?
+                  │
+                  ├─ NO → Olane OS still useful for
+                  │       emergent workflows + human agents
+                  │
+                  └─ YES → Does cost matter? Multiple domains?
+                           │
+                           ├─ NO → Any framework works
+                           │
+                           └─ YES → ✅ Olane OS is ideal
+                                    (70-90% cost reduction)
+```
+
+## Core use cases {#core-use-cases}
+
+### 1. Autonomous Workflows {#autonomous-workflows}
+
+**What it is**: Agents express goals in natural language, tools autonomously coordinate to achieve them.
+
+**Key Benefits**:
+- No hardcoded workflows
+- Adapts to changing requirements
+- Learns optimal paths over time
+- Works for both human and AI agents
+
+**Example Scenario**: Customer Health Analysis
+
+<Tabs>
+  <Tab title="Traditional Approach">
+    ```typescript
+    // You hardcode EVERY step
+    async function analyzeCustomerHealth(customerId: string) {
+      // Step 1: Get customer data
+      const customer = await customerAPI.get(customerId);
+      
+      // Step 2: Get transaction history
+      const transactions = await billingAPI.getTransactions(customerId);
+      
+      // Step 3: Calculate LTV
+      const ltv = await calculateLTV(transactions);
+      
+      // Step 4: Assess churn risk
+      const churnRisk = await assessChurnRisk(customer, transactions);
+      
+      // Step 5: Get support tickets
+      const tickets = await supportAPI.getTickets(customerId);
+      
+      // Step 6: Generate health score
+      const healthScore = await calculateHealth(customer, ltv, churnRisk, tickets);
+      
+      // Step 7: Generate recommendations
+      const recommendations = await generateRecommendations(healthScore);
+      
+      return { healthScore, recommendations };
+    }
+    
+    // New requirement? Rewrite the entire function.
+    // Different customer type? Duplicate with variations.
+    // Error in step 3? Start over from beginning.
+    ```
+  </Tab>
+  
+  <Tab title="Olane OS Approach">
+    ```typescript
+    import { oLaneTool } from '@olane/o-lane';
+    import { oAddress } from '@olane/o-core';
+    
+    // Define tools, not workflows
+    class CustomerHealthNode extends oLaneTool {
+      constructor() {
+        super({
+          address: new oAddress('o://crm/customer-health'),
+          laneContext: {
+            domain: 'Customer Health Analysis',
+            expertise: ['LTV calculation', 'Churn prediction', 'Health scoring']
+          }
+        });
+      }
+      
+      async _tool_get_customer_data(request) { /* ... */ }
+      async _tool_calculate_ltv(request) { /* ... */ }
+      async _tool_assess_churn_risk(request) { /* ... */ }
+      async _tool_get_support_history(request) { /* ... */ }
+      async _tool_generate_health_score(request) { /* ... */ }
+      async _tool_generate_recommendations(request) { /* ... */ }
+    }
+    
+    // Agent (human or AI) sends intent
+    const result = await node.use({
+      method: 'intent',
+      params: {
+        intent: 'Analyze health for customer #1234 and suggest retention strategies'
+      }
+    });
+    
+    // Tool autonomously:
+    // - Determines optimal sequence
+    // - Adapts based on customer type
+    // - Handles errors and retries
+    // - Returns comprehensive analysis
+    
+    // New requirement? Tool adapts autonomously.
+    // Different customer type? Tool adjusts approach.
+    // Error? Automatic recovery and alternative paths.
+    ```
+  </Tab>
+</Tabs>
+
+**When to use**:
+- ✅ Workflows vary by scenario (different customers need different analysis)
+- ✅ Requirements change frequently (new data sources, new compliance rules)
+- ✅ Multiple steps with conditional logic (if X then Y else Z)
+- ✅ Need both human and AI agents to use the same workflow
+
+[Learn more about Autonomous Workflows →](/use-cases/autonomous-workflows)
+
+### 2. Multi-Tool Networks {#multi-tool-networks}
+
+**What it is**: Coordinate 5-50+ specialized tool nodes through dynamic discovery and intelligent routing.
+
+**Key Benefits**:
+- No manual integration code between tools
+- Tools discover each other automatically
+- Scale by adding nodes (no coordination code changes)
+- Hierarchical organization for context inheritance
+
+**Example Scenario**: Enterprise CRM System
+
+```typescript
+import { OlaneOS } from '@olane/os';
+import { NodeType, oAddress } from '@olane/o-core';
+
+// Define multi-tool network
+const crmSystem = new OlaneOS({
+  nodes: [
+    // Coordination layer
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader')
+    },
+    
+    // Customer management tools
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/customers'),
+      // Tools: get_customer, update_customer, search_customers
+    },
+    
+    // Sales pipeline tools
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/sales'),
+      // Tools: create_deal, update_stage, forecast_revenue
+    },
+    
+    // Support ticket tools
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/support'),
+      // Tools: create_ticket, assign_agent, resolve_ticket
+    },
+    
+    // Analytics coordinator (complex node)
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/analytics'),
+      // Accepts intents, coordinates other nodes
+    }
+  ]
+});
+
+await crmSystem.start();
+
+// Agent sends intent to analytics coordinator
+const report = await crmSystem.use(
+  new oAddress('o://crm/analytics'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Generate Q4 customer health report with sales pipeline correlation'
+    }
+  }
+);
+
+// Analytics node autonomously:
+// 1. Discovers o://crm/customers (via leader registry)
+// 2. Discovers o://crm/sales (via leader registry)
+// 3. Discovers o://crm/support (via leader registry)
+// 4. Coordinates data gathering from all three
+// 5. Analyzes correlations
+// 6. Generates comprehensive report
+```
+
+**Network Patterns**:
+
+<CardGroup cols={3}>
+  <Card title="Hub-and-Spoke" icon="circle-dot">
+    Central coordinator node manages worker nodes
+    
+    **Best for**: Centralized control, external API exposure
+  </Card>
+  
+  <Card title="Peer-to-Peer" icon="diagram-project">
+    Nodes discover and call each other directly
+    
+    **Best for**: Distributed systems, no bottlenecks
+  </Card>
+  
+  <Card title="Hierarchical" icon="sitemap">
+    Nested coordinators with domain boundaries
+    
+    **Best for**: Large organizations, department ownership
+  </Card>
+</CardGroup>
+
+**When to use**:
+- ✅ 5+ distinct capabilities that need coordination
+- ✅ Different teams own different tools
+- ✅ Tools need to discover capabilities dynamically
+- ✅ Scale individual tools independently
+
+[Learn more about Multi-Tool Networks →](/use-cases/multi-tool-networks)
+
+### 3. Long-Running Processes {#long-running-processes}
+
+**What it is**: Tasks that run hours or days with built-in fault tolerance, checkpointing, and automatic recovery.
+
+**Key Benefits**:
+- Automatic checkpointing every N steps
+- Recover from crashes without losing work
+- 99.8% reliability for multi-hour tasks
+- Real-time streaming of progress
+
+**Example Scenario**: Comprehensive Market Research
+
+```typescript
+import { oLaneTool } from '@olane/o-lane';
+
+class MarketResearchNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://research/market-analysis'),
+      laneContext: {
+        domain: 'Market Research',
+        expertise: ['Competitor analysis', 'Market sizing', 'Trend identification']
+      }
+    });
+  }
+  
+  async _tool_research_competitors(request) {
+    const { industry, count } = request.params;
+    const competitors = [];
+    
+    for (let i = 0; i < count; i++) {
+      // Research each competitor (takes 15-30 min each)
+      const competitor = await this.researchCompetitor(industry, i);
+      competitors.push(competitor);
+      
+      // Automatic checkpoint after each competitor
+      await this.checkpoint({ 
+        progress: `${i+1}/${count} competitors analyzed`,
+        competitors 
+      });
+      
+      // If process crashes here, it resumes from this checkpoint
+      // No need to re-analyze previous competitors
+    }
+    
+    return { competitors };
+  }
+  
+  async _tool_analyze_market_trends(request) {
+    // Long-running trend analysis (2-4 hours)
+    const trends = await this.analyzeTrends(request.params);
+    
+    // Checkpoint after major operations
+    await this.checkpoint({ trends });
+    
+    return { trends };
+  }
+  
+  async _tool_generate_report(request) {
+    // Generate comprehensive report (30-60 min)
+    return await this.generateReport(request.params);
+  }
+}
+
+// Agent initiates long-running task
+const research = await researchNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Research top 20 competitors in fintech and analyze market trends',
+    streamTo: 'o://notifications/progress'  // Real-time updates
+  }
+});
+
+// Process runs for 8+ hours:
+// - Automatic checkpoints every competitor
+// - If crash after 12 competitors → resumes with #13
+// - Progress streamed to notification system
+// - No manual intervention needed
+```
+
+**Reliability Features**:
+
+<AccordionGroup>
+  <Accordion title="Automatic Checkpointing">
+    State saved after each significant operation. Resume from last checkpoint on crash without losing work.
+  </Accordion>
+  
+  <Accordion title="Content-Addressed Storage">
+    All execution history stored in content-addressed format. Replay, audit, or analyze any previous execution.
+  </Accordion>
+  
+  <Accordion title="Real-Time Streaming">
+    Stream progress updates to monitoring systems or user interfaces. Know exactly what's happening at any moment.
+  </Accordion>
+  
+  <Accordion title="Error Recovery">
+    Automatic retry with exponential backoff. Alternative approaches if primary path fails.
+  </Accordion>
+</AccordionGroup>
+
+**When to use**:
+- ✅ Tasks take 1+ hours to complete
+- ✅ Expensive operations (can't afford to restart from scratch)
+- ✅ Need real-time progress monitoring
+- ✅ Reliability is critical (99.8%+ uptime required)
+
+[Learn more about Long-Running Processes →](/use-cases/long-running-processes)
+
+### 4. Cost Optimization {#cost-optimization}
+
+**What it is**: Achieve AI capabilities with **70-90% cost reduction** by using a single generalist LLM across all tools instead of fine-tuned models per domain.
+
+**Key Benefits**:
+- One LLM serves all domains
+- No fine-tuning costs ($0 vs $50K+ per domain)
+- 80% lower per-call costs (context injection vs fine-tuned inference)
+- Instant updates (no retraining needed)
+
+**Example Scenario**: Multi-Domain Business Platform
+
+<Tabs>
+  <Tab title="Traditional (Fine-Tuned Models)">
+    ```typescript
+    // Finance domain - Fine-tuned GPT-4
+    const financeModel = await deployFineTunedModel({
+      baseModel: 'gpt-4',
+      trainingData: financialDataset,  // $50K training cost
+      domain: 'financial-analysis'
+    });
+    
+    // CRM domain - Fine-tuned GPT-4
+    const crmModel = await deployFineTunedModel({
+      baseModel: 'gpt-4',
+      trainingData: crmDataset,  // $50K training cost
+      domain: 'customer-management'
+    });
+    
+    // Support domain - Fine-tuned GPT-4
+    const supportModel = await deployFineTunedModel({
+      baseModel: 'gpt-4',
+      trainingData: supportDataset,  // $50K training cost
+      domain: 'customer-support'
+    });
+    
+    // Total setup: $150K
+    // Per-call cost: $0.03 per call (fine-tuned inference)
+    // 100K calls/month = $3,000/month
+    // New domain? Another $50K + retraining
+    // Update knowledge? Retrain all models
+    ```
+  </Tab>
+  
+  <Tab title="Olane OS (Single Generalist)">
+    ```typescript
+    import { oLaneTool } from '@olane/o-lane';
+    
+    // Finance node - Context injection (no training)
+    class FinanceNode extends oLaneTool {
+      constructor() {
+        super({
+          address: new oAddress('o://company/finance'),
+          laneContext: {
+            domain: 'Financial Analysis',
+            expertise: [
+              'Revenue recognition per GAAP',
+              'Cash flow analysis',
+              'Financial ratio interpretation'
+            ],
+            knowledge: `Our company uses accrual accounting...`
+          }
+        });
+      }
+      // Domain tools augment the generalist LLM
+    }
+    
+    // CRM node - Context injection (no training)
+    class CRMNode extends oLaneTool {
+      constructor() {
+        super({
+          address: new oAddress('o://company/crm'),
+          laneContext: {
+            domain: 'Customer Management',
+            expertise: ['Customer lifecycle', 'Health scoring', 'Retention'],
+            knowledge: `Our customer segments are...`
+          }
+        });
+      }
+    }
+    
+    // Support node - Context injection (no training)
+    class SupportNode extends oLaneTool {
+      constructor() {
+        super({
+          address: new oAddress('o://company/support'),
+          laneContext: {
+            domain: 'Customer Support',
+            expertise: ['Ticket triage', 'Resolution paths', 'Escalation'],
+            knowledge: `Our support tiers are...`
+          }
+        });
+      }
+    }
+    
+    // Total setup: $0 (context injection, no training)
+    // Per-call cost: $0.006 per call (standard GPT-4 with context)
+    // 100K calls/month = $600/month
+    // New domain? Add context, no retraining
+    // Update knowledge? Update context string
+    ```
+  </Tab>
+</Tabs>
+
+**Cost Breakdown**:
+
+| Metric | Fine-Tuned Models | Olane OS (Generalist) | Savings |
+|--------|------------------|-----------------------|---------|
+| **Setup Cost** | $50K per domain | $0 | **100%** |
+| **3 Domains Setup** | $150K | $0 | **$150K** |
+| **Per-Call Cost** | $0.03 | $0.006 | **80%** |
+| **100K Calls/Month** | $3,000 | $600 | **$2,400/mo** |
+| **Annual Operating Cost** | $36K | $7.2K | **$28.8K/year** |
+| **New Domain Cost** | $50K + time | Minutes | **$50K** |
+| **Update Knowledge** | Retrain ($50K) | Edit context (free) | **$50K** |
+
+**ROI Example** (3 domains, 100K calls/month):
+- **Year 1**: $150K (setup) + $36K (operating) = $186K vs $7.2K = **$178.8K saved**
+- **Year 2**: $36K vs $7.2K = **$28.8K saved**
+- **Total 2-year savings**: **$207.6K**
+
+**When to use**:
+- ✅ Multiple domains (finance, CRM, support, etc.)
+- ✅ Moderate to high call volumes (10K+ per month)
+- ✅ Budget-conscious (startup or cost center)
+- ✅ Fast iteration required (no time for retraining)
+
+[Learn more about Cost Optimization →](/use-cases/cost-optimization)
+
+## Secondary use cases {#secondary-use-cases}
+
+### Hybrid Human-AI Workflows {#hybrid-workflows}
+
+Humans initiate tasks, AI coordinates execution, humans review results.
+
+```bash
+# Human starts the process
+$ olane intent "Analyze customer churn risk for enterprise accounts"
+
+# AI agent coordinates:
+# → Discovers o://crm/customers tool
+# → Discovers o://analytics/churn tool
+# → Discovers o://finance/ltv tool
+# → Coordinates multi-tool analysis
+# → Generates comprehensive report
+
+# Human reviews results and takes action
+```
+
+**Best for**: Business analysis, research, compliance reporting
+
+### Knowledge Accumulation {#knowledge-accumulation}
+
+Tools learn from each execution and share knowledge across the network.
+
+```typescript
+// First execution discovers optimal approach
+await node.use({ 
+  method: 'intent', 
+  params: { intent: 'Analyze Q4 sales trends' } 
+});
+// → Takes 30 minutes, explores multiple paths
+// → Leaves knowledge artifact: "Best approach for Q4 analysis"
+
+// Second execution learns from first
+await node.use({ 
+  method: 'intent', 
+  params: { intent: 'Analyze Q4 sales trends' } 
+});
+// → Takes 8 minutes, uses proven path
+// → 75% faster due to accumulated knowledge
+```
+
+**Best for**: Repeated workflows, team collaboration, continuous improvement
+
+### Dynamic Scaling {#dynamic-scaling}
+
+Add tool capacity without changing code or redeploying.
+
+```typescript
+// Start with minimal setup
+const os = new OlaneOS({
+  nodes: [
+    { type: NodeType.LEADER, address: new oAddress('o://leader') },
+    { type: NodeType.NODE, address: new oAddress('o://processor-1') }
+  ]
+});
+
+// Add capacity dynamically based on load
+if (queueDepth > 100) {
+  const additionalProcessor = new oNodeTool({
+    address: new oAddress('o://processor-2'),
+    leader: os.rootLeader?.address
+  });
+  
+  await os.addNode(additionalProcessor);
+  // Leader automatically load balances across both processors
+}
+```
+
+**Best for**: Variable load, cost optimization, gradual scaling
+
+### Multi-Tenancy {#multi-tenancy}
+
+Isolated tool networks per customer or department.
+
+```typescript
+// Customer A's isolated network
+const customerANetwork = new OlaneOS({
+  nodes: [
+    { address: new oAddress('o://customer-a/leader') },
+    { address: new oAddress('o://customer-a/processor') }
+  ]
+});
+
+// Customer B's isolated network
+const customerBNetwork = new OlaneOS({
+  nodes: [
+    { address: new oAddress('o://customer-b/leader') },
+    { address: new oAddress('o://customer-b/processor') }
+  ]
+});
+
+// Complete isolation between customers
+// Each has their own tools, data, and coordination
+```
+
+**Best for**: SaaS platforms, enterprise deployments, security requirements
+
+## Anti-patterns {#anti-patterns}
+
+### ❌ Using Olane for simple CRUD
+
+**Wrong**:
+```typescript
+// Overkill for basic database operations
+class UserCRUD extends oLaneTool {
+  async _tool_create_user(request) { /* INSERT */ }
+  async _tool_read_user(request) { /* SELECT */ }
+  async _tool_update_user(request) { /* UPDATE */ }
+  async _tool_delete_user(request) { /* DELETE */ }
+}
+```
+
+**Right**: Use a traditional REST API or database ORM
+
+### ❌ Hardcoding workflows in tool nodes
+
+**Wrong**:
+```typescript
+// Defeats the purpose of intent-driven design
+async _tool_complete_workflow(request) {
+  const step1 = await this.doStep1();
+  const step2 = await this.doStep2(step1);
+  const step3 = await this.doStep3(step2);
+  return step3;
+}
+```
+
+**Right**: Break into individual tools, let agent coordinate via intents
+
+### ❌ One massive monolithic node
+
+**Wrong**:
+```typescript
+// 50+ tools in single node
+class MegaNode extends oLaneTool {
+  async _tool_finance_1() { /* ... */ }
+  async _tool_finance_2() { /* ... */ }
+  async _tool_crm_1() { /* ... */ }
+  async _tool_crm_2() { /* ... */ }
+  async _tool_support_1() { /* ... */ }
+  // ... 45 more tools
+}
+```
+
+**Right**: Split into domain-specific nodes (o://finance, o://crm, o://support)
+
+### ❌ Using Olane for real-time streaming
+
+**Wrong**:
+```typescript
+// Olane is not optimized for millisecond latency
+class VideoStreamNode extends oLaneTool {
+  async _tool_stream_video(request) {
+    // Bad: High latency, wrong use case
+  }
+}
+```
+
+**Right**: Use WebRTC, HLS, or dedicated streaming protocols
+
+## Getting started with your use case {#getting-started}
+
+Follow these steps to implement your use case:
+
+<Steps>
+  <Step title="Identify Your Pattern">
+    Match your scenario to one of the core use cases above. Many applications combine multiple patterns.
+  </Step>
+  
+  <Step title="Design Your Tool Network">
+    Decide if you need a single node or multiple coordinated nodes. Use the [decision guide](#decision-guide).
+  </Step>
+  
+  <Step title="Build Your First Tool">
+    Start with the [Quickstart Guide](/quickstart) to create a working tool in 30 minutes.
+  </Step>
+  
+  <Step title="Add Coordination">
+    If needed, add a coordinator node or leader-based discovery. See [Multi-Tool Networks](/use-cases/multi-tool-networks).
+  </Step>
+  
+  <Step title="Enable Intent-Driven Execution">
+    Use `oLaneTool` for complex nodes that accept natural language intents. See [Autonomous Workflows](/use-cases/autonomous-workflows).
+  </Step>
+  
+  <Step title="Optimize Costs">
+    Implement context injection and tool augmentation for cost-effective AI. See [Cost Optimization](/use-cases/cost-optimization).
+  </Step>
+</Steps>
+
+## Real-world examples {#real-world-examples}
+
+<CardGroup cols={2}>
+  <Card title="Enterprise CRM" icon="building">
+    Multi-tool network with customer, sales, support, and analytics nodes. Serves both humans and AI agents.
+    
+    **Patterns**: Multi-tool networks, autonomous workflows, hybrid human-AI
+  </Card>
+  
+  <Card title="Market Research Platform" icon="chart-line">
+    Long-running research tasks (8+ hours) with fault tolerance. Analyzes competitors, trends, and market sizing.
+    
+    **Patterns**: Long-running processes, knowledge accumulation
+  </Card>
+  
+  <Card title="Financial Analytics" icon="dollar-sign">
+    Cost-optimized multi-domain analysis (revenue, expenses, forecasting, reporting) using single generalist LLM.
+    
+    **Patterns**: Cost optimization, autonomous workflows
+  </Card>
+  
+  <Card title="Customer Support Automation" icon="headset">
+    AI-powered ticket triage and resolution with human escalation. Learns optimal resolution paths over time.
+    
+    **Patterns**: Hybrid workflows, knowledge accumulation, cost optimization
+  </Card>
+</CardGroup>
+
+## Comparison to alternatives {#comparison}
+
+| Your Scenario | Traditional Approach | Olane OS Advantage |
+|--------------|---------------------|-------------------|
+| **Complex multi-step workflow** | LangGraph (hardcoded) | Emergent, adapts autonomously |
+| **Multiple AI agents** | CrewAI ($$$) | Single LLM (70-90% cheaper) |
+| **Long-running task** | Manual checkpointing | Built-in fault tolerance |
+| **Serve humans + AI** | Separate APIs | Agent-agnostic design |
+| **Evolving requirements** | Rewrite workflows | Intent-driven adaptation |
+| **Cross-domain AI** | Fine-tune per domain ($$$) | Context injection ($0) |
+
+## Next steps {#next-steps}
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Tutorial" icon="rocket" href="/quickstart">
+    Build your first tool node in 30 minutes
+  </Card>
+  
+  <Card title="Autonomous Workflows" icon="robot" href="/use-cases/autonomous-workflows">
+    Learn intent-driven execution patterns
+  </Card>
+  
+  <Card title="Multi-Tool Networks" icon="network-wired" href="/use-cases/multi-tool-networks">
+    Coordinate multiple specialized tools
+  </Card>
+  
+  <Card title="Cost Optimization" icon="piggy-bank" href="/use-cases/cost-optimization">
+    Achieve 70-90% AI cost reduction
+  </Card>
+</CardGroup>
+
+## Common questions {#faq}
+
+<AccordionGroup>
+  <Accordion title="Can I combine multiple use case patterns?">
+    Yes! Most real-world applications combine patterns. Example: Multi-tool network + autonomous workflows + cost optimization.
+  </Accordion>
+  
+  <Accordion title="Do I need AI to use Olane OS?">
+    No. Olane OS is agent-agnostic and works perfectly for human agents. You can start with humans and add AI later without changing your tools.
+  </Accordion>
+  
+  <Accordion title="What if my use case isn't listed here?">
+    These are the most common patterns. If your scenario involves multi-step coordination, tool discovery, or agent interaction, Olane OS likely fits. Join our [Community](/support/community) to discuss your specific use case.
+  </Accordion>
+  
+  <Accordion title="How do I know if I should build one node or multiple?">
+    Use the [decision guide](#decision-guide). Generally: single domain = single node, multiple coordinating domains = multiple nodes.
+  </Accordion>
+  
+  <Accordion title="Can I migrate from an existing framework?">
+    Yes. Check out our [Migration Guides](/migration/overview) for step-by-step instructions from LangGraph, CrewAI, and AutoGen.
+  </Accordion>
+</AccordionGroup>
+
+## Related resources {#related}
+
+- **Understanding**: [What is Olane?](/understanding/what-is-olane) - Core concepts
+- **Understanding**: [When to Use Olane](/understanding/when-to-use) - Decision framework
+- **Concepts**: [Generalist vs Specialist](/concepts/generalist-vs-specialist) - Architecture
+- **Concepts**: [Emergent vs Explicit](/concepts/emergent-vs-explicit) - Orchestration
+- **Examples**: Browse working examples in the [Examples section](/examples)
+- **Comparison**: [vs LangGraph](/comparison/vs-langgraph), [vs CrewAI](/comparison/vs-crewai)
+
