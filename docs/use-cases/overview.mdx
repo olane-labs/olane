@@ -24,7 +24,7 @@ Olane OS is designed for building **intent-driven, agent-accessible applications
   </Card>
 </CardGroup>
 
-## Quick decision guide {#decision-guide}
+## Quick decision guide 
 
 Use this guide to determine if Olane OS is right for your use case:
 
@@ -52,9 +52,9 @@ Does your application involve multiple tools or steps?
                                     (70-90% cost reduction)
 ```
 
-## Core use cases {#core-use-cases}
+## Core use cases 
 
-### 1. Autonomous Workflows {#autonomous-workflows}
+### 1. Autonomous Workflows 
 
 **What it is**: Agents express goals in natural language, tools autonomously coordinate to achieve them.
 
@@ -155,7 +155,7 @@ Does your application involve multiple tools or steps?
 
 [Learn more about Autonomous Workflows →](/use-cases/autonomous-workflows)
 
-### 2. Multi-Tool Networks {#multi-tool-networks}
+### 2. Multi-Tool Networks 
 
 **What it is**: Coordinate 5-50+ specialized tool nodes through dynamic discovery and intelligent routing.
 
@@ -262,7 +262,7 @@ const report = await crmSystem.use(
 
 [Learn more about Multi-Tool Networks →](/use-cases/multi-tool-networks)
 
-### 3. Long-Running Processes {#long-running-processes}
+### 3. Long-Running Processes 
 
 **What it is**: Tasks that run hours or days with built-in fault tolerance, checkpointing, and automatic recovery.
 
@@ -370,7 +370,7 @@ const research = await researchNode.use({
 
 [Learn more about Long-Running Processes →](/use-cases/long-running-processes)
 
-### 4. Cost Optimization {#cost-optimization}
+### 4. Cost Optimization 
 
 **What it is**: Achieve AI capabilities with **70-90% cost reduction** by using a single generalist LLM across all tools instead of fine-tuned models per domain.
 
@@ -499,9 +499,9 @@ const research = await researchNode.use({
 
 [Learn more about Cost Optimization →](/use-cases/cost-optimization)
 
-## Secondary use cases {#secondary-use-cases}
+## Secondary use cases 
 
-### Hybrid Human-AI Workflows {#hybrid-workflows}
+### Hybrid Human-AI Workflows 
 
 Humans initiate tasks, AI coordinates execution, humans review results.
 
@@ -521,7 +521,7 @@ $ olane intent "Analyze customer churn risk for enterprise accounts"
 
 **Best for**: Business analysis, research, compliance reporting
 
-### Knowledge Accumulation {#knowledge-accumulation}
+### Knowledge Accumulation 
 
 Tools learn from each execution and share knowledge across the network.
 
@@ -545,7 +545,7 @@ await node.use({
 
 **Best for**: Repeated workflows, team collaboration, continuous improvement
 
-### Dynamic Scaling {#dynamic-scaling}
+### Dynamic Scaling 
 
 Add tool capacity without changing code or redeploying.
 
@@ -572,7 +572,7 @@ if (queueDepth > 100) {
 
 **Best for**: Variable load, cost optimization, gradual scaling
 
-### Multi-Tenancy {#multi-tenancy}
+### Multi-Tenancy 
 
 Isolated tool networks per customer or department.
 
@@ -599,7 +599,7 @@ const customerBNetwork = new OlaneOS({
 
 **Best for**: SaaS platforms, enterprise deployments, security requirements
 
-## Anti-patterns {#anti-patterns}
+## Anti-patterns 
 
 ### ❌ Using Olane for simple CRUD
 
@@ -662,7 +662,7 @@ class VideoStreamNode extends oLaneTool {
 
 **Right**: Use WebRTC, HLS, or dedicated streaming protocols
 
-## Getting started with your use case {#getting-started}
+## Getting started with your use case 
 
 Follow these steps to implement your use case:
 
@@ -692,7 +692,7 @@ Follow these steps to implement your use case:
   </Step>
 </Steps>
 
-## Real-world examples {#real-world-examples}
+## Real-world examples 
 
 <CardGroup cols={2}>
   <Card title="Enterprise CRM" icon="building">
@@ -720,7 +720,7 @@ Follow these steps to implement your use case:
   </Card>
 </CardGroup>
 
-## Comparison to alternatives {#comparison}
+## Comparison to alternatives 
 
 | Your Scenario | Traditional Approach | Olane OS Advantage |
 |--------------|---------------------|-------------------|
@@ -731,7 +731,7 @@ Follow these steps to implement your use case:
 | **Evolving requirements** | Rewrite workflows | Intent-driven adaptation |
 | **Cross-domain AI** | Fine-tune per domain ($$$) | Context injection ($0) |
 
-## Next steps {#next-steps}
+## Next steps 
 
 <CardGroup cols={2}>
   <Card title="Quickstart Tutorial" icon="rocket" href="/quickstart">
@@ -751,7 +751,7 @@ Follow these steps to implement your use case:
   </Card>
 </CardGroup>
 
-## Common questions {#faq}
+## Common questions 
 
 <AccordionGroup>
   <Accordion title="Can I combine multiple use case patterns?">
@@ -775,7 +775,7 @@ Follow these steps to implement your use case:
   </Accordion>
 </AccordionGroup>
 
-## Related resources {#related}
+## Related resources 
 
 - **Understanding**: [What is Olane?](/understanding/what-is-olane) - Core concepts
 - **Understanding**: [When to Use Olane](/understanding/when-to-use) - Decision framework
