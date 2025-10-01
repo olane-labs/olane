@@ -1,0 +1,717 @@
+---
+title: "Agents Overview"
+description: "Understanding agents (human and AI) as the intelligent users of Olane OS"
+---
+
+## Overview
+
+**Agents** are the intelligent users of Olane OS. They interact with tool nodes using natural language to accomplish goals. Agents can be either **human** (developers, analysts, business users) or **AI-powered** (GPT-4, Claude, Gemini). Both types use the same interface to send intents and coordinate with tools.
+
+This agent-agnostic design means you build tools once, and they serve both human and AI users through a unified natural language interface.
+
+## What Makes Agents Special
+
+Unlike traditional software where you write code to explicitly call APIs, agents express what they want in natural language, and the system figures out how to accomplish it.
+
+<CardGroup cols={2}>
+  <Card title="Human Agents" icon="user" color="#0D9373">
+    Interact via CLI, web UI, or API
+    - Express business goals naturally
+    - Get autonomous tool execution
+    - Benefit from simplified interfaces
+  </Card>
+  
+  <Card title="AI Agents" icon="robot" color="#07C983">
+    Autonomous reasoning and coordination
+    - GPT-4, Claude, Gemini, or custom LLMs
+    - Multi-tool-node workflows
+    - Emergent orchestration patterns
+  </Card>
+</CardGroup>
+
+## Agent Types
+
+### Human Agents {#human-agents}
+
+Humans who interact with tools through various interfaces:
+
+**Command-Line Interface (CLI)**:
+```bash
+# Express goals in natural language
+olane intent "Analyze Q4 sales and identify top products"
+
+# Get structured results back
+# {
+#   "totalSales": 1500000,
+#   "topProducts": ["Product A", "Product B"],
+#   "trends": "15% growth YoY"
+# }
+```
+
+**Web Interface**:
+```typescript
+// Form submission from web UI
+POST /api/intent
+{
+  "toolNode": "o://company/analytics",
+  "intent": "Generate monthly customer retention report"
+}
+```
+
+**Programmatic API**:
+```typescript
+import { oAddress } from '@olane/o-core';
+
+// Human-initiated programmatic call
+const result = await olaneClient.use(
+  new oAddress('o://company/crm'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Find all leads from last week that haven\'t been contacted'
+    }
+  }
+);
+```
+
+### AI Agents {#ai-agents}
+
+Large language models that autonomously coordinate with tools:
+
+**Single Tool Node Interaction**:
+```typescript
+// AI agent reasoning about a goal
+const aiAgent = new GPT4Agent();
+
+const result = await aiAgent.coordinateWith({
+  toolNode: 'o://company/finance/analyst',
+  intent: 'Calculate profit margins for each product line'
+});
+
+// AI determines which tools to use based on available capabilities
+```
+
+**Multi-Tool Node Coordination**:
+```typescript
+// AI agent coordinates across multiple tool nodes
+const workflow = await aiAgent.accomplish({
+  goal: 'Generate quarterly business review',
+  availableToolNodes: [
+    'o://company/finance/analyst',
+    'o://company/sales/reporter',
+    'o://company/marketing/insights',
+    'o://company/reporting/generator'
+  ]
+});
+
+// AI discovers optimal execution path:
+// 1. Get financial data from analyst
+// 2. Get sales metrics from reporter
+// 3. Get marketing insights
+// 4. Combine into comprehensive report
+```
+
+## The Agent-Agnostic Architecture
+
+Tools in Olane OS are **agent-agnostic** - they don't care whether the intent comes from a human or an AI agent. This creates powerful flexibility:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Agents (Users)                                      │
+│  ├─ Human via CLI: "Analyze sales"                  │
+│  ├─ Human via Web UI: Form submission               │
+│  ├─ AI Agent (GPT-4): Autonomous coordination       │
+│  └─ AI Agent (Claude): Part of workflow             │
+└─────────────────────────────────────────────────────┘
+                        ⬇ all send intents
+┌─────────────────────────────────────────────────────┐
+│  Tool Node: o://company/analytics                    │
+│  • Accepts natural language intents                  │
+│  • Processes autonomously                            │
+│  • Returns structured results                        │
+│  • Source-agnostic (doesn't know/care who asked)    │
+└─────────────────────────────────────────────────────┘
+```
+
+## How Agents Interact with Tool Nodes
+
+### Intent-Based Invocation {#intent-based-invocation}
+
+Agents send **intents** (natural language descriptions of goals) rather than direct tool calls:
+
+<CodeGroup>
+
+```typescript AI Agent
+// AI agent sends intent
+const result = await toolNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Find customers at risk of churning this month'
+  }
+});
+
+// Tool node autonomously:
+// 1. Analyzes available tools
+// 2. Determines execution sequence
+// 3. Executes tools
+// 4. Returns results
+```
+
+```bash Human Agent (CLI)
+# Human sends same intent via CLI
+olane use o://company/crm --intent "Find customers at risk of churning this month"
+
+# Same autonomous processing
+# Same structured results
+```
+
+```javascript Human Agent (Web)
+// Human sends intent via web interface
+fetch('/api/tool-nodes/o://company/crm/intent', {
+  method: 'POST',
+  body: JSON.stringify({
+    intent: 'Find customers at risk of churning this month'
+  })
+});
+```
+
+</CodeGroup>
+
+### Direct Tool Invocation {#direct-tool-invocation}
+
+For simple tool nodes (1-5 tools), agents can directly invoke specific tools:
+
+<CodeGroup>
+
+```typescript AI Agent
+// Direct tool call from AI
+const result = await toolNode.use({
+  method: 'convert_currency',
+  params: {
+    amount: 100,
+    from: 'USD',
+    to: 'EUR'
+  }
+});
+```
+
+```bash Human Agent (CLI)
+# Direct tool call from human
+olane use o://utilities/currency --method convert_currency \
+  --params '{"amount": 100, "from": "USD", "to": "EUR"}'
+```
+
+</CodeGroup>
+
+## Agent Coordination Patterns
+
+### Pattern 1: Human-Initiated, AI-Executed {#human-initiated-ai-executed}
+
+Human expresses a goal, AI agent coordinates execution:
+
+```typescript
+// 1. Human expresses goal via UI
+const humanIntent = "Generate comprehensive Q4 business review";
+
+// 2. System routes to AI coordinator
+const aiCoordinator = await system.getCoordinator();
+
+// 3. AI discovers and coordinates tool nodes
+const result = await aiCoordinator.accomplish({
+  intent: humanIntent,
+  discover: true, // Find relevant tool nodes
+  coordinate: true // Autonomously orchestrate
+});
+
+// 4. Results delivered back to human
+```
+
+**Use Cases**:
+- Complex analysis requiring multiple data sources
+- Report generation with cross-functional insights
+- Automated workflow execution from simple requests
+
+### Pattern 2: Pure AI Autonomous {#pure-ai-autonomous}
+
+AI agent operates independently without human intervention:
+
+```typescript
+// Long-running autonomous agent
+class MonitoringAgent extends AIAgent {
+  async run() {
+    while (this.active) {
+      // Autonomously monitor and respond
+      const metrics = await this.use('o://monitoring/metrics', {
+        method: 'intent',
+        params: { intent: 'Get system health status' }
+      });
+      
+      if (metrics.unhealthy) {
+        // Coordinate remediation
+        await this.use('o://ops/remediation', {
+          method: 'intent',
+          params: { intent: `Fix ${metrics.issue}` }
+        });
+      }
+      
+      await this.sleep(60000); // Check every minute
+    }
+  }
+}
+```
+
+**Use Cases**:
+- System monitoring and auto-remediation
+- Continuous optimization tasks
+- Scheduled report generation
+- Proactive alerts and notifications
+
+### Pattern 3: Human Direct Execution {#human-direct-execution}
+
+Human directly uses tools without AI coordination:
+
+```bash
+# Simple, direct tool usage
+olane use o://utilities/currency --method convert \
+  --params '{"amount": 100, "from": "USD", "to": "EUR"}'
+
+# Result: { "amount": 85.50, "currency": "EUR" }
+```
+
+**Use Cases**:
+- Simple utility functions
+- Direct API calls
+- Testing and debugging
+- Scripting and automation
+
+### Pattern 4: Hybrid Collaboration {#hybrid-collaboration}
+
+Humans and AI agents collaborate on complex tasks:
+
+```typescript
+// Human initiates with specific requirements
+const humanRequest = {
+  intent: "Analyze customer sentiment from Q4 feedback",
+  constraints: {
+    minSampleSize: 100,
+    categories: ['product', 'service', 'support'],
+    format: 'executive-summary'
+  }
+};
+
+// AI coordinates data gathering
+const rawData = await aiAgent.gather({
+  sources: [
+    'o://data/feedback',
+    'o://crm/interactions',
+    'o://support/tickets'
+  ]
+});
+
+// Human reviews and refines
+const humanFeedback = await ui.review(rawData);
+
+// AI generates final analysis
+const finalReport = await aiAgent.analyze({
+  data: rawData,
+  feedback: humanFeedback,
+  format: humanRequest.constraints.format
+});
+```
+
+**Use Cases**:
+- Iterative analysis with human oversight
+- Collaborative content creation
+- Complex decision-making workflows
+- Quality assurance processes
+
+## Agent Capabilities
+
+### Discovery {#discovery}
+
+Agents can discover available tool nodes and their capabilities:
+
+```typescript
+// AI agent discovers relevant tools
+const tools = await agent.discover({
+  domain: 'finance',
+  capabilities: ['analysis', 'reporting']
+});
+
+// Returns:
+// [
+//   {
+//     address: 'o://company/finance/analyst',
+//     tools: ['calculate_revenue', 'forecast_growth', 'analyze_trends'],
+//     description: 'Financial analysis and forecasting'
+//   },
+//   {
+//     address: 'o://company/finance/reporter',
+//     tools: ['generate_report', 'create_visualization'],
+//     description: 'Financial reporting and visualization'
+//   }
+// ]
+```
+
+### Reasoning {#reasoning}
+
+AI agents use reasoning to determine optimal tool usage:
+
+```typescript
+// Agent receives intent
+const intent = "Identify our most profitable customer segments";
+
+// Agent reasons about approach
+const plan = await aiAgent.plan({
+  intent,
+  availableTools: discoveredTools,
+  reasoning: true
+});
+
+// Reasoning output:
+// "To identify profitable segments, I need to:
+// 1. Get customer data with revenue info
+// 2. Segment by demographics/behavior
+// 3. Calculate profitability per segment
+// 4. Rank and identify top segments"
+
+// Execute plan
+const result = await aiAgent.execute(plan);
+```
+
+### Learning {#learning}
+
+Agents (especially AI) can learn from execution patterns:
+
+```typescript
+// Track successful workflows
+const workflow = {
+  intent: "Generate sales forecast",
+  toolsUsed: [
+    'o://data/sales/historical',
+    'o://analytics/forecasting',
+    'o://reporting/visualizer'
+  ],
+  sequence: [
+    { tool: 'get_historical_data', duration: 500 },
+    { tool: 'forecast', duration: 2000 },
+    { tool: 'visualize', duration: 300 }
+  ],
+  success: true,
+  userSatisfaction: 0.95
+};
+
+// Agent learns optimal patterns
+await agent.learnFromExecution(workflow);
+
+// Future similar intents use learned patterns
+```
+
+## Benefits of Agent-Agnostic Design
+
+### Build Once, Serve Both {#build-once-serve-both}
+
+<AccordionGroup>
+  <Accordion title="Unified Development">
+    Write tool nodes once and serve both human and AI agents through the same interface. No need for separate APIs, UIs, or integration layers.
+  </Accordion>
+  
+  <Accordion title="Future-Proof Architecture">
+    Works today with human users via CLI and web interfaces. Seamlessly scales as AI agent adoption increases. No refactoring required.
+  </Accordion>
+  
+  <Accordion title="Consistent Experience">
+    Both agent types get the same capabilities, same execution logic, same reliability. No feature parity issues.
+  </Accordion>
+  
+  <Accordion title="Simplified Maintenance">
+    Update tools once, improvements benefit all agents. Fix bugs once, all interaction modes benefit.
+  </Accordion>
+</AccordionGroup>
+
+### Gradual AI Adoption {#gradual-ai-adoption}
+
+Start with human users, add AI capabilities incrementally:
+
+```typescript
+// Phase 1: Human users via web UI
+class SalesAnalytics extends oNodeTool {
+  async _tool_get_revenue(req) { /* ... */ }
+}
+
+// Phase 2: Add intent support for complex queries
+class SalesAnalytics extends oLaneTool {
+  async _tool_get_revenue(req) { /* ... */ }
+  // Intent method automatically available
+}
+
+// Phase 3: AI agents discover and coordinate
+// No changes to tool node needed!
+// AI agents can now autonomously use it
+```
+
+## Best Practices
+
+### For Tool Node Developers
+
+<Card title="Design for Intent" icon="lightbulb">
+  Build tool nodes that can handle both direct tool calls (simple) and intents (complex). Use `oLaneTool` for complex nodes with 5+ tools.
+</Card>
+
+<Card title="Validate Inputs" icon="shield-check">
+  Always provide parameter schemas via `_params_*` methods. Both human and AI agents benefit from clear validation.
+</Card>
+
+<Card title="Return Structured Data" icon="file-code">
+  Return JSON-serializable results. Makes it easy for both humans (via UI rendering) and AI agents (for further processing).
+</Card>
+
+<Card title="Document Capabilities" icon="book">
+  Provide clear tool descriptions and examples. Helps humans understand what's available and helps AI agents discover optimal tools.
+</Card>
+
+### For Agent Operators
+
+<Card title="Start Simple" icon="play">
+  Begin with direct tool calls for simple tasks. Graduate to intent-based interaction as complexity increases.
+</Card>
+
+<Card title="Provide Context" icon="message-lines">
+  When sending intents, include relevant context. More information enables better autonomous execution.
+</Card>
+
+<Card title="Monitor AI Coordination" icon="chart-line">
+  For AI agents, track which tools are used and how often. Identify optimization opportunities.
+</Card>
+
+<Card title="Design Feedback Loops" icon="arrows-rotate">
+  Enable humans to review and refine AI-coordinated results. Hybrid workflows often produce the best outcomes.
+</Card>
+
+## Real-World Examples
+
+### Example 1: Customer Support System {#example-customer-support}
+
+**Human Agent (Support Rep)**:
+```bash
+# Support rep uses CLI to find customer info
+olane use o://crm/customers \
+  --intent "Find customer with email john@example.com and show recent tickets"
+
+# Quick lookup during support call
+```
+
+**AI Agent (Automated Triage)**:
+```typescript
+// AI monitors incoming tickets and auto-triages
+class TriageAgent extends AIAgent {
+  async processTicket(ticket) {
+    // Analyze sentiment and urgency
+    const analysis = await this.use('o://support/analyzer', {
+      method: 'intent',
+      params: { 
+        intent: `Analyze urgency and sentiment of: ${ticket.content}` 
+      }
+    });
+    
+    // Route to appropriate team
+    if (analysis.urgent) {
+      await this.use('o://support/routing', {
+        method: 'route',
+        params: { 
+          ticket: ticket.id, 
+          team: 'escalation' 
+        }
+      });
+    }
+  }
+}
+```
+
+### Example 2: Financial Analysis {#example-financial-analysis}
+
+**Human Agent (Analyst)**:
+```typescript
+// Analyst using web dashboard
+const dashboard = new AnalystDashboard();
+
+// Express goal in form
+dashboard.sendIntent({
+  toolNode: 'o://finance/analyst',
+  intent: 'Compare Q3 vs Q4 revenue by region and identify growth opportunities'
+});
+
+// Receive interactive visualizations
+```
+
+**AI Agent (Continuous Monitoring)**:
+```typescript
+// AI monitors financial metrics continuously
+class FinancialMonitor extends AIAgent {
+  async dailyAnalysis() {
+    const insights = await this.use('o://finance/analyst', {
+      method: 'intent',
+      params: {
+        intent: 'Analyze yesterday\'s performance across all metrics and flag anomalies'
+      }
+    });
+    
+    if (insights.anomalies.length > 0) {
+      // Generate alert report
+      await this.use('o://reporting/alerts', {
+        method: 'generate',
+        params: {
+          type: 'anomaly-alert',
+          data: insights.anomalies
+        }
+      });
+    }
+  }
+}
+```
+
+### Example 3: Data Pipeline Orchestration {#example-data-pipeline}
+
+**Human Agent (Data Engineer)**:
+```bash
+# Manual pipeline trigger for testing
+olane use o://data/pipeline/etl \
+  --intent "Run customer data ETL for 2024-10-01 with validation"
+
+# Monitor execution
+olane logs o://data/pipeline/etl --follow
+```
+
+**AI Agent (Autonomous Orchestration)**:
+```typescript
+// AI coordinates complex multi-stage pipeline
+class PipelineOrchestrator extends AIAgent {
+  async orchestrateDaily() {
+    // Discover available pipeline nodes
+    const pipelines = await this.discover({
+      domain: 'data-processing',
+      capability: 'etl'
+    });
+    
+    // Coordinate execution across dependencies
+    for (const pipeline of pipelines) {
+      const result = await this.use(pipeline.address, {
+        method: 'intent',
+        params: {
+          intent: 'Execute daily ETL with dependency resolution'
+        }
+      });
+      
+      // Handle failures autonomously
+      if (result.failed) {
+        await this.use('o://ops/remediation', {
+          method: 'intent',
+          params: {
+            intent: `Fix ETL failure: ${result.error}`
+          }
+        });
+      }
+    }
+  }
+}
+```
+
+## Common Patterns
+
+### Pattern: Progressive Enhancement {#progressive-enhancement}
+
+Start with human-driven workflows, add AI capabilities over time:
+
+```typescript
+// Stage 1: Manual execution
+const report = await manuallyGenerateReport();
+
+// Stage 2: Semi-automated with human approval
+const draft = await aiAgent.generateDraft();
+const approved = await human.review(draft);
+
+// Stage 3: Fully automated with monitoring
+const final = await aiAgent.generateAndPublish({
+  monitoring: true,
+  alertOnAnomaly: true
+});
+```
+
+### Pattern: Human-in-the-Loop {#human-in-the-loop}
+
+AI executes, human validates critical decisions:
+
+```typescript
+class HumanInTheLoopAgent extends AIAgent {
+  async processOrder(order) {
+    // AI analyzes order
+    const analysis = await this.analyze(order);
+    
+    // If unusual, request human approval
+    if (analysis.unusual) {
+      const approval = await this.requestHumanApproval({
+        order,
+        analysis,
+        reason: analysis.unusualReason
+      });
+      
+      if (!approval.approved) {
+        return { status: 'rejected', reason: approval.reason };
+      }
+    }
+    
+    // Proceed with execution
+    return await this.executeOrder(order);
+  }
+}
+```
+
+### Pattern: Hybrid Expertise {#hybrid-expertise}
+
+Combine human domain expertise with AI coordination:
+
+```typescript
+// Human provides expertise
+const humanConstraints = {
+  budgetLimit: 50000,
+  requiredVendors: ['VendorA', 'VendorB'],
+  timeline: '2 weeks'
+};
+
+// AI coordinates within constraints
+const aiProposal = await aiAgent.optimizeProcurement({
+  requirements: humanConstraints,
+  optimize: ['cost', 'delivery-time', 'quality']
+});
+
+// Human makes final decision
+const decision = await human.decide(aiProposal);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Human Interfaces" icon="desktop" href="/agents/human-interfaces">
+    Learn about CLI, web UI, and API interfaces for human agents
+  </Card>
+  
+  <Card title="AI Integration" icon="brain" href="/agents/ai-integration">
+    Integrate AI models as agents in your system
+  </Card>
+  
+  <Card title="Hybrid Workflows" icon="arrows-split-up-and-left" href="/agents/hybrid-workflows">
+    Design workflows combining human and AI agents
+  </Card>
+  
+  <Card title="Agent-Agnostic Design" icon="handshake" href="/agents/agent-agnostic-design">
+    Best practices for building tools that serve all agent types
+  </Card>
+</CardGroup>
+
+## Related Resources
+
+- **Understanding**: [Three-Layer Model](/understanding/three-layer-model) - Complete architecture overview
+- **Concepts**: [Tools, Nodes & Applications](/concepts/tools-nodes-applications) - What agents interact with
+- **Building**: [Tool Nodes Overview](/concepts/tool-nodes/overview) - How to build tools for agents
+- **API**: [Tool Node Reference](/api/tool-nodes) - Technical API documentation
+
