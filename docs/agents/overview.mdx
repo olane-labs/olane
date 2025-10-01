@@ -31,7 +31,7 @@ Unlike traditional software where you write code to explicitly call APIs, agents
 
 ## Agent Types
 
-### Human Agents {#human-agents}
+### Human Agents
 
 Humans who interact with tools through various interfaces:
 
@@ -74,7 +74,7 @@ const result = await olaneClient.use(
 );
 ```
 
-### AI Agents {#ai-agents}
+### AI Agents
 
 Large language models that autonomously coordinate with tools:
 
@@ -135,7 +135,7 @@ Tools in Olane OS are **agent-agnostic** - they don't care whether the intent co
 
 ## How Agents Interact with Tool Nodes
 
-### Intent-Based Invocation {#intent-based-invocation}
+### Intent-Based Invocation
 
 Agents send **intents** (natural language descriptions of goals) rather than direct tool calls:
 
@@ -177,7 +177,7 @@ fetch('/api/tool-nodes/o://company/crm/intent', {
 
 </CodeGroup>
 
-### Direct Tool Invocation {#direct-tool-invocation}
+### Direct Tool Invocation
 
 For simple tool nodes (1-5 tools), agents can directly invoke specific tools:
 
@@ -205,7 +205,7 @@ olane use o://utilities/currency --method convert_currency \
 
 ## Agent Coordination Patterns
 
-### Pattern 1: Human-Initiated, AI-Executed {#human-initiated-ai-executed}
+### Pattern 1: Human-Initiated, AI-Executed
 
 Human expresses a goal, AI agent coordinates execution:
 
@@ -231,7 +231,7 @@ const result = await aiCoordinator.accomplish({
 - Report generation with cross-functional insights
 - Automated workflow execution from simple requests
 
-### Pattern 2: Pure AI Autonomous {#pure-ai-autonomous}
+### Pattern 2: Pure AI Autonomous
 
 AI agent operates independently without human intervention:
 
@@ -266,7 +266,7 @@ class MonitoringAgent extends AIAgent {
 - Scheduled report generation
 - Proactive alerts and notifications
 
-### Pattern 3: Human Direct Execution {#human-direct-execution}
+### Pattern 3: Human Direct Execution
 
 Human directly uses tools without AI coordination:
 
@@ -284,7 +284,7 @@ olane use o://utilities/currency --method convert \
 - Testing and debugging
 - Scripting and automation
 
-### Pattern 4: Hybrid Collaboration {#hybrid-collaboration}
+### Pattern 4: Hybrid Collaboration
 
 Humans and AI agents collaborate on complex tasks:
 
@@ -327,7 +327,7 @@ const finalReport = await aiAgent.analyze({
 
 ## Agent Capabilities
 
-### Discovery {#discovery}
+### Discovery
 
 Agents can discover available tool nodes and their capabilities:
 
@@ -353,7 +353,7 @@ const tools = await agent.discover({
 // ]
 ```
 
-### Reasoning {#reasoning}
+### Reasoning
 
 AI agents use reasoning to determine optimal tool usage:
 
@@ -379,7 +379,7 @@ const plan = await aiAgent.plan({
 const result = await aiAgent.execute(plan);
 ```
 
-### Learning {#learning}
+### Learning
 
 Agents (especially AI) can learn from execution patterns:
 
@@ -409,7 +409,7 @@ await agent.learnFromExecution(workflow);
 
 ## Benefits of Agent-Agnostic Design
 
-### Build Once, Serve Both {#build-once-serve-both}
+### Build Once, Serve Both
 
 <AccordionGroup>
   <Accordion title="Unified Development">
@@ -429,7 +429,7 @@ await agent.learnFromExecution(workflow);
   </Accordion>
 </AccordionGroup>
 
-### Gradual AI Adoption {#gradual-ai-adoption}
+### Gradual AI Adoption
 
 Start with human users, add AI capabilities incrementally:
 
@@ -490,7 +490,7 @@ class SalesAnalytics extends oLaneTool {
 
 ## Real-World Examples
 
-### Example 1: Customer Support System {#example-customer-support}
+### Example 1: Customer Support System
 
 **Human Agent (Support Rep)**:
 ```bash
@@ -528,7 +528,7 @@ class TriageAgent extends AIAgent {
 }
 ```
 
-### Example 2: Financial Analysis {#example-financial-analysis}
+### Example 2: Financial Analysis
 
 **Human Agent (Analyst)**:
 ```typescript
@@ -570,7 +570,7 @@ class FinancialMonitor extends AIAgent {
 }
 ```
 
-### Example 3: Data Pipeline Orchestration {#example-data-pipeline}
+### Example 3: Data Pipeline Orchestration
 
 **Human Agent (Data Engineer)**:
 ```bash
@@ -618,7 +618,7 @@ class PipelineOrchestrator extends AIAgent {
 
 ## Common Patterns
 
-### Pattern: Progressive Enhancement {#progressive-enhancement}
+### Pattern: Progressive Enhancement
 
 Start with human-driven workflows, add AI capabilities over time:
 
@@ -637,7 +637,7 @@ const final = await aiAgent.generateAndPublish({
 });
 ```
 
-### Pattern: Human-in-the-Loop {#human-in-the-loop}
+### Pattern: Human-in-the-Loop
 
 AI executes, human validates critical decisions:
 
@@ -666,7 +666,7 @@ class HumanInTheLoopAgent extends AIAgent {
 }
 ```
 
-### Pattern: Hybrid Expertise {#hybrid-expertise}
+### Pattern: Hybrid Expertise
 
 Combine human domain expertise with AI coordination:
 
