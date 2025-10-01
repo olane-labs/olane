@@ -4,13 +4,13 @@
 
 ## Core Definition
 
-**Olane OS is an agentic operating system where Agents (human or AI) are the users, tool nodes are the applications, and Olane packages provide the runtime infrastructure.**
+**Olane OS is an agentic operating system where Agents (human or AI) are the users, tools are the applications, and Olane packages provide the runtime infrastructure.**
 
 ## Why This Matters
 
 ### The Real Value Proposition
 
-Tool nodes are **agent-agnostic**. They accept natural language intents from ANY agent:
+Tools are **agent-agnostic**. They accept natural language intents from ANY agent:
 
 ```typescript
 // The SAME tool node serves:
@@ -31,7 +31,7 @@ await toolNode.use({
 
 1. **Broader market**: Not just "AI agent orchestration" but "intent-driven applications"
 2. **Future-proof**: Works today with humans, scales with AI adoption
-3. **Unified interface**: One tool node serves both human and AI users
+3. **Unified interface**: One tool serves both human and AI users
 4. **Real differentiation**: Unlike frameworks that only support AI agents
 
 ## Terminology Rules
@@ -43,8 +43,8 @@ await toolNode.use({
 | **Agents (human or AI)** | When referring to Layer 1 users | "Agents express intents in natural language" |
 | **Human agents** | When specifically discussing human users | "Human agents can use the CLI to send intents" |
 | **AI agents** | When specifically discussing AI models | "AI agents can coordinate autonomously" |
-| **Agent-agnostic** | When describing tool nodes | "Tool nodes are agent-agnostic - they serve both humans and AI" |
-| **Users** or **Agents** | General reference to Layer 1 | "Users interact with tool nodes via intents" |
+| **Agent-agnostic** | When describing tools | "Tools are agent-agnostic - they serve both humans and AI" |
+| **Users** or **Agents** | General reference to Layer 1 | "Users interact with tools via intents" |
 
 ### ❌ DON'T Use
 
@@ -63,7 +63,7 @@ await toolNode.use({
 ```markdown
 ## Layer 1: Users (Agents)
 
-Agents are intelligent users that interact with your tool nodes using natural language. 
+Agents are intelligent users that interact with your tools using natural language. 
 They can be either **human** or **AI-powered**.
 
 ### Human Agents
@@ -81,7 +81,7 @@ They can be either **human** or **AI-powered**.
 ```markdown
 ## Layer 1: Users (AI Agents)
 
-AI agents are intelligent users that interact with your tool nodes.
+AI agents are intelligent users that interact with your tools.
 ```
 
 ### Pattern 2: Code Examples
@@ -110,14 +110,14 @@ await toolNode.use({
 
 ✅ **Correct:**
 ```markdown
-Tool nodes accept intents from agents (human or AI) and autonomously 
+Tools accept intents from agents (human or AI) and autonomously 
 determine the execution path. Humans benefit from simplified interaction, 
 while AI agents enable autonomous coordination.
 ```
 
 ❌ **Incorrect:**
 ```markdown
-Tool nodes accept intents from AI agents and autonomously determine 
+Tools accept intents from AI agents and autonomously determine 
 the execution path using LLM reasoning.
 ```
 
@@ -127,7 +127,7 @@ the execution path using LLM reasoning.
 
 **First mention must clarify:**
 ```markdown
-Agents (human or AI) are the users of Olane OS. You build tool nodes 
+Agents (human or AI) are the users of Olane OS. You build tools 
 that both humans and AI agents interact with using natural language.
 ```
 
@@ -184,7 +184,7 @@ AI agents coordinate complex multi-step processes:
 ### 3. Hybrid Workflows
 Humans initiate, AI agents execute, results return to humans:
 - Human: "Analyze our customer churn"
-- AI: Coordinates across analytics, CRM, and reporting tool nodes
+- AI: Coordinates across analytics, CRM, and reporting tools
 - Human: Receives comprehensive insights
 ```
 
@@ -247,13 +247,13 @@ The tool node processes the intent autonomously regardless of source.
 ### Value Propositions
 
 1. **Build Once, Serve Both**
-   - "Tool nodes serve both human and AI agents through a unified intent interface"
+   - "Tools serve both human and AI agents through a unified intent interface"
 
 2. **Future-Proof Architecture**
    - "Works today with humans, scales as AI adoption increases"
 
 3. **Agent-Agnostic Design**
-   - "Tool nodes don't care if the intent comes from a human or AI - they just process it"
+   - "Tools don't care if the intent comes from a human or AI - they just process it"
 
 4. **Broader Than AI Frameworks**
    - "Unlike frameworks that only support AI orchestration, Olane OS enables intent-driven applications for everyone"
@@ -262,7 +262,7 @@ The tool node processes the intent autonomously regardless of source.
 
 ✅ **Use these:**
 - "Olane OS enables intent-driven applications that agents (human or AI) can use"
-- "Build tool nodes once, serve both human and AI agents"
+- "Build tools once, serve both human and AI agents"
 - "Agent-agnostic architecture for the agentic future"
 
 ❌ **Avoid these:**
@@ -292,7 +292,7 @@ The tool node processes the intent autonomously regardless of source.
 
 ### Pitfall 4: Ignoring the Human UX
 
-**Problem:** No discussion of how humans interact with tool nodes
+**Problem:** No discussion of how humans interact with tools
 
 **Fix:** Document CLI, web UI, and API interfaces for human agents
 
@@ -343,7 +343,7 @@ Use these questions to verify documentation is agent-inclusive:
 - Human agents → CLI, web UI, API
 - AI agents → GPT-4, Claude, autonomous
 
-**Tool Nodes:** Agent-agnostic applications
+**Tools:** Agent-agnostic applications
 - Same interface serves both
 - Accept natural language intents
 - Process autonomously
@@ -358,7 +358,7 @@ Use these questions to verify documentation is agent-inclusive:
 1. First mention: "agents (human or AI)"
 2. Provide examples of BOTH when relevant
 3. Explain unique benefits for each when applicable
-4. Use "agent-agnostic" to describe tool nodes
+4. Use "agent-agnostic" to describe tools
 5. Frame value propositions inclusively
 
 ---
