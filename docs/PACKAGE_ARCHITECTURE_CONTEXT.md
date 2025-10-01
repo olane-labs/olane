@@ -23,14 +23,15 @@
 
 ### What is Olane OS?
 
-**Olane OS is an agentic operating system** where **AI agents are the users**, **tool nodes are the applications**, and **Olane packages provide the runtime infrastructure**. It's NOT a network framework, API library, or orchestration tool - it's a complete operating system for intelligent agents to interact with specialized capabilities.
+**Olane OS is an agentic operating system** where **agents (human or AI) are the users**, **tool nodes are the applications**, and **Olane packages provide the runtime infrastructure**. It's NOT a network framework, API library, or orchestration tool - it's a complete operating system for intelligent agents to interact with specialized capabilities.
 
 ### Three-Layer Mental Model
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  USERS: AI Agents                                │
-│  - Generalist reasoning brains (GPT-4, Claude)   │
+│  USERS: Agents (Human or AI)                     │
+│  - Humans: CLI, web UI, API                      │
+│  - AI: Generalist reasoning (GPT-4, Claude)      │
 │  - Natural language interfaces                   │
 │  - Intent-driven interactions                    │
 └─────────────────────────────────────────────────┘
@@ -40,6 +41,7 @@
 │  - Domain-specific tools (CRM, analytics, etc.)  │
 │  - Business integrations (APIs, databases)       │
 │  - Specialized capabilities (search, compute)    │
+│  - Agent-agnostic interface                      │
 └─────────────────────────────────────────────────┘
                       ⬇ run on
 ┌─────────────────────────────────────────────────┐
@@ -53,21 +55,26 @@
 
 ### Understanding the Layers
 
-**Users (AI Agents)**: The intelligent consumers who interact with the system using natural language. They make requests, express intents, and coordinate with other agents. These are the LLMs (GPT-4, Claude, etc.) that serve as the reasoning brains.
+**Users (Agents - Human or AI)**: The intelligent consumers who interact with the system using natural language. Agents can be:
+- **Human agents**: Developers, business users, analysts interacting via CLI, web UI, or API
+- **AI agents**: LLMs (GPT-4, Claude, etc.) that serve as autonomous reasoning brains
 
-**Applications (Tool Nodes)**: The specialized capabilities and integrations that agents invoke to accomplish tasks. These are the domain-specific tools that developers build - CRM integrations, analytics engines, data pipelines, etc.
+Both types of agents make requests, express intents, and coordinate with tool nodes using the same natural language interface.
+
+**Applications (Tool Nodes)**: The specialized capabilities and integrations that agents invoke to accomplish tasks. These are the agent-agnostic, domain-specific tools that developers build - CRM integrations, analytics engines, data pipelines, etc. Tool nodes serve both human and AI agents through a unified interface.
 
 **Operating System (Olane)**: The runtime infrastructure that manages processes, handles communication, coordinates agents, and provides the foundation for everything to work together. This is what the Olane packages provide.
 
 ### Key Architectural Principles
 
-1. **Agents as Users**: AI agents (LLMs) are the intelligent users of the system, not what you build
+1. **Agents as Users**: Agents (human or AI) are the intelligent users of the system, not what you build
 2. **Tool Nodes as Applications**: Developers build specialized tool nodes that agents invoke
-3. **Generalist-Specialist Pattern**: One LLM brain serves many specialized tool nodes
-4. **Emergent Orchestration**: Workflows discovered through agent interactions, not pre-defined
-5. **Hierarchical Organization**: Filesystem-like addressing (o://) for tool node discovery
-6. **Intent-Driven Execution**: Agents use natural language to interact with tool nodes
-7. **Tool Augmentation**: Specialization through capabilities and context, not training
+3. **Agent-Agnostic Design**: Tool nodes serve both human and AI agents through unified interfaces
+4. **Generalist-Specialist Pattern**: One LLM brain (for AI agents) serves many specialized tool nodes
+5. **Emergent Orchestration**: Workflows discovered through agent interactions, not pre-defined
+6. **Hierarchical Organization**: Filesystem-like addressing (o://) for tool node discovery
+7. **Intent-Driven Execution**: Agents use natural language to interact with tool nodes
+8. **Tool Augmentation**: Specialization through capabilities and context, not training
 
 ---
 
@@ -78,13 +85,13 @@
 The abstract operating system layer - defines contracts but doesn't implement transport.
 
 #### @olane/o-core (The Kernel)
-**What it does**: Provides the foundational runtime infrastructure for creating and managing AI agent nodes.
+**What it does**: Provides the foundational runtime infrastructure for creating and managing nodes that agents (human or AI) interact with.
 
 **Think of it as**: The Linux kernel - defines how processes work, but doesn't implement specific hardware drivers.
 
 **Core Responsibilities**:
-- Agent lifecycle management (start/stop/states)
-- Inter-agent communication (IPC) abstractions
+- Node lifecycle management (start/stop/states)
+- Inter-node communication (IPC) abstractions
 - Hierarchical addressing system (o:// protocol)
 - Routing and connection management interfaces
 - Parent-child hierarchy management
@@ -100,8 +107,10 @@ The abstract operating system layer - defines contracts but doesn't implement tr
 
 **Does NOT include**: Actual networking, transport implementations, or tool system
 
+**Use When**: Building custom transport implementations or need base infrastructure without networking
+
 #### @olane/o-protocol
-**What it does**: Type definitions, interfaces, and protocol specifications.
+**What it does**: Type definitions, interfaces, and protocol specifications for the o:// protocol.
 
 **Think of it as**: The POSIX standard - defines how things should work.
 
@@ -128,7 +137,7 @@ The abstract operating system layer - defines contracts but doesn't implement tr
 Production-ready implementations and agent augmentation systems.
 
 #### @olane/o-node (The Distribution)
-**What it does**: Production-ready, libp2p-based implementation of o-core that makes agents work over real P2P networks.
+**What it does**: Production-ready, libp2p-based implementation of o-core that makes nodes work over real P2P networks.
 
 **Think of it as**: Ubuntu/Fedora - a concrete Linux distribution. While o-core is the kernel spec, o-node is the actual working OS.
 
@@ -156,10 +165,10 @@ Production-ready implementations and agent augmentation systems.
 - Maintains connection pools
 - Handles automatic reconnection
 
-**Use When**: Building AI agents that need real networking between processes/machines
+**Use When**: Building tool nodes that need real networking between processes/machines
 
 #### @olane/o-tool (The Tool System)
-**What it does**: Convention-based system for augmenting agents with discoverable, validated capabilities.
+**What it does**: Convention-based system for augmenting nodes with discoverable, validated capabilities that agents can use.
 
 **Think of it as**: System calls and libraries - how applications invoke OS functionality.
 
@@ -196,12 +205,12 @@ class MyTool extends oToolBase {
 - `stop` - Graceful shutdown
 - `child_register` - Hierarchy registration
 
-**Specialization Method**: Tools are how you create specialist agents without fine-tuning. Inject domain knowledge via context + provide domain tools.
+**Specialization Method**: Tools are how you create specialist tool nodes that agents can use. Inject domain knowledge via context + provide domain tools. Tool nodes are agent-agnostic - they serve both human and AI agents.
 
 #### @olane/o-lane (The Process Manager)
-**What it does**: Manages agentic workflows through capability-based loops, transforming intents into coordinated multi-step actions.
+**What it does**: Manages agentic workflows through capability-based loops, transforming intents from agents (human or AI) into coordinated multi-step actions.
 
-**Think of it as**: systemd or the process scheduler - manages running processes (but for AI agents).
+**Think of it as**: systemd or the process scheduler - manages running processes for intent-driven execution.
 
 **Core Responsibilities**:
 - Intent-driven execution (natural language goals)
@@ -247,18 +256,18 @@ PENDING → PREFLIGHT → RUNNING → POSTFLIGHT → COMPLETED
                      CANCELLED
 ```
 
-**Key Innovation**: Emergent orchestration. Agents discover optimal workflows through execution rather than following pre-defined graphs (LangGraph, etc.).
+**Key Innovation**: Emergent orchestration. The system discovers optimal workflows through execution rather than following pre-defined graphs (LangGraph, etc.). Works for both human-initiated and AI-autonomous workflows.
 
-**Use When**: You want agents to autonomously accomplish complex, multi-step goals without explicit workflow definition.
+**Use When**: You want tool nodes to accept natural language intents from agents (human or AI) and autonomously accomplish complex, multi-step goals without explicit workflow definition.
 
 #### @olane/o-leader (The Network Coordinator)
-**What it does**: Root coordinator node for agent networks, providing centralized coordination and discovery.
+**What it does**: Root coordinator node for tool node networks, providing centralized coordination and discovery.
 
 **Think of it as**: The init process (PID 1) or DNS - the root service that bootstraps and coordinates the rest of the system.
 
 **Core Responsibilities**:
-- Network entry point for joining agents
-- Agent discovery registry (who's available, what can they do)
+- Network entry point for joining nodes
+- Node discovery registry (who's available, what can they do)
 - Network-wide capability indexing
 - Join request validation and access control
 - Parent-child relationship management
@@ -272,36 +281,36 @@ PENDING → PREFLIGHT → RUNNING → POSTFLIGHT → COMPLETED
 - Custom registry implementations (PostgreSQL, Redis, etc.)
 
 **Registry Operations**:
-- `commit` - Register agent and capabilities
-- `search` - Find agents by address/capability/protocol
-- `find_all` - List all registered agents
-- `remove` - Deregister agent
+- `commit` - Register node and capabilities
+- `search` - Find nodes by address/capability/protocol
+- `find_all` - List all registered nodes
+- `remove` - Deregister node
 
 **Network Join Flow**:
 ```
-1. Agent makes join request → o://leader
+1. Node makes join request → o://leader
 2. Leader validates request (customizable)
 3. Leader updates hierarchy relationships
-4. Agent registered in registry
-5. Agent receives network configuration
-6. Agent can now discover other agents
+4. Node registered in registry
+5. Node receives network configuration
+6. Node can now discover other nodes
 ```
 
 **Network Architecture Patterns**:
-- **Hub-and-Spoke**: Central leader, all agents connect to it
+- **Hub-and-Spoke**: Central leader, all nodes connect to it
 - **Hierarchical**: Department leaders under root leader
 - **Multi-Leader**: Regional leaders for scale/geography
-- **Mesh**: All agents know each other (via DHT)
+- **Mesh**: All nodes know each other (via DHT)
 
-**Use When**: Building multi-agent systems where agents need to discover and coordinate with each other.
+**Use When**: Building multi-node systems where tool nodes need to discover and coordinate with each other.
 
 ---
 
 ### Layer 3: Applications (Your Tool Nodes)
 
-This is where you build domain-specific tool nodes that AI agents use to accomplish tasks.
+This is where you build domain-specific tool nodes that agents (human or AI) use to accomplish tasks.
 
-**What You Build**: Specialized tool nodes with domain capabilities that agents invoke through natural language.
+**What You Build**: Specialized, agent-agnostic tool nodes with domain capabilities that agents invoke through natural language.
 
 **Examples**:
 - Financial analysis tools (revenue calculation, trend analysis, forecasting)
@@ -309,7 +318,7 @@ This is where you build domain-specific tool nodes that AI agents use to accompl
 - Data pipeline tools (ETL operations, data validation, transformation)
 - Research tools (web search, document analysis, citation management)
 
-**Remember**: You're building the **applications** (tool nodes) that run on the **OS** (Olane), which are used by **agents** (LLMs) as intelligent users.
+**Remember**: You're building the **applications** (tool nodes) that run on the **OS** (Olane), which are used by **agents** (human or AI) as intelligent users. Tool nodes are agent-agnostic - the same tool serves both human agents (via CLI/web UI) and AI agents (programmatically).
 
 ---
 
@@ -378,22 +387,25 @@ Your Tool Node
 
 ## Core Value Propositions
 
-### 1. Generalist-Specialist Architecture
+### 1. Generalist-Specialist Architecture & Agent-Agnostic Design
 
-**The Problem**: Fine-tuning separate models for each domain is expensive ($$$) and slow.
+**The Problem**: Fine-tuning separate models for each domain is expensive ($$$) and slow. Building separate interfaces for humans and AI creates duplication.
 
-**The Solution**: One generalist LLM (agent) + specialized tool nodes through tool augmentation and context injection.
+**The Solution**: Agent-agnostic tool nodes that serve both human and AI agents through a unified natural language interface. For AI agents: one generalist LLM + specialized tool nodes through tool augmentation and context injection.
 
 **How Olane Enables This**:
 
 ```
 ┌─────────────────────────────────────────┐
-│  Generalist Agent (GPT-4, Claude, etc.) │
-│  "The intelligent user"                  │
+│  Agents (Human or AI)                    │
+│  - Human: CLI, web UI, API               │
+│  - AI: Generalist LLM (GPT-4, Claude)    │
+│  "The intelligent users"                 │
 └─────────────────────────────────────────┘
-              ⬇ uses
+              ⬇ use
 ┌─────────────────────────────────────────┐
 │  Specialist Tool Nodes (o-tool + o-lane)│
+│  - Agent-agnostic interface              │
 │  - Context injection (domain knowledge)  │
 │  - Tool augmentation (capabilities)      │
 │  - Knowledge accumulation (learning)     │
@@ -405,13 +417,16 @@ Your Tool Node
 - **o-lane**: Enables tool nodes to accept intents and inject context
 - **o-core**: Base runtime infrastructure
 
-**Result**: 70-90% cost reduction vs separate fine-tuned models
+**Result**: 
+- For AI agents: 70-90% cost reduction vs separate fine-tuned models
+- For human agents: Simplified intent-driven interactions
+- For both: Build once, serve both through unified interface
 
 ### 2. Emergent Intelligence (vs Explicit Orchestration)
 
 **The Problem**: Pre-defined workflows (LangGraph) can't adapt or learn optimal paths.
 
-**The Solution**: Agents discover optimal workflows through execution and shared knowledge.
+**The Solution**: System discovers optimal workflows through execution and shared knowledge. Works for both human-initiated and AI-autonomous workflows.
 
 **How Olane Enables This**:
 
@@ -429,15 +444,18 @@ const workflow = new StateGraph({
 
 **Olane (Emergent)**:
 ```typescript
-// Just provide the intent
-const result = await agent.use({
+// Human agent (CLI):
+// $ olane intent "Analyze Q4 sales and create report"
+
+// AI agent (programmatic):
+const result = await toolNode.use({
   method: 'intent',
   params: {
     intent: 'Analyze Q4 sales and create report'
   }
 });
 
-// Agent discovers optimal path:
+// Tool node discovers optimal path (same for both agent types):
 // Cycle 1: EVALUATE → "Need data source"
 // Cycle 2: SEARCH → Found o://analytics
 // Cycle 3: TASK → Fetch data
@@ -451,9 +469,9 @@ const result = await agent.use({
 **Packages Involved**:
 - **o-lane**: Capability loop enables emergent behavior
 - **o-tool**: Tools are discovered, not pre-wired
-- **o-leader**: Agents discover each other dynamically
+- **o-leader**: Nodes discover each other dynamically
 
-**Key Mechanism**: "Rooms with Tips" - agents leave knowledge artifacts that other agents discover and learn from.
+**Key Mechanism**: "Rooms with Tips" - tool nodes leave knowledge artifacts that other executions discover and learn from, benefiting both human-initiated and AI-autonomous workflows.
 
 **Result**: Workflows improve over time through collective learning
 
@@ -519,20 +537,20 @@ const lane = await manager.createLane({
 
 ### 5. Intelligence Reuse
 
-**The Problem**: Each agent learns in isolation, no knowledge sharing.
+**The Problem**: Each execution learns in isolation, no knowledge sharing.
 
-**The Solution**: Knowledge artifacts shared across agents automatically.
+**The Solution**: Knowledge artifacts shared across all executions automatically, benefiting both human and AI agent interactions.
 
 **How Olane Enables This**:
 
 ```
-Agent A discovers: "Best way to analyze Q4 sales"
+First execution (human or AI) discovers: "Best way to analyze Q4 sales"
     ↓ stores knowledge artifact
 o://knowledge/sales-analysis/q4-best-practices
     ↓ discovered by
-Agent B: "I need to analyze sales too"
-    ↓ learns from Agent A
-Agent B uses proven approach (75% faster)
+Second execution: "I need to analyze sales too"
+    ↓ learns from first execution
+Second execution uses proven approach (75% faster)
 ```
 
 **Packages Involved**:
@@ -547,29 +565,29 @@ Agent B uses proven approach (75% faster)
 
 ## Functional Groupings
 
-### Group 1: Agent Runtime & Lifecycle
+### Group 1: Node Runtime & Lifecycle
 
-**Purpose**: Create, start, stop, and manage AI agents as processes.
+**Purpose**: Create, start, stop, and manage nodes as processes.
 
 **Primary Packages**:
 - o-core (abstract lifecycle)
 - o-node (concrete implementation)
 
 **Key Concepts**:
-- Agent states (STOPPED, STARTING, RUNNING, STOPPING, ERROR)
+- Node states (STOPPED, STARTING, RUNNING, STOPPING, ERROR)
 - Lifecycle hooks (initialize, register, unregister, teardown)
 - Graceful shutdown
 - Health monitoring
 
 **Documentation Topics**:
-- Creating your first agent
-- Agent lifecycle management
+- Creating your first node
+- Node lifecycle management
 - State transitions
 - Error recovery
 
-### Group 2: Inter-Agent Communication (IPC)
+### Group 2: Inter-Node Communication (IPC)
 
-**Purpose**: Agents communicate with each other using o:// addresses.
+**Purpose**: Nodes communicate with each other using o:// addresses.
 
 **Primary Packages**:
 - o-core (abstract connections)
@@ -583,7 +601,7 @@ Agent B uses proven approach (75% faster)
 - Error handling
 
 **Documentation Topics**:
-- Making requests between agents
+- Making requests between nodes
 - Connection management
 - Handling responses
 - Error codes and recovery
@@ -610,7 +628,7 @@ Agent B uses proven approach (75% faster)
 
 ### Group 4: Tool Augmentation & Specialization
 
-**Purpose**: Create specialized agents through tool augmentation.
+**Purpose**: Create specialized tool nodes through tool augmentation that agents (human or AI) can use.
 
 **Primary Packages**:
 - o-tool
@@ -628,7 +646,8 @@ Agent B uses proven approach (75% faster)
 - Tool conventions
 - Parameter validation
 - Tool discovery
-- Building specialist agents
+- Building specialist tool nodes
+- Agent-agnostic design patterns
 
 ### Group 5: Process Management & Workflows
 
@@ -654,7 +673,7 @@ Agent B uses proven approach (75% faster)
 
 ### Group 6: Network Coordination & Discovery
 
-**Purpose**: Multi-agent coordination and service discovery.
+**Purpose**: Multi-node coordination and service discovery.
 
 **Primary Packages**:
 - o-leader
@@ -669,7 +688,7 @@ Agent B uses proven approach (75% faster)
 
 **Documentation Topics**:
 - Setting up leader nodes
-- Agent registration
+- Node registration
 - Service discovery
 - Network architecture patterns
 - Multi-leader federation
@@ -680,7 +699,7 @@ Agent B uses proven approach (75% faster)
 
 ### Workflow 1: Creating a Specialized Tool Node
 
-**Scenario**: Build a financial analysis tool node that agents can use to analyze sales data.
+**Scenario**: Build a financial analysis tool node that agents (human or AI) can use to analyze sales data.
 
 **Packages Used**: o-node → o-tool → o-lane
 
@@ -714,7 +733,12 @@ class FinancialToolNode extends oNodeTool {
 const toolNode = new FinancialToolNode();
 await toolNode.start(); // Registers with leader, joins network
 
-// Step 4: Agents can use this tool node with natural language (o-lane)
+// Step 4: Agents (human or AI) can use this tool node with natural language (o-lane)
+
+// Human agent (CLI):
+// $ olane intent "Analyze Q4 2024 revenue and identify growth trends"
+
+// AI agent (programmatic):
 const result = await toolNode.use({
   method: 'intent',
   params: {
@@ -723,8 +747,8 @@ const result = await toolNode.use({
   }
 });
 
-// Tool node autonomously:
-// 1. Evaluates intent (LLM agent reasoning)
+// Tool node autonomously (same process for both agent types):
+// 1. Evaluates intent (using LLM reasoning)
 // 2. Searches for data sources
 // 3. Calls analyze_revenue tool
 // 4. Processes results
@@ -740,7 +764,7 @@ const result = await toolNode.use({
 
 ### Workflow 2: Multi-Tool Network Coordination
 
-**Scenario**: Create a network of specialized tool nodes that agents discover and coordinate.
+**Scenario**: Create a network of specialized tool nodes that agents (human or AI) discover and coordinate.
 
 **Packages Used**: o-leader → o-node → o-lane
 
@@ -778,7 +802,11 @@ const coordinator = new oLaneTool({
 });
 await coordinator.start();
 
-// Agent sends intent to coordinator tool node
+// Agent (human or AI) sends intent to coordinator tool node
+
+// Human: $ olane intent "Coordinate team to analyze customer satisfaction"
+
+// AI agent:
 const result = await coordinator.use({
   method: 'intent',
   params: {
@@ -786,7 +814,7 @@ const result = await coordinator.use({
   }
 });
 
-// o-lane capability loop autonomously coordinates tool nodes:
+// o-lane capability loop autonomously coordinates tool nodes (same for both):
 // Cycle 1: EVALUATE → "Need to collect data"
 // Cycle 2: SEARCH → Discovers o://data-collector via registry
 // Cycle 3: TASK → Calls data-collector tool node
@@ -807,7 +835,7 @@ const result = await coordinator.use({
 
 ### Workflow 3: Long-Running Tool Node with Checkpointing
 
-**Scenario**: Build a monitoring tool node that agents can use for continuous health monitoring.
+**Scenario**: Build a monitoring tool node that agents (human or AI) can use for continuous health monitoring.
 
 **Packages Used**: o-lane → o-core → o-node
 
@@ -826,7 +854,11 @@ class HealthMonitorToolNode extends oLaneTool {
 const monitor = new HealthMonitorToolNode();
 await monitor.start();
 
-// Step 2: Agent sends long-running intent to tool node
+// Step 2: Agent (human or AI) sends long-running intent to tool node
+
+// Human: $ olane intent "Monitor API endpoints every 5 minutes and alert on failures"
+
+// AI agent:
 const result = await monitor.use({
   method: 'intent',
   params: {
@@ -860,29 +892,30 @@ const result = await monitor.use({
 ### How Packages Map to mint.json Structure
 
 #### Get Started Section
-**Purpose**: Onboarding (5-10 minutes to first working agent)
+**Purpose**: Onboarding (5-10 minutes to first working tool node)
 
 **Primary Packages**: o-node + o-tool
 
 **Content Flow**:
-1. **Introduction**: What is Olane OS? (all packages overview)
-2. **Quickstart**: Create first agent (o-node + o-tool)
+1. **Introduction**: What is Olane OS? (all packages overview, emphasize agent-agnostic design)
+2. **Quickstart**: Create first tool node (o-node + o-tool)
 3. **Installation**: npm install packages
 
 #### Generalist-Specialist Architecture Section
-**Purpose**: Explain core innovation - one LLM, many specialists
+**Purpose**: Explain core innovation - agent-agnostic design, one LLM for AI agents, many specialists
 
 **Primary Packages**: o-tool + o-lane
 
 **Content Flow**:
-1. Overview: The architecture
-2. Quickstart: Build specialist agent
-3. Generalist Model Brain: How LLM serves all agents
-4. Specialist Agent Layer: Tool + context augmentation (o-tool)
-5. Hierarchical Organization: o:// addressing (o-core)
-6. Context Specialization: Lane context injection (o-lane)
-7. Tool Augmented Agents: Convention-based tools (o-tool)
-8. Specialization Flywheel: Knowledge accumulation
+1. Overview: The architecture (emphasize agent-agnostic design)
+2. Quickstart: Build specialist tool node (show both human and AI usage)
+3. Agent-Agnostic Design: One interface serves both
+4. Generalist Model Brain: How LLM serves AI agents
+5. Specialist Tool Node Layer: Tool + context augmentation (o-tool)
+6. Hierarchical Organization: o:// addressing (o-core)
+7. Context Specialization: Lane context injection (o-lane)
+8. Tool Augmented Nodes: Convention-based tools (o-tool)
+9. Specialization Flywheel: Knowledge accumulation
 
 #### Emergent Intelligence Section
 **Purpose**: Explain emergent vs explicit orchestration
@@ -922,20 +955,20 @@ const result = await monitor.use({
 4. Long-Running Processes: Persistence (o-lane)
 5. Fault Tolerance: Recovery (o-core)
 
-#### Agent Specialization Section
-**Purpose**: Build domain-specific agents
+#### Tool Node Specialization Section
+**Purpose**: Build domain-specific tool nodes
 
 **Primary Packages**: o-tool + o-lane
 
 **Content Flow**:
-1. Overview: Specialization methods
-2. Quickstart: Create specialist
+1. Overview: Specialization methods (emphasize agent-agnostic)
+2. Quickstart: Create specialist tool node (show both human and AI usage)
 3. Context Injection: o-lane context
 4. Tool Integration: o-tool system
 5. Domain Expertise: Combining context + tools
 6. Hierarchical Context Inheritance: o:// benefits
 7. Knowledge Accumulation: Learning
-8. Collaborative Specialization: Multi-agent
+8. Collaborative Specialization: Multi-node coordination
 
 #### Developer Resources Section
 **Purpose**: Practical implementation guides
@@ -943,13 +976,14 @@ const result = await monitor.use({
 **All Packages**
 
 **Content Flow**:
-1. Testing Agents: All packages
+1. Testing Tool Nodes: All packages
 2. Debugging Guide: All packages
-3. Building Specialist Agents: o-tool + o-lane
-4. Context Management: o-lane
-5. Hierarchical Design Patterns: o-core
-6. Tool Development: o-tool
-7. Performance Profiling: All packages
+3. Building Specialist Tool Nodes: o-tool + o-lane
+4. Agent-Agnostic Design Patterns: Best practices for serving both humans and AI
+5. Context Management: o-lane
+6. Hierarchical Design Patterns: o-core
+7. Tool Development: o-tool
+8. Performance Profiling: All packages
 
 #### API Reference Section
 **Purpose**: Technical documentation
@@ -987,10 +1021,10 @@ const result = await monitor.use({
 **Primary Packages**: All (showing equivalents)
 
 **Content Flow**:
-1. From LangGraph: Show o-lane as alternative
-2. From CrewAI: Show o-leader + multi-agent
-3. From AutoGen: Show hierarchical org
-4. Monolithic to Specialist: Show o-tool
+1. From LangGraph: Show o-lane as alternative (emergent vs explicit)
+2. From CrewAI: Show o-leader + multi-node coordination
+3. From AutoGen: Show hierarchical organization
+4. Monolithic to Specialist: Show o-tool (agent-agnostic design)
 5. Comparisons: Feature-by-feature
 6. Troubleshooting: Common issues
 
@@ -1002,10 +1036,11 @@ const result = await monitor.use({
 
 | Feature | o-core | o-node | o-tool | o-lane | o-leader |
 |---------|--------|--------|--------|--------|----------|
-| Agent lifecycle | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Node lifecycle | ✅ | ✅ | ✅ | ✅ | ✅ |
 | P2P networking | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Tool system | ❌ | ❌ | ✅ | ✅ | ❌ |
 | Intent execution | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Agent-agnostic interface | ❌ | ❌ | ✅ | ✅ | ❌ |
 | Network coordination | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Hierarchical addressing | ✅ | ✅ | ✅ | ✅ | ✅ |
 | IPC abstractions | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -1039,9 +1074,12 @@ const result = await monitor.use({
 
 | Term | Definition | Package |
 |------|------------|---------|
-| **Agent** | AI user (LLM) that interacts with tool nodes | - |
-| **Tool Node** | Specialized capability node that agents use | o-core |
-| **Intent** | Natural language goal from agent | o-lane |
+| **Agent** | Intelligent user (human or AI) that interacts with tool nodes | - |
+| **Human Agent** | Human user via CLI, web UI, or API | - |
+| **AI Agent** | LLM (GPT-4, Claude, etc.) that uses tool nodes programmatically | - |
+| **Tool Node** | Specialized, agent-agnostic capability node | o-core |
+| **Agent-Agnostic** | Serves both human and AI agents through unified interface | - |
+| **Intent** | Natural language goal from agent (human or AI) | o-lane |
 | **Capability** | Atomic operation in capability loop | o-lane |
 | **Tool** | Discoverable method on a tool node | o-tool |
 | **Lane** | Execution context for resolving intent | o-lane |
@@ -1056,14 +1094,14 @@ const result = await monitor.use({
 
 | Term | Definition | Package |
 |------|------------|---------|
-| **Lifecycle** | Tool node states (start/stop/run) | o-core |
+| **Lifecycle** | Node states (start/stop/run) | o-core |
 | **Capability Loop** | Evaluate→Decide→Execute cycle | o-lane |
 | **Handshake** | Capability negotiation | o-tool |
-| **Join Request** | Tool node joining network | o-leader |
-| **Network Indexing** | Crawling tool node capabilities | o-leader |
+| **Join Request** | Node joining network | o-leader |
+| **Network Indexing** | Crawling node capabilities | o-leader |
 | **Tool Discovery** | Vector search for tools | o-tool |
 | **Context Injection** | Adding domain knowledge to tool nodes | o-lane |
-| **Knowledge Artifacts** | Stored learnings | o-lane |
+| **Knowledge Artifacts** | Stored learnings (benefits both human and AI) | o-lane |
 
 ---
 
@@ -1074,37 +1112,39 @@ const result = await monitor.use({
 **Goal**: Understand value proposition quickly
 
 **Emphasize**:
-- Generalist-specialist architecture (cost benefits)
+- Agent-agnostic design (build once, serve both human and AI)
+- Generalist-specialist architecture (cost benefits for AI agents)
 - Emergent vs explicit orchestration
 - Quick comparison to LangGraph/CrewAI
 
 **Packages to Feature**:
 - o-lane (emergent intelligence demo)
-- o-tool (specialization demo)
+- o-tool (specialization demo with both human and AI examples)
 
 **Content**:
-- 5-minute quickstart
+- 5-minute quickstart showing both human and AI usage
 - Cost comparison table
-- Architecture diagram
-- One compelling example
+- Architecture diagram (showing both agent types)
+- One compelling example demonstrating agent-agnostic interface
 
 ### For Developers (Building Phase)
 
 **Goal**: Build their first specialized tool node
 
 **Emphasize**:
+- Agent-agnostic design patterns
 - o-tool conventions for creating tools
-- o-lane intent handling for agent interactions
+- o-lane intent handling for agent interactions (human and AI)
 - o-node networking setup
 
 **Packages to Feature**:
 - o-node (getting connected)
 - o-tool (creating tool capabilities)
-- o-lane (accepting intents from agents)
+- o-lane (accepting intents from both agent types)
 
 **Content**:
-- Multiple working examples
-- Best practices for tool node development
+- Multiple working examples (showing both human and AI invocation)
+- Best practices for agent-agnostic tool node development
 - Troubleshooting guide
 - API reference
 
@@ -1158,3 +1198,11 @@ const result = await monitor.use({
 - Package responsibilities change
 - New value propositions emerge
 - Documentation site structure changes
+- Agent terminology guidelines are updated
+
+**Last Updated**: October 1, 2025
+**Changelog**:
+- Updated all terminology to follow AGENT_TERMINOLOGY_GUIDE.md
+- Changed "AI agents" to "agents (human or AI)" throughout
+- Added agent-agnostic design emphasis
+- Updated workflows to show both human and AI invocation patterns
