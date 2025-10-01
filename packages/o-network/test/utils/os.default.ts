@@ -1,7 +1,7 @@
 import { NodeType, oAddress, setupGracefulShutdown } from '@olane/o-core';
-import { oNetwork } from '../../src/index.js';
+import { OlaneOS } from '../../src/o-olane-os/index.js';
 
-export const defaultNetwork = new oNetwork({
+export const defaultOSInstance = new OlaneOS({
   // configFilePath: path.join(os.homedir(), '.olane', 'config.json'),
   nodes: [
     {
@@ -25,9 +25,9 @@ export const defaultNetwork = new oNetwork({
 
 setupGracefulShutdown(
   async () => {
-    console.log('Stopping o-network...');
-    await defaultNetwork.stop();
-    console.log('o-network stopped successfully');
+    console.log('Stopping o-os instance...');
+    await defaultOSInstance.stop();
+    console.log('o-os instance stopped successfully');
   },
   {
     timeout: 30000, // 30 seconds timeout

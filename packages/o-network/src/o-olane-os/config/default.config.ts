@@ -1,18 +1,18 @@
-import { DEFAULT_NETWORKS_PATH, NodeType, oAddress } from '@olane/o-core';
-import { NetworkConfigInterface } from '../interfaces/o-os.config.js';
+import { DEFAULT_INSTANCE_PATH, NodeType, oAddress } from '@olane/o-core';
+import { OlaneOSConfig } from '../interfaces/o-os.config.js';
 import path from 'path';
 
-export const defaultNetworkConfig = (port: number): NetworkConfigInterface => {
+export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
   return {
     configFilePath: path.join(
-      DEFAULT_NETWORKS_PATH,
-      'my-network',
+      DEFAULT_INSTANCE_PATH,
+      'my-olane-os',
       'config.json',
     ),
     network: {
-      name: 'my-network-' + Math.random().toString(36).substring(2, 6),
+      name: 'my-olane-os-' + Math.random().toString(36).substring(2, 6),
       version: '0.0.1',
-      description: 'my olane network',
+      description: 'my olane os instance',
       port: port,
     },
     nodes: [

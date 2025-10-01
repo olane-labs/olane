@@ -1,17 +1,17 @@
 import { oAddress, NodeState } from '@olane/o-core';
 import { expect } from 'chai';
 import dotenv from 'dotenv';
-import { defaultNetwork } from '../utils/default.network.js';
-import { NetworkStatus } from '../../src/index.js';
+import { defaultOSInstance } from '../utils/os.default.js';
+import { OlaneOSSystemStatus } from '../../src/o-olane-os/enum/o-os.status-enum.js';
 
 dotenv.config();
 
-const network = defaultNetwork;
+const network = defaultOSInstance;
 
 describe('basic-usage @initialize', async () => {
   it('should be able to startup the network', async () => {
     await network.start();
-    expect(network.status).to.equal(NetworkStatus.RUNNING);
+    expect(network.status).to.equal(OlaneOSSystemStatus.RUNNING);
   });
 
   // disabled for now, to avoid unecessary indexing costs
@@ -120,6 +120,6 @@ describe('basic-usage @initialize', async () => {
 describe('basic-usage @stop-network', async () => {
   it('should be able to stop the network', async () => {
     await network.stop();
-    expect(network.status).to.equal(NetworkStatus.STOPPED);
+    expect(network.status).to.equal(OlaneOSSystemStatus.STOPPED);
   });
 });

@@ -1,12 +1,9 @@
-import { expect } from 'chai';
 import dotenv from 'dotenv';
-import { multiaddr } from '@olane/o-config';
-import { defaultNetwork } from '../utils/default.network.js';
-import { GITHUB_TEST_CASES } from './github/github.test-cases.js';
+import { defaultOSInstance } from '../utils/os.default.js';
 
 dotenv.config();
 
-const network = defaultNetwork;
+const network = defaultOSInstance;
 
 describe('basic-usage @initialize', async () => {
   it('should be able to startup the network', async () => {

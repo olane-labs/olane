@@ -13,7 +13,7 @@ import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
-export class OSLocal extends oObject {
+export class OlaneOS extends oObject {
   private leaders: oLeaderNode[] = []; // clones of leader for scale
   private nodes: OlaneOSNode[] = []; // clones of node for scale
   public rootLeader: oLeaderNode | null = null; // the root leader node
