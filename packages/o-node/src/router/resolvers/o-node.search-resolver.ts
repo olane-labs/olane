@@ -29,14 +29,18 @@ export class oSearchResolver extends oAddressResolver {
       };
     }
     // search the leader registry for the address
+    const extraParams = address
+      .toString()
+      .replace(address.toRootAddress().toString(), '');
+    const params = {
+      staticAddress: address.toRootAddress().toString(),
+      address: address.toString(),
+    };
     const registrySearchResults = await node.use(
       new oAddress(RestrictedAddresses.REGISTRY),
       {
         method: 'search',
-        params: {
-          staticAddress: address.toString(),
-          address: address.toString(),
-        },
+        params: params,
       },
     );
 
@@ -47,7 +51,10 @@ export class oSearchResolver extends oAddressResolver {
     if (registrySearchResultsArray.length > 0) {
       const registrySearchResult = registrySearchResultsArray[0];
       // we know the final destination, so let's return it + the next hop
-      const targetAddress = new oAddress(registrySearchResult.address);
+      const targetAddress = new oAddress(
+        registrySearchResult.address + extraParams,
+      );
+      this.logger.debug('Target address: ', targetAddress);
       const nextHopAddress = oAddress.next(node.address, targetAddress);
       const targetTransports = registrySearchResult.transports.map(
         (t: { value: string; type: TransportType }) =>

@@ -1,5 +1,6 @@
 import { oNodeAddress } from './o-node.address.js';
 import {
+  CoreUtils,
   NodeType,
   oAddress,
   oError,
@@ -34,6 +35,28 @@ export class oNodeRouter extends oToolRouter {
       params: request.params,
       id: request.id,
     });
+
+    // are we dialing self?
+    if (node.address.toString() === address.toString()) {
+      const { payload } = request.params;
+      const params = payload.params as RequestParams;
+      nextHopRequest = new oRequest({
+        method: payload.method as string,
+        params: {
+          ...params,
+        },
+        id: request.id,
+      });
+      const result = await node.execute(nextHopRequest);
+      const response = CoreUtils.buildResponse(
+        nextHopRequest,
+        result,
+        result?.error,
+      );
+
+      // add the request method to the response
+      return CoreUtils.sendResponse(response, stream);
+    }
 
     // next hop is the destination address
     if (

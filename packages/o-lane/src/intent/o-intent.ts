@@ -9,4 +9,14 @@ export class oIntent extends oObject {
   get value(): string {
     return this.config.intent;
   }
+
+  toString(): string {
+    return this.value;
+  }
+
+  toJSON(): any {
+    return {
+      intent: this.value,
+    };
+  }
 }

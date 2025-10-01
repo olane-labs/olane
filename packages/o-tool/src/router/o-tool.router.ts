@@ -26,9 +26,9 @@ export abstract class oToolRouter extends oRouter {
 
     const finalRequest = requestOverride || request;
     const req = new oRouterRequest({
-      method: request.method,
-      params: request.params,
-      id: request.id,
+      method: finalRequest.method,
+      params: finalRequest.params,
+      id: finalRequest.id,
       jsonrpc: JSONRPC_VERSION,
       stream: request.stream,
     });

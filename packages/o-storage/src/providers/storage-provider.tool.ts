@@ -15,6 +15,6 @@ export abstract class StorageProviderTool extends oLaneTool {
 
   async initialize(): Promise<void> {
     await super.initialize();
-    // this.router.addResolver(new oStorageResolver(this.address));
+    this.router.addResolver(new oStorageResolver(this.address), true);
   }
 }

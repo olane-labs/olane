@@ -40,8 +40,8 @@ export abstract class oRouter extends oObject {
     node: oCore,
   ): Promise<any>;
 
-  addResolver(resolver: oAddressResolver): void {
-    this.addressResolution.addResolver(resolver);
+  addResolver(resolver: oAddressResolver, isPriority: boolean = false): void {
+    this.addressResolution.addResolver(resolver, isPriority);
   }
 
   supportsAddress(address: oAddress): boolean {

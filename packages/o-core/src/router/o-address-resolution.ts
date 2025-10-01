@@ -10,8 +10,12 @@ import { oRouterRequest } from './o-request.router.js';
 export class oAddressResolution extends oObject {
   private readonly resolvers: oAddressResolver[] = [];
 
-  addResolver(resolver: oAddressResolver) {
-    this.resolvers.push(resolver);
+  addResolver(resolver: oAddressResolver, isPriority: boolean = false) {
+    if (isPriority) {
+      this.resolvers.unshift(resolver);
+    } else {
+      this.resolvers.push(resolver);
+    }
   }
 
   supportsAddress(address: oAddress): boolean {

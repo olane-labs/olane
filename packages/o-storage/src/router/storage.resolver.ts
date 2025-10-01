@@ -4,10 +4,12 @@ import {
   TransportType,
   oRequest,
   oCustomTransport,
+  RestrictedAddresses,
 } from '@olane/o-core';
-import type { oRouterRequest, oTransport, RouteResponse } from '@olane/o-core';
+import { oRouterRequest, oTransport, RouteResponse } from '@olane/o-core';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageResolveRequest } from './storage.resolve-request.js';
+import { JSONRPC_VERSION, oProtocolMethods } from '@olane/o-protocol';
 
 export class oStorageResolver extends oAddressResolver {
   constructor(protected readonly address: oAddress) {
@@ -23,16 +25,17 @@ export class oStorageResolver extends oAddressResolver {
   }
 
   async resolve(request: StorageResolveRequest): Promise<RouteResponse> {
-    this.logger.debug('Resolving custom storage address: ', request.address);
-    const { address, node, request: resolveRequest } = request;
+    const { address, node, request: resolveRequest, targetAddress } = request;
 
-    if (address === node.address) {
+    // are we routing to ourselves
+    if (targetAddress.paths.indexOf(node.address.paths) === -1) {
       return {
         nextHopAddress: address,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: resolveRequest,
       };
     }
+
     // extract the key from the address
     let key = null;
     let method: string = 'get';
@@ -49,21 +52,29 @@ export class oStorageResolver extends oAddressResolver {
       throw new Error('Invalid address');
     }
 
+    this.logger.debug('Applying storage resolver to address: ', address);
+
     // restructure the request to include the key
-    const req = new oRequest({
-      method: method,
+    const req = new oRouterRequest({
+      method: oProtocolMethods.ROUTE,
       params: {
         _connectionId: '',
-        _requestMethod: method,
-        key,
-        method: method,
+        _requestMethod: oProtocolMethods.ROUTE,
+        address: node.address.toString(),
+        payload: {
+          method: method,
+          params: {
+            key: key,
+          },
+        },
       },
+      jsonrpc: JSONRPC_VERSION,
       id: uuidv4(),
     });
 
     return {
       nextHopAddress: node.address,
-      targetAddress: address,
+      targetAddress: node.address,
       requestOverride: req as oRouterRequest,
     };
   }

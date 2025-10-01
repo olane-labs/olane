@@ -1,14 +1,12 @@
-import { oAddress, oRequest } from '@olane/o-core';
-import { ToolResult } from '@olane/o-tool';
+import { oAddress } from '@olane/o-core';
 import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
-import { StorageProviderTool } from './providers/storage-provider.tool.js';
-import { GetDataResponse } from './interfaces/get-data.response.js';
 import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
 import { PlaceholderTool } from './placeholder.tool.js';
 import { oNodeToolConfig } from '@olane/o-node';
+import { oLaneTool } from '@olane/o-lane';
 
-export class StorageTool extends StorageProviderTool {
+export class StorageTool extends oLaneTool {
   constructor(config: oNodeToolConfig) {
     super({
       ...config,
@@ -19,50 +17,37 @@ export class StorageTool extends StorageProviderTool {
 
   async initialize(): Promise<void> {
     await super.initialize();
-    const config = this.config;
     let node: any = new DiskStorageProvider({
       name: 'disk',
-      ...config,
+      parent: this.address,
+      leader: this.leader,
     });
     await node.start();
     this.addChildNode(node);
 
     node = new MemoryStorageProvider({
       name: 'memory',
-      ...config,
+      parent: this.address,
+      leader: this.leader,
+      address: new oAddress('o://memory'),
     });
     await node.start();
     this.addChildNode(node);
 
     node = new SecureStorageProvider({
       name: 'secure',
-      ...config,
+      parent: this.address,
+      leader: this.leader,
     });
     await node.start();
     this.addChildNode(node);
 
     node = new PlaceholderTool({
       name: 'placeholder storage',
-      ...config,
+      parent: this.address,
+      leader: this.leader,
     });
     await node.start();
     this.addChildNode(node);
-  }
-
-  async _tool_put(request: oRequest): Promise<ToolResult> {
-    // return this.use()
-    throw new Error('Not implemented');
-  }
-
-  async _tool_get(request: oRequest): Promise<GetDataResponse> {
-    throw new Error('Not implemented');
-  }
-
-  async _tool_delete(request: oRequest): Promise<ToolResult> {
-    throw new Error('Not implemented');
-  }
-
-  async _tool_has(request: oRequest): Promise<ToolResult> {
-    throw new Error('Not implemented');
   }
 }

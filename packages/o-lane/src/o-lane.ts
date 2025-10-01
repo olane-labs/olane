@@ -32,7 +32,7 @@ export class oLane extends oObject {
   });
 
   constructor(protected readonly config: oLaneConfig) {
-    super('o-lane:' + `[${config.intent}]`);
+    super('o-lane:' + `[${config.intent.value}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentLaneId = this.config.parentLaneId;
     this.intentEncoder = new oIntentEncoder();

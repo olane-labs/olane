@@ -65,7 +65,7 @@ export class oLeaderNode extends oLaneTool {
     const { plan } = request.params;
     this.logger.debug('Adding plan to network: ' + plan);
 
-    if (!this.config.networkName) {
+    if (!this.config.systemName) {
       this.logger.warn('No network name provided, cannot update config');
       return;
     }

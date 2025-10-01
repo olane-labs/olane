@@ -19,7 +19,7 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
-    "test:benchmarks": "npm test -- test/benchmarks/benchmark.spec.ts",
+    "test:benchmarks": "aegir test -- test/benchmarks/benchmark.spec",
     "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
@@ -33,7 +33,7 @@
   },
   "author": "oLane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "oLane OS basic implementation",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",

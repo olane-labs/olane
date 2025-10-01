@@ -65,6 +65,14 @@ export class oAddress extends oObject {
     return new oAddress(`o://${paths[paths.length - 1]}`);
   }
 
+  toRootAddress(): oAddress {
+    const paths = this.paths.split('/');
+    if (paths.length === 0) {
+      return this;
+    }
+    return new oAddress(`o://${paths[0]}`);
+  }
+
   toString(): string {
     return this.value;
   }
