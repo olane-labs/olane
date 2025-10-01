@@ -1,0 +1,813 @@
+---
+title: "The Three-Layer Model"
+description: "Understanding users, applications, and infrastructure in Olane OS"
+---
+
+## Overview
+
+Olane OS is organized into three distinct layers: **Users** (agents), **Applications** (tools/nodes), and **Infrastructure** (Olane runtime). This architecture separates concerns between who uses the system, what they use, and what runs it.
+
+**TL;DR**: Agents are users, tools are apps, Olane OS is the infrastructure. Each layer has a specific role and responsibility.
+
+## The three layers
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 1: USERS (Agents)                                │
+│  • Humans via CLI, web UI, API                          │
+│  • AI models (GPT-4, Claude, Gemini)                    │
+│  • Express goals in natural language                    │
+└─────────────────────────────────────────────────────────┘
+                        ⬇ sends intents
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 2: APPLICATIONS (Tools)                          │
+│  • Tools: Individual executable methods                 │
+│  • Nodes: Processes containing tools                    │
+│  • Applications: Multiple coordinated nodes             │
+│  • Agent-agnostic (serve both humans and AI)            │
+└─────────────────────────────────────────────────────────┘
+                        ⬇ runs on
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 3: INFRASTRUCTURE (Olane OS)                     │
+│  • Runtime system and lifecycle management              │
+│  • Network discovery and routing                        │
+│  • Message passing and coordination                     │
+│  • Configuration and persistence                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+## Why this matters
+
+Traditional systems mix these concerns, making them hard to evolve. Olane OS separates them cleanly:
+
+<CardGroup cols={3}>
+  <Card title="Clear Boundaries" icon="layer-group" color="#0D9373">
+    Each layer has specific responsibilities
+  </Card>
+  <Card title="Independent Evolution" icon="code-branch" color="#0D9373">
+    Layers can evolve without affecting others
+  </Card>
+  <Card title="Agent Agnostic" icon="users" color="#0D9373">
+    Tools serve both humans and AI
+  </Card>
+</CardGroup>
+
+## Layer 1: Users (Agents)
+
+Agents are intelligent users that interact with tools using natural language. They can be human or AI.
+
+### Human Agents
+
+People who interact with Olane OS through various interfaces:
+
+<CodeGroup>
+```bash CLI Interface
+# Human uses command-line interface
+$ olane intent "Analyze Q4 2024 revenue trends"
+
+# Result streamed to terminal
+Analyzing revenue data...
+Q4 Revenue: $2.5M (+15% vs Q3)
+Key trends:
+- Holiday surge in December
+- B2B deals closed in November
+- Subscription MRR grew 8%
+```
+
+```bash Web UI
+# Human uses web interface
+# → Enter: "Generate monthly sales report"
+# → System executes and displays results in browser
+```
+
+```bash REST API
+# Human application calls API
+curl -X POST https://api.olane.com/intent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "intent": "Analyze customer churn",
+    "context": "Q4 2024"
+  }'
+```
+</CodeGroup>
+
+### AI Agents
+
+Large language models that autonomously reason and coordinate tools:
+
+<CodeGroup>
+```typescript GPT-4 Integration
+import { oAddress } from '@olane/o-core';
+
+// AI agent (GPT-4) calls tool programmatically
+const result = await financialNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 2024 revenue trends',
+    context: 'Focus on subscription vs one-time sales'
+  }
+});
+
+// AI agent receives structured data
+console.log(result);
+// {
+//   revenue: { total: 2500000, growth: 0.15 },
+//   breakdown: { subscriptions: 1800000, oneTime: 700000 },
+//   trends: [...]
+// }
+```
+
+```typescript Claude Integration
+// Claude autonomous agent coordinates multiple tools
+async function analyzeBusinessHealth() {
+  // Discover available tools
+  const revenueNode = await leader.search({ 
+    capability: 'revenue_analysis' 
+  });
+  const churnNode = await leader.search({ 
+    capability: 'churn_analysis' 
+  });
+  
+  // Coordinate multi-tool workflow
+  const revenue = await revenueNode.use({
+    method: 'intent',
+    params: { intent: 'Analyze revenue trends' }
+  });
+  
+  const churn = await churnNode.use({
+    method: 'intent',
+    params: { intent: 'Calculate churn rate' }
+  });
+  
+  // Synthesize insights
+  return synthesizeReport(revenue, churn);
+}
+```
+</CodeGroup>
+
+### Agent Characteristics
+
+| Type | Interface | Use Case | Example |
+|------|-----------|----------|---------|
+| **Human** | CLI, Web UI, API | Manual operations, oversight | "Generate report for board meeting" |
+| **AI** | Programmatic SDK | Autonomous workflows, coordination | Multi-step analysis and decision-making |
+| **Hybrid** | Combination | Human-initiated, AI-executed | Human triggers, AI completes task |
+
+<Note>
+  **Key Insight**: Both human and AI agents use the **same interface** (natural language intents). Tools don't need to know who's calling them.
+</Note>
+
+## Layer 2: Applications (Tools)
+
+Tools are the applications in Olane OS. They exist at three levels of granularity.
+
+### Tools (Individual Methods)
+
+Single executable methods that perform one operation:
+
+<CodeGroup>
+```typescript Tool Definition
+class FinancialNode extends oNodeTool {
+  // This is a TOOL - one specific operation
+  async _tool_calculate_revenue(request: oRequest) {
+    const { startDate, endDate } = request.params;
+    
+    // Calculate revenue for date range
+    const transactions = await this.fetchTransactions(startDate, endDate);
+    const revenue = transactions.reduce((sum, t) => sum + t.amount, 0);
+    
+    return { 
+      revenue,
+      currency: 'USD',
+      period: { startDate, endDate },
+      transactionCount: transactions.length
+    };
+  }
+
+  // Schema defines parameters
+  _params_calculate_revenue() {
+    return {
+      startDate: { type: 'string', required: true },
+      endDate: { type: 'string', required: true }
+    };
+  }
+}
+```
+
+```typescript Human Calls Tool
+# Via CLI
+$ olane call o://finance/analyst calculate_revenue \
+  --startDate "2024-01-01" \
+  --endDate "2024-03-31"
+```
+
+```typescript AI Calls Tool
+// Via SDK
+const result = await node.use({
+  method: 'calculate_revenue',
+  params: {
+    startDate: '2024-01-01',
+    endDate: '2024-03-31'
+  }
+});
+```
+</CodeGroup>
+
+### Nodes (Processes)
+
+Processes containing related tools, addressable via `o://` protocol:
+
+<CodeGroup>
+```typescript Simple Node (1-5 tools)
+class CurrencyConverterNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://utilities/currency-converter')
+    });
+  }
+
+  // Tool 1
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params;
+    const rate = await this.getExchangeRate(from, to);
+    return { result: amount * rate, rate };
+  }
+
+  // Tool 2
+  async _tool_get_rate(request: oRequest) {
+    const { from, to } = request.params;
+    return { rate: await this.getExchangeRate(from, to) };
+  }
+
+  // Tool 3
+  async _tool_list_currencies(request: oRequest) {
+    return { currencies: ['USD', 'EUR', 'GBP', 'JPY'] };
+  }
+}
+```
+
+```typescript Complex Node (5-20+ tools)
+import { oLaneTool } from '@olane/o-lane';
+
+class FinancialAnalystNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/finance/analyst'),
+      laneContext: {
+        domain: 'Financial Analysis',
+        expertise: ['Revenue', 'Expenses', 'Forecasting']
+      }
+    });
+  }
+
+  // Many tools...
+  async _tool_calculate_revenue(request: oRequest) { /* ... */ }
+  async _tool_calculate_expenses(request: oRequest) { /* ... */ }
+  async _tool_calculate_margin(request: oRequest) { /* ... */ }
+  async _tool_identify_trends(request: oRequest) { /* ... */ }
+  async _tool_generate_report(request: oRequest) { /* ... */ }
+  // ... 10 more tools
+}
+
+// Agent sends INTENT (not direct tool call)
+await analystNode.use({
+  method: 'intent',
+  params: { intent: 'Generate Q4 financial summary' }
+});
+// Node autonomously decides which tools to use
+```
+</CodeGroup>
+
+### Applications (Multiple Nodes)
+
+Multiple coordinated nodes providing complete business capabilities:
+
+```typescript
+// APPLICATION: Complete CRM Platform
+// Multiple nodes working together
+
+// Node 1: Customer data (Simple Node)
+class CustomerDataNode extends oNodeTool {
+  // o://crm/customers
+  async _tool_get_customer(request) { /* ... */ }
+  async _tool_update_customer(request) { /* ... */ }
+  async _tool_search_customers(request) { /* ... */ }
+}
+
+// Node 2: Sales pipeline (Simple Node)
+class SalesPipelineNode extends oNodeTool {
+  // o://crm/sales
+  async _tool_create_deal(request) { /* ... */ }
+  async _tool_update_stage(request) { /* ... */ }
+  async _tool_forecast_revenue(request) { /* ... */ }
+}
+
+// Node 3: Analytics (Complex Node)
+class CRMAnalyticsNode extends oLaneTool {
+  // o://crm/analytics
+  async _tool_customer_lifetime_value(request) { /* ... */ }
+  async _tool_churn_analysis(request) { /* ... */ }
+  async _tool_sales_performance(request) { /* ... */ }
+}
+
+// Agents coordinate these nodes to provide complete CRM
+```
+
+### Application Hierarchy
+
+| Level | Granularity | Example | Addressable |
+|-------|-------------|---------|-------------|
+| **Tool** | Single function | `_tool_calculate_revenue()` | ❌ No (method on node) |
+| **Node** | Single process | Currency Converter | ✅ Yes (`o://utilities/converter`) |
+| **Application** | Multiple processes | Complete CRM | ✅ Yes (multiple `o://` addresses) |
+
+<Check>
+  **Build Once, Serve Both**: Tools work identically whether called by humans via CLI or AI agents programmatically.
+</Check>
+
+## Layer 3: Infrastructure (Olane OS)
+
+The runtime system that manages tool execution, discovery, and coordination.
+
+### Core Components
+
+<CardGroup cols={2}>
+  <Card title="Runtime System" icon="server" color="#0D9373">
+    **OlaneOS** - Manages lifecycle, startup, shutdown, and orchestration
+  </Card>
+  <Card title="Discovery & Registry" icon="magnifying-glass" color="#0D9373">
+    **Leaders** - Node registry, search, routing, and load balancing
+  </Card>
+  <Card title="Network Layer" icon="network-wired" color="#0D9373">
+    **P2P Networking** - libp2p-based communication, discovery, and messaging
+  </Card>
+  <Card title="Configuration" icon="gear" color="#0D9373">
+    **Config Manager** - Persistent storage for instances and network settings
+  </Card>
+</CardGroup>
+
+### Example: Complete System
+
+<CodeGroup>
+```typescript Starting Olane OS
+import { OlaneOS } from '@olane/os';
+import { NodeType, oAddress } from '@olane/o-core';
+
+// Create OS instance with infrastructure
+const os = new OlaneOS({
+  nodes: [
+    // Leader (discovery & coordination)
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader'),
+      leader: null,
+      parent: null,
+      network: {
+        listeners: ['/ip4/0.0.0.0/tcp/5000']
+      }
+    },
+    // Worker nodes (applications)
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/customers')
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/sales')
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://crm/analytics')
+    }
+  ]
+});
+
+// Start infrastructure
+await os.start();
+console.log('Olane OS running');
+console.log('Leaders:', os.leaderNodes.length);
+console.log('Workers:', os.workerNodes.length);
+
+// Agent uses infrastructure
+const result = await os.use(
+  new oAddress('o://crm/analytics'),
+  {
+    method: 'intent',
+    params: { intent: 'Analyze customer churn' }
+  }
+);
+
+// Graceful shutdown
+await os.stop();
+```
+
+```typescript Infrastructure Components
+// LAYER 3: What Olane OS Provides
+
+// 1. Runtime Lifecycle
+class OlaneOS {
+  async start() {
+    // Start leader nodes
+    // Start worker nodes
+    // Register nodes with leaders
+    // Run saved plans
+  }
+  
+  async stop() {
+    // Stop workers gracefully
+    // Stop leaders
+    // Clean up resources
+  }
+}
+
+// 2. Discovery & Routing
+class oLeaderNode {
+  async search(query) {
+    // Find nodes by capability, address, or attributes
+    return matchingNodes;
+  }
+  
+  async route(address, request) {
+    // Route request to appropriate node
+    // Load balance across instances
+    return response;
+  }
+}
+
+// 3. Network Communication
+class oNode {
+  async connect(peerAddress) {
+    // Establish libp2p connection
+    // Exchange capabilities
+    // Enable message passing
+  }
+  
+  async send(peerAddress, message) {
+    // Send message over P2P network
+    // Handle encryption
+    // Manage retries
+  }
+}
+
+// 4. Configuration Persistence
+class ConfigManager {
+  async saveOSConfig(config) {
+    // Save to ~/.olane/instances/
+    // Persist network topology
+  }
+  
+  async loadOSConfig(name) {
+    // Load saved configuration
+    // Restore network state
+  }
+}
+```
+</CodeGroup>
+
+### Infrastructure Packages
+
+| Package | Layer 3 Component | Responsibility |
+|---------|-------------------|----------------|
+| `@olane/os` | Runtime System | OlaneOS lifecycle and orchestration |
+| `@olane/o-leader` | Discovery & Registry | Node registry, search, routing |
+| `@olane/o-core` | Network Foundation | Abstract interfaces, addressing |
+| `@olane/o-node` | P2P Implementation | libp2p networking, connections |
+| `@olane/o-config` | Configuration | Persistent storage, instance management |
+| `@olane/o-protocol` | Addressing | `o://` protocol, address resolution |
+
+<Note>
+  **Developers build Layer 2 (tools/nodes), Olane OS provides Layer 3 (infrastructure)**. You don't build runtime systems, you build applications that run on the runtime.
+</Note>
+
+## How the layers work together
+
+Here's a complete flow showing all three layers in action:
+
+### Example: Financial Analysis Request
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 1: Agent (Human via CLI)                         │
+│                                                          │
+│  $ olane intent "Analyze Q4 2024 revenue trends"        │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+                          ⬇
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 3: Olane OS Infrastructure                       │
+│                                                          │
+│  1. CLI sends request to OlaneOS runtime                │
+│  2. Runtime routes to entry point (leader)              │
+│  3. Leader searches registry for "revenue analysis"     │
+│  4. Leader finds: o://company/finance/analyst           │
+│  5. Leader routes request to that node                  │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+                          ⬇
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 2: Application (Financial Analyst Node)          │
+│                                                          │
+│  Node receives intent: "Analyze Q4 2024 revenue trends" │
+│                                                          │
+│  Autonomous execution (capability loop):                │
+│  1. EVALUATE: "I need revenue data"                     │
+│  2. TASK: Call _tool_calculate_revenue                  │
+│  3. EVALUATE: "I need trend analysis"                   │
+│  4. TASK: Call _tool_identify_trends                    │
+│  5. EVALUATE: "Ready to generate summary"               │
+│  6. TASK: Call _tool_generate_report                    │
+│  7. STOP: Return results                                │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+                          ⬇
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 3: Olane OS Infrastructure                       │
+│                                                          │
+│  1. Node returns results to leader                      │
+│  2. Leader returns results to runtime                   │
+│  3. Runtime formats response                            │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+                          ⬇
+┌─────────────────────────────────────────────────────────┐
+│  LAYER 1: Agent (Human via CLI)                         │
+│                                                          │
+│  Q4 2024 Revenue Analysis:                              │
+│  • Total: $2.5M (+15% vs Q3)                            │
+│  • Trends: Holiday surge, B2B deals, MRR growth         │
+│  • Forecast: $2.8M for Q1 2025                          │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Complete Code Example
+
+<CodeGroup>
+```typescript All Three Layers
+import { OlaneOS } from '@olane/os';
+import { oLaneTool } from '@olane/o-lane';
+import { NodeType, oAddress } from '@olane/o-core';
+
+// ===== LAYER 2: BUILD APPLICATION =====
+class FinancialAnalystNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/finance/analyst'),
+      laneContext: {
+        domain: 'Financial Analysis',
+        expertise: ['Revenue analysis', 'Trend identification']
+      }
+    });
+  }
+
+  async _tool_calculate_revenue(request: oRequest) {
+    // Business logic here
+    return { revenue: 2500000, growth: 0.15 };
+  }
+
+  async _tool_identify_trends(request: oRequest) {
+    // Business logic here
+    return { trends: ['Holiday surge', 'B2B deals'] };
+  }
+
+  async _tool_generate_report(request: oRequest) {
+    // Business logic here
+    return { report: 'Q4 analysis complete...' };
+  }
+}
+
+// ===== LAYER 3: START INFRASTRUCTURE =====
+const os = new OlaneOS({
+  nodes: [
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader'),
+      leader: null,
+      parent: null
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://company/finance/analyst'),
+      nodeClass: FinancialAnalystNode
+    }
+  ]
+});
+
+await os.start();
+
+// ===== LAYER 1: AGENT USES SYSTEM =====
+
+// Human agent (via CLI)
+// $ olane intent "Analyze Q4 2024 revenue trends"
+
+// AI agent (programmatic)
+const result = await os.use(
+  new oAddress('o://company/finance/analyst'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze Q4 2024 revenue trends'
+    }
+  }
+);
+
+console.log(result);
+// Agent receives: { revenue, trends, forecast }
+
+// ===== LAYER 3: SHUTDOWN INFRASTRUCTURE =====
+await os.stop();
+```
+</CodeGroup>
+
+## Architectural benefits
+
+### Clear Separation of Concerns
+
+<AccordionGroup>
+  <Accordion title="Users Don't Manage Infrastructure">
+    Agents (Layer 1) don't worry about networking, discovery, or routing. They just express intents.
+  </Accordion>
+  
+  <Accordion title="Applications Don't Manage Runtime">
+    Tools/nodes (Layer 2) focus on business logic. They don't handle lifecycle, connections, or discovery.
+  </Accordion>
+  
+  <Accordion title="Infrastructure Handles Coordination">
+    Olane OS (Layer 3) manages all the complexity: networking, discovery, routing, lifecycle, persistence.
+  </Accordion>
+</AccordionGroup>
+
+### Independent Evolution
+
+Each layer can evolve without breaking others:
+
+| Change | Impact |
+|--------|--------|
+| New agent type (e.g., Gemini) | ✅ No changes to Layer 2 or 3 |
+| New tool node added | ✅ No changes to Layer 1 or 3 |
+| Infrastructure upgrade (better networking) | ✅ No changes to Layer 1 or 2 |
+| New interface (e.g., mobile app) | ✅ No changes to Layer 2 or 3 |
+
+### Agent-Agnostic Design
+
+The same tools serve both human and AI agents:
+
+```typescript
+// Layer 2: Tool doesn't care who calls it
+async _tool_analyze_data(request: oRequest) {
+  // Same logic for human or AI
+  return analyzeData(request.params);
+}
+
+// Layer 1: Human agent
+// → CLI: olane intent "Analyze data"
+
+// Layer 1: AI agent  
+// → SDK: await node.use({ method: 'intent', params: {...} })
+
+// Both get same result from Layer 2
+```
+
+## Real-world comparison
+
+### Traditional Monolith
+
+```
+┌─────────────────────────────────────────────┐
+│  Everything Mixed Together                  │
+│                                             │
+│  • UI logic                                 │
+│  • Business logic                           │
+│  • Data access                              │
+│  • Networking                               │
+│  • Coordination                             │
+│  • All tightly coupled                      │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+**Problems**: 
+- Can't evolve parts independently
+- Hard to test
+- Difficult to scale
+- Tight coupling everywhere
+
+### Olane OS Three-Layer Model
+
+```
+┌─────────────────────────────────────────────┐
+│  LAYER 1: Users (Agents)                    │  ← Interfaces can change
+│  Clean interface via natural language       │
+└─────────────────────────────────────────────┘
+                    ⬇
+┌─────────────────────────────────────────────┐
+│  LAYER 2: Applications (Tools/Nodes)        │  ← Business logic isolated
+│  Business logic and domain expertise        │
+└─────────────────────────────────────────────┘
+                    ⬇
+┌─────────────────────────────────────────────┐
+│  LAYER 3: Infrastructure (Olane OS)         │  ← Infrastructure managed
+│  Runtime, networking, discovery, routing    │
+└─────────────────────────────────────────────┘
+```
+
+**Benefits**:
+- Each layer evolves independently
+- Easy to test each layer
+- Scale layers independently
+- Loose coupling between layers
+
+## Common patterns
+
+### Pattern 1: Human-Initiated, AI-Executed
+
+```
+Human (Layer 1)
+  → "Analyze customer churn"
+     ↓
+Olane OS (Layer 3)
+  → Routes to appropriate node
+     ↓
+AI Agent (Layer 1 + Layer 2)
+  → Discovers multiple nodes
+  → Coordinates analysis tools
+  → Generates insights
+     ↓
+Olane OS (Layer 3)
+  → Returns results
+     ↓
+Human (Layer 1)
+  → Receives comprehensive report
+```
+
+### Pattern 2: AI-to-AI Coordination
+
+```
+AI Agent A (Layer 1)
+  → "Generate sales forecast"
+     ↓
+Olane OS (Layer 3)
+  → Routes to forecasting node
+     ↓
+Forecasting Node (Layer 2)
+  → Needs historical data
+  → Calls analytics node
+     ↓
+Analytics Node (Layer 2)
+  → Provides data
+     ↓
+Forecasting Node (Layer 2)
+  → Generates forecast
+     ↓
+AI Agent A (Layer 1)
+  → Receives forecast
+```
+
+### Pattern 3: Human Oversight
+
+```
+Human (Layer 1)
+  → Sets up monitoring rules
+     ↓
+AI Agent (Layer 1)
+  → Continuously monitors metrics
+  → Detects anomaly
+     ↓
+AI Agent (Layer 1)
+  → Analyzes issue
+  → Proposes solution
+     ↓
+Human (Layer 1)
+  → Reviews proposal
+  → Approves or modifies
+     ↓
+AI Agent (Layer 1)
+  → Executes approved solution
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="What is Olane?" icon="book" href="/understanding/what-is-olane">
+    Deeper understanding of Olane OS
+  </Card>
+  <Card title="Tools, Nodes, Applications" icon="layer-group" href="/concepts/tools-nodes-applications">
+    Layer 2 architecture in detail
+  </Card>
+  <Card title="Build Your First Node" icon="rocket" href="/quickstart">
+    Hands-on 30-minute tutorial
+  </Card>
+  <Card title="Working with Agents" icon="robot" href="/agents/overview">
+    Agent integration patterns
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Understanding**: [What is Olane?](/understanding/what-is-olane)
+- **Understanding**: [Terminology Guide](/understanding/terminology)
+- **Concepts**: [Architecture Overview](/concepts/architecture-overview)
+- **Concepts**: [Tools, Nodes, and Applications](/concepts/tools-nodes-applications)
+- **Agents**: [Agent-Agnostic Design](/agents/agent-agnostic-design)
+- **Package**: [OlaneOS Runtime](/packages/o-os)
+
