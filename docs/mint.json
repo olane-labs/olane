@@ -57,6 +57,7 @@
       "group": "Get Started",
       "pages": [
         "introduction",
+        "why-olane",
         "quickstart",
         "installation"
       ]
@@ -72,19 +73,41 @@
       ]
     },
     {
+      "group": "Use Cases",
+      "pages": [
+        "use-cases/overview",
+        "use-cases/autonomous-workflows",
+        "use-cases/multi-tool-networks",
+        "use-cases/long-running-processes",
+        "use-cases/cost-optimization"
+      ]
+    },
+    {
+      "group": "Working with Agents",
+      "pages": [
+        "agents/overview",
+        "agents/human-interfaces",
+        "agents/ai-integration",
+        "agents/hybrid-workflows",
+        "agents/agent-agnostic-design"
+      ]
+    },
+    {
       "group": "Core Concepts",
       "pages": [
         "concepts/architecture-overview",
+        "concepts/tools-nodes-applications",
         "concepts/generalist-vs-specialist",
         "concepts/emergent-vs-explicit"
       ]
     },
     {
-      "group": "Tool Nodes",
+      "group": "Building Tool Nodes",
       "pages": [
         "concepts/tool-nodes/overview",
+        "concepts/tool-nodes/simple-nodes",
+        "concepts/tool-nodes/complex-nodes",
         "concepts/tool-nodes/lifecycle",
-        "concepts/tool-nodes/creating-tool-nodes",
         "concepts/tool-nodes/hierarchies",
         "concepts/tool-nodes/specialization"
       ]
@@ -139,44 +162,12 @@
       ]
     },
     {
-      "group": "Autonomous Workflows",
-      "pages": [
-        "use-cases/workflows/overview",
-        "use-cases/workflows/quickstart",
-        "use-cases/workflows/intent-driven-execution",
-        "use-cases/workflows/emergent-coordination",
-        "use-cases/workflows/testing",
-        "use-cases/workflows/monitoring"
-      ]
-    },
-    {
-      "group": "Multi-Tool-Node Networks",
-      "pages": [
-        "use-cases/multi-tool-node/overview",
-        "use-cases/multi-tool-node/quickstart",
-        "use-cases/multi-tool-node/network-setup",
-        "use-cases/multi-tool-node/tool-node-discovery",
-        "use-cases/multi-tool-node/coordination-patterns",
-        "use-cases/multi-tool-node/testing",
-        "use-cases/multi-tool-node/scaling"
-      ]
-    },
-    {
-      "group": "Long-Running Processes",
-      "pages": [
-        "use-cases/long-running/overview",
-        "use-cases/long-running/quickstart",
-        "use-cases/long-running/persistence",
-        "use-cases/long-running/checkpointing",
-        "use-cases/long-running/fault-tolerance",
-        "use-cases/long-running/testing"
-      ]
-    },
-    {
       "group": "Packages",
       "pages": [
         "packages/overview",
         "packages/choosing-packages",
+        "packages/package-combinations",
+        "packages/o-os",
         "packages/o-core",
         "packages/o-node",
         "packages/o-tool",
@@ -189,13 +180,15 @@
     {
       "group": "Development",
       "pages": [
+        "dev/development-workflow",
         "dev/testing-overview",
-        "dev/testing-tool-nodes",
-        "dev/testing-workflows",
-        "dev/testing-networks",
+        "dev/testing-simple-nodes",
+        "dev/testing-complex-nodes",
+        "dev/testing-multi-node-apps",
         "dev/debugging",
         "dev/error-handling",
-        "dev/performance-profiling"
+        "dev/performance-profiling",
+        "dev/production-deployment"
       ]
     },
     {
@@ -204,7 +197,11 @@
         "guides/knowledge-accumulation",
         "guides/hierarchical-organization",
         "guides/fault-tolerance",
-        "guides/cost-optimization"
+        "guides/cost-optimization",
+        "guides/multi-leader-federation",
+        "guides/custom-capabilities",
+        "guides/security-best-practices",
+        "guides/observability-monitoring"
       ]
     },
     {
