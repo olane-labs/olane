@@ -45,8 +45,14 @@ export class oSearchResolver extends oAddressResolver {
     );
 
     // if there are results, return the first one
-    const registrySearchResultsArray = registrySearchResults.result
-      .data as any[];
+    const registrySearchResultsArray = (
+      registrySearchResults.result.data as any[]
+    ).filter(
+      // filter out the items that may cause infinite looping
+      (result) =>
+        result.staticAddress !== RestrictedAddresses.REGISTRY &&
+        result.address !== node.address,
+    );
 
     if (registrySearchResultsArray.length > 0) {
       const registrySearchResult = registrySearchResultsArray[0];

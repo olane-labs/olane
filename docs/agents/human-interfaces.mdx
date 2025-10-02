@@ -1,0 +1,1733 @@
+---
+title: "Human Interfaces"
+description: "How humans interact with Olane OS tool nodes via CLI, web UI, and programmatic APIs"
+---
+
+## Overview
+
+Humans are first-class citizens in Olane OS. As **human agents**, you can interact with tool nodes using natural language through multiple interfaces: command-line (CLI), web applications, and programmatic APIs. All interfaces accept the same natural language intents, ensuring a consistent experience across interaction modes.
+
+**TL;DR**: Humans express what they want in natural language. Tool nodes figure out how to accomplish it. You get structured results back. Works via CLI, web UI, or code.
+
+<CardGroup cols={3}>
+  <Card title="Command-Line Interface" icon="terminal" color="#0D9373">
+    Direct terminal access
+    - Quick testing and debugging
+    - Scripting and automation
+    - Real-time feedback
+  </Card>
+  
+  <Card title="Web Interface" icon="browser" color="#07C983">
+    Browser-based applications
+    - User-friendly forms
+    - Interactive dashboards
+    - Visual result presentation
+  </Card>
+  
+  <Card title="Programmatic API" icon="code" color="#0D9373">
+    Integration in applications
+    - Custom workflows
+    - Embedded functionality
+    - Automated processes
+  </Card>
+</CardGroup>
+
+## Why human interfaces matter
+
+### You are an agent
+
+In Olane OS, **you** (the human) are an agent - just like AI models. The system doesn't distinguish between intents from humans and AI agents. This creates powerful flexibility:
+
+```
+┌─────────────────────────────────────────┐
+│  You (Human Agent)                       │
+│  "Analyze Q4 sales and identify trends" │
+└─────────────────────────────────────────┘
+                  ⬇ sends intent
+┌─────────────────────────────────────────┐
+│  Tool Node: o://analytics                │
+│  • Receives natural language intent      │
+│  • Processes autonomously                │
+│  • Returns structured results            │
+│  • Doesn't know/care if human or AI sent │
+└─────────────────────────────────────────┘
+```
+
+### Benefits for humans
+
+<AccordionGroup>
+  <Accordion title="Natural language interaction">
+    No need to memorize API endpoints, parameter names, or exact command syntax. Express your goal naturally, like "Find all customers who haven't purchased in 90 days."
+  </Accordion>
+  
+  <Accordion title="Simplified workflows">
+    Complex multi-step operations become single intents. The tool node coordinates its internal tools automatically.
+  </Accordion>
+  
+  <Accordion title="Consistent experience">
+    Same commands work in CLI, web UIs, and programmatic code. Learn once, use everywhere.
+  </Accordion>
+  
+  <Accordion title="Progressive complexity">
+    Start simple with direct tool calls, graduate to complex intents as needs grow. Both work with the same nodes.
+  </Accordion>
+</AccordionGroup>
+
+## Command-Line Interface (CLI)
+
+The Olane CLI provides direct terminal access to tool nodes.
+
+### Installation
+
+```bash
+# Install CLI globally
+npm install -g @olane/cli
+
+# Verify installation
+olane --version
+```
+
+### Basic usage
+
+#### Sending intents
+
+Express goals in natural language:
+
+```bash
+# Send intent to a tool node
+olane intent "Analyze Q4 2024 sales trends"
+
+# Target specific node
+olane use o://company/analytics --intent "Identify top-performing products"
+
+# With context
+olane use o://crm/customers --intent "Find customers at risk of churning" \
+  --context "Focus on high-value accounts"
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "atRiskCustomers": [
+      {
+        "id": "cust_123",
+        "name": "Acme Corp",
+        "lastPurchase": "2024-08-15",
+        "lifetimeValue": 50000,
+        "churnRisk": 0.85
+      }
+    ],
+    "totalValue": 200000,
+    "timestamp": "2024-10-02T10:30:00Z"
+  }
+}
+```
+
+#### Direct tool calls
+
+For simple operations, call tools directly:
+
+```bash
+# Call specific tool with parameters
+olane call o://utilities/currency convert \
+  --amount 100 \
+  --from "USD" \
+  --to "EUR"
+
+# Response: { "amount": 85, "currency": "EUR", "rate": 0.85 }
+```
+
+#### Discovering available nodes
+
+Find tool nodes in your network:
+
+```bash
+# List all nodes
+olane nodes list
+
+# Search by capability
+olane nodes search --capability "financial_analysis"
+
+# Get node details
+olane nodes info o://company/finance/analyst
+```
+
+**Output**:
+```
+Node: o://company/finance/analyst
+Type: Complex (Intent-driven)
+Status: Running
+
+Tools:
+  • calculate_revenue - Calculate revenue for date range
+  • calculate_expenses - Calculate expenses for date range
+  • calculate_margin - Calculate profit margins
+  • identify_trends - Identify revenue trends
+  • generate_report - Generate financial reports
+
+Supported Intents:
+  • "Analyze financial performance for [period]"
+  • "Generate profit and loss report"
+  • "Identify revenue trends and forecasts"
+```
+
+### Advanced CLI usage
+
+#### Streaming results
+
+Watch long-running operations in real-time:
+
+```bash
+# Stream progress updates
+olane use o://data/pipeline --intent "Process Q4 customer data" --stream
+
+# Output:
+# [10%] Loading dataset...
+# [30%] Processing 5000 records...
+# [60%] Validating data...
+# [90%] Generating report...
+# [100%] Complete
+```
+
+#### Working with files
+
+Pass data from files:
+
+```bash
+# Read intent from file
+olane intent @intent.txt
+
+# Pipe input
+echo "Analyze customer churn" | olane intent
+
+# Save output to file
+olane use o://analytics --intent "Generate monthly report" > report.json
+```
+
+#### Environment configuration
+
+Configure CLI behavior:
+
+```bash
+# Set default network
+olane config set network o://leader
+
+# Set default output format
+olane config set output-format json
+
+# View configuration
+olane config list
+```
+
+**Configuration file** (`~/.olane/config.json`):
+```json
+{
+  "defaultNetwork": "o://leader",
+  "outputFormat": "json",
+  "streamUpdates": true,
+  "colorOutput": true
+}
+```
+
+#### Scripting and automation
+
+Integrate CLI in shell scripts:
+
+```bash
+#!/bin/bash
+# daily-report.sh - Generate and email daily sales report
+
+# Generate report
+REPORT=$(olane use o://analytics \
+  --intent "Generate daily sales summary for $(date +%Y-%m-%d)" \
+  --format json)
+
+# Check if successful
+if [ $? -eq 0 ]; then
+  # Email report
+  echo "$REPORT" | mail -s "Daily Sales Report" team@company.com
+  echo "Report sent successfully"
+else
+  echo "Report generation failed"
+  exit 1
+fi
+```
+
+### CLI best practices
+
+<Check>
+  **Use intents for complex operations**: Let the tool node figure out the steps
+</Check>
+
+<Check>
+  **Use direct calls for simple lookups**: Faster when you know the exact tool
+</Check>
+
+<Check>
+  **Enable streaming for long operations**: Get real-time progress feedback
+</Check>
+
+<Check>
+  **Save frequently used commands as scripts**: Automate repetitive tasks
+</Check>
+
+## Web Interface (Browser-Based)
+
+Build web applications that allow humans to interact with tool nodes through forms, dashboards, and interactive UIs.
+
+### Architecture pattern
+
+```
+┌─────────────────────────────────────┐
+│  Frontend (Browser)                  │
+│  • React, Vue, or vanilla JS        │
+│  • User inputs intent via form      │
+│  • Displays results visually        │
+└─────────────────────────────────────┘
+                ⬇ HTTP/WebSocket
+┌─────────────────────────────────────┐
+│  Backend API                         │
+│  • Express, Fastify, or similar     │
+│  • Proxies requests to Olane OS     │
+│  • Handles authentication           │
+└─────────────────────────────────────┘
+                ⬇ IPC/Network
+┌─────────────────────────────────────┐
+│  Olane OS Tool Nodes                 │
+│  • Process intents                   │
+│  • Execute tools autonomously        │
+│  • Return structured results         │
+└─────────────────────────────────────┘
+```
+
+### Building a web interface
+
+#### Backend API setup
+
+Create an API server that connects to Olane OS:
+
+<CodeGroup>
+
+```typescript Node.js + Express
+import express from 'express';
+import { OlaneOS, oAddress } from '@olane/os';
+
+const app = express();
+app.use(express.json());
+
+// Initialize Olane OS
+const os = new OlaneOS({
+  nodes: [
+    {
+      type: 'leader',
+      address: new oAddress('o://leader')
+    },
+    {
+      type: 'node',
+      address: new oAddress('o://analytics')
+    }
+  ]
+});
+
+await os.start();
+
+// Intent endpoint
+app.post('/api/intent', async (req, res) => {
+  try {
+    const { toolNode, intent, context } = req.body;
+    
+    const result = await os.use(
+      new oAddress(toolNode),
+      {
+        method: 'intent',
+        params: { intent, context }
+      }
+    );
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Direct tool call endpoint
+app.post('/api/tools/:node/:tool', async (req, res) => {
+  try {
+    const { node, tool } = req.params;
+    const params = req.body;
+    
+    const result = await os.use(
+      new oAddress(node),
+      { method: tool, params }
+    );
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Discovery endpoint
+app.get('/api/nodes', async (req, res) => {
+  const nodes = await os.discoverNodes();
+  res.json({ nodes });
+});
+
+app.listen(3000, () => {
+  console.log('API server running on http://localhost:3000');
+});
+```
+
+```typescript Streaming Support
+import express from 'express';
+
+app.post('/api/intent/stream', async (req, res) => {
+  const { toolNode, intent } = req.body;
+  
+  // Set headers for SSE (Server-Sent Events)
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  
+  try {
+    // Execute intent with streaming
+    const result = await os.use(
+      new oAddress(toolNode),
+      {
+        method: 'intent',
+        params: { 
+          intent,
+          streamTo: 'inline' // Request streaming
+        }
+      },
+      {
+        // Stream callback
+        onProgress: (update) => {
+          res.write(`data: ${JSON.stringify(update)}\n\n`);
+        }
+      }
+    );
+    
+    // Send final result
+    res.write(`data: ${JSON.stringify({ 
+      type: 'complete', 
+      result 
+    })}\n\n`);
+    res.end();
+    
+  } catch (error) {
+    res.write(`data: ${JSON.stringify({ 
+      type: 'error', 
+      error: error.message 
+    })}\n\n`);
+    res.end();
+  }
+});
+```
+
+</CodeGroup>
+
+#### Frontend implementation
+
+Build UI components that send intents:
+
+<CodeGroup>
+
+```tsx React Example
+import React, { useState } from 'react';
+
+export function IntentForm() {
+  const [intent, setIntent] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const response = await fetch('/api/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toolNode: 'o://analytics',
+          intent: intent
+        })
+      });
+      
+      const data = await response.json();
+      setResult(data.data);
+    } catch (error) {
+      console.error('Failed to process intent:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="intent-form">
+      <form onSubmit={handleSubmit}>
+        <label>
+          What would you like to do?
+          <textarea
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            placeholder="e.g., Analyze Q4 sales trends"
+            rows={3}
+          />
+        </label>
+        
+        <button type="submit" disabled={loading}>
+          {loading ? 'Processing...' : 'Submit'}
+        </button>
+      </form>
+      
+      {result && (
+        <div className="results">
+          <h3>Results:</h3>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+```tsx React with Streaming
+import React, { useState } from 'react';
+
+export function StreamingIntentForm() {
+  const [intent, setIntent] = useState('');
+  const [progress, setProgress] = useState([]);
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProgress([]);
+    setResult(null);
+    
+    const response = await fetch('/api/intent/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolNode: 'o://analytics',
+        intent: intent
+      })
+    });
+    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = JSON.parse(line.slice(6));
+          
+          if (data.type === 'progress') {
+            setProgress(prev => [...prev, data.message]);
+          } else if (data.type === 'complete') {
+            setResult(data.result);
+          }
+        }
+      }
+    }
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <textarea
+          value={intent}
+          onChange={(e) => setIntent(e.target.value)}
+          placeholder="Enter your request..."
+        />
+        <button type="submit">Execute</button>
+      </form>
+      
+      {progress.length > 0 && (
+        <div className="progress">
+          <h3>Progress:</h3>
+          <ul>
+            {progress.map((msg, i) => (
+              <li key={i}>{msg}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      {result && (
+        <div className="result">
+          <h3>Result:</h3>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+```html Vanilla JavaScript
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Olane OS Web Interface</title>
+</head>
+<body>
+  <h1>Analytics Dashboard</h1>
+  
+  <form id="intentForm">
+    <label>
+      What would you like to analyze?
+      <textarea id="intentInput" rows="3"></textarea>
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+  
+  <div id="results"></div>
+  
+  <script>
+    document.getElementById('intentForm')
+      .addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const intent = document.getElementById('intentInput').value;
+        const resultsDiv = document.getElementById('results');
+        
+        resultsDiv.innerHTML = 'Processing...';
+        
+        try {
+          const response = await fetch('/api/intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              toolNode: 'o://analytics',
+              intent: intent
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            resultsDiv.innerHTML = `
+              <h3>Results:</h3>
+              <pre>${JSON.stringify(data.data, null, 2)}</pre>
+            `;
+          } else {
+            resultsDiv.innerHTML = `
+              <p style="color: red">Error: ${data.error}</p>
+            `;
+          }
+        } catch (error) {
+          resultsDiv.innerHTML = `
+            <p style="color: red">Failed: ${error.message}</p>
+          `;
+        }
+      });
+  </script>
+</body>
+</html>
+```
+
+</CodeGroup>
+
+### Web UI patterns
+
+#### Pattern 1: Simple form interface
+
+Best for straightforward operations:
+
+```tsx
+// User-friendly form that maps to tool parameters
+export function CurrencyConverter() {
+  const [amount, setAmount] = useState(100);
+  const [from, setFrom] = useState('USD');
+  const [to, setTo] = useState('EUR');
+  const [result, setResult] = useState(null);
+
+  const handleConvert = async () => {
+    const response = await fetch('/api/tools/o://utilities/currency/convert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, from, to })
+    });
+    
+    const data = await response.json();
+    setResult(data.data);
+  };
+
+  return (
+    <div>
+      <h2>Currency Converter</h2>
+      <input 
+        type="number" 
+        value={amount} 
+        onChange={(e) => setAmount(Number(e.target.value))} 
+      />
+      <select value={from} onChange={(e) => setFrom(e.target.value)}>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+      </select>
+      <span>to</span>
+      <select value={to} onChange={(e) => setTo(e.target.value)}>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="GBP">GBP</option>
+      </select>
+      <button onClick={handleConvert}>Convert</button>
+      
+      {result && (
+        <p>
+          {amount} {from} = {result.amount} {result.currency}
+        </p>
+      )}
+    </div>
+  );
+}
+```
+
+#### Pattern 2: Natural language interface
+
+Best for complex, multi-step operations:
+
+```tsx
+export function AnalyticsDashboard() {
+  const [intent, setIntent] = useState('');
+  const [suggestions] = useState([
+    'Analyze Q4 2024 sales trends',
+    'Identify top 10 customers by revenue',
+    'Compare this month vs last month performance',
+    'Find products with declining sales'
+  ]);
+
+  return (
+    <div>
+      <h2>Analytics</h2>
+      <p>Tell us what you want to know:</p>
+      
+      <textarea
+        value={intent}
+        onChange={(e) => setIntent(e.target.value)}
+        placeholder="e.g., Compare Q3 and Q4 revenue by region"
+      />
+      
+      <div className="suggestions">
+        <p>Try these:</p>
+        {suggestions.map(suggestion => (
+          <button 
+            key={suggestion}
+            onClick={() => setIntent(suggestion)}
+          >
+            {suggestion}
+          </button>
+        ))}
+      </div>
+      
+      <button onClick={() => handleIntent(intent)}>
+        Analyze
+      </button>
+    </div>
+  );
+}
+```
+
+#### Pattern 3: Interactive dashboard
+
+Best for data exploration:
+
+```tsx
+export function CustomerInsights() {
+  const [activeView, setActiveView] = useState('overview');
+  const [data, setData] = useState(null);
+
+  const views = {
+    overview: 'Show customer overview',
+    churn: 'Identify at-risk customers',
+    lifetime: 'Analyze customer lifetime value',
+    segments: 'Show customer segments'
+  };
+
+  useEffect(() => {
+    // Load view data based on active view
+    fetch('/api/intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolNode: 'o://crm/analytics',
+        intent: views[activeView]
+      })
+    })
+    .then(r => r.json())
+    .then(result => setData(result.data));
+  }, [activeView]);
+
+  return (
+    <div className="dashboard">
+      <nav>
+        {Object.keys(views).map(view => (
+          <button
+            key={view}
+            className={activeView === view ? 'active' : ''}
+            onClick={() => setActiveView(view)}
+          >
+            {view}
+          </button>
+        ))}
+      </nav>
+      
+      <div className="content">
+        {data && <DataVisualization data={data} />}
+      </div>
+    </div>
+  );
+}
+```
+
+### Web UI best practices
+
+<Check>
+  **Provide suggested intents**: Help users discover what they can ask for
+</Check>
+
+<Check>
+  **Show progress for long operations**: Use streaming or polling for feedback
+</Check>
+
+<Check>
+  **Render results visually**: Convert JSON to charts, tables, and summaries
+</Check>
+
+<Check>
+  **Enable refinement**: Let users modify intents based on initial results
+</Check>
+
+<Check>
+  **Handle errors gracefully**: Show clear error messages with suggested fixes
+</Check>
+
+## Programmatic API (Code Integration)
+
+Integrate Olane OS tool nodes directly in your applications using the JavaScript/TypeScript SDK.
+
+### Installation
+
+```bash
+npm install @olane/os @olane/o-core
+```
+
+### Basic usage
+
+#### Connecting to Olane OS
+
+<CodeGroup>
+
+```typescript Create OS Instance
+import { OlaneOS, oAddress, NodeType } from '@olane/os';
+
+// Create and start OS instance
+const os = new OlaneOS({
+  nodes: [
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader'),
+      leader: null,
+      parent: null
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://analytics')
+    }
+  ]
+});
+
+await os.start();
+
+// Use tool nodes
+const result = await os.use(
+  new oAddress('o://analytics'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze Q4 sales trends'
+    }
+  }
+);
+
+console.log(result);
+```
+
+```typescript Connect to Existing OS
+import { oAddress, oNodeClient } from '@olane/o-core';
+
+// Connect to running OS instance
+const client = new oNodeClient({
+  leader: new oAddress('o://leader'),
+  network: {
+    connect: ['/ip4/127.0.0.1/tcp/5000']
+  }
+});
+
+await client.start();
+
+// Use tool nodes
+const result = await client.use(
+  new oAddress('o://analytics'),
+  {
+    method: 'intent',
+    params: { intent: 'Get monthly revenue' }
+  }
+);
+```
+
+</CodeGroup>
+
+#### Sending intents
+
+Express goals programmatically:
+
+```typescript
+import { oAddress } from '@olane/o-core';
+
+// Simple intent
+const result = await os.use(
+  new oAddress('o://crm/customers'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Find customers who haven\'t purchased in 90 days'
+    }
+  }
+);
+
+console.log(`Found ${result.customers.length} inactive customers`);
+
+// Intent with context
+const analysis = await os.use(
+  new oAddress('o://analytics'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze customer behavior',
+      context: JSON.stringify({
+        dateRange: { start: '2024-01-01', end: '2024-12-31' },
+        segments: ['enterprise', 'mid-market'],
+        metrics: ['purchase_frequency', 'average_value']
+      })
+    }
+  }
+);
+```
+
+#### Direct tool calls
+
+For specific operations:
+
+```typescript
+// Call tool directly with parameters
+const conversion = await os.use(
+  new oAddress('o://utilities/currency'),
+  {
+    method: 'convert',
+    params: {
+      amount: 100,
+      from: 'USD',
+      to: 'EUR'
+    }
+  }
+);
+
+console.log(`100 USD = ${conversion.amount} ${conversion.currency}`);
+```
+
+#### Error handling
+
+Handle failures gracefully:
+
+```typescript
+try {
+  const result = await os.use(
+    new oAddress('o://analytics'),
+    {
+      method: 'intent',
+      params: { intent: 'Invalid request' }
+    }
+  );
+} catch (error) {
+  if (error.code === 'NODE_NOT_FOUND') {
+    console.error('Tool node is not available');
+  } else if (error.code === 'INTENT_PROCESSING_FAILED') {
+    console.error('Failed to process intent:', error.details);
+  } else {
+    console.error('Unexpected error:', error.message);
+  }
+}
+```
+
+### Advanced programmatic usage
+
+#### Streaming results
+
+Get real-time progress updates:
+
+```typescript
+const result = await os.use(
+  new oAddress('o://data/pipeline'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Process large dataset',
+      streamTo: 'inline'
+    }
+  },
+  {
+    // Progress callback
+    onProgress: (update) => {
+      console.log(`[${update.progress}%] ${update.message}`);
+    }
+  }
+);
+
+console.log('Processing complete:', result);
+```
+
+#### Parallel execution
+
+Execute multiple intents concurrently:
+
+```typescript
+const [revenue, expenses, customers] = await Promise.all([
+  os.use(
+    new oAddress('o://finance/revenue'),
+    { method: 'intent', params: { intent: 'Calculate Q4 revenue' } }
+  ),
+  os.use(
+    new oAddress('o://finance/expenses'),
+    { method: 'intent', params: { intent: 'Calculate Q4 expenses' } }
+  ),
+  os.use(
+    new oAddress('o://crm/customers'),
+    { method: 'intent', params: { intent: 'Get active customer count' } }
+  )
+]);
+
+console.log('Combined results:', {
+  revenue: revenue.total,
+  expenses: expenses.total,
+  profit: revenue.total - expenses.total,
+  customers: customers.count
+});
+```
+
+#### Dynamic node discovery
+
+Find and use nodes at runtime:
+
+```typescript
+// Discover nodes with specific capability
+const nodes = await os.discoverNodes({
+  capability: 'financial_analysis'
+});
+
+console.log(`Found ${nodes.length} financial analysis nodes`);
+
+// Use discovered nodes
+for (const node of nodes) {
+  const result = await os.use(
+    node.address,
+    {
+      method: 'intent',
+      params: { intent: 'Generate monthly report' }
+    }
+  );
+  
+  console.log(`Report from ${node.address}:`, result);
+}
+```
+
+#### Building workflows
+
+Chain multiple operations:
+
+```typescript
+class ReportGenerator {
+  constructor(private os: OlaneOS) {}
+
+  async generateQuarterlyReport(quarter: string) {
+    // Step 1: Get revenue data
+    const revenue = await this.os.use(
+      new oAddress('o://finance/revenue'),
+      {
+        method: 'intent',
+        params: { intent: `Calculate ${quarter} revenue by region` }
+      }
+    );
+
+    // Step 2: Get expense data
+    const expenses = await this.os.use(
+      new oAddress('o://finance/expenses'),
+      {
+        method: 'intent',
+        params: { intent: `Calculate ${quarter} expenses by category` }
+      }
+    );
+
+    // Step 3: Get customer metrics
+    const customers = await this.os.use(
+      new oAddress('o://crm/analytics'),
+      {
+        method: 'intent',
+        params: { intent: `Analyze ${quarter} customer acquisition and churn` }
+      }
+    );
+
+    // Step 4: Generate comprehensive report
+    const report = await this.os.use(
+      new oAddress('o://reporting/generator'),
+      {
+        method: 'generate',
+        params: {
+          type: 'quarterly',
+          data: {
+            revenue: revenue.data,
+            expenses: expenses.data,
+            customers: customers.data
+          }
+        }
+      }
+    );
+
+    return report;
+  }
+}
+
+// Usage
+const generator = new ReportGenerator(os);
+const report = await generator.generateQuarterlyReport('Q4 2024');
+console.log('Report generated:', report.url);
+```
+
+### Integration patterns
+
+#### Pattern 1: Microservice integration
+
+Expose tool nodes via REST API:
+
+```typescript
+import express from 'express';
+import { OlaneOS, oAddress } from '@olane/os';
+
+class OlaneAPIGateway {
+  private app = express();
+  private os: OlaneOS;
+
+  constructor(os: OlaneOS) {
+    this.os = os;
+    this.setupRoutes();
+  }
+
+  private setupRoutes() {
+    // Generic intent endpoint
+    this.app.post('/api/v1/:toolNode/intent', async (req, res) => {
+      const { toolNode } = req.params;
+      const { intent, context } = req.body;
+
+      try {
+        const result = await this.os.use(
+          new oAddress(toolNode),
+          {
+            method: 'intent',
+            params: { intent, context }
+          }
+        );
+
+        res.json({ success: true, data: result });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+
+    // Generic tool call endpoint
+    this.app.post('/api/v1/:toolNode/:tool', async (req, res) => {
+      const { toolNode, tool } = req.params;
+      const params = req.body;
+
+      try {
+        const result = await this.os.use(
+          new oAddress(toolNode),
+          { method: tool, params }
+        );
+
+        res.json({ success: true, data: result });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          error: error.message
+        });
+      }
+    });
+  }
+
+  start(port: number) {
+    this.app.listen(port, () => {
+      console.log(`API Gateway running on port ${port}`);
+    });
+  }
+}
+
+// Usage
+const os = new OlaneOS({ /* config */ });
+await os.start();
+
+const gateway = new OlaneAPIGateway(os);
+gateway.start(3000);
+```
+
+#### Pattern 2: Event-driven architecture
+
+React to events with tool nodes:
+
+```typescript
+import { EventEmitter } from 'events';
+
+class EventProcessor {
+  private events = new EventEmitter();
+  
+  constructor(private os: OlaneOS) {
+    this.setupEventHandlers();
+  }
+
+  private setupEventHandlers() {
+    // Customer created event
+    this.events.on('customer.created', async (customer) => {
+      await this.os.use(
+        new oAddress('o://crm/onboarding'),
+        {
+          method: 'intent',
+          params: {
+            intent: `Onboard new customer: ${customer.email}`
+          }
+        }
+      );
+    });
+
+    // Order placed event
+    this.events.on('order.placed', async (order) => {
+      // Process payment
+      await this.os.use(
+        new oAddress('o://payments'),
+        {
+          method: 'process_payment',
+          params: { orderId: order.id }
+        }
+      );
+
+      // Update inventory
+      await this.os.use(
+        new oAddress('o://inventory'),
+        {
+          method: 'intent',
+          params: {
+            intent: `Reserve items for order ${order.id}`
+          }
+        }
+      );
+
+      // Send confirmation
+      await this.os.use(
+        new oAddress('o://notifications'),
+        {
+          method: 'send_email',
+          params: {
+            to: order.customer.email,
+            template: 'order_confirmation',
+            data: order
+          }
+        }
+      );
+    });
+  }
+
+  emit(event: string, data: any) {
+    this.events.emit(event, data);
+  }
+}
+```
+
+#### Pattern 3: Background job processing
+
+Use tool nodes in job queues:
+
+```typescript
+import Bull from 'bull';
+
+class JobProcessor {
+  private queue: Bull.Queue;
+
+  constructor(private os: OlaneOS) {
+    this.queue = new Bull('olane-jobs', {
+      redis: { host: 'localhost', port: 6379 }
+    });
+
+    this.setupProcessors();
+  }
+
+  private setupProcessors() {
+    // Process analytics jobs
+    this.queue.process('analytics', async (job) => {
+      const { intent, toolNode } = job.data;
+
+      const result = await this.os.use(
+        new oAddress(toolNode),
+        {
+          method: 'intent',
+          params: { intent }
+        }
+      );
+
+      return result;
+    });
+
+    // Process report generation
+    this.queue.process('report', async (job) => {
+      const { reportType, params } = job.data;
+
+      const result = await this.os.use(
+        new oAddress('o://reporting'),
+        {
+          method: 'generate',
+          params: { type: reportType, ...params }
+        }
+      );
+
+      // Store result
+      await this.storeReport(result);
+
+      return { reportId: result.id };
+    });
+  }
+
+  async scheduleJob(name: string, data: any) {
+    await this.queue.add(name, data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 }
+    });
+  }
+}
+
+// Usage
+const processor = new JobProcessor(os);
+
+// Schedule nightly report
+await processor.scheduleJob('report', {
+  reportType: 'daily-summary',
+  params: { date: '2024-10-02' }
+});
+```
+
+### Programmatic best practices
+
+<Check>
+  **Reuse OS instances**: Create once, use throughout application lifecycle
+</Check>
+
+<Check>
+  **Handle errors explicitly**: Don't rely on generic try-catch for all errors
+</Check>
+
+<Check>
+  **Use streaming for long operations**: Provide feedback instead of blocking
+</Check>
+
+<Check>
+  **Cache discovery results**: Avoid repeated node lookups
+</Check>
+
+<Check>
+  **Implement retry logic**: Handle transient failures gracefully
+</Check>
+
+## Comparison: When to use each interface
+
+| Use Case | CLI | Web UI | Programmatic |
+|----------|-----|--------|--------------|
+| **Quick testing** | ✅ Best | ❌ | ⚠️ Possible |
+| **Debugging** | ✅ Best | ⚠️ Possible | ⚠️ Possible |
+| **End user access** | ❌ | ✅ Best | ❌ |
+| **Automation** | ✅ Good | ❌ | ✅ Best |
+| **Integration** | ⚠️ Possible | ❌ | ✅ Best |
+| **Scripting** | ✅ Best | ❌ | ⚠️ Possible |
+| **Interactive exploration** | ⚠️ Possible | ✅ Best | ❌ |
+| **Visual presentation** | ❌ | ✅ Best | ❌ |
+| **Real-time feedback** | ✅ Good | ✅ Best | ⚠️ Possible |
+| **Complex workflows** | ⚠️ Limited | ✅ Good | ✅ Best |
+
+## Real-world examples
+
+### Example 1: Support rep using CLI
+
+Support representative quickly looks up customer information:
+
+```bash
+# During customer call, rep needs quick info
+$ olane use o://crm/customers --intent "Find customer john@example.com"
+
+{
+  "customer": {
+    "id": "cust_123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "status": "active",
+    "lifetimeValue": 15000
+  },
+  "recentTickets": [
+    {
+      "id": "ticket_456",
+      "subject": "Billing question",
+      "status": "resolved",
+      "created": "2024-09-28"
+    }
+  ],
+  "lastPurchase": "2024-09-15"
+}
+
+# Follow up with another intent
+$ olane use o://crm/customers --intent "Show purchase history for cust_123"
+```
+
+### Example 2: Analyst using web dashboard
+
+Business analyst explores sales data interactively:
+
+```tsx
+// Analyst Dashboard with natural language query
+function SalesDashboard() {
+  const [query, setQuery] = useState('');
+  const [data, setData] = useState(null);
+
+  const handleAnalyze = async () => {
+    const response = await fetch('/api/intent', {
+      method: 'POST',
+      body: JSON.stringify({
+        toolNode: 'o://analytics/sales',
+        intent: query
+      })
+    });
+    
+    const result = await response.json();
+    setData(result.data);
+  };
+
+  return (
+    <div className="dashboard">
+      <h1>Sales Analytics</h1>
+      
+      {/* Natural language input */}
+      <div className="query-box">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="What would you like to know about sales?"
+        />
+        <button onClick={handleAnalyze}>Analyze</button>
+      </div>
+      
+      {/* Quick actions */}
+      <div className="quick-actions">
+        <button onClick={() => setQuery('Show Q4 revenue by region')}>
+          Q4 Revenue
+        </button>
+        <button onClick={() => setQuery('Identify top 10 products')}>
+          Top Products
+        </button>
+        <button onClick={() => setQuery('Compare this month vs last month')}>
+          Month Comparison
+        </button>
+      </div>
+      
+      {/* Visual results */}
+      {data && (
+        <div className="results">
+          <Chart data={data.chartData} />
+          <Table data={data.tableData} />
+          <Summary stats={data.summary} />
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Example 3: Data engineer using programmatic API
+
+Automated nightly data pipeline:
+
+```typescript
+import { OlaneOS, oAddress } from '@olane/os';
+import { schedule } from 'node-cron';
+
+class DataPipelineOrchestrator {
+  constructor(private os: OlaneOS) {}
+
+  async runNightlyPipeline() {
+    console.log('Starting nightly data pipeline...');
+
+    try {
+      // Step 1: Extract data from sources
+      const extraction = await this.os.use(
+        new oAddress('o://data/extractor'),
+        {
+          method: 'intent',
+          params: {
+            intent: 'Extract yesterday\'s data from all sources'
+          }
+        }
+      );
+
+      console.log(`Extracted ${extraction.recordCount} records`);
+
+      // Step 2: Transform and validate
+      const transformation = await this.os.use(
+        new oAddress('o://data/transformer'),
+        {
+          method: 'intent',
+          params: {
+            intent: 'Transform and validate extracted data',
+            context: JSON.stringify({ dataId: extraction.id })
+          }
+        }
+      );
+
+      console.log(`Transformed ${transformation.validRecords} valid records`);
+
+      // Step 3: Load into warehouse
+      const loading = await this.os.use(
+        new oAddress('o://data/warehouse'),
+        {
+          method: 'intent',
+          params: {
+            intent: 'Load transformed data into warehouse',
+            context: JSON.stringify({ dataId: transformation.id })
+          }
+        }
+      );
+
+      console.log(`Loaded into warehouse: ${loading.location}`);
+
+      // Step 4: Update analytics
+      await this.os.use(
+        new oAddress('o://analytics/refresher'),
+        {
+          method: 'intent',
+          params: {
+            intent: 'Refresh all analytics dashboards with new data'
+          }
+        }
+      );
+
+      console.log('Pipeline complete');
+
+      // Send success notification
+      await this.notifySuccess();
+
+    } catch (error) {
+      console.error('Pipeline failed:', error);
+      await this.notifyFailure(error);
+      throw error;
+    }
+  }
+
+  async notifySuccess() {
+    await this.os.use(
+      new oAddress('o://notifications'),
+      {
+        method: 'send',
+        params: {
+          channel: 'slack',
+          message: '✅ Nightly data pipeline completed successfully'
+        }
+      }
+    );
+  }
+
+  async notifyFailure(error: Error) {
+    await this.os.use(
+      new oAddress('o://notifications'),
+      {
+        method: 'send',
+        params: {
+          channel: 'slack',
+          message: `❌ Nightly data pipeline failed: ${error.message}`,
+          priority: 'high'
+        }
+      }
+    );
+  }
+}
+
+// Initialize and schedule
+const os = new OlaneOS({ /* config */ });
+await os.start();
+
+const orchestrator = new DataPipelineOrchestrator(os);
+
+// Run every night at 2 AM
+schedule('0 2 * * *', () => {
+  orchestrator.runNightlyPipeline();
+});
+
+console.log('Data pipeline orchestrator started');
+```
+
+## Troubleshooting
+
+### Error: "Command not found: olane"
+
+**Cause**: CLI not installed globally or not in PATH
+
+**Solution**:
+```bash
+# Install CLI globally
+npm install -g @olane/cli
+
+# Or use npx to run without installing
+npx @olane/cli intent "Your goal"
+```
+
+### Error: "Cannot connect to Olane OS"
+
+**Cause**: OS instance not running or incorrect address
+
+**Solution**:
+```bash
+# Check if OS is running
+olane status
+
+# Start OS if stopped
+olane start
+
+# Or specify custom address
+olane config set network o://leader:5000
+```
+
+### Error: "Node not found"
+
+**Cause**: Tool node not registered or incorrect address
+
+**Solution**:
+```bash
+# List available nodes
+olane nodes list
+
+# Check node status
+olane nodes info o://your/node
+
+# Verify node address spelling
+```
+
+### Slow intent processing
+
+**Cause**: Complex intent requiring multiple tool executions
+
+**Solution**:
+```bash
+# Use streaming to see progress
+olane use o://node --intent "Complex task" --stream
+
+# Or break into smaller direct tool calls
+olane call o://node tool_1 --params '{...}'
+olane call o://node tool_2 --params '{...}'
+```
+
+### Web UI not receiving results
+
+**Cause**: CORS issues or incorrect API endpoint
+
+**Solution**:
+```typescript
+// Enable CORS in backend
+import cors from 'cors';
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
+// Verify API endpoint in frontend
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+```
+
+## Best practices summary
+
+<AccordionGroup>
+  <Accordion title="Choose the right interface">
+    - **CLI**: Testing, debugging, scripting
+    - **Web UI**: End users, data exploration, visual results
+    - **Programmatic**: Integration, automation, workflows
+  </Accordion>
+  
+  <Accordion title="Start simple, grow complex">
+    Begin with direct tool calls for straightforward operations. Graduate to intent-driven interaction as complexity increases.
+  </Accordion>
+  
+  <Accordion title="Provide context when helpful">
+    More context enables better autonomous execution, especially for complex intents.
+  </Accordion>
+  
+  <Accordion title="Handle errors gracefully">
+    All interfaces should handle errors and provide clear feedback to users.
+  </Accordion>
+  
+  <Accordion title="Enable streaming for long operations">
+    Real-time progress feedback improves user experience for time-consuming tasks.
+  </Accordion>
+  
+  <Accordion title="Cache and reuse connections">
+    Avoid creating new OS instances or connections for every request.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="AI Integration" icon="brain" href="/agents/ai-integration">
+    Learn how AI agents interact with tool nodes
+  </Card>
+  
+  <Card title="Hybrid Workflows" icon="arrows-split-up-and-left" href="/agents/hybrid-workflows">
+    Combine human and AI agents in workflows
+  </Card>
+  
+  <Card title="Agent-Agnostic Design" icon="handshake" href="/agents/agent-agnostic-design">
+    Build tools that serve both humans and AI
+  </Card>
+  
+  <Card title="Building Tool Nodes" icon="hammer" href="/concepts/tool-nodes/overview">
+    Create tool nodes for agents to use
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Understanding**: [Three-Layer Model](/understanding/three-layer-model) - Complete architecture overview
+- **Agents**: [Agents Overview](/agents/overview) - Understanding agents as users
+- **CLI Reference**: [CLI Documentation](/dev/cli-reference) - Complete command reference
+- **API**: [Tool Node Reference](/api/tool-nodes) - Technical API documentation
+- **Examples**: [Human Agent Examples](/examples/human-agents) - More practical examples
+

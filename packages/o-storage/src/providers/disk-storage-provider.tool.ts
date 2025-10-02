@@ -8,7 +8,7 @@ import { GetDataResponse } from '../interfaces/get-data.response.js';
 import { oNodeToolConfig } from '@olane/o-node';
 
 // Extend the config interface to include storage directory
-interface DiskStorageConfig extends oNodeToolConfig {
+export interface DiskStorageConfig extends oNodeToolConfig {
   storageDir?: string;
   address?: oAddress;
 }

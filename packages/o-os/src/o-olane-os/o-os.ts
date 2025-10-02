@@ -8,7 +8,7 @@ import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import { oLaneTool } from '@olane/o-lane';
+import { oLaneStorage, oLaneTool } from '@olane/o-lane';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
 
@@ -141,6 +141,13 @@ export class OlaneOS extends oObject {
         });
         await commonNode.start();
         this.rootLeader?.addChildNode(commonNode);
+        const olaneStorage = new oLaneStorage({
+          name: 'lane-storage',
+          parent: commonNode.address,
+          leader: this.rootLeader?.address || null,
+        });
+        await olaneStorage.start();
+        commonNode.addChildNode(olaneStorage);
         await initCommonTools(commonNode);
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);

@@ -1,0 +1,770 @@
+---
+title: "Nodes Overview"
+description: "Understanding nodes - the fundamental building blocks of Olane OS that contain and execute tools"
+---
+
+## Overview
+
+A **node** is a process running on Olane OS that contains one or more related tools. Nodes are the fundamental execution units that agents (human or AI) interact with to accomplish goals.
+
+**TL;DR**: Nodes are addressable processes containing tools. They come in two flavors: **simple nodes** (direct tool calls) and **complex nodes** (intent-driven with autonomy).
+
+## What is a node?
+
+Think of a node as a **service** or **capability unit** in your distributed system.
+
+```
+┌─────────────────────────────────────┐
+│  Node: o://company/finance/analyst  │
+│                                     │
+│  Contains:                          │
+│  • Multiple related tools           │
+│  • Shared state/context             │
+│  • o:// address for discovery       │
+│  • Network connectivity             │
+│                                     │
+│  Capabilities:                      │
+│  • Executes tools                   │
+│  • Processes requests               │
+│  • Returns responses                │
+│  • Discovers other nodes            │
+└─────────────────────────────────────┘
+```
+
+### Key characteristics
+
+<CardGroup cols={2}>
+  <Card title="Addressable" icon="location-dot" color="#0D9373">
+    Has unique `o://` address for discovery
+  </Card>
+  <Card title="Autonomous" icon="robot" color="#0D9373">
+    Runs independently as a process
+  </Card>
+  <Card title="Discoverable" icon="magnifying-glass" color="#0D9373">
+    Registers with leader for network-wide visibility
+  </Card>
+  <Card title="Tool Container" icon="toolbox" color="#0D9373">
+    Contains one or more related tools
+  </Card>
+</CardGroup>
+
+## Quick start
+
+<CodeGroup>
+```typescript Simple Node
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+class CurrencyConverterNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://utilities/currency-converter')
+    });
+  }
+
+  // Tool 1: Convert currency
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params;
+    const rate = await this.getExchangeRate(from, to);
+    return { 
+      result: amount * rate,
+      from,
+      to,
+      rate 
+    };
+  }
+
+  // Tool 2: List currencies
+  async _tool_list_currencies(request: oRequest) {
+    return { 
+      currencies: ['USD', 'EUR', 'GBP', 'JPY'],
+      count: 4
+    };
+  }
+
+  private async getExchangeRate(from: string, to: string): Promise<number> {
+    // Fetch from exchange rate API
+    return 1.18; // Example rate
+  }
+}
+
+// Start the node
+const node = new CurrencyConverterNode();
+await node.start();
+
+// Agents call tools directly
+const result = await node.use({
+  method: 'convert',
+  params: {
+    amount: 100,
+    from: 'EUR',
+    to: 'USD'
+  }
+});
+
+console.log(result);
+// { result: 118, from: 'EUR', to: 'USD', rate: 1.18 }
+```
+
+```typescript Complex Node
+import { oLaneTool } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+class FinancialAnalystNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/finance/analyst'),
+      laneContext: {
+        domain: 'Financial Analysis',
+        expertise: ['Revenue', 'Expenses', 'Forecasting']
+      }
+    });
+  }
+
+  // Internal tools (many)
+  async _tool_calculate_revenue(request: oRequest) {
+    // Calculate revenue for date range
+    return { revenue: 150000, currency: 'USD' };
+  }
+
+  async _tool_calculate_expenses(request: oRequest) {
+    // Calculate expenses for date range
+    return { expenses: 95000, currency: 'USD' };
+  }
+
+  async _tool_calculate_margin(request: oRequest) {
+    // Calculate profit margin
+    return { margin: 36.67, unit: 'percent' };
+  }
+
+  async _tool_identify_trends(request: oRequest) {
+    // Analyze trends in data
+    return { trends: ['Growing revenue', 'Stable expenses'] };
+  }
+
+  async _tool_generate_report(request: oRequest) {
+    // Generate executive summary
+    return { report: '...' };
+  }
+}
+
+// Start the node
+const node = new FinancialAnalystNode();
+await node.start();
+
+// Agents send INTENTS (not direct tool calls)
+const result = await node.use({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 2024 financial performance and generate executive summary'
+  }
+});
+
+// Node AUTONOMOUSLY:
+// 1. EVALUATE: "I need revenue, expenses, and trends"
+// 2. TASK: Call _tool_calculate_revenue
+// 3. TASK: Call _tool_calculate_expenses
+// 4. TASK: Call _tool_identify_trends
+// 5. EVALUATE: "I have data, need to calculate margins"
+// 6. TASK: Call _tool_calculate_margin
+// 7. EVALUATE: "Ready to generate report"
+// 8. TASK: Call _tool_generate_report
+// 9. STOP: Return report to agent
+```
+</CodeGroup>
+
+## Node types
+
+Nodes come in two varieties, each optimized for different use cases.
+
+### Simple nodes
+
+**Simple nodes** contain 1-5 related tools and respond to direct tool invocations.
+
+<CardGroup cols={2}>
+  <Card title="Direct Invocation" icon="arrow-right" color="#0D9373">
+    Agents call tools by name
+  </Card>
+  <Card title="Few Tools" icon="list" color="#0D9373">
+    1-5 focused operations
+  </Card>
+  <Card title="Fast Response" icon="bolt" color="#0D9373">
+    Quick execution (typically < 30s)
+  </Card>
+  <Card title="Stateless" icon="circle-nodes" color="#0D9373">
+    No persistent execution context
+  </Card>
+</CardGroup>
+
+**Example use cases**:
+- Currency converter
+- Email sender
+- Data validator
+- Rate limiter
+- File processor
+
+**When to use**:
+- Single, well-defined domain
+- Tools are related and cohesive
+- Agents know which tool to call
+- No multi-step workflows needed
+
+**Learn more**: [Simple Nodes →](/concepts/nodes/simple-nodes)
+
+---
+
+### Complex nodes
+
+**Complex nodes** contain 5-20+ tools and accept natural language intents, autonomously deciding which tools to use.
+
+<CardGroup cols={2}>
+  <Card title="Intent-Driven" icon="brain" color="#0D9373">
+    Accepts natural language goals
+  </Card>
+  <Card title="Many Tools" icon="toolbox" color="#0D9373">
+    5-20+ operations
+  </Card>
+  <Card title="Autonomous" icon="robot" color="#0D9373">
+    Uses o-lane capability loop
+  </Card>
+  <Card title="Multi-Step" icon="stairs" color="#0D9373">
+    Coordinates multiple tools
+  </Card>
+</CardGroup>
+
+**Example use cases**:
+- Financial analyst
+- Data pipeline manager
+- Content generator
+- Security scanner
+- Research assistant
+
+**When to use**:
+- Complex domain with many operations
+- Agents shouldn't know all tools
+- Multi-step workflows common
+- Decision-making needed between steps
+
+**Learn more**: [Complex Nodes →](/concepts/nodes/complex-nodes)
+
+## Comparison
+
+| Aspect | Simple Node | Complex Node |
+|--------|-------------|--------------|
+| **Tools Count** | 1-5 | 5-20+ |
+| **Invocation** | Direct tool calls | Intents |
+| **Intelligence** | None (executes) | Autonomous (decides) |
+| **Coordination** | None | o-lane capability loop |
+| **Response Time** | Fast (< 30s) | Variable (can be long-running) |
+| **State** | Stateless | Stateful execution |
+| **Packages** | `o-node` + `o-tool` | `o-node` + `o-tool` + `o-lane` |
+| **Complexity** | 🟢 Simple | 🟡 Medium |
+| **Example** | Currency converter | Financial analyst |
+
+## How agents interact with nodes
+
+Both human and AI agents can interact with nodes using the same interface.
+
+### Simple node interaction
+
+Agents call tools directly by name:
+
+<CodeGroup>
+```bash Human Agent (CLI)
+# Call tool directly
+olane call o://utilities/converter convert \
+  --amount 100 \
+  --from "EUR" \
+  --to "USD"
+
+# Result
+{
+  "result": 118,
+  "from": "EUR",
+  "to": "USD",
+  "rate": 1.18
+}
+```
+
+```typescript AI Agent (Programmatic)
+// Discover node
+const converter = await leader.search({ 
+  address: 'o://utilities/converter' 
+});
+
+// Call tool directly
+const result = await converter.use({
+  method: 'convert',
+  params: {
+    amount: 100,
+    from: 'EUR',
+    to: 'USD'
+  }
+});
+
+console.log(result);
+// { result: 118, from: 'EUR', to: 'USD', rate: 1.18 }
+```
+</CodeGroup>
+
+### Complex node interaction
+
+Agents send high-level intents:
+
+<CodeGroup>
+```bash Human Agent (CLI)
+# Send intent (not tool name)
+olane intent o://company/finance/analyst \
+  "Analyze Q4 2024 financial performance and generate executive summary"
+
+# Node autonomously:
+# 1. Evaluates intent
+# 2. Calls multiple tools
+# 3. Makes decisions
+# 4. Returns comprehensive result
+```
+
+```typescript AI Agent (Programmatic)
+// Discover node
+const analyst = await leader.search({ 
+  address: 'o://company/finance/analyst' 
+});
+
+// Send intent (not tool name)
+const result = await analyst.use({
+  method: 'intent',
+  params: {
+    intent: 'Analyze Q4 2024 financial performance and generate executive summary',
+    context: {
+      quarter: 'Q4',
+      year: 2024
+    }
+  }
+});
+
+// Result is comprehensive report generated autonomously
+console.log(result);
+```
+</CodeGroup>
+
+## Node addressing
+
+Every node has a unique `o://` address for discovery and routing.
+
+### Addressing scheme
+
+```
+o://[domain]/[subdomain]/[node-name]
+
+Examples:
+o://leader                          (root leader)
+o://utilities/converter             (utility node)
+o://company/finance/analyst         (hierarchical)
+o://company/engineering/backend     (team namespace)
+```
+
+### Benefits of o:// protocol
+
+<AccordionGroup>
+  <Accordion title="Human-Readable">
+    Addresses are meaningful, not random IDs like `node_a1b2c3d4`
+  </Accordion>
+  
+  <Accordion title="Hierarchical Organization">
+    Natural grouping like file systems: `o://company/finance/revenue`
+  </Accordion>
+  
+  <Accordion title="Namespace Control">
+    Prevent collisions with team/domain prefixes
+  </Accordion>
+  
+  <Accordion title="Discoverable">
+    Search by path patterns: `o://company/**` finds all company nodes
+  </Accordion>
+  
+  <Accordion title="Flexible">
+    Easy to reorganize without changing code
+  </Accordion>
+</AccordionGroup>
+
+### Resolving addresses
+
+```typescript
+import { oAddress } from '@olane/o-core';
+
+// Create address
+const address = new oAddress('o://company/finance/analyst');
+
+// Resolve to node instance (via leader)
+const node = await address.resolve();
+
+// Use the node
+const result = await node.use({
+  method: 'intent',
+  params: { intent: 'Your goal' }
+});
+```
+
+## Node lifecycle
+
+Nodes have a standard lifecycle managed by Olane OS.
+
+```
+STOPPED → STARTING → RUNNING → STOPPING → STOPPED
+```
+
+### Starting a node
+
+<CodeGroup>
+```typescript Programmatic Start
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+const node = new oNodeTool({
+  address: new oAddress('o://my-node'),
+  leader: new oAddress('o://leader')
+});
+
+// Start node
+await node.start();
+
+// Node is now:
+// 1. Connected to network
+// 2. Registered with leader
+// 3. Ready to receive requests
+
+console.log(node.status); // RUNNING
+```
+
+```typescript Via OlaneOS
+import { OlaneOS, NodeType } from '@olane/os';
+
+const os = new OlaneOS({
+  nodes: [
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader')
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://my-node')
+    }
+  ]
+});
+
+// Start entire OS (leader + nodes)
+await os.start();
+
+// All nodes are now running
+console.log(os.status); // RUNNING
+```
+</CodeGroup>
+
+### Stopping a node
+
+```typescript
+// Graceful shutdown
+await node.stop();
+
+// Node:
+// 1. Completes in-flight requests
+// 2. Deregisters from leader
+// 3. Closes network connections
+// 4. Releases resources
+
+console.log(node.status); // STOPPED
+```
+
+**Learn more**: [Node Lifecycle →](/concepts/nodes/lifecycle)
+
+## When to build a node
+
+Use this decision tree to determine if you need a node:
+
+```
+Do you have related tools that should be grouped together?
+│
+├─ YES → Do agents know which tool to call?
+│        │
+│        ├─ YES → Build SIMPLE NODE
+│        │       • 1-5 tools
+│        │       • Direct tool calls
+│        │       • o-node + o-tool
+│        │
+│        └─ NO → Build COMPLEX NODE
+│                • 5-20+ tools
+│                • Intent-driven
+│                • o-node + o-tool + o-lane
+│
+└─ NO → Do you have MULTIPLE domains?
+        └─ Build APPLICATION
+           • Multiple nodes
+           • Each domain = one node
+           • Coordinate via agents or coordinator
+```
+
+### Examples
+
+| Scenario | Solution | Reasoning |
+|----------|----------|-----------|
+| Currency converter with 3 operations | Simple Node | Few tools, agents call directly |
+| Email service (send, validate, template) | Simple Node | Related operations, simple domain |
+| Financial analyst with 15 tools | Complex Node | Many tools, intent-driven |
+| Data pipeline manager | Complex Node | Multi-step workflows, decisions needed |
+| CRM with customers + sales + support | Application | Multiple domains, coordinate via leader |
+
+## Real-world analogies
+
+<CardGroup cols={2}>
+  <Card title="Simple Node = Microservice" icon="server" color="#0D9373">
+    RESTful service with a few endpoints
+    - Stripe payment processing
+    - Twilio SMS service
+    - SendGrid email API
+  </Card>
+  
+  <Card title="Complex Node = Smart Service" icon="brain" color="#0D9373">
+    Service with its own intelligence
+    - GitHub Copilot (intent → code)
+    - Bloomberg Terminal (intent → analysis)
+    - Adobe Creative Suite (intent → design)
+  </Card>
+</CardGroup>
+
+## Common patterns
+
+### Pattern 1: Single-Purpose Node
+
+One focused capability with a few tools.
+
+```typescript
+class EmailServiceNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://services/email')
+    });
+  }
+
+  async _tool_send(request: oRequest) {
+    // Send email
+  }
+
+  async _tool_validate(request: oRequest) {
+    // Validate email address
+  }
+
+  async _tool_get_template(request: oRequest) {
+    // Get email template
+  }
+}
+```
+
+**Best for**: Clear, focused domains where agents know what they need.
+
+---
+
+### Pattern 2: Multi-Tool Coordination Node
+
+Complex node that coordinates many internal tools.
+
+```typescript
+class DataPipelineNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://data/pipeline')
+    });
+  }
+
+  // Many internal tools
+  async _tool_extract_data(request: oRequest) { /* ... */ }
+  async _tool_transform_data(request: oRequest) { /* ... */ }
+  async _tool_validate_data(request: oRequest) { /* ... */ }
+  async _tool_load_data(request: oRequest) { /* ... */ }
+  async _tool_monitor_pipeline(request: oRequest) { /* ... */ }
+  async _tool_generate_report(request: oRequest) { /* ... */ }
+}
+
+// Agent sends intent
+await pipeline.use({
+  method: 'intent',
+  params: {
+    intent: 'Process customer data from S3 and load into warehouse'
+  }
+});
+```
+
+**Best for**: Complex workflows requiring autonomous decision-making.
+
+---
+
+### Pattern 3: Specialist Node in Application
+
+Node as part of larger application.
+
+```typescript
+// Part of CRM application
+class CustomerDataNode extends oNodeTool {
+  // o://crm/customers
+  async _tool_get_customer(request: oRequest) { /* ... */ }
+  async _tool_update_customer(request: oRequest) { /* ... */ }
+  async _tool_search_customers(request: oRequest) { /* ... */ }
+}
+
+class SalesPipelineNode extends oNodeTool {
+  // o://crm/sales
+  async _tool_create_deal(request: oRequest) { /* ... */ }
+  async _tool_update_stage(request: oRequest) { /* ... */ }
+  async _tool_forecast_revenue(request: oRequest) { /* ... */ }
+}
+
+// Agents coordinate between nodes
+// Or coordinator node orchestrates them
+```
+
+**Best for**: Large applications with clear domain boundaries.
+
+## Node discovery
+
+Nodes register with leaders for network-wide discovery.
+
+### Registration
+
+When a node starts, it automatically registers:
+
+```typescript
+// Node starts
+await node.start();
+
+// Automatically:
+// 1. Connects to leader at configured address
+// 2. Sends registration with metadata:
+//    - Address: o://my-node
+//    - Tools: [list of available tools]
+//    - Capabilities: [tags, keywords]
+//    - Status: RUNNING
+// 3. Receives confirmation
+// 4. Ready to receive requests
+```
+
+### Searching for nodes
+
+From within another node or agent:
+
+```typescript
+// Search by address
+const node = await this.leader.search({ 
+  address: 'o://company/finance/analyst' 
+});
+
+// Search by capability
+const analysts = await this.leader.search({ 
+  capability: 'financial_analysis' 
+});
+
+// Search by path pattern
+const financeNodes = await this.leader.search({ 
+  addressPattern: 'o://company/finance/**' 
+});
+
+// Use discovered node
+const result = await node.use({
+  method: 'intent',
+  params: { intent: 'Your goal' }
+});
+```
+
+## Troubleshooting
+
+### Error: "Node failed to register with leader"
+
+**Cause**: Leader not reachable or not started before node
+
+**Solution**: Ensure leader starts first and is reachable:
+
+```typescript
+const os = new OlaneOS({
+  nodes: [
+    // Leader FIRST
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader')
+    },
+    // Workers AFTER
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://worker')
+    }
+  ]
+});
+```
+
+### Error: "Tool not found"
+
+**Cause**: Agent calling tool that doesn't exist on node
+
+**Solution**: List available tools:
+
+```typescript
+// Discover node's tools
+const tools = node.getAvailableTools();
+console.log(tools);
+// ['convert', 'get_rate', 'list_currencies']
+
+// Call existing tool
+await node.use({
+  method: 'convert',  // Must match tool name
+  params: { /* ... */ }
+});
+```
+
+### Error: "Intent processing timeout"
+
+**Cause**: Complex node taking too long to process intent
+
+**Solution**: Increase timeout or simplify intent:
+
+```typescript
+// Increase timeout
+const result = await node.use({
+  method: 'intent',
+  params: { 
+    intent: 'Your goal',
+    timeout: 300000  // 5 minutes
+  }
+});
+
+// Or simplify intent
+await node.use({
+  method: 'intent',
+  params: { 
+    intent: 'Just analyze revenue (not full report)'
+  }
+});
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Build Simple Node" icon="rocket" href="/concepts/nodes/simple-nodes">
+    Learn to build direct-invocation nodes
+  </Card>
+  <Card title="Build Complex Node" icon="brain" href="/concepts/nodes/complex-nodes">
+    Learn to build intent-driven nodes
+  </Card>
+  <Card title="Node Lifecycle" icon="rotate" href="/concepts/nodes/lifecycle">
+    Understand node startup and shutdown
+  </Card>
+  <Card title="Node Hierarchies" icon="sitemap" href="/concepts/nodes/hierarchies">
+    Organize nodes in hierarchies
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Tools, Nodes, and Applications](/concepts/tools-nodes-applications)
+- **Concept**: [Simple Nodes](/concepts/nodes/simple-nodes)
+- **Concept**: [Complex Nodes](/concepts/nodes/complex-nodes)
+- **Package**: [o-node Reference](/packages/o-node)
+- **Package**: [o-lane Reference](/packages/o-lane)
+- **Guide**: [Building Your First Node](/guides/first-node)
+

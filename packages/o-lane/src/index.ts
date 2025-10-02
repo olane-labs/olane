@@ -12,7 +12,7 @@ export * from './capabilities-evaluate/o-capability.evaluate.js';
 export * from './capabilities-multiple-step/o-capability.multiple-step.js';
 export * from './capabilities-search/o-capability.search.js';
 export * from './capabilities-task/o-capability.task.js';
-export * from './past/o-lane.past.js';
+export * from './storage/o-lane.storage.js';
 export * from './prompts/custom.prompt.js';
 export * from './intent-encoder/index.js';
 export * from './enum/o-lane.status-enum.js';

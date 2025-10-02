@@ -38,7 +38,7 @@ export class oLane extends oObject {
     this.intentEncoder = new oIntentEncoder();
 
     // set a max cycles if one is not provided
-    if (process.env.MAX_CYCLES) {
+    if (!!process.env.MAX_CYCLES) {
       this.MAX_CYCLES = parseInt(process.env.MAX_CYCLES);
     }
     this.MAX_CYCLES = this.config.maxCycles || this.MAX_CYCLES;
@@ -139,8 +139,8 @@ export class oLane extends oObject {
 
   async execute(): Promise<oCapabilityResult> {
     this.logger.debug('Executing...');
-    this.status = oLaneStatus.RUNNING;
     await this.preflight();
+    this.status = oLaneStatus.RUNNING;
     try {
       this.result = await this.loop();
     } catch (error) {
