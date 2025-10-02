@@ -213,67 +213,10 @@ export class OlaneOS extends oObject {
     const stopPromises: Promise<void>[] = [];
 
     try {
-      // Stop all common nodes first
-      if (this.nodes.length > 0) {
-        stopPromises.push(
-          Promise.allSettled(
-            this.nodes.map(async (node) => {
-              try {
-                await node.stop();
-                this.logger.debug(`Stopped node: ${node.address.toString()}`);
-              } catch (error) {
-                this.logger.error(
-                  `Error stopping node ${node.address.toString()}:`,
-                  error,
-                );
-              }
-            }),
-          ).then(() => {
-            this.nodes = [];
-            this.logger.debug('All common nodes stopped');
-          }),
-        );
+      if (!this.rootLeader) {
+        throw new Error('Root leader not found');
       }
-
-      // Stop all leader nodes
-      if (this.leaders.length > 0) {
-        stopPromises.push(
-          Promise.allSettled(
-            this.leaders.map(async (leader) => {
-              try {
-                await leader.stop();
-                this.logger.debug(
-                  `Stopped leader: ${leader.address.toString()}`,
-                );
-              } catch (error) {
-                this.logger.error(
-                  `Error stopping leader ${leader.address.toString()}:`,
-                  error,
-                );
-              }
-            }),
-          ).then(() => {
-            this.leaders = [];
-            this.logger.debug('All leader nodes stopped');
-          }),
-        );
-      }
-
-      // Stop root leader last
-      if (this.rootLeader) {
-        this.logger.debug('Stopping root leader...');
-        stopPromises.push(
-          this.rootLeader
-            .stop()
-            .then(() => {
-              this.logger.debug('Root leader stopped');
-              this.rootLeader = null;
-            })
-            .catch((error: any) => {
-              this.logger.error('Error stopping root leader:', error);
-            }),
-        );
-      }
+      stopPromises.push(this.rootLeader.stop());
 
       // Wait for all stop operations to complete
       await Promise.all(stopPromises);

@@ -107,6 +107,7 @@
         "concepts/nodes/overview",
         "concepts/nodes/simple-nodes",
         "concepts/nodes/complex-nodes",
+        "concepts/nodes/everything-is-a-node",
         "concepts/nodes/lifecycle",
         "concepts/nodes/hierarchies",
         "concepts/nodes/specialization"

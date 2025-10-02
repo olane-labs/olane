@@ -39,7 +39,7 @@ export class oAddress extends oObject {
   }
 
   validate(): boolean {
-    if (!this.value.startsWith('o://')) {
+    if (!this.value?.startsWith('o://')) {
       return false;
     }
     return true;

@@ -1,0 +1,1024 @@
+---
+title: "Browser Nodes"
+description: "Run Olane nodes in browser tabs and create peer-to-peer web applications"
+---
+
+## Overview
+
+Browser tabs can become full-fledged nodes in your Olane network. This enables direct peer-to-peer communication between browsers, server-to-browser coordination, and distributed browser-based applications.
+
+**TL;DR**: Each browser tab = one node. Tabs discover each other, coordinate workflows, and communicate directly with servers - no traditional API layer needed.
+
+## Quick start
+
+<Steps>
+  <Step title="Install dependencies">
+    ```bash
+    npm install @olane/o-node @olane/o-core
+    ```
+  </Step>
+  
+  <Step title="Create browser node">
+    ```typescript
+    import { oNode } from '@olane/o-node';
+    import { oAddress } from '@olane/o-core';
+    
+    // Create node in browser
+    const browserNode = new oNode({
+      address: new oAddress('o://browser/tab-' + Date.now())
+    });
+    
+    // Connect to network
+    await browserNode.start();
+    
+    console.log('Browser tab is now a node!');
+    ```
+  </Step>
+  
+  <Step title="Call from server">
+    ```typescript
+    // Server can now discover and call this browser tab
+    const browserTabs = await leader.search({ 
+      addressPattern: 'o://browser/*' 
+    });
+    
+    for (const tab of browserTabs) {
+      await tab.use({
+        method: 'update_ui',
+        params: { message: 'Hello from server!' }
+      });
+    }
+    ```
+  </Step>
+</Steps>
+
+## Installation
+
+### Via npm (bundled app)
+
+```bash
+npm install @olane/o-node @olane/o-core
+```
+
+### Via CDN (quick testing)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Browser Node Example</title>
+  <script type="module">
+    import { oNode } from 'https://esm.sh/@olane/o-node';
+    import { oAddress } from 'https://esm.sh/@olane/o-core';
+    
+    // Your code here
+  </script>
+</head>
+<body>
+  <h1>This tab is a node!</h1>
+</body>
+</html>
+```
+
+## How it works
+
+### Browser networking
+
+Browsers use **WebRTC** and **WebSocket** transports to join the Olane network:
+
+```
+┌─────────────────────────────────────────────┐
+│  Browser Tab (Node)                          │
+│  • WebRTC for P2P (browser ↔ browser)       │
+│  • WebSocket for Server (browser ↔ server)  │
+│  • Same interface as server nodes           │
+└─────────────────────────────────────────────┘
+```
+
+### Transport selection
+
+The node automatically selects the best transport:
+
+| Connection Type | Transport | Use Case |
+|----------------|-----------|----------|
+| Browser → Server | WebSocket | API calls, coordination |
+| Browser → Browser (same origin) | WebRTC | P2P collaboration |
+| Browser → Browser (different origin) | WebRTC + TURN | Cross-site coordination |
+
+<Note>
+  libp2p (the networking layer) handles transport selection automatically based on what's available.
+</Note>
+
+## Basic patterns
+
+### Pattern 1: Browser tab as UI node
+
+Each tab registers as a discoverable UI component:
+
+```typescript
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+class DashboardTabNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://ui/dashboard/' + sessionId),
+      // Connect to your network's leader
+      leader: new oAddress('o://leader')
+    });
+  }
+  
+  // Tool 1: Update UI
+  async _tool_update_chart(request: oRequest) {
+    const { chartId, data } = request.params;
+    
+    // Update chart in browser
+    const chart = document.getElementById(chartId);
+    chart.data = data;
+    chart.render();
+    
+    return { updated: true, chartId };
+  }
+  
+  // Tool 2: Show notification
+  async _tool_notify(request: oRequest) {
+    const { message, type } = request.params;
+    
+    // Show browser notification
+    if (Notification.permission === 'granted') {
+      new Notification('Update', { body: message });
+    }
+    
+    // Also show in-page notification
+    this.showToast(message, type);
+    
+    return { displayed: true };
+  }
+  
+  // Tool 3: Get current state
+  async _tool_get_state(request: oRequest) {
+    return {
+      url: window.location.href,
+      title: document.title,
+      scrollPosition: window.scrollY,
+      activeElement: document.activeElement?.id
+    };
+  }
+  
+  private showToast(message: string, type: string) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+}
+
+// Initialize when page loads
+window.addEventListener('DOMContentLoaded', async () => {
+  const tabNode = new DashboardTabNode();
+  await tabNode.start();
+  
+  console.log('Dashboard tab is live on network');
+});
+```
+
+### Pattern 2: Server pushing updates to browser
+
+Server directly updates browser UI:
+
+<CodeGroup>
+```typescript Server Node
+class DataProcessorNode extends oNodeTool {
+  async _tool_process_data(request: oRequest) {
+    const { data, userId } = request.params;
+    
+    // Process data...
+    const result = this.analyzeData(data);
+    
+    // Find user's browser tabs
+    const userTabs = await this.leader.search({ 
+      addressPattern: `o://ui/*`,
+      userId: userId
+    });
+    
+    // Update ALL user's open tabs
+    for (const tab of userTabs) {
+      await tab.use({
+        method: 'update_chart',
+        params: {
+          chartId: 'analytics-chart',
+          data: result
+        }
+      });
+    }
+    
+    return { processed: true, tabsUpdated: userTabs.length };
+  }
+}
+```
+
+```typescript Browser Node
+class AnalyticsTabNode extends oNodeTool {
+  async _tool_update_chart(request: oRequest) {
+    const { chartId, data } = request.params;
+    
+    // Update Chart.js or similar
+    const chart = Chart.getChart(chartId);
+    chart.data.datasets[0].data = data;
+    chart.update();
+    
+    // Show visual feedback
+    this.flashElement(chartId);
+    
+    return { updated: true };
+  }
+  
+  private flashElement(id: string) {
+    const element = document.getElementById(id);
+    element.classList.add('flash-update');
+    setTimeout(() => element.classList.remove('flash-update'), 500);
+  }
+}
+```
+</CodeGroup>
+
+### Pattern 3: Browser-to-browser collaboration
+
+Multiple tabs coordinate directly:
+
+```typescript
+class CollaborativeEditorNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://collab/editor/' + sessionId)
+    });
+  }
+  
+  async _tool_text_changed(request: oRequest) {
+    const { position, text, userId } = request.params;
+    
+    // Apply change to local editor
+    this.applyTextChange(position, text);
+    
+    // Find other editors in same document
+    const otherEditors = await this.leader.search({
+      addressPattern: 'o://collab/editor/*',
+      documentId: this.documentId
+    });
+    
+    // Broadcast change to other tabs
+    for (const editor of otherEditors) {
+      if (editor.address !== this.address) {
+        await editor.use({
+          method: 'apply_remote_change',
+          params: { position, text, userId }
+        });
+      }
+    }
+    
+    return { synced: true };
+  }
+  
+  async _tool_apply_remote_change(request: oRequest) {
+    const { position, text, userId } = request.params;
+    
+    // Apply remote change
+    this.applyTextChange(position, text);
+    
+    // Show who made the change
+    this.showUserCursor(userId, position);
+    
+    return { applied: true };
+  }
+}
+```
+
+## Security considerations
+
+### 1. Authentication
+
+Authenticate browser nodes before allowing network access:
+
+```typescript
+class SecureBrowserNode extends oNodeTool {
+  constructor(authToken: string) {
+    super({
+      address: new oAddress('o://browser/secure/' + generateId()),
+      // Include auth in metadata
+      metadata: {
+        authToken: authToken,
+        userId: extractUserId(authToken)
+      }
+    });
+  }
+  
+  async start() {
+    // Verify authentication before starting
+    const isValid = await this.verifyAuth(this.metadata.authToken);
+    if (!isValid) {
+      throw new Error('Invalid authentication token');
+    }
+    
+    await super.start();
+  }
+  
+  private async verifyAuth(token: string): Promise<boolean> {
+    // Call your auth service
+    const response = await fetch('/api/verify-token', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.ok;
+  }
+}
+```
+
+### 2. Leader validation
+
+Leaders should validate browser join requests:
+
+```typescript
+class SecureLeaderNode extends oLeaderNode {
+  async validateJoinRequest(request: JoinRequest): Promise<boolean> {
+    // Browser nodes must have valid auth
+    if (request.address.startsWith('o://browser/')) {
+      const authToken = request.metadata?.authToken;
+      if (!authToken) {
+        console.warn('Browser node without auth rejected');
+        return false;
+      }
+      
+      return await this.verifyToken(authToken);
+    }
+    
+    return true; // Allow server nodes
+  }
+}
+```
+
+### 3. Scope isolation
+
+Limit what browser nodes can access:
+
+```typescript
+class BrowserNode extends oNodeTool {
+  async _tool_query_data(request: oRequest) {
+    // Only allow querying user's own data
+    const userId = this.metadata.userId;
+    
+    if (request.params.userId !== userId) {
+      throw new Error('Cannot access other users data');
+    }
+    
+    return await this.fetchUserData(userId);
+  }
+}
+```
+
+### 4. Content Security Policy
+
+Add CSP headers to allow WebRTC:
+
+```html
+<meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               connect-src 'self' wss://*.your-network.com;
+               worker-src 'self' blob:;">
+```
+
+## Advanced patterns
+
+### Pattern 1: Multi-tab coordination
+
+Coordinate multiple tabs from the same user:
+
+```typescript
+class TabCoordinator {
+  private tabs: Map<string, oNodeTool> = new Map();
+  private leaderId: string;
+  
+  async registerTab(tabId: string) {
+    // Create node for this tab
+    const tabNode = new oNodeTool({
+      address: new oAddress(`o://tabs/${userId}/${tabId}`),
+      metadata: { userId, tabId, isLeader: false }
+    });
+    
+    await tabNode.start();
+    this.tabs.set(tabId, tabNode);
+    
+    // First tab becomes leader
+    if (this.tabs.size === 1) {
+      this.leaderId = tabId;
+      tabNode.metadata.isLeader = true;
+      this.startCoordination(tabNode);
+    }
+    
+    return tabNode;
+  }
+  
+  private startCoordination(leaderTab: oNodeTool) {
+    // Leader tab coordinates shared state
+    leaderTab.addTool('sync_state', async (request) => {
+      // Broadcast to all tabs
+      for (const [id, tab] of this.tabs) {
+        if (id !== this.leaderId) {
+          await tab.use({
+            method: 'update_state',
+            params: request.params
+          });
+        }
+      }
+    });
+  }
+  
+  async closeTab(tabId: string) {
+    const tab = this.tabs.get(tabId);
+    await tab?.stop();
+    this.tabs.delete(tabId);
+    
+    // Elect new leader if needed
+    if (tabId === this.leaderId && this.tabs.size > 0) {
+      const [newLeaderId, newLeaderTab] = this.tabs.entries().next().value;
+      this.leaderId = newLeaderId;
+      newLeaderTab.metadata.isLeader = true;
+      this.startCoordination(newLeaderTab);
+    }
+  }
+}
+
+// Usage
+const coordinator = new TabCoordinator();
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const tabId = sessionStorage.getItem('tabId') || generateId();
+  sessionStorage.setItem('tabId', tabId);
+  
+  await coordinator.registerTab(tabId);
+});
+
+window.addEventListener('beforeunload', () => {
+  const tabId = sessionStorage.getItem('tabId');
+  coordinator.closeTab(tabId);
+});
+```
+
+### Pattern 2: Offline-first with sync
+
+Handle offline scenarios gracefully:
+
+```typescript
+class OfflineCapableBrowserNode extends oNodeTool {
+  private offlineQueue: Array<any> = [];
+  private isOnline: boolean = navigator.onLine;
+  
+  constructor() {
+    super({
+      address: new oAddress('o://browser/offline/' + generateId())
+    });
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => this.handleOnline());
+    window.addEventListener('offline', () => this.handleOffline());
+  }
+  
+  async _tool_sync_action(request: oRequest) {
+    if (this.isOnline) {
+      // Execute immediately
+      return await this.executeAction(request.params);
+    } else {
+      // Queue for later
+      this.offlineQueue.push(request.params);
+      this.saveQueueToStorage();
+      return { queued: true };
+    }
+  }
+  
+  private async handleOnline() {
+    this.isOnline = true;
+    console.log('Back online, syncing queued actions...');
+    
+    // Process queued actions
+    for (const action of this.offlineQueue) {
+      try {
+        await this.executeAction(action);
+      } catch (error) {
+        console.error('Failed to sync action:', error);
+      }
+    }
+    
+    this.offlineQueue = [];
+    this.saveQueueToStorage();
+  }
+  
+  private handleOffline() {
+    this.isOnline = false;
+    console.log('Offline mode activated');
+    this.showOfflineIndicator();
+  }
+  
+  private saveQueueToStorage() {
+    localStorage.setItem('offlineQueue', JSON.stringify(this.offlineQueue));
+  }
+  
+  private loadQueueFromStorage() {
+    const stored = localStorage.getItem('offlineQueue');
+    if (stored) {
+      this.offlineQueue = JSON.parse(stored);
+    }
+  }
+}
+```
+
+### Pattern 3: Service Worker integration
+
+Use Service Worker for persistent background node:
+
+```typescript
+// service-worker.ts
+import { oNodeTool } from '@olane/o-node';
+
+class ServiceWorkerNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://sw/worker-' + self.registration.scope)
+    });
+  }
+  
+  async _tool_handle_push(request: oRequest) {
+    const { title, body, data } = request.params;
+    
+    // Show notification
+    await self.registration.showNotification(title, {
+      body: body,
+      data: data,
+      icon: '/icon.png'
+    });
+    
+    // Notify all open tabs
+    const clients = await self.clients.matchAll();
+    for (const client of clients) {
+      client.postMessage({
+        type: 'PUSH_RECEIVED',
+        data: data
+      });
+    }
+    
+    return { delivered: true };
+  }
+  
+  async _tool_sync_data(request: oRequest) {
+    // Background sync logic
+    const data = await this.fetchLatestData();
+    
+    // Update cache
+    const cache = await caches.open('data-cache');
+    await cache.put('/api/latest', new Response(JSON.stringify(data)));
+    
+    return { synced: true };
+  }
+}
+
+// Initialize when service worker activates
+self.addEventListener('activate', async () => {
+  const swNode = new ServiceWorkerNode();
+  await swNode.start();
+  console.log('Service Worker node is active');
+});
+```
+
+## Performance optimization
+
+### 1. Connection pooling
+
+Reuse connections across tool calls:
+
+```typescript
+class OptimizedBrowserNode extends oNodeTool {
+  private connectionPool: Map<string, Connection> = new Map();
+  
+  async use(request: oRequest) {
+    // Reuse existing connection if available
+    const targetAddress = this.resolveTarget(request);
+    let connection = this.connectionPool.get(targetAddress);
+    
+    if (!connection || !connection.isAlive) {
+      connection = await this.createConnection(targetAddress);
+      this.connectionPool.set(targetAddress, connection);
+    }
+    
+    return await connection.send(request);
+  }
+}
+```
+
+### 2. Lazy node initialization
+
+Don't start node until needed:
+
+```typescript
+class LazyBrowserNode {
+  private node: oNodeTool | null = null;
+  
+  async ensureStarted() {
+    if (!this.node) {
+      this.node = new oNodeTool({
+        address: new oAddress('o://browser/' + generateId())
+      });
+      await this.node.start();
+    }
+    return this.node;
+  }
+  
+  async callTool(method: string, params: any) {
+    const node = await this.ensureStarted();
+    return await node.use({ method, params });
+  }
+}
+
+// Usage: Node only starts when first tool is called
+const lazyNode = new LazyBrowserNode();
+await lazyNode.callTool('fetch_data', { id: 123 });
+```
+
+### 3. Batch operations
+
+Batch multiple UI updates:
+
+```typescript
+class BatchedBrowserNode extends oNodeTool {
+  private updateQueue: Array<any> = [];
+  private batchTimer: any = null;
+  
+  async _tool_update_ui(request: oRequest) {
+    // Add to queue
+    this.updateQueue.push(request.params);
+    
+    // Clear existing timer
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+    }
+    
+    // Batch updates
+    this.batchTimer = setTimeout(() => {
+      this.flushUpdates();
+    }, 50); // 50ms debounce
+    
+    return { queued: true };
+  }
+  
+  private flushUpdates() {
+    // Apply all updates in one DOM operation
+    requestAnimationFrame(() => {
+      const updates = [...this.updateQueue];
+      this.updateQueue = [];
+      
+      // Batch DOM updates
+      for (const update of updates) {
+        this.applyUpdate(update);
+      }
+    });
+  }
+}
+```
+
+## Troubleshooting
+
+### Error: "WebRTC connection failed"
+
+**Cause**: STUN/TURN servers not configured or firewall blocking WebRTC
+
+**Solution**: Configure TURN servers for NAT traversal:
+
+```typescript
+const browserNode = new oNode({
+  address: new oAddress('o://browser/tab'),
+  network: {
+    config: {
+      Addresses: {
+        Announce: [],
+        NoAnnounce: []
+      },
+      ConnectionManager: {
+        minConnections: 1
+      }
+    },
+    // Add TURN servers
+    rtc: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        {
+          urls: 'turn:turn.your-domain.com:3478',
+          username: 'user',
+          credential: 'password'
+        }
+      ]
+    }
+  }
+});
+```
+
+### Error: "Leader not reachable"
+
+**Cause**: WebSocket connection blocked or wrong leader address
+
+**Solution**: Verify WebSocket connection:
+
+```typescript
+// Test WebSocket connection first
+const ws = new WebSocket('wss://your-leader-host:port');
+ws.onopen = () => {
+  console.log('WebSocket works!');
+  ws.close();
+  
+  // Now start node
+  const node = new oNode({
+    address: new oAddress('o://browser/tab'),
+    leader: new oAddress('o://leader')
+  });
+  node.start();
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket connection failed:', error);
+};
+```
+
+### Error: "Notification permission denied"
+
+**Cause**: Browser notifications not permitted
+
+**Solution**: Request permission before starting node:
+
+```typescript
+async function initializeBrowserNode() {
+  // Request notification permission
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  
+  if (Notification.permission === 'granted') {
+    const node = new NotificationCapableNode();
+    await node.start();
+  } else {
+    // Fall back to in-page notifications only
+    const node = new BasicBrowserNode();
+    await node.start();
+  }
+}
+```
+
+### Performance: Slow tab startup
+
+**Cause**: Too many connections established on start
+
+**Solution**: Use lazy connection establishment:
+
+```typescript
+const node = new oNode({
+  address: new oAddress('o://browser/tab'),
+  network: {
+    config: {
+      ConnectionManager: {
+        minConnections: 0, // Don't establish connections immediately
+        maxConnections: 10
+      }
+    }
+  }
+});
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="1. Handle tab lifecycle properly">
+    ```typescript
+    class LifecycleAwareBrowserNode extends oNodeTool {
+      constructor() {
+        super({ address: new oAddress('o://browser/tab') });
+        
+        // Cleanup on tab close
+        window.addEventListener('beforeunload', () => {
+          this.gracefulShutdown();
+        });
+        
+        // Handle visibility changes
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            this.pause();
+          } else {
+            this.resume();
+          }
+        });
+      }
+      
+      private async gracefulShutdown() {
+        // Notify network that tab is closing
+        await this.use({
+          method: 'goodbye',
+          params: { reason: 'tab_closing' }
+        });
+        
+        await this.stop();
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="2. Implement reconnection logic">
+    ```typescript
+    class ResilientBrowserNode extends oNodeTool {
+      private reconnectAttempts = 0;
+      private maxReconnectAttempts = 5;
+      
+      async start() {
+        try {
+          await super.start();
+          this.reconnectAttempts = 0; // Reset on success
+        } catch (error) {
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+            console.log(`Reconnecting in ${delay}ms...`);
+            setTimeout(() => this.start(), delay);
+          } else {
+            console.error('Max reconnection attempts reached');
+            throw error;
+          }
+        }
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="3. Monitor network quality">
+    ```typescript
+    class NetworkMonitoringNode extends oNodeTool {
+      private latencyHistory: number[] = [];
+      
+      async measureLatency() {
+        const start = Date.now();
+        await this.leader.use({ method: 'ping', params: {} });
+        const latency = Date.now() - start;
+        
+        this.latencyHistory.push(latency);
+        if (this.latencyHistory.length > 10) {
+          this.latencyHistory.shift();
+        }
+        
+        const avgLatency = this.latencyHistory.reduce((a, b) => a + b) / this.latencyHistory.length;
+        
+        if (avgLatency > 1000) {
+          this.showSlowConnectionWarning();
+        }
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="4. Use appropriate storage">
+    ```typescript
+    // Persistent data: IndexedDB
+    import { openDB } from 'idb';
+    
+    class PersistentBrowserNode extends oNodeTool {
+      private db: any;
+      
+      async initialize() {
+        this.db = await openDB('node-storage', 1, {
+          upgrade(db) {
+            db.createObjectStore('state');
+          }
+        });
+      }
+      
+      async saveState(key: string, value: any) {
+        await this.db.put('state', value, key);
+      }
+      
+      async loadState(key: string) {
+        return await this.db.get('state', key);
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Examples
+
+### Example 1: Real-time dashboard
+
+```typescript
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+class DashboardNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://dashboard/' + userId)
+    });
+  }
+  
+  async _tool_update_metric(request: oRequest) {
+    const { metric, value } = request.params;
+    
+    // Update DOM
+    const element = document.getElementById(`metric-${metric}`);
+    if (element) {
+      element.textContent = value;
+      element.classList.add('updated');
+      setTimeout(() => element.classList.remove('updated'), 500);
+    }
+    
+    return { updated: true };
+  }
+}
+
+// Server pushes updates
+// await dashboardNode.use({ 
+//   method: 'update_metric', 
+//   params: { metric: 'sales', value: '$1.2M' } 
+// });
+```
+
+### Example 2: Collaborative whiteboard
+
+```typescript
+class WhiteboardNode extends oNodeTool {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  
+  constructor(canvasId: string) {
+    super({
+      address: new oAddress('o://whiteboard/' + sessionId)
+    });
+    
+    this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    this.ctx = this.canvas.getContext('2d')!;
+    
+    // Broadcast local drawings
+    this.canvas.addEventListener('pointerdown', (e) => this.startDrawing(e));
+    this.canvas.addEventListener('pointermove', (e) => this.draw(e));
+  }
+  
+  private async draw(e: PointerEvent) {
+    if (!this.isDrawing) return;
+    
+    const x = e.offsetX;
+    const y = e.offsetY;
+    
+    // Draw locally
+    this.drawLine(this.lastX, this.lastY, x, y);
+    
+    // Broadcast to other whiteboards
+    const peers = await this.leader.search({
+      addressPattern: 'o://whiteboard/*',
+      sessionId: sessionId
+    });
+    
+    for (const peer of peers) {
+      if (peer.address !== this.address) {
+        peer.use({
+          method: 'draw_remote',
+          params: { x1: this.lastX, y1: this.lastY, x2: x, y2: y }
+        });
+      }
+    }
+    
+    this.lastX = x;
+    this.lastY = y;
+  }
+  
+  async _tool_draw_remote(request: oRequest) {
+    const { x1, y1, x2, y2 } = request.params;
+    this.drawLine(x1, y1, x2, y2);
+    return { drawn: true };
+  }
+}
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="React Integration" icon="react" href="/guides/react-nodes">
+    Build React components as nodes
+  </Card>
+  <Card title="Mobile Nodes" icon="mobile" href="/guides/mobile-nodes">
+    Create iOS/Android app nodes
+  </Card>
+  <Card title="Security Guide" icon="shield" href="/guides/security">
+    Secure your browser nodes
+  </Card>
+  <Card title="Performance Tips" icon="gauge-high" href="/guides/performance">
+    Optimize browser node performance
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Everything is a Node](/concepts/nodes/everything-is-a-node)
+- **Package**: [o-node Reference](/packages/o-node)
+- **Guide**: [Network Security](/guides/security)
+- **Example**: [Real-time Dashboard Demo](https://github.com/olane/examples/browser-dashboard)
+

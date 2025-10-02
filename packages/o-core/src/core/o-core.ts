@@ -111,9 +111,13 @@ export abstract class oCore extends oObject {
       id?: string;
     },
   ): Promise<oResponse> {
+    if (!this.isRunning) {
+      throw new Error('Node is not running');
+    }
     if (!address.validate()) {
       throw new Error('Invalid address');
     }
+
     this.logger.debug('Using address: ', address.toString());
 
     if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
@@ -159,6 +163,9 @@ export abstract class oCore extends oObject {
     params?: { [key: string]: any };
     id?: string;
   }): Promise<oResponse> {
+    if (!this.isRunning) {
+      throw new Error('Node is not running');
+    }
     // let's call our own tool
     this.logger.debug('Calling ourselves, skipping...', data);
 
@@ -200,6 +207,9 @@ export abstract class oCore extends oObject {
       id?: string;
     },
   ): Promise<oResponse> {
+    if (!this.isRunning) {
+      throw new Error('Node is not running');
+    }
     const connection = await this.connect(childAddress, childAddress);
 
     // communicate the payload to the target node
@@ -246,6 +256,10 @@ export abstract class oCore extends oObject {
 
   // initialize
   async initialize(): Promise<void> {}
+
+  get isRunning(): boolean {
+    return this.state < NodeState.STOPPING;
+  }
 
   /**
    * Starts the node by transitioning through initialization and registration phases.

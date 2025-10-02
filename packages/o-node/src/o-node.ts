@@ -310,6 +310,7 @@ export class oNode extends oToolBase {
 
     // setup a fallback resolver for non-leader nodes
     if (this.isLeader === false) {
+      this.logger.debug('Adding leader resolver fallback...');
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
   }
