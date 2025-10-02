@@ -44,7 +44,7 @@ export class oLaneTool extends oNodeTool {
       intent: new oIntent({ intent: intent as string }),
       currentNode: this,
       caller: this.address,
-      streamTo: new oAddress(streamTo as string),
+      streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
       context: context
         ? new oLaneContext([
             `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
@@ -65,5 +65,10 @@ export class oLaneTool extends oNodeTool {
         };
       }),
     };
+  }
+
+  async teardown(): Promise<void> {
+    await this.manager.teardown();
+    await super.teardown();
   }
 }

@@ -13,7 +13,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
 import { oLaneStatus } from './enum/o-lane.status-enum.js';
-import { oCapabilityResult, oCapabilityType } from './capabilities/index.js';
+import {
+  oCapabilityConfig,
+  oCapabilityResult,
+  oCapabilityType,
+} from './capabilities/index.js';
 import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
 
 export class oLane extends oObject {
@@ -24,12 +28,7 @@ export class oLane extends oObject {
   public intentEncoder: oIntentEncoder;
   public MAX_CYCLES: number = 20;
   public status: oLaneStatus = oLaneStatus.PENDING;
-  public result: oCapabilityResult = new oCapabilityResult({
-    type: oCapabilityType.UNKNOWN,
-    result: null,
-    config: undefined,
-    error: undefined,
-  });
+  public result: oCapabilityResult | undefined;
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent.value}]`);
@@ -99,10 +98,10 @@ export class oLane extends oObject {
       value: JSON.stringify(this.toJSON()),
     };
     this.logger.debug('Storing plan params: ', params);
-    await this.node.use(oAddress.lane(), {
-      method: 'put',
-      params: params,
-    });
+    // await this.node.use(oAddress.lane(), {
+    //   method: 'put',
+    //   params: params,
+    // });
   }
 
   get agentHistory() {
@@ -137,7 +136,7 @@ export class oLane extends oObject {
     this.status = oLaneStatus.PREFLIGHT;
   }
 
-  async execute(): Promise<oCapabilityResult> {
+  async execute(): Promise<oCapabilityResult | undefined> {
     this.logger.debug('Executing...');
     await this.preflight();
     this.status = oLaneStatus.RUNNING;
@@ -159,10 +158,15 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
+    this.logger.debug('Doing capability: ', currentStep);
+    const nextStep = currentStep.result;
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {
-        const result = await capability.execute(currentStep.config);
+        const result = await capability.execute({
+          ...currentStep.config,
+          ...(typeof nextStep === 'object' ? nextStep : {}),
+        } as oCapabilityConfig);
         return result;
       }
     }
@@ -182,6 +186,7 @@ export class oLane extends oObject {
         laneConfig: this.config,
         intent: this.intent,
         node: this.node,
+        history: this.agentHistory,
       },
     });
 
@@ -189,18 +194,24 @@ export class oLane extends oObject {
       iterations++ < this.MAX_CYCLES &&
       this.status === oLaneStatus.RUNNING
     ) {
+      // update the history
+      currentStep.config.history = this.agentHistory;
       // perform the latest capability
       const result = await this.doCapability(currentStep);
+      this.logger.debug('Capability result: ', result);
       this.addSequence(result);
       if (result.type === oCapabilityType.STOP) {
         return result;
       }
       currentStep = result;
+      break;
     }
     throw new Error('Plan failed, reached max iterations');
   }
 
-  async postflight(response: oCapabilityResult): Promise<oCapabilityResult> {
+  async postflight(
+    response?: oCapabilityResult,
+  ): Promise<oCapabilityResult | undefined> {
     this.logger.debug('Postflight...');
     this.status = oLaneStatus.POSTFLIGHT;
     try {

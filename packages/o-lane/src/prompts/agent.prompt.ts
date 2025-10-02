@@ -92,9 +92,9 @@ Search Response:
   "queries": [
     {
       "query": "vector database query key terms to search for",
-      "provider": "internal",
     }
   ],
+  "isExternal": boolean,
   "reasoning": string,
   "type": "search",
 }

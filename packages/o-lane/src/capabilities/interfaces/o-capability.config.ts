@@ -6,4 +6,5 @@ export interface oCapabilityConfig {
   node: oLaneTool;
   intent: oIntent;
   laneConfig: oLaneConfig;
+  history: string;
 }

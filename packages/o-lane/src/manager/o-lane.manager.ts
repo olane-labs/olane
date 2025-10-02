@@ -45,6 +45,12 @@ export class oLaneManager extends oObject {
     return this.lanes.find((l) => l.id === id);
   }
 
+  async teardown(): Promise<void> {
+    for (const lane of this.lanes) {
+      await lane.cancel();
+    }
+  }
+
   get activeLanes(): oLane[] {
     return this.lanes.filter((l) => l.status === oLaneStatus.RUNNING);
   }
