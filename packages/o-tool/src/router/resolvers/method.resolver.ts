@@ -25,12 +25,9 @@ export class oMethodResolver extends oAddressResolver {
     const { address, node, request: resolveRequest, targetAddress } = request;
     const nextHopAddress = oAddress.next(node?.address, address);
     const method = nextHopAddress.protocol.split('/').pop();
-    this.logger.debug('Resolving method: ', method);
     if (method) {
       const methodName = await (node as oToolBase).findMethod(method);
-      this.logger.debug('Method name: ', methodName);
       if (methodName) {
-        this.logger.debug('Routing to method: ', methodName);
         const req = new oRouterRequest({
           method: oProtocolMethods.ROUTE,
           params: {

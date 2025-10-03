@@ -20,11 +20,11 @@ export class oSearchResolver extends oAddressResolver {
   }
 
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
-    const { address, node, request: resolveRequest } = request;
+    const { address, node, request: resolveRequest, targetAddress } = request;
     if (address.transports.length > 0) {
       return {
         nextHopAddress: address,
-        targetAddress: address,
+        targetAddress: targetAddress,
         requestOverride: resolveRequest,
       };
     }
@@ -80,7 +80,7 @@ export class oSearchResolver extends oAddressResolver {
     }
     return {
       nextHopAddress: address,
-      targetAddress: address,
+      targetAddress: targetAddress,
       requestOverride: resolveRequest,
     };
   }

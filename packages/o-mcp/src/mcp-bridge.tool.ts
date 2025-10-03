@@ -45,7 +45,7 @@ export class McpBridgeTool extends oLaneTool {
     const params = request.params;
 
     // params have already been validated
-    const { mcpServerUrl, headers } = params;
+    const { mcpServerUrl, headers, name, description } = params;
     try {
       this.logger.debug('Adding MCP server: ' + mcpServerUrl);
       const transport = new StreamableHTTPClientTransport(
@@ -63,7 +63,12 @@ export class McpBridgeTool extends oLaneTool {
         headers: headers,
       });
       await mcpClient.connect(transport);
-      await this.createMcpTool(mcpClient, mcpServerUrl as string);
+      await this.createMcpTool(
+        mcpClient,
+        mcpServerUrl as string,
+        name as string,
+        description as string,
+      );
       return {
         message:
           'Successfully added MCP server with ' +
@@ -139,23 +144,24 @@ export class McpBridgeTool extends oLaneTool {
     mcpClient: Client,
     url: string,
     name?: string,
+    description?: string,
   ): Promise<McpTool> {
     this.logger.debug('Creating MCP tool: ', name, url);
 
     const mcpTool = new McpTool({
       name: name || 'mcp-' + Date.now(),
-      description: 'MCP server for ' + url,
+      description: description || 'MCP server for ' + url,
       address: new oAddress(`o://${name || `mcp-${Date.now()}`}`),
       mcpClient: mcpClient,
       dependencies: [],
-      leader: this.config.leader,
+      leader: this.leader,
       parent: this.address,
     });
-    this.addChildNode(mcpTool);
-    await mcpTool.start();
     await mcpTool.setupTools();
+    await mcpTool.start();
+    this.addChildNode(mcpTool);
 
-    await this.use(new oAddress(mcpTool.address.toString()), {
+    await this.useChild(mcpTool.address, {
       method: 'index_network',
       params: {},
     });

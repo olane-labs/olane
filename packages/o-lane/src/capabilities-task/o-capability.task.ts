@@ -72,8 +72,8 @@ export class oCapabilityTask extends oCapability {
       });
 
       return new oCapabilityTaskResult({
-        result: `Tool input: ${JSON.stringify(task || {}, null, 2)}\nTool output: ${JSON.stringify(response.result, null, 2)}`,
-        type: oCapabilityType.RESULT,
+        result: `Tool Address Use output: ${JSON.stringify(response.result, null, 2)}`,
+        type: oCapabilityType.EVALUATE,
         config: this.config,
       });
     } catch (error: any) {

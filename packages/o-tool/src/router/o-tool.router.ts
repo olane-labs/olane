@@ -15,7 +15,7 @@ export abstract class oToolRouter extends oRouter {
   ): Promise<any>;
 
   async route(request: oRouterRequest, node: oCore): Promise<any> {
-    const { payload } = request.params;
+    const { payload }: any = request.params;
     const { address } = request.params;
 
     const { method } = payload;
@@ -37,19 +37,26 @@ export abstract class oToolRouter extends oRouter {
     if (finalRequest && targetAddress) {
       finalRequest.params.address = targetAddress.toString();
     }
+    const params = (req.params.payload as any).params;
     // override the method if it is a handshake
     if (isHandshake) {
       try {
         if (requestOverride) {
           // this is likely a method resolver, so we need to override the method
           // let's specify the method in the request params to optimize on context window
-          (req.params.payload as any).params.tool = req.params?.payload?.method;
+          params.tool = req.params?.payload?.method;
         }
       } catch (e) {
         this.logger.error('Error assigning tool to handshake: ', e);
       }
       // update the method to be the handshake
       req.params.payload.method = method;
+    } else if (requestOverride) {
+      // method resolved
+      (req.params.payload as any).params = {
+        ...payload.params, // initial params
+        ...params, // overloaded params
+      };
     }
     // TODO: send the request to the destination
     return this.forward(nextHopAddress, req, node);

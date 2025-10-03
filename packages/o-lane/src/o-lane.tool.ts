@@ -61,16 +61,12 @@ export class oLaneTool extends oNodeTool {
     });
 
     const response = await pc.execute();
+    this.logger.debug('Intent resolution response: ', response);
     return {
       ...response,
       cycles: pc.sequence.length,
       sequence: pc.sequence.map((s: oCapabilityResult) => {
-        return {
-          reasoning: s.result?.reasoning,
-          result: s.result?.result,
-          error: s.result?.error,
-          type: s.result?.type,
-        };
+        return s.result;
       }),
     };
   }

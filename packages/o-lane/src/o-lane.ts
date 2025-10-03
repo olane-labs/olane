@@ -164,6 +164,10 @@ export class oLane extends oObject {
       ...result.config,
       history: this.agentHistory,
       params: typeof result.result === 'object' ? result.result : {},
+      laneConfig: {
+        ...this.config,
+        sequence: this.sequence, // pass the full sequence to the next capability
+      },
     };
   }
 
@@ -212,9 +216,7 @@ export class oLane extends oObject {
         currentStep.config.history = this.agentHistory;
       }
       // perform the latest capability
-      this.logger.debug('Processing next step: ', currentStep);
       const result = await this.doCapability(currentStep);
-      this.logger.debug('Capability result: ', result);
       this.addSequence(result);
       if (result.type === oCapabilityType.STOP) {
         return result;

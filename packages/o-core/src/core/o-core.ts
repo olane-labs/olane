@@ -210,6 +210,9 @@ export abstract class oCore extends oObject {
     if (!this.isRunning) {
       throw new Error('Node is not running');
     }
+    if (!childAddress.transports) {
+      this.logger.warn('Child address has no transports, this might break!');
+    }
     const connection = await this.connect(childAddress, childAddress);
 
     // communicate the payload to the target node

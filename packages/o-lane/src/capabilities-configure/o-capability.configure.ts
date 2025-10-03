@@ -55,7 +55,6 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
     this.logger.debug('Handshake: ', handshake.result);
     const { tools, methods } = handshake.result;
     const prompt = this.generatePrompt(tools, methods);
-    this.logger.debug('Prompt: ', prompt);
     const response = await this.intelligence(prompt);
 
     return response;

@@ -28,6 +28,22 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
         required: true,
       },
       {
+        name: 'name',
+        type: 'string',
+        value: 'string',
+        description:
+          'The name for the MCP server. Generate this if not provided.',
+        required: true,
+      },
+      {
+        name: 'description',
+        type: 'string',
+        value: 'string',
+        description:
+          'The description for the MCP server. Generate this if not provided.',
+        required: false,
+      },
+      {
         name: 'headers',
         type: 'object',
         value: 'Record<string, string>',

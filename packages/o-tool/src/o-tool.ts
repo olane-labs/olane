@@ -43,36 +43,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
      * @returns
      */
     async _tool_intent(request: oRequest): Promise<any> {
-      this.logger.debug('Intent resolution called: ', request.params);
-      const { intent, context, streamTo } = request.params;
-      // const pc = new oAgentPlan({
-      //   intent: intent as string,
-      //   currentNode: this,
-      //   caller: this.address,
-      //   streamTo: new oAddress(streamTo as string),
-      //   context: context
-      //     ? new oPlanContext([
-      //         `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
-      //       ])
-      //     : undefined,
-      //   shouldContinue: () => {
-      //     return !!this.requests[request.id];
-      //   },
-      // });
-
-      // const response = await pc.execute();
-      // return {
-      //   ...response,
-      //   cycles: pc.sequence.length,
-      //   sequence: pc.sequence.map((s) => {
-      //     return {
-      //       reasoning: s.result?.reasoning,
-      //       result: s.result?.result,
-      //       error: s.result?.error,
-      //       type: s.result?.type,
-      //     };
-      //   }),
-      // };
+      throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Intent not implemented');
     }
 
     async _tool_hello_world(request: oRequest): Promise<ToolResult> {
