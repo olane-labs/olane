@@ -119,7 +119,7 @@ interface OpenAIListModelsResponse {
 
 export class OpenAIIntelligenceTool extends oLaneTool {
   private baseUrl: string = 'https://api.openai.com/v1';
-  private defaultModel: string = 'gpt-5-mini';
+  private defaultModel: string = 'gpt-5';
   private organization?: string;
   private apiKey: string = process.env.OPENAI_API_KEY || '';
 

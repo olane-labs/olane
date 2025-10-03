@@ -7,4 +7,5 @@ export interface oCapabilityConfig {
   intent: oIntent;
   laneConfig: oLaneConfig;
   history: string;
+  params?: any;
 }

@@ -20,6 +20,8 @@ import { MethodUtils } from './utils/method.utils.js';
  * @returns A new class that extends the base class and implements the oTool interface
  */
 export class oToolBase extends oCore {
+  private indexed: boolean = false;
+
   validateToolCall(oRequest: oRequest): boolean {
     const method = oRequest.method as string;
     if (!method) {
@@ -160,6 +162,14 @@ export class oToolBase extends oCore {
   }
 
   async index() {
+    if (this.indexed) {
+      this.logger.debug('Tool already indexed, skipping...');
+      return {
+        summary: 'Tool already indexed',
+      };
+    }
+    this.indexed = true;
+    // perform index
     const metadata = await this.whoami();
     if (!metadata.tools.length && !metadata.description) {
       this.logger.warn('No metadata found, skipping...');

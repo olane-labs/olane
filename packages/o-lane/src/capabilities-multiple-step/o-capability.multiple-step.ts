@@ -17,16 +17,17 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
   }
 
   get intents(): oIntent[] {
-    return this.config.intents;
+    return this.config.params.intents;
   }
 
   get explanation(): string {
-    return this.config.explanation;
+    return this.config.params.explanation;
   }
 
   async run(): Promise<oCapabilityResult> {
     const results: oCapabilityResult[] = [];
     for (const intent of this.intents) {
+      this.logger.debug('Running intent: ', intent);
       const subLane = new oLane({
         ...this.config.laneConfig,
         intent: intent,

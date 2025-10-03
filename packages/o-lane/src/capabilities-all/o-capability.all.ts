@@ -1,5 +1,4 @@
 import { oCapabilityConfigure } from '../capabilities-configure/o-capability.configure.js';
-import { oCapabilityError } from '../capabilities-error/o-capability.error.js';
 import { oCapabilityEvaluate } from '../capabilities-evaluate/o-capability.evaluate.js';
 import { oCapabilityMultipleStep } from '../capabilities-multiple-step/o-capability.multiple-step.js';
 import { oCapabilitySearch } from '../capabilities-search/o-capability.search.js';
@@ -11,5 +10,4 @@ export const ALL_CAPABILITIES = [
   oCapabilityEvaluate,
   oCapabilityMultipleStep,
   oCapabilityConfigure,
-  oCapabilityError,
 ];

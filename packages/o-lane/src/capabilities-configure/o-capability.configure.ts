@@ -1,4 +1,4 @@
-import { oError, oErrorCodes } from '@olane/o-core';
+import { oAddress, oError, oErrorCodes } from '@olane/o-core';
 import { oCapabilityResult, oCapabilityType } from '../capabilities/index.js';
 import { oCapabilityConfigureConfig } from './interfaces/o-capability.configure-config.js';
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
@@ -24,22 +24,26 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
       `[Method Metadata Begin]\n${JSON.stringify(methods, null, 2)}\n[Method Metadata End]`,
       `[Method Options Begin]\n${(tools || []).join(', ')}\n[Method Options End]`,
     ]);
-    const configureIntent = `This is a configure request, prioritize "Configure Request Instructions". You have already found the tool to resolve the user's intent: ${this.config.receiver.value}. Configure the request to use the tool with user intent: ${this.config.intent.value}`;
+    const configureIntent = `Configure the tool use, prioritize "Use Tool Instructions". You have already found the tool to resolve the user's intent: ${this.config.params.toolAddress}. Configure the request to use the tool with user intent: ${this.config.params.intent}`;
+
     return AGENT_PROMPT(
       configureIntent,
       context.toString(),
-      '',
+      this.config.history || '',
       CONFIGURE_INSTRUCTIONS,
     );
   }
 
   async handshake(): Promise<oHandshakeResult> {
-    const response = await this.node.use(this.config.receiver, {
-      method: oProtocolMethods.HANDSHAKE,
-      params: {
-        intent: this.config.intent.value,
+    const response = await this.node.use(
+      new oAddress(this.config.params.toolAddress),
+      {
+        method: oProtocolMethods.HANDSHAKE,
+        params: {
+          intent: this.config.intent.value,
+        },
       },
-    });
+    );
     return response.result.data as oHandshakeResult;
   }
 
@@ -48,8 +52,10 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
     }
+    this.logger.debug('Handshake: ', handshake.result);
     const { tools, methods } = handshake.result;
     const prompt = this.generatePrompt(tools, methods);
+    this.logger.debug('Prompt: ', prompt);
     const response = await this.intelligence(prompt);
 
     return response;

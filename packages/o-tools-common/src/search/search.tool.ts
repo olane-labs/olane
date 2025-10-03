@@ -16,7 +16,7 @@ export class SearchTool extends oLaneTool {
   }
 
   async _tool_vector(request: oRequest): Promise<ToolResult> {
-    const { query } = request.params as any;
+    const { query, limit } = request.params as any;
     // let's search our available providers to resolve the task
     // first search local providers
     this.logger.debug('Searching network with terms: ', query);
@@ -25,7 +25,7 @@ export class SearchTool extends oLaneTool {
       method: 'search_similar',
       params: {
         query: query,
-        limit: 10,
+        limit: limit || 10,
       },
     });
     return response.result.data as any;

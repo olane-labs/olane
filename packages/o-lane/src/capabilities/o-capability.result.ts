@@ -1,6 +1,6 @@
-import { oCapabilityErrorConfig } from '../capabilities-error/interfaces/o-capability.error-config.js';
 import { oCapabilityMultipleStepConfig } from '../capabilities-multiple-step/interfaces/o-capability.multiple-step-config.js';
 import { oCapabilitySearchConfig } from '../capabilities-search/interfaces/o-capability.search-config.js';
+import { oCapabilityTaskConfig } from '../capabilities-task/interfaces/o-capability.task-config.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
 import { oCapabilityConfig } from './interfaces/o-capability.config.js';
 import { oCapabilityResultInterface } from './interfaces/o-capability.result-interface.js';
@@ -10,12 +10,12 @@ export class oCapabilityResult implements oCapabilityResultInterface {
   id: string;
   result?:
     | oCapabilitySearchConfig
-    | oCapabilityErrorConfig
     | oCapabilityMultipleStepConfig
+    | oCapabilityTaskConfig
     | any;
   type: oCapabilityType;
   error?: string;
-  config: oCapabilityConfig;
+  config?: oCapabilityConfig;
 
   constructor(config: oCapabilityResultInterface) {
     this.id = uuidv4();
@@ -31,7 +31,11 @@ export class oCapabilityResult implements oCapabilityResultInterface {
       result: this.result,
       type: this.type,
       error: this.error,
-      config: this.config,
+      config: {
+        intent: this.config?.intent,
+        params: this.config?.params,
+        history: this.config?.history,
+      },
     };
   }
 

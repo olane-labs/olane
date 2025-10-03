@@ -17,15 +17,15 @@ export class oCapabilitySearch extends oCapability {
   }
 
   get external(): boolean {
-    return this.config.isExternal;
+    return this.config.params.isExternal;
   }
 
-  get queries(): { query: string }[] {
-    return this.config.queries;
+  get queries(): { query: string; limit?: number }[] {
+    return this.config.params.queries;
   }
 
   get explanation(): string {
-    return this.config.explanation;
+    return this.config.params.explanation;
   }
 
   async doExternalSearch(query: string): Promise<string> {
@@ -69,14 +69,19 @@ export class oCapabilitySearch extends oCapability {
     return new oCapabilitySearchResult({
       result: searchResultContext,
       type: oCapabilityType.RESULT,
+      config: this.config,
     });
   }
 
-  private async doInternalSearch(query: string): Promise<string> {
+  private async doInternalSearch(
+    query: string,
+    limit?: number,
+  ): Promise<string> {
     const response = await this.node.use(new oAddress('o://search'), {
       method: 'vector',
       params: {
         query: query,
+        limit: limit || 20,
       },
     });
     let searchResultContext = ``;
@@ -105,7 +110,10 @@ export class oCapabilitySearch extends oCapability {
     let searchResultContext = `[Search Results Begin]`;
 
     for (const query of this.queries) {
-      const searchResult = await this.doInternalSearch(query.query);
+      const searchResult = await this.doInternalSearch(
+        query.query,
+        query.limit,
+      );
       searchResultContext += searchResult;
     }
 
@@ -113,6 +121,7 @@ export class oCapabilitySearch extends oCapability {
     return new oCapabilitySearchResult({
       result: searchResultContext,
       type: oCapabilityType.EVALUATE,
+      config: this.config,
     });
   }
 

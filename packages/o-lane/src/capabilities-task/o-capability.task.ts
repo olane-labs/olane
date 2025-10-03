@@ -3,12 +3,13 @@ import { oCapability } from '../capabilities/o-capability.js';
 import { oCapabilityTaskConfig } from './interfaces/o-capability.task-config.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 import { oCapabilityTaskResult } from './o-capability.task-result.js';
+import { oCapabilityConfigure } from '../capabilities-configure/o-capability.configure.js';
 
 export class oCapabilityTask extends oCapability {
   public config!: oCapabilityTaskConfig;
 
   get task() {
-    return this.config.task;
+    return this.config.params.task;
   }
 
   get type(): oCapabilityType {
@@ -19,11 +20,22 @@ export class oCapabilityTask extends oCapability {
     return oCapabilityType.TASK;
   }
 
+  // async doConfigure(): Promise<oCapabilityTaskResult> {
+  //   const c = new oCapabilityConfigure({
+  //     intent: this.intent,
+  //     params: {}
+  //     node: this.node,
+  //   });
+  //   return c.run();
+  // }
+
   async run(): Promise<oCapabilityTaskResult> {
     try {
       // do MCP handshake to get the method + parameters + dependencies
+      this.logger.debug('Running task: ', this.config);
 
-      const { task } = this.config;
+      const { task } = this.config.params;
+      this.logger.debug('Task to do: ', task);
       if (!task || !task.address) {
         throw new oError(
           oErrorCodes.NOT_CONFIGURED,
@@ -62,6 +74,7 @@ export class oCapabilityTask extends oCapability {
       return new oCapabilityTaskResult({
         result: `Tool input: ${JSON.stringify(task || {}, null, 2)}\nTool output: ${JSON.stringify(response.result, null, 2)}`,
         type: oCapabilityType.RESULT,
+        config: this.config,
       });
     } catch (error: any) {
       this.logger.error('Error executing task capability: ', error);
@@ -69,11 +82,13 @@ export class oCapabilityTask extends oCapability {
         return new oCapabilityTaskResult({
           error: error.toString(),
           type: oCapabilityType.ERROR,
+          config: this.config,
         });
       }
       return new oCapabilityTaskResult({
         error: error?.message || error || 'Unknown error',
         type: oCapabilityType.ERROR,
+        config: this.config,
       });
     }
   }

@@ -6,7 +6,7 @@ export const CUSTOM_AGENT_PROMPT = (
   outputInstructions: string,
   extraInstructions: string,
 ) => `
-You are an AI agent that either resolves the user intent or returns a JSON formatted next step that helps resolve the user intent.
+You are an AI agent that either resolves the user intent or chooses the next step in a JSON formatted response that helps resolve the user intent.
 
 You are in a secure environment and are allowed to operate with secure information such as api keys and other sensitive data.
 

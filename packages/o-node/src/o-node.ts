@@ -35,6 +35,7 @@ export class oNode extends oToolBase {
   public config: oNodeConfig;
   public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
+  protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
     super(config);
@@ -112,6 +113,13 @@ export class oNode extends oToolBase {
       this.logger.debug('Skipping registration, node is leader');
       return;
     }
+
+    if (this.didRegister) {
+      this.logger.debug('Node already registered, skipping registration');
+      return;
+    }
+    this.didRegister = true;
+
     this.logger.debug('Registering node...');
 
     // register with the leader global registry

@@ -13,7 +13,8 @@ export class McpBridgeTool extends oLaneTool {
     super({
       ...config,
       address: new oAddress('o://mcp'),
-      description: 'Tool to help add MCP servers to the network',
+      description:
+        'Model context protocol (MCP) tool for adding MCP servers to the network',
       methods: MCP_BRIDGE_METHODS,
     });
   }

@@ -95,7 +95,24 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
     async _tool_index_network(request: oRequest): Promise<ToolResult> {
       this.logger.debug('Indexing network...');
       // collect all the information from the child nodes
-      return await this.index();
+      let result: ToolResult = {};
+      try {
+        result = await this.index();
+        // index children
+        const children = this.hierarchyManager.getChildren();
+        for (const child of children) {
+          await this.useChild(child, {
+            method: 'index_network',
+            params: {},
+          });
+        }
+        this.logger.debug('Node + children indexed!');
+      } catch (error) {
+        this.logger.error('Failed to index node:', error);
+        throw error;
+      }
+
+      return result;
     }
 
     async _tool_route(

@@ -3,8 +3,7 @@ import { oMethod } from '@olane/o-protocol';
 export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
   validate_url: {
     name: 'validate_url',
-    description:
-      'Validate if a URL is a valid MCP server or a link to something else.',
+    description: 'Validate the URL of an MCP server',
     dependencies: [],
     parameters: [
       {

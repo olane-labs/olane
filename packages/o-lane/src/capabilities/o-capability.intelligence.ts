@@ -6,6 +6,11 @@ import { oCapabilityType } from './enums/o-capability.type-enum.js';
 export abstract class oCapabilityIntelligence extends oCapability {
   async intelligence(prompt: string): Promise<oCapabilityIntelligenceResult> {
     try {
+      if (!this.node.isRunning) {
+        throw new Error(
+          'Node is not running, cannot use intelligence capability',
+        );
+      }
       const intelligenceResponse = await this.node.use(
         new oAddress(RestrictedAddresses.INTELLIGENCE),
         {

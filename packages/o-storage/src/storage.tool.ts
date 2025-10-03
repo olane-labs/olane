@@ -11,7 +11,8 @@ export class StorageTool extends oLaneTool {
     super({
       ...config,
       address: new oAddress('o://storage'),
-      description: 'Tool to store and retrieve data from the network',
+      description:
+        'Storage application tool for routing storage requests to the appropriate storage provider',
     });
   }
 
@@ -21,6 +22,7 @@ export class StorageTool extends oLaneTool {
       name: 'disk',
       parent: this.address,
       leader: this.leader,
+      address: new oAddress('o://disk'),
     });
     await node.start();
     this.addChildNode(node);
@@ -38,6 +40,7 @@ export class StorageTool extends oLaneTool {
       name: 'secure',
       parent: this.address,
       leader: this.leader,
+      address: new oAddress('o://secure'),
     });
     await node.start();
     this.addChildNode(node);

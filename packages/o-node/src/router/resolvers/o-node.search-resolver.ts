@@ -60,7 +60,6 @@ export class oSearchResolver extends oAddressResolver {
       const targetAddress = new oAddress(
         registrySearchResult.address + extraParams,
       );
-      this.logger.debug('Target address: ', targetAddress);
       const nextHopAddress = oAddress.next(node.address, targetAddress);
       const targetTransports = registrySearchResult.transports.map(
         (t: { value: string; type: TransportType }) =>

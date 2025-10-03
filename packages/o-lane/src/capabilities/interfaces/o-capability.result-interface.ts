@@ -5,5 +5,5 @@ export interface oCapabilityResultInterface {
   result?: any;
   type: oCapabilityType;
   error?: string;
-  config: oCapabilityConfig;
+  config?: oCapabilityConfig;
 }

@@ -120,13 +120,17 @@ export class oLane extends oObject {
             `[Cycle ${index + 1} Begin ${s.id}]\n
             Cycle Intent: ${s.config?.intent}\n
             Cycle Result:\n
-            ${JSON.stringify(
-              {
-                ...s.result,
-              },
-              null,
-              2,
-            )} \n[Cycle ${index + 1} End ${s.id}]`,
+            ${
+              typeof s.result === 'string'
+                ? s.result
+                : JSON.stringify(
+                    {
+                      ...s.result,
+                    },
+                    null,
+                    2,
+                  )
+            } \n[Cycle ${index + 1} End ${s.id}]`,
         )
         .join('\n') || ''
     );
@@ -155,6 +159,14 @@ export class oLane extends oObject {
     return this.config.capabilities || ALL_CAPABILITIES.map((c) => new c());
   }
 
+  resultToConfig(result: any): oCapabilityConfig {
+    return {
+      ...result.config,
+      history: this.agentHistory,
+      params: typeof result.result === 'object' ? result.result : {},
+    };
+  }
+
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
@@ -163,9 +175,10 @@ export class oLane extends oObject {
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {
+        const capabilityConfig: oCapabilityConfig =
+          this.resultToConfig(currentStep);
         const result = await capability.execute({
-          ...currentStep.config,
-          ...(typeof nextStep === 'object' ? nextStep : {}),
+          ...capabilityConfig,
         } as oCapabilityConfig);
         return result;
       }
@@ -195,18 +208,21 @@ export class oLane extends oObject {
       this.status === oLaneStatus.RUNNING
     ) {
       // update the history
-      currentStep.config.history = this.agentHistory;
+      if (currentStep.config) {
+        currentStep.config.history = this.agentHistory;
+      }
       // perform the latest capability
+      this.logger.debug('Processing next step: ', currentStep);
       const result = await this.doCapability(currentStep);
       this.logger.debug('Capability result: ', result);
       this.addSequence(result);
       if (result.type === oCapabilityType.STOP) {
         return result;
       }
+      // update the current step
       currentStep = result;
-      break;
     }
-    throw new Error('Plan failed, reached max iterations');
+    throw new Error('Plan failed');
   }
 
   async postflight(

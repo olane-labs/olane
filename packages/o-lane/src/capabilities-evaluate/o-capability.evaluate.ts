@@ -17,7 +17,7 @@ export class oCapabilityEvaluate extends oCapabilityIntelligence {
       AGENT_PROMPT(
         this.config.intent.value,
         this.config.laneConfig.context?.toString() || '',
-        '',
+        this.config.history || '',
         this.config.laneConfig.extraInstructions || '',
       ),
     );
