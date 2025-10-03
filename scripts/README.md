@@ -1,6 +1,8 @@
 # Olane Release Management Scripts
 
-This directory contains optimized TypeScript-based scripts for managing the Olane monorepo release process. These scripts replace the complex GitHub workflow with a more maintainable, efficient, and reusable solution.
+This directory contains optimized TypeScript-based scripts for managing the Olane monorepo release process. These scripts are designed to work seamlessly with npm workspaces and provide a more maintainable, efficient, and reusable solution.
+
+> 📖 **For a comprehensive guide on the workspace-aware release process, see [WORKSPACE_RELEASE_GUIDE.md](../docs/WORKSPACE_RELEASE_GUIDE.md)**
 
 ## 🚀 Quick Start
 

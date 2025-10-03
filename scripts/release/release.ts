@@ -38,16 +38,27 @@ class ReleaseManager {
 
   /**
    * Install dependencies for all packages
+   * In a workspace setup, we install at the root level
    */
   private async installDependencies(): Promise<void> {
-    console.log('📥 Installing dependencies...');
-    const buildOrder = this.packageManager.getBuildOrder();
+    console.log('📥 Installing workspace dependencies...');
 
-    await this.packageManager.executeInBatches(
-      buildOrder,
-      () => 'npm install',
-      { dryRun: this.options.dryRun, parallel: this.options.parallel },
-    );
+    if (this.options.dryRun) {
+      console.log('[DRY RUN] Would run: npm install (at root)');
+      return;
+    }
+
+    try {
+      const { execSync } = await import('child_process');
+      execSync('npm install', {
+        cwd: this.packageManager.rootDir,
+        stdio: 'inherit',
+      });
+      console.log('✅ Workspace dependencies installed');
+    } catch (error) {
+      console.error('❌ Failed to install workspace dependencies:', error);
+      throw error;
+    }
   }
 
   /**
@@ -126,16 +137,35 @@ class ReleaseManager {
 
   /**
    * Publish all packages to npm
+   * Before publishing, we need to convert workspace:* references to actual version numbers
    */
   private async publishPackages(): Promise<void> {
     console.log('🚀 Publishing packages...');
     const buildOrder = this.packageManager.getBuildOrder();
+
+    // Convert workspace references to version numbers before publishing
+    console.log('🔄 Converting workspace references to version numbers...');
+    for (const pkg of buildOrder) {
+      if (!this.options.dryRun) {
+        this.packageManager.convertFromWorkspaceReferences(pkg);
+      } else {
+        console.log(`[DRY RUN] Would convert workspace references for ${pkg}`);
+      }
+    }
 
     await this.packageManager.executeInBatches(
       buildOrder,
       () => 'npm publish --access public',
       { dryRun: this.options.dryRun, parallel: this.options.parallel },
     );
+
+    // After publishing, restore workspace references
+    if (!this.options.dryRun) {
+      console.log('🔄 Restoring workspace references...');
+      for (const pkg of buildOrder) {
+        this.packageManager.convertToWorkspaceReferences(pkg);
+      }
+    }
   }
 
   /**

@@ -57,13 +57,13 @@
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",
-    "@olane/o-config": "^0.6.12",
-    "@olane/o-core": "^0.6.12",
-    "@olane/o-intelligence": "^0.6.7",
-    "@olane/o-leader": "^0.6.12",
-    "@olane/o-protocol": "^0.6.12",
-    "@olane/o-tool": "^0.6.12",
-    "@olane/o-lane": "^0.6.12"
+    "@olane/o-config": "^0.7.0",
+    "@olane/o-core": "^0.7.0",
+    "@olane/o-intelligence": "^0.7.0",
+    "@olane/o-leader": "^0.7.0",
+    "@olane/o-protocol": "^0.7.0",
+    "@olane/o-tool": "^0.7.0",
+    "@olane/o-lane": "^0.7.0"
   },
   "dependencies": {
     "debug": "^4.4.1",

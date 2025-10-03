@@ -13,24 +13,25 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "npm run test --workspaces",
-    "test:node": "npm run test:node --workspaces",
-    "test:browser": "npm run test:browser --workspaces",
-    "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:node": "npm run test:node --workspaces --if-present",
+    "test:browser": "npm run test:browser --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "deep:clean": "rm -rf node_modules && rm package-lock.json && npm run deep:clean --workspaces --if-present",
+    "install:all": "npm install",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "docs:dev": "cd docs && mintlify dev",
     "docs:build": "cd docs && mintlify build",
     "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "release": "cd scripts/release && npm run release",
-    "release:dry-run": "cd scripts/release && npm run release:dry-run",
-    "release:parallel": "cd scripts/release && npm run release:parallel",
-    "release:minor": "cd scripts/release && npm run release:minor",
-    "release:major": "cd scripts/release && npm run release:major"
+    "release": "cd scripts/release && npm install && npm run release",
+    "release:dry-run": "cd scripts/release && npm install && npm run release:dry-run",
+    "release:parallel": "cd scripts/release && npm install && npm run release:parallel",
+    "release:minor": "cd scripts/release && npm install && npm run release:minor",
+    "release:major": "cd scripts/release && npm install && npm run release:major"
   },
   "repository": {
     "type": "git",
@@ -65,9 +66,5 @@
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "multiformats": "^13.3.7"
-  },
-  "peerDependencies": {
-    "@olane/o-config": "^0.6.10",
-    "@olane/o-protocol": "^0.6.10"
   }
 }

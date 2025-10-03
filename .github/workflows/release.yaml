@@ -23,6 +23,9 @@ jobs:
           cache: npm
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Install workspace dependencies
+        run: npm install
+
       - name: Install script dependencies
         working-directory: scripts/release
         run: npm install
@@ -56,6 +59,9 @@ jobs:
         run: |
           git config --global user.email "bot@olane.com"
           git config --global user.name "Automated Release"
+
+      - name: Install workspace dependencies
+        run: npm install
 
       - name: Install script dependencies
         working-directory: scripts/release
