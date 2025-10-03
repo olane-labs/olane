@@ -56,11 +56,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.11",
-    "@olane/o-core": "^0.6.11",
-    "@olane/o-protocol": "^0.6.11",
-    "@olane/o-tool": "^0.6.11",
-    "@olane/o-storage": "^0.6.11"
+    "@olane/o-config": "^0.7.0",
+    "@olane/o-core": "^0.7.0",
+    "@olane/o-protocol": "^0.7.0",
+    "@olane/o-tool": "^0.7.0"
   },
   "dependencies": {
     "debug": "^4.4.1",
