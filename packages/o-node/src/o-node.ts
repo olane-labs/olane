@@ -24,7 +24,7 @@ import { oNodeConnection } from './connection/o-node-connection.js';
 import { oNodeConnectionManager } from './connection/o-node-connection.manager.js';
 import { oNodeResolver } from './router/resolvers/o-node.resolver.js';
 import { NetworkUtils } from './utils/network.utils.js';
-import { oToolBase } from '@olane/o-tool';
+import { oMethodResolver, oToolBase } from '@olane/o-tool';
 import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
 import { oLeaderResolverFallback } from './router/index.js';
 
@@ -314,6 +314,7 @@ export class oNode extends oToolBase {
     });
 
     // initialize address resolution
+    this.router.addResolver(new oMethodResolver(this.address));
     this.router.addResolver(new oNodeResolver(this.address));
 
     // setup a fallback resolver for non-leader nodes

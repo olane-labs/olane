@@ -124,9 +124,7 @@ export class oToolBase extends oCore {
   }
 
   async findMethod(method: string): Promise<string | undefined> {
-    return (await this.myTools()).find((key) =>
-      key.startsWith('_tool_' + method),
-    );
+    return (await this.myTools()).find((key) => key.startsWith(method));
   }
 
   myToolParams(tool: string): Record<string, any> {

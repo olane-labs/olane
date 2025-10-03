@@ -21,12 +21,20 @@ export class oLaneTool extends oNodeTool {
       handshake.params.intent,
     );
 
-    const mytools = await this.myTools();
+    let tools = await this.myTools();
+    let methods = this.methods;
+
+    const { tool }: { tool: string } = handshake.params as any;
+
+    if (tool) {
+      tools = tools.filter((t) => t === tool);
+      methods = { tool: this.methods[tool] };
+    }
 
     return new oCapabilityResult({
       result: {
-        tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
-        methods: this.methods,
+        tools: tools.filter((t) => t !== 'handshake' && t !== 'intent'),
+        methods: methods,
       },
       type: oCapabilityType.HANDSHAKE,
     });

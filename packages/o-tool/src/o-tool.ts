@@ -31,21 +31,10 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
     }
 
     async _tool_handshake(handshake: oRequest): Promise<any> {
-      this.logger.debug(
-        'Performing handshake with intent: ',
-        handshake.params.intent,
+      throw new oError(
+        oErrorCodes.NOT_IMPLEMENTED,
+        'Handshake not implemented',
       );
-
-      const mytools = await this.myTools();
-
-      return {
-        tools: mytools.filter((t) => t !== 'handshake' && t !== 'intent'),
-        methods: this.methods,
-        successes: [],
-        failures: [],
-        task: undefined,
-        type: 'handshake',
-      };
     }
 
     /**
