@@ -74,6 +74,16 @@
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "fs-extra": "^11.3.0",
-    "touch": "^3.1.1"
+    "touch": "^3.1.1",
+    "@olane/o-config": "workspace:*",
+    "@olane/o-core": "workspace:*",
+    "@olane/o-intelligence": "workspace:*",
+    "@olane/o-leader": "workspace:*",
+    "@olane/o-protocol": "workspace:*",
+    "@olane/o-storage": "workspace:*",
+    "@olane/o-tool": "workspace:*",
+    "@olane/o-tool-registry": "workspace:*",
+    "@olane/o-tools-common": "workspace:*",
+    "@olane/o-lane": "workspace:*"
   }
 }

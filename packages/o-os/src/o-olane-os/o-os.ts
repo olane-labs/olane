@@ -8,7 +8,8 @@ import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import { oLaneStorage, oLaneTool } from '@olane/o-lane';
+import { oLaneTool } from '@olane/o-lane';
+import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
 

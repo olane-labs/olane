@@ -67,6 +67,7 @@
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "multiformats": "^13.3.7"
+    "multiformats": "^13.3.7",
+    "@olane/o-protocol": "workspace:*"
   }
 }

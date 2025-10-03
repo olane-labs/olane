@@ -63,6 +63,11 @@
   },
   "dependencies": {
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "@olane/o-config": "workspace:*",
+    "@olane/o-core": "workspace:*",
+    "@olane/o-protocol": "workspace:*",
+    "@olane/o-tool": "workspace:*",
+    "@olane/o-lane": "workspace:*"
   }
 }

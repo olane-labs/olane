@@ -81,9 +81,9 @@ class ReleaseManager {
           packageInfo.packageJson.scripts?.['update:peers'];
 
         let command = 'npm run build';
-        if (hasUpdatePeers) {
-          command = 'npm run update:peers && ' + command;
-        }
+        // if (hasUpdatePeers) {
+        //   command = 'npm run update:peers && ' + command;
+        // }
 
         return command;
       },
