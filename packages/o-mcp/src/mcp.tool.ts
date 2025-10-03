@@ -1,12 +1,15 @@
-import { oToolConfig, oVirtualTool } from '@olane/o-tool';
-import { oAddress, oRequest, oToolError, oToolErrorCodes } from '@olane/o-core';
+import { oAddress, oError, oErrorCodes, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
-export class McpTool extends oVirtualTool {
+export class McpTool extends oLaneTool {
   private mcpClient: Client;
 
-  constructor(config: oToolConfig & { address: oAddress; mcpClient: Client }) {
+  constructor(
+    config: oNodeToolConfig & { address: oAddress; mcpClient: Client },
+  ) {
     super({
       ...config,
       address: config.address,
@@ -40,15 +43,14 @@ export class McpTool extends oVirtualTool {
         });
         this.logger.debug('MCP tool result: ', result);
         if (result.isError) {
-          throw new oToolError(
-            oToolErrorCodes.TOOL_ERROR,
+          throw new oError(
+            oErrorCodes.UNKNOWN,
             JSON.stringify((result as any).content),
           );
         }
         return result.content;
       };
     });
-    await this.startChildren();
   }
 
   async myTools() {
@@ -63,26 +65,22 @@ export class McpTool extends oVirtualTool {
     const result = await super.index();
     // add each mcp tool to the vector store
     const tools = await this.mcpClient.listTools();
-    await Promise.all(
-      tools.tools.map((tool) => {
-        return this.use(new oAddress('o://vector-store'), {
-          method: 'add_documents',
-          params: {
-            documents: [
-              {
-                pageContent: tool.description,
-                metadata: {
-                  address: this.address?.toString() + '/' + tool.name,
-                  id: uuidv4(),
-                },
+    for (const tool of tools.tools) {
+      await this.use(new oAddress('o://vector-store'), {
+        method: 'add_documents',
+        params: {
+          documents: [
+            {
+              pageContent: tool.description,
+              metadata: {
+                address: this.address?.toString() + '/' + tool.name,
+                id: uuidv4(),
               },
-            ],
-          },
-        });
-      }),
-    ).catch((err) => {
-      this.logger.error('Error adding MCP tools to vector store: ', err);
-    });
+            },
+          ],
+        },
+      });
+    }
     return result;
   }
 
@@ -90,6 +88,7 @@ export class McpTool extends oVirtualTool {
     // do nothing
     const tools = await this.mcpClient.listTools();
     return {
+      description: this.description,
       tools: tools.tools.map((tool) => {
         this.logger.debug(
           'MCP Tool Definition: ',

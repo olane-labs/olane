@@ -1,23 +1,37 @@
 import {
-  LEADER_ADRESS,
   NodeType,
   oAddress,
   oRequest,
   oResponse,
+  RestrictedAddresses,
 } from '@olane/o-core';
-import { oServerTool, oToolConfig } from '@olane/o-tool';
 import { START_METHOD } from './methods/start.method.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig, oNodeToolConfig, oSearchResolver } from '@olane/o-node';
+import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 
-export class oLeaderNode extends oServerTool {
-  constructor(config: oToolConfig) {
+export class oLeaderNode extends oLaneTool {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
-      address: new oAddress(LEADER_ADRESS),
+      address: oAddress.leader(),
       type: NodeType.LEADER,
       methods: {
         start: START_METHOD,
       },
     });
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+    this.router.addResolver(new oSearchResolver(this.address));
+    const registryTool = new RegistryMemoryTool({
+      name: 'registry',
+      parent: this.address,
+      leader: this.address,
+    });
+    await registryTool.start();
+    this.addChildNode(registryTool);
   }
 
   async validateJoinRequest(request: oRequest): Promise<any> {
@@ -51,35 +65,40 @@ export class oLeaderNode extends oServerTool {
     const { plan } = request.params;
     this.logger.debug('Adding plan to network: ' + plan);
 
-    if (!this.config.networkName) {
+    if (!this.config.systemName) {
       this.logger.warn('No network name provided, cannot update config');
       return;
     }
   }
 
-  async _tool_index_network(request: oRequest): Promise<any> {
-    // paginate through all the registered nodes and index them
-    const nodes: oResponse = await this.use(
-      new oAddress('o://leader/register'),
-      {
-        method: 'find_all',
-        params: {},
-      },
-    );
+  // async _tool_index_network(request: oRequest): Promise<any> {
+  //   // paginate through all the registered nodes and index them
+  //   const nodes: oResponse = await this.use(
+  //     new oAddress(RestrictedAddresses.REGISTRY),
+  //     {
+  //       method: 'find_all',
+  //       params: {},
+  //     },
+  //   );
 
-    const nodesArray = nodes.result.data as any[];
-    for (let i = 0; i < nodesArray.length; i++) {
-      // first let's get the node's tools
-      const node = nodesArray[i];
-      const { result } = await this.use(new oAddress(node.address), {
-        method: 'index_network',
-        params: {},
-      });
-    }
-    return {
-      message: 'Network indexed!',
-    };
-  }
+  //   const hashMap: any = {};
+  //   const nodesArray = nodes.result.data as any[];
+  //   for (let i = 0; i < nodesArray.length; i++) {
+  //     // first let's get the node's tools
+  //     const node = nodesArray[i];
+  //     if (hashMap[node.address]) {
+  //       continue;
+  //     }
+  //     hashMap[node.address] = true;
+  //     await this.use(new oAddress(node.address), {
+  //       method: 'index_network',
+  //       params: {},
+  //     });
+  //   }
+  //   return {
+  //     message: 'Network indexed!',
+  //   };
+  // }
 
   // _tool_elect_root(params: RunToolParams): Promise<void> {
   //   return Promise.resolve();

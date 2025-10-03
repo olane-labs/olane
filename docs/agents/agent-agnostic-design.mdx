@@ -1,0 +1,1326 @@
+---
+title: "Agent-Agnostic Design"
+description: "Best practices for building tool nodes that serve both human and AI agents through a unified interface"
+---
+
+## Overview
+
+**Agent-agnostic design** is the practice of building tool nodes that serve both human and AI agents through a unified natural language interface. Instead of creating separate APIs for humans and AI systems, you build once and serve both.
+
+This approach is a core innovation of Olane OS - tools don't care whether an intent comes from a human via CLI or an AI agent coordinating programmatically. They simply process the request and return results.
+
+**TL;DR**: Build tool nodes once with a natural language interface. Humans use them via CLI/web UI, AI agents use them programmatically. Same code, same capabilities, unified maintenance.
+
+## Why agent-agnostic design matters
+
+### The traditional approach (duplicated effort)
+
+```
+┌─────────────────────────────────────────┐
+│  Human Interface                         │
+│  • REST API endpoints                    │
+│  • Web UI forms                          │
+│  • CLI commands                          │
+│  • Custom validation                     │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  AI Interface                            │
+│  • Different API format                  │
+│  • Tool schemas                          │
+│  • Function calling format               │
+│  • Separate documentation                │
+└─────────────────────────────────────────┘
+
+❌ Two interfaces = 2x maintenance
+❌ Feature parity problems
+❌ Inconsistent behavior
+```
+
+### The Olane OS approach (unified interface)
+
+```
+┌─────────────────────────────────────────┐
+│  Agents (Human or AI)                    │
+│  • Humans via CLI: "Analyze sales"       │
+│  • AI via code: { intent: "Analyze..." }│
+│  • Same natural language interface       │
+└─────────────────────────────────────────┘
+                  ⬇
+┌─────────────────────────────────────────┐
+│  Agent-Agnostic Tool Node                │
+│  • One interface serves both             │
+│  • Natural language processing           │
+│  • Autonomous tool execution             │
+│  • Structured results                    │
+└─────────────────────────────────────────┘
+
+✅ One interface = 1x maintenance
+✅ Guaranteed feature parity
+✅ Consistent behavior
+✅ Future-proof architecture
+```
+
+## Core principles
+
+### 1. Natural language interface
+
+Tool nodes accept intents in plain language, not rigid API calls.
+
+<CodeGroup>
+
+```typescript Human Agent (CLI)
+# Human expresses goal naturally
+$ olane intent "Find all customers who haven't purchased in 90 days"
+
+# Tool node processes the intent
+# Returns structured results
+```
+
+```typescript AI Agent (Programmatic)
+// AI agent sends same intent programmatically
+const result = await toolNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Find all customers who haven\'t purchased in 90 days'
+  }
+});
+
+// Same processing
+// Same structured results
+```
+
+</CodeGroup>
+
+<Note>
+The tool node receives natural language from both agents and processes it identically.
+</Note>
+
+### 2. Source-agnostic processing
+
+Tool nodes shouldn't know or care who sent the request.
+
+```typescript
+// ❌ BAD: Source-aware processing
+class BadToolNode extends oLaneTool {
+  async _tool_intent(request: oRequest) {
+    if (request.source === 'human') {
+      // Different logic for humans
+      return this.processForHuman(request);
+    } else if (request.source === 'ai') {
+      // Different logic for AI
+      return this.processForAI(request);
+    }
+  }
+}
+
+// ✅ GOOD: Source-agnostic processing
+class GoodToolNode extends oLaneTool {
+  async _tool_intent(request: oRequest) {
+    // Same logic for all agents
+    const intent = request.params.intent;
+    return await this.processIntent(intent);
+  }
+}
+```
+
+### 3. Structured results
+
+Return JSON-serializable data that both humans and AI agents can consume.
+
+```typescript
+// ✅ GOOD: Structured results
+async _tool_analyze_sales(request: oRequest) {
+  return {
+    totalRevenue: 150000,
+    topProducts: [
+      { id: 'prod_1', name: 'Product A', revenue: 50000 },
+      { id: 'prod_2', name: 'Product B', revenue: 30000 }
+    ],
+    trends: {
+      growthRate: 0.15,
+      direction: 'up'
+    },
+    timestamp: Date.now()
+  };
+}
+
+// Humans: UI renders this as charts/tables
+// AI agents: Parse JSON for further processing
+```
+
+### 4. Progressive disclosure
+
+Support both simple direct calls and complex intent-driven workflows.
+
+```typescript
+class SalesAnalytics extends oLaneTool {
+  // Simple: Direct tool calls for straightforward operations
+  async _tool_get_revenue(request: oRequest) {
+    const { startDate, endDate } = request.params;
+    return { revenue: await this.calculateRevenue(startDate, endDate) };
+  }
+
+  // Complex: Intent-driven for multi-step workflows
+  // Automatically available via o-lane
+  // async _tool_intent(request: oRequest) { ... }
+}
+```
+
+<CodeGroup>
+
+```bash Human - Simple Usage
+# Direct tool call for simple operations
+$ olane call o://analytics get_revenue \
+  --startDate "2024-01-01" \
+  --endDate "2024-03-31"
+```
+
+```bash Human - Complex Usage
+# Intent for complex analysis
+$ olane intent "Compare Q1 vs Q4 revenue and identify growth opportunities"
+```
+
+```typescript AI - Simple Usage
+// Direct tool call
+await toolNode.use({
+  method: 'get_revenue',
+  params: { 
+    startDate: '2024-01-01', 
+    endDate: '2024-03-31' 
+  }
+});
+```
+
+```typescript AI - Complex Usage
+// Intent for complex coordination
+await toolNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Compare Q1 vs Q4 revenue and identify growth opportunities'
+  }
+});
+```
+
+</CodeGroup>
+
+## Design patterns
+
+### Pattern 1: Simple tool node (1-5 tools)
+
+Best for straightforward operations where agents know exactly which tool to call.
+
+```typescript
+import { oNodeTool } from '@olane/o-tool';
+import { oAddress } from '@olane/o-core';
+
+class CurrencyConverter extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://utilities/currency')
+    });
+  }
+
+  // Tool 1: Convert currency
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params;
+    const rate = await this.getRate(from, to);
+    
+    return {
+      original: { amount, currency: from },
+      converted: { amount: amount * rate, currency: to },
+      rate,
+      timestamp: Date.now()
+    };
+  }
+
+  // Parameter schema
+  _params_convert() {
+    return {
+      amount: { type: 'number', required: true },
+      from: { type: 'string', required: true },
+      to: { type: 'string', required: true }
+    };
+  }
+
+  // Tool 2: Get exchange rate
+  async _tool_get_rate(request: oRequest) {
+    const { from, to } = request.params;
+    return {
+      rate: await this.getRate(from, to),
+      timestamp: Date.now()
+    };
+  }
+
+  _params_get_rate() {
+    return {
+      from: { type: 'string', required: true },
+      to: { type: 'string', required: true }
+    };
+  }
+
+  private async getRate(from: string, to: string): Promise<number> {
+    // Fetch from exchange rate API
+    return 1.18; // Example
+  }
+}
+```
+
+**Usage by both agent types**:
+
+<CodeGroup>
+
+```bash Human Agent (CLI)
+# Direct tool invocation
+$ olane call o://utilities/currency convert \
+  --amount 100 \
+  --from "USD" \
+  --to "EUR"
+
+# Result
+{
+  "original": { "amount": 100, "currency": "USD" },
+  "converted": { "amount": 85, "currency": "EUR" },
+  "rate": 0.85,
+  "timestamp": 1696118400000
+}
+```
+
+```typescript AI Agent (Programmatic)
+// Same tool, programmatic invocation
+const result = await currencyConverter.use({
+  method: 'convert',
+  params: {
+    amount: 100,
+    from: 'USD',
+    to: 'EUR'
+  }
+});
+
+console.log(result);
+// {
+//   original: { amount: 100, currency: 'USD' },
+//   converted: { amount: 85, currency: 'EUR' },
+//   rate: 0.85,
+//   timestamp: 1696118400000
+// }
+```
+
+</CodeGroup>
+
+<Check>
+  Both agents get identical results and capabilities. No special handling needed.
+</Check>
+
+---
+
+### Pattern 2: Complex tool node (5-20+ tools)
+
+Best for domains with many operations where intent-driven execution provides value.
+
+```typescript
+import { oLaneTool } from '@olane/o-lane';
+import { oAddress } from '@olane/o-core';
+
+class CustomerAnalytics extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://analytics/customers'),
+      laneContext: {
+        domain: 'Customer Analytics',
+        expertise: ['Segmentation', 'Churn Analysis', 'Lifetime Value']
+      }
+    });
+  }
+
+  // Internal tool 1: Get customer data
+  async _tool_get_customers(request: oRequest) {
+    const { filters } = request.params;
+    return { customers: await this.fetchCustomers(filters) };
+  }
+
+  _params_get_customers() {
+    return {
+      filters: { type: 'object', required: false }
+    };
+  }
+
+  // Internal tool 2: Segment customers
+  async _tool_segment(request: oRequest) {
+    const { customers, criteria } = request.params;
+    return { segments: await this.segmentCustomers(customers, criteria) };
+  }
+
+  _params_segment() {
+    return {
+      customers: { type: 'array', required: true },
+      criteria: { type: 'string', required: true }
+    };
+  }
+
+  // Internal tool 3: Calculate lifetime value
+  async _tool_calculate_ltv(request: oRequest) {
+    const { customerId } = request.params;
+    return { ltv: await this.calculateLTV(customerId) };
+  }
+
+  _params_calculate_ltv() {
+    return {
+      customerId: { type: 'string', required: true }
+    };
+  }
+
+  // Internal tool 4: Predict churn
+  async _tool_predict_churn(request: oRequest) {
+    const { customerId } = request.params;
+    return { churnRisk: await this.predictChurn(customerId) };
+  }
+
+  _params_predict_churn() {
+    return {
+      customerId: { type: 'string', required: true }
+    };
+  }
+
+  // ... 10 more tools
+
+  // Intent method is automatically available via o-lane
+  // Agents send high-level intents, node figures out which tools to use
+}
+```
+
+**Usage by both agent types**:
+
+<CodeGroup>
+
+```bash Human Agent (CLI)
+# Human sends high-level intent
+$ olane intent "Identify high-value customers at risk of churning"
+
+# Tool node autonomously:
+# 1. EVALUATE: "Need customer data with purchase history"
+# 2. TASK: Call _tool_get_customers
+# 3. EVALUATE: "Need to calculate LTV for each"
+# 4. TASK: Call _tool_calculate_ltv for top customers
+# 5. EVALUATE: "Need churn predictions"
+# 6. TASK: Call _tool_predict_churn
+# 7. EVALUATE: "Have all data, generate insights"
+# 8. STOP: Return results
+
+# Human receives structured results
+{
+  "atRiskCustomers": [
+    {
+      "id": "cust_123",
+      "name": "Acme Corp",
+      "ltv": 50000,
+      "churnRisk": 0.75,
+      "recommendation": "Immediate outreach"
+    }
+  ],
+  "totalValue": 200000,
+  "avgChurnRisk": 0.45
+}
+```
+
+```typescript AI Agent (Programmatic)
+// AI agent sends same high-level intent
+const result = await customerAnalytics.use({
+  method: 'intent',
+  params: {
+    intent: 'Identify high-value customers at risk of churning',
+    context: 'Focus on customers with LTV > $10k'
+  }
+});
+
+// Same autonomous processing
+// Same structured results
+console.log(result);
+// {
+//   atRiskCustomers: [...],
+//   totalValue: 200000,
+//   avgChurnRisk: 0.45
+// }
+
+// AI agent can use results for further coordination
+for (const customer of result.atRiskCustomers) {
+  await crmTool.use({
+    method: 'create_task',
+    params: {
+      customerId: customer.id,
+      action: 'retention_outreach'
+    }
+  });
+}
+```
+
+</CodeGroup>
+
+<Note>
+  The tool node processes intents identically regardless of source. The capability loop (EVALUATE → TASK → EVALUATE) works the same for human and AI agents.
+</Note>
+
+---
+
+### Pattern 3: Hybrid simple + complex
+
+Support both direct tool calls (simple) and intent-driven workflows (complex).
+
+```typescript
+class FinancialAnalyst extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://finance/analyst')
+    });
+  }
+
+  // Simple tools - called directly by agents
+  async _tool_get_revenue(request: oRequest) {
+    const { period } = request.params;
+    return { revenue: await this.calculateRevenue(period) };
+  }
+
+  async _tool_get_expenses(request: oRequest) {
+    const { period } = request.params;
+    return { expenses: await this.calculateExpenses(period) };
+  }
+
+  async _tool_calculate_margin(request: oRequest) {
+    const { revenue, expenses } = request.params;
+    return { margin: (revenue - expenses) / revenue };
+  }
+
+  // Complex: Intent method for multi-step analysis
+  // Automatically available via o-lane
+}
+```
+
+**Usage by both agent types**:
+
+<CodeGroup>
+
+```bash Human - Simple
+# Quick lookup of specific metric
+$ olane call o://finance/analyst get_revenue --period "Q4-2024"
+```
+
+```bash Human - Complex
+# Complex analysis across multiple metrics
+$ olane intent "Compare Q4 profitability vs Q3 and explain changes"
+```
+
+```typescript AI - Simple
+// Direct tool call for specific data
+const revenue = await analyst.use({
+  method: 'get_revenue',
+  params: { period: 'Q4-2024' }
+});
+```
+
+```typescript AI - Complex
+// Intent for complex coordination
+const analysis = await analyst.use({
+  method: 'intent',
+  params: {
+    intent: 'Compare Q4 profitability vs Q3 and explain changes'
+  }
+});
+```
+
+</CodeGroup>
+
+<Check>
+  Agents choose the invocation style based on complexity. Tool node supports both seamlessly.
+</Check>
+
+## Best practices
+
+### 1. Design for intent first
+
+Think about the goals agents (human or AI) want to accomplish, not just the tools you're building.
+
+```typescript
+// ❌ BAD: Tool-centric design
+class DataPipeline extends oNodeTool {
+  async _tool_extract() { /* ... */ }
+  async _tool_transform() { /* ... */ }
+  async _tool_load() { /* ... */ }
+  async _tool_validate() { /* ... */ }
+}
+// Agents need to know the exact sequence
+
+// ✅ GOOD: Intent-driven design
+class DataPipeline extends oLaneTool {
+  // Internal tools
+  async _tool_extract() { /* ... */ }
+  async _tool_transform() { /* ... */ }
+  async _tool_load() { /* ... */ }
+  async _tool_validate() { /* ... */ }
+
+  // Agents send intents like:
+  // "Process customer data with validation"
+  // Tool node figures out the sequence autonomously
+}
+```
+
+### 2. Provide clear tool descriptions
+
+Help both humans (via documentation) and AI agents (via discovery) understand capabilities.
+
+```typescript
+class SalesTools extends oNodeTool {
+  async _tool_forecast_revenue(request: oRequest) {
+    // Implementation
+  }
+
+  _params_forecast_revenue() {
+    return {
+      historicalMonths: { 
+        type: 'number', 
+        required: true,
+        description: 'Number of historical months to analyze (3-24)'
+      },
+      method: {
+        type: 'string',
+        required: false,
+        default: 'linear',
+        enum: ['linear', 'exponential', 'moving-average'],
+        description: 'Forecasting method to use'
+      }
+    };
+  }
+
+  // Optional: Tool metadata for better discovery
+  _meta_forecast_revenue() {
+    return {
+      description: 'Forecast future revenue based on historical data',
+      examples: [
+        {
+          params: { historicalMonths: 6, method: 'exponential' },
+          description: 'Forecast using 6 months of data with exponential smoothing'
+        }
+      ],
+      tags: ['forecasting', 'revenue', 'prediction']
+    };
+  }
+}
+```
+
+### 3. Return actionable, structured data
+
+Ensure results can be rendered for humans AND processed by AI agents.
+
+```typescript
+// ✅ GOOD: Structured, actionable results
+async _tool_analyze_churn(request: oRequest) {
+  return {
+    // Metrics - both agents can use
+    summary: {
+      totalCustomers: 1000,
+      atRisk: 150,
+      riskRate: 0.15
+    },
+    
+    // Detailed data - AI can process, humans can view
+    customers: [
+      {
+        id: 'cust_123',
+        name: 'Acme Corp',
+        riskScore: 0.85,
+        lastPurchase: '2024-08-15',
+        totalValue: 50000,
+        // Recommendation for action
+        recommendedAction: {
+          type: 'immediate_outreach',
+          priority: 'high',
+          message: 'High-value customer, no purchase in 45 days'
+        }
+      }
+    ],
+    
+    // Metadata for context
+    analysis: {
+      timestamp: Date.now(),
+      model: 'churn-predictor-v2',
+      confidence: 0.92
+    }
+  };
+}
+
+// Humans: UI renders charts, tables, alerts
+// AI agents: Parse and take automated actions
+```
+
+### 4. Validate inputs consistently
+
+Use parameter schemas to validate inputs from all agents uniformly.
+
+```typescript
+class OrderProcessor extends oNodeTool {
+  async _tool_create_order(request: oRequest) {
+    // Validation happens automatically via _params_
+    const { customerId, items, shippingAddress } = request.params;
+    
+    return {
+      orderId: await this.processOrder(customerId, items, shippingAddress)
+    };
+  }
+
+  // Schema validates input from ANY agent
+  _params_create_order() {
+    return {
+      customerId: {
+        type: 'string',
+        required: true,
+        pattern: '^cust_[a-zA-Z0-9]+$'
+      },
+      items: {
+        type: 'array',
+        required: true,
+        minItems: 1,
+        items: {
+          type: 'object',
+          properties: {
+            productId: { type: 'string', required: true },
+            quantity: { type: 'number', required: true, min: 1 }
+          }
+        }
+      },
+      shippingAddress: {
+        type: 'object',
+        required: true,
+        properties: {
+          street: { type: 'string', required: true },
+          city: { type: 'string', required: true },
+          zipCode: { type: 'string', required: true, pattern: '^[0-9]{5}$' }
+        }
+      }
+    };
+  }
+}
+```
+
+### 5. Handle errors gracefully
+
+Return structured errors that both agent types can handle appropriately.
+
+```typescript
+async _tool_process_payment(request: oRequest) {
+  try {
+    const result = await this.chargeCard(request.params);
+    return {
+      success: true,
+      transactionId: result.id,
+      amount: result.amount
+    };
+  } catch (error) {
+    // Structured error for both agents
+    return {
+      success: false,
+      error: {
+        code: 'PAYMENT_FAILED',
+        message: 'Unable to process payment',
+        details: error.message,
+        retryable: error.code === 'INSUFFICIENT_FUNDS' ? false : true,
+        suggestedAction: error.code === 'CARD_EXPIRED' 
+          ? 'Request updated payment method'
+          : 'Retry with same card'
+      }
+    };
+  }
+}
+
+// Humans: See error message and suggested action
+// AI agents: Parse error code and decide whether to retry
+```
+
+### 6. Stream progress for long operations
+
+Enable real-time feedback for both human and AI agents.
+
+```typescript
+class DataProcessor extends oLaneTool {
+  async _tool_process_large_dataset(request: oRequest) {
+    const { datasetId } = request.params;
+    
+    // Get stream address (could be human's terminal or AI's listener)
+    const streamTo = request.params.streamTo;
+    
+    if (streamTo) {
+      // Stream progress updates
+      await this.streamProgress(streamTo, {
+        stage: 'loading',
+        progress: 0.1,
+        message: 'Loading dataset...'
+      });
+      
+      await this.streamProgress(streamTo, {
+        stage: 'processing',
+        progress: 0.5,
+        message: 'Processing 5000 records...'
+      });
+      
+      await this.streamProgress(streamTo, {
+        stage: 'complete',
+        progress: 1.0,
+        message: 'Processing complete'
+      });
+    }
+    
+    return { processed: true, recordCount: 5000 };
+  }
+}
+```
+
+## Real-world examples
+
+### Example 1: Customer support system
+
+A tool node that serves both human support reps and AI triage agents.
+
+```typescript
+class CustomerSupport extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://support/customer-service')
+    });
+  }
+
+  // Simple tool: Get customer info
+  async _tool_get_customer(request: oRequest) {
+    const { customerId } = request.params;
+    return {
+      customer: await this.fetchCustomer(customerId),
+      recentTickets: await this.fetchTickets(customerId),
+      accountStatus: await this.getAccountStatus(customerId)
+    };
+  }
+
+  // Simple tool: Create ticket
+  async _tool_create_ticket(request: oRequest) {
+    const { customerId, issue, priority } = request.params;
+    return {
+      ticketId: await this.createTicket(customerId, issue, priority)
+    };
+  }
+
+  // Complex: Handle via intent
+  // "Find customer john@example.com and show recent activity"
+  // "Create high-priority ticket for customer cust_123 about billing"
+}
+```
+
+**Human support rep**:
+```bash
+# Quick customer lookup during call
+$ olane call o://support/customer-service get_customer \
+  --customerId "cust_123"
+
+# Create ticket manually
+$ olane call o://support/customer-service create_ticket \
+  --customerId "cust_123" \
+  --issue "Billing inquiry" \
+  --priority "high"
+```
+
+**AI triage agent**:
+```typescript
+// AI monitors incoming emails, auto-creates tickets
+class EmailTriageAgent {
+  async processIncomingEmail(email: Email) {
+    // Extract customer from email
+    const customer = await this.identifyCustomer(email.from);
+    
+    // AI analyzes sentiment and urgency
+    const analysis = await this.analyzeSentiment(email.body);
+    
+    // Create ticket via same tool node
+    await supportTool.use({
+      method: 'create_ticket',
+      params: {
+        customerId: customer.id,
+        issue: email.subject,
+        priority: analysis.urgent ? 'high' : 'normal'
+      }
+    });
+  }
+}
+```
+
+<Check>
+  Same tool node serves both manual human operations and automated AI triage.
+</Check>
+
+---
+
+### Example 2: Financial reporting system
+
+Tool node serves both human analysts and AI monitoring agents.
+
+```typescript
+class FinancialReporting extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://finance/reporting')
+    });
+  }
+
+  // Simple tools
+  async _tool_get_revenue(request: oRequest) {
+    const { period } = request.params;
+    return { revenue: await this.calculateRevenue(period) };
+  }
+
+  async _tool_get_expenses(request: oRequest) {
+    const { period } = request.params;
+    return { expenses: await this.calculateExpenses(period) };
+  }
+
+  async _tool_generate_report(request: oRequest) {
+    const { reportType, period } = request.params;
+    return { report: await this.generateReport(reportType, period) };
+  }
+
+  // Complex: Intent-driven comprehensive analysis
+}
+```
+
+**Human analyst workflow**:
+```typescript
+// Web dashboard interface
+class AnalystDashboard {
+  async generateQuarterlyReport() {
+    // Human clicks "Generate Q4 Report" button
+    const result = await financialReporting.use({
+      method: 'intent',
+      params: {
+        intent: 'Generate comprehensive Q4 financial report with YoY comparison'
+      }
+    });
+    
+    // Dashboard renders interactive report
+    this.renderReport(result);
+  }
+}
+```
+
+**AI monitoring agent**:
+```typescript
+// Autonomous monitoring and alerting
+class FinancialMonitor extends AIAgent {
+  async dailyCheck() {
+    // AI runs automated daily analysis
+    const result = await financialReporting.use({
+      method: 'intent',
+      params: {
+        intent: 'Analyze yesterday\'s financial performance and flag anomalies'
+      }
+    });
+    
+    // AI decides whether to alert humans
+    if (result.anomalies.length > 0) {
+      await this.sendAlert({
+        severity: 'high',
+        message: `${result.anomalies.length} financial anomalies detected`,
+        details: result.anomalies
+      });
+    }
+  }
+}
+```
+
+<Check>
+  Analysts use on-demand via UI, AI agent monitors continuously. Same tool node, different usage patterns.
+</Check>
+
+---
+
+### Example 3: Data pipeline orchestration
+
+Tool node serves both data engineers (manual) and AI coordinators (automated).
+
+```typescript
+class DataPipeline extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://data/etl-pipeline')
+    });
+  }
+
+  // Internal tools
+  async _tool_extract(request: oRequest) { /* ... */ }
+  async _tool_transform(request: oRequest) { /* ... */ }
+  async _tool_validate(request: oRequest) { /* ... */ }
+  async _tool_load(request: oRequest) { /* ... */ }
+
+  // Intent method handles complex orchestration
+}
+```
+
+**Data engineer (manual trigger)**:
+```bash
+# Engineer tests pipeline manually
+$ olane intent "Run customer data ETL for 2024-10-01 with validation"
+
+# Monitor execution in real-time
+$ olane logs o://data/etl-pipeline --follow
+```
+
+**AI orchestration agent (automated)**:
+```typescript
+// AI coordinates daily pipeline execution
+class PipelineOrchestrator extends AIAgent {
+  async orchestrateDaily() {
+    // AI discovers pipeline dependencies
+    const pipelines = await this.discover({
+      domain: 'data-processing',
+      capability: 'etl'
+    });
+    
+    // Execute in dependency order
+    for (const pipeline of pipelines) {
+      const result = await pipeline.use({
+        method: 'intent',
+        params: {
+          intent: 'Execute daily ETL with dependency resolution and validation'
+        }
+      });
+      
+      // AI handles failures autonomously
+      if (result.failed) {
+        await this.remediateFailed(pipeline, result);
+      }
+    }
+  }
+  
+  async remediateFailed(pipeline: any, result: any) {
+    // AI attempts automatic remediation
+    await remediation.use({
+      method: 'intent',
+      params: {
+        intent: `Fix ETL failure in ${pipeline.address}: ${result.error}`
+      }
+    });
+  }
+}
+```
+
+<Check>
+  Engineers trigger manually for testing, AI orchestrates daily execution autonomously.
+</Check>
+
+## Common patterns
+
+### Pattern: Progressive human → AI adoption
+
+Start with human users, gradually add AI capabilities without refactoring.
+
+```typescript
+// Phase 1: Build for humans
+class SalesAnalytics extends oNodeTool {
+  async _tool_get_revenue(request: oRequest) { 
+    return { revenue: await this.calculateRevenue() };
+  }
+}
+
+// Humans use via web UI
+// No AI yet
+
+// Phase 2: Add intent support (just upgrade to oLaneTool)
+class SalesAnalytics extends oLaneTool {
+  async _tool_get_revenue(request: oRequest) { 
+    return { revenue: await this.calculateRevenue() };
+  }
+  
+  // Intent method automatically available
+}
+
+// Humans still use via web UI
+// Now also supports complex intents from humans
+
+// Phase 3: AI agents discover and use
+// NO CODE CHANGES NEEDED
+// AI agents can now discover and use the tool node autonomously
+```
+
+<Note>
+  Agent-agnostic design enables incremental AI adoption without breaking existing human workflows.
+</Note>
+
+---
+
+### Pattern: Human-in-the-loop AI coordination
+
+AI coordinates, human approves critical decisions.
+
+```typescript
+class OrderApproval extends oLaneTool {
+  async _tool_analyze_order(request: oRequest) {
+    const { orderId } = request.params;
+    const analysis = await this.analyzeRisk(orderId);
+    
+    return {
+      orderId,
+      riskScore: analysis.score,
+      needsApproval: analysis.score > 0.7,
+      recommendation: analysis.recommendation
+    };
+  }
+
+  async _tool_approve_order(request: oRequest) {
+    const { orderId, approver } = request.params;
+    return { approved: await this.approveOrder(orderId, approver) };
+  }
+}
+
+// AI agent coordinates, requests human approval
+class SmartOrderProcessor {
+  async processOrder(order: Order) {
+    // AI analyzes order
+    const analysis = await orderApproval.use({
+      method: 'analyze_order',
+      params: { orderId: order.id }
+    });
+    
+    if (analysis.needsApproval) {
+      // Request human approval
+      const humanDecision = await this.requestHumanReview({
+        order,
+        analysis,
+        recommendation: analysis.recommendation
+      });
+      
+      if (humanDecision.approved) {
+        // Human approved via web UI
+        await orderApproval.use({
+          method: 'approve_order',
+          params: { 
+            orderId: order.id, 
+            approver: humanDecision.userId 
+          }
+        });
+      }
+    } else {
+      // AI approves autonomously (low risk)
+      await this.processAutomatically(order);
+    }
+  }
+}
+```
+
+---
+
+### Pattern: Hybrid expertise (human + AI)
+
+Combine human domain knowledge with AI execution.
+
+```typescript
+// Human provides strategic constraints
+const humanStrategy = {
+  budgetLimit: 50000,
+  requiredVendors: ['VendorA', 'VendorB'],
+  timeline: '2 weeks',
+  priorities: ['cost', 'quality', 'delivery-time']
+};
+
+// AI coordinates within human-defined constraints
+const result = await procurementTool.use({
+  method: 'intent',
+  params: {
+    intent: 'Optimize procurement across vendors',
+    context: JSON.stringify(humanStrategy)
+  }
+});
+
+// AI proposes solution
+console.log(result.proposal);
+// {
+//   vendors: [...],
+//   totalCost: 48000,
+//   deliveryTime: '10 days',
+//   justification: 'Optimized for cost and delivery within constraints'
+// }
+
+// Human makes final decision
+const humanDecision = await human.review(result.proposal);
+if (humanDecision.approved) {
+  await procurementTool.use({
+    method: 'execute_procurement',
+    params: { proposalId: result.proposal.id }
+  });
+}
+```
+
+## Testing agent-agnostic tool nodes
+
+Test with both human and AI usage patterns.
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { oAddress } from '@olane/o-core';
+import { CustomerAnalytics } from './customer-analytics';
+
+describe('CustomerAnalytics - Agent-Agnostic', () => {
+  let toolNode: CustomerAnalytics;
+
+  beforeEach(async () => {
+    toolNode = new CustomerAnalytics();
+    await toolNode.start();
+  });
+
+  // Test 1: Direct tool call (human or AI agent)
+  it('should handle direct tool calls from any agent', async () => {
+    const result = await toolNode.use({
+      method: 'get_customers',
+      params: {
+        filters: { status: 'active' }
+      }
+    });
+
+    expect(result.customers).toBeDefined();
+    expect(Array.isArray(result.customers)).toBe(true);
+  });
+
+  // Test 2: Intent-driven (complex workflow)
+  it('should handle intents from any agent', async () => {
+    const result = await toolNode.use({
+      method: 'intent',
+      params: {
+        intent: 'Find high-value customers at risk of churning'
+      }
+    });
+
+    expect(result.atRiskCustomers).toBeDefined();
+    expect(result.totalValue).toBeGreaterThan(0);
+  });
+
+  // Test 3: Results are structured and serializable
+  it('should return JSON-serializable results', async () => {
+    const result = await toolNode.use({
+      method: 'get_customers',
+      params: { filters: { status: 'active' } }
+    });
+
+    // Should be JSON-serializable (important for both agent types)
+    const serialized = JSON.stringify(result);
+    const deserialized = JSON.parse(serialized);
+    
+    expect(deserialized).toEqual(result);
+  });
+
+  // Test 4: Parameter validation works for all agents
+  it('should validate parameters consistently', async () => {
+    await expect(
+      toolNode.use({
+        method: 'get_customers',
+        params: {} // Missing required filters
+      })
+    ).rejects.toThrow('Validation error');
+  });
+
+  // Test 5: Errors are structured
+  it('should return structured errors', async () => {
+    const result = await toolNode.use({
+      method: 'get_customers',
+      params: { filters: { invalidField: 'test' } }
+    });
+
+    if (!result.success) {
+      expect(result.error).toBeDefined();
+      expect(result.error.code).toBeDefined();
+      expect(result.error.message).toBeDefined();
+    }
+  });
+});
+```
+
+## Migration checklist
+
+Migrating existing code to agent-agnostic design:
+
+<Steps>
+  <Step title="Identify separate human and AI interfaces">
+    Find code that handles human requests differently from AI requests.
+  </Step>
+  
+  <Step title="Design unified natural language interface">
+    Create intent-based interface that both agent types can use.
+  </Step>
+  
+  <Step title="Upgrade to oLaneTool if needed">
+    For complex nodes with 5+ tools, use `oLaneTool` for intent support.
+  </Step>
+  
+  <Step title="Return structured, serializable results">
+    Ensure all tool methods return JSON-serializable data.
+  </Step>
+  
+  <Step title="Add parameter schemas">
+    Define `_params_` methods for all tools to enable consistent validation.
+  </Step>
+  
+  <Step title="Test with both agent types">
+    Write tests that simulate both human CLI usage and AI programmatic usage.
+  </Step>
+  
+  <Step title="Document for both audiences">
+    Provide examples showing human CLI usage and AI programmatic usage.
+  </Step>
+</Steps>
+
+## Benefits summary
+
+<CardGroup cols={2}>
+  <Card title="Build Once" icon="code" color="#0D9373">
+    One interface serves both human and AI agents. No duplicate code.
+  </Card>
+  
+  <Card title="Future-Proof" icon="shield-check" color="#0D9373">
+    Works today with humans, scales as AI adoption increases.
+  </Card>
+  
+  <Card title="Consistent" icon="check-double" color="#0D9373">
+    Guaranteed feature parity between human and AI interfaces.
+  </Card>
+  
+  <Card title="Maintainable" icon="wrench" color="#0D9373">
+    Update once, improvements benefit all agents.
+  </Card>
+  
+  <Card title="Scalable" icon="chart-line" color="#0D9373">
+    Add AI capabilities without refactoring human workflows.
+  </Card>
+  
+  <Card title="Testable" icon="vial" color="#0D9373">
+    Test once for both usage patterns.
+  </Card>
+</CardGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Human Interfaces" icon="desktop" href="/agents/human-interfaces">
+    Learn CLI, web UI, and API interfaces for human agents
+  </Card>
+  
+  <Card title="AI Integration" icon="brain" href="/agents/ai-integration">
+    Integrate AI models as agents in your system
+  </Card>
+  
+  <Card title="Hybrid Workflows" icon="arrows-split-up-and-left" href="/agents/hybrid-workflows">
+    Design workflows combining human and AI agents
+  </Card>
+  
+  <Card title="Building Tool Nodes" icon="hammer" href="/concepts/tool-nodes/overview">
+    Deep dive into tool node architecture
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Understanding**: [Three-Layer Model](/understanding/three-layer-model) - Architecture overview
+- **Agents**: [Agents Overview](/agents/overview) - Understanding agents as users
+- **Concepts**: [Tools, Nodes & Applications](/concepts/tools-nodes-applications) - Architectural levels
+- **Building**: [Complex Nodes](/concepts/tool-nodes/complex-nodes) - Intent-driven nodes
+- **API**: [o-lane Reference](/api/lanes) - Lane API documentation
+

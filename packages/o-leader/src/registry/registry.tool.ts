@@ -1,16 +1,18 @@
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { oRegistrationParams } from '@olane/o-protocol';
-import { oAddress, oRequest } from '@olane/o-core';
+import { oAddress, oRequest, RestrictedAddresses } from '@olane/o-core';
 import { REGISTRY_PARAMS } from './methods/registry.methods.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
-export abstract class RegistryTool extends oVirtualTool {
+export abstract class RegistryTool extends oLaneTool {
   protected readonly registry: Map<string, oRegistrationParams> = new Map();
   protected readonly protocolMapping: Map<string, string[]> = new Map();
 
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
-      address: new oAddress('o://register'),
+      address: new oAddress(RestrictedAddresses.REGISTRY),
       methods: REGISTRY_PARAMS,
       description: 'Network registry of tools and their respective addresses',
     });

@@ -1,12 +1,13 @@
-import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import fs from 'fs/promises';
 import { STORAGE_PARAMS } from '../methods/storage.methods.js';
 import { GetDataResponse } from '../interfaces/get-data.response.js';
 import { DiskStorageProvider } from './disk-storage-provider.tool.js';
+import { oNodeToolConfig } from '@olane/o-node';
 
 // Extend the config interface to include storage directory
-interface DiskStorageConfig extends oToolConfig {
+interface DiskStorageConfig extends oNodeToolConfig {
   storageDir?: string;
   address?: oAddress;
 }

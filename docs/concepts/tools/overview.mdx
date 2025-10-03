@@ -1,0 +1,997 @@
+---
+title: "Tools Overview"
+description: "Individual executable methods that make node capabilities discoverable and invokable by any agent"
+---
+
+## Overview
+
+**Tools** are individual executable methods on nodes that make capabilities discoverable and invokable by agents. They're how you expose functionality in Olane OS - whether to human agents (via CLI, UI) or AI agents (via LLMs).
+
+**TL;DR**: Tools turn node methods into discoverable, validated capabilities that any agent can find and use. Think: functions with schemas, automatic validation, and network-wide discovery.
+
+## Mental model: Like MCP tools, but agent-agnostic
+
+If you're familiar with MCP (Model Context Protocol), think of Olane tools similarly: **discoverable, validated functions that agents can invoke**. The key difference is that Olane tools serve both human agents (CLI, UI) and AI agents (LLMs) through the same interface.
+
+```typescript
+// A tool in Olane OS
+class WeatherNode extends oNodeTool {
+  // Discoverable method with _tool_ prefix
+  async _tool_get_weather(request: oRequest) {
+    return { temp: 72, conditions: "sunny" };
+  }
+
+  // Parameter schema for validation
+  _params_get_weather() {
+    return {
+      location: { type: 'string', required: true }
+    };
+  }
+}
+```
+
+<Note>
+  If you're using MCP servers, Olane can bridge them into your network. See [MCP Integration](/concepts/tools/mcp-integration) to learn how.
+</Note>
+
+## Why tools exist
+
+Traditional function calls have limitations when working with agents:
+
+<CardGroup cols={2}>
+  <Card title="Not Discoverable" icon="eye-slash" color="#ef4444">
+    Agents can't find what functions exist
+  </Card>
+  <Card title="No Schema" icon="file-slash" color="#ef4444">
+    Parameters aren't validated or documented
+  </Card>
+  <Card title="No Routing" icon="route" color="#ef4444">
+    Can't invoke across network boundaries
+  </Card>
+  <Card title="Agent-Specific" icon="lock" color="#ef4444">
+    Built for either humans OR AI, not both
+  </Card>
+</CardGroup>
+
+### How Olane tools solve this
+
+```
+┌──────────────────────────────────────────────────┐
+│  Agent (Human or AI)                             │
+│  "I need to calculate revenue for Q4"            │
+└──────────────────────────────────────────────────┘
+                    ⬇ discovers
+┌──────────────────────────────────────────────────┐
+│  Tool Registry                                    │
+│  • o://finance/analyst has "calculate_revenue"   │
+│  • Parameters: { quarter, year }                 │
+│  • Returns: { revenue, currency }                │
+└──────────────────────────────────────────────────┘
+                    ⬇ invokes
+┌──────────────────────────────────────────────────┐
+│  Tool Execution                                   │
+│  1. Validate parameters (quarter=4, year=2024)   │
+│  2. Execute tool logic                           │
+│  3. Return result: { revenue: 150000, ... }      │
+└──────────────────────────────────────────────────┘
+```
+
+## Tool anatomy
+
+A tool consists of three parts:
+
+### 1. The executable method
+
+<CodeGroup>
+```typescript Basic Tool
+class FinancialNode extends oNodeTool {
+  // The _tool_ prefix makes this discoverable
+  async _tool_calculate_revenue(request: oRequest) {
+    const { quarter, year } = request.params;
+    
+    // Your domain logic
+    const revenue = await this.sumTransactions(quarter, year);
+    
+    return {
+      revenue,
+      currency: 'USD',
+      period: { quarter, year }
+    };
+  }
+}
+```
+
+```typescript With Error Handling
+class FinancialNode extends oNodeTool {
+  async _tool_calculate_revenue(request: oRequest) {
+    const { quarter, year } = request.params;
+    
+    // Validate business logic
+    if (quarter < 1 || quarter > 4) {
+      throw new Error('Quarter must be between 1 and 4');
+    }
+    
+    try {
+      const revenue = await this.sumTransactions(quarter, year);
+      
+      return {
+        revenue,
+        currency: 'USD',
+        period: { quarter, year }
+      };
+    } catch (error) {
+      // Olane handles error formatting for agents
+      throw new Error(`Failed to calculate revenue: ${error.message}`);
+    }
+  }
+}
+```
+</CodeGroup>
+
+### 2. The parameter schema
+
+<CodeGroup>
+```typescript Basic Schema
+class FinancialNode extends oNodeTool {
+  // The _params_ prefix defines the schema
+  _params_calculate_revenue() {
+    return {
+      quarter: { 
+        type: 'number', 
+        required: true,
+        description: 'Quarter number (1-4)'
+      },
+      year: { 
+        type: 'number', 
+        required: true,
+        description: 'Year (e.g., 2024)'
+      }
+    };
+  }
+}
+```
+
+```typescript Advanced Schema
+class FinancialNode extends oNodeTool {
+  _params_calculate_revenue() {
+    return {
+      quarter: { 
+        type: 'number', 
+        required: true,
+        min: 1,
+        max: 4,
+        description: 'Quarter number (1-4)'
+      },
+      year: { 
+        type: 'number', 
+        required: true,
+        min: 2020,
+        max: 2030,
+        description: 'Year (e.g., 2024)'
+      },
+      includeProjections: {
+        type: 'boolean',
+        required: false,
+        default: false,
+        description: 'Include revenue projections'
+      },
+      breakdown: {
+        type: 'string',
+        required: false,
+        enum: ['product', 'region', 'customer'],
+        description: 'Revenue breakdown type'
+      }
+    };
+  }
+}
+```
+</CodeGroup>
+
+### 3. The documentation
+
+```typescript
+class FinancialNode extends oNodeTool {
+  // Optional: Add description for tools
+  _description_calculate_revenue() {
+    return 'Calculate total revenue for a specific quarter and year';
+  }
+  
+  // Optional: Add examples
+  _examples_calculate_revenue() {
+    return [
+      {
+        params: { quarter: 4, year: 2024 },
+        result: { revenue: 150000, currency: 'USD' }
+      },
+      {
+        params: { quarter: 1, year: 2024, breakdown: 'product' },
+        result: { 
+          revenue: 120000, 
+          currency: 'USD',
+          products: { productA: 80000, productB: 40000 }
+        }
+      }
+    ];
+  }
+}
+```
+
+## Naming conventions
+
+The `_tool_` and `_params_` prefixes are **conventions**, not magic:
+
+<Tabs>
+  <Tab title="Tool Method">
+    ```typescript
+    // ✅ Correct: _tool_ prefix
+    async _tool_calculate_revenue(request: oRequest) { }
+    
+    // ❌ Wrong: No prefix
+    async calculateRevenue(request: oRequest) { }
+    
+    // ❌ Wrong: Different prefix
+    async tool_calculate_revenue(request: oRequest) { }
+    ```
+  </Tab>
+  
+  <Tab title="Parameter Schema">
+    ```typescript
+    // ✅ Correct: _params_ prefix, same method name
+    _params_calculate_revenue() { }
+    
+    // ❌ Wrong: No prefix
+    paramsCalculateRevenue() { }
+    
+    // ❌ Wrong: Method name mismatch
+    _params_calc_revenue() { }  // Tool is _tool_calculate_revenue
+    ```
+  </Tab>
+  
+  <Tab title="Best Practices">
+    ```typescript
+    // ✅ Use verb_noun pattern
+    _tool_calculate_revenue()
+    _tool_generate_report()
+    _tool_send_notification()
+    
+    // ✅ Be specific
+    _tool_calculate_quarterly_revenue()
+    
+    // ❌ Too vague
+    _tool_process()
+    _tool_do_thing()
+    
+    // ❌ Too long
+    _tool_calculate_revenue_for_specific_quarter_and_year()
+    ```
+  </Tab>
+</Tabs>
+
+## How agents invoke tools
+
+Tools are **agent-agnostic** - they work identically for human and AI agents.
+
+### Human Agent (CLI)
+
+```bash
+# Discover tools on a node
+$ olane discover o://finance/analyst
+
+# Available tools:
+# - calculate_revenue (quarter, year)
+# - generate_report (reportType)
+# - forecast_growth (periods)
+
+# Call a tool
+$ olane call o://finance/analyst calculate_revenue \
+  --quarter 4 \
+  --year 2024
+
+# Result:
+# {
+#   "revenue": 150000,
+#   "currency": "USD",
+#   "period": { "quarter": 4, "year": 2024 }
+# }
+```
+
+### AI Agent (Programmatic)
+
+```typescript
+// AI agent discovers and calls tools programmatically
+import { oAddress } from '@olane/o-core';
+
+// Discover the node
+const financeNode = await oAddress.resolve('o://finance/analyst');
+
+// Get available tools
+const tools = await financeNode.getTools();
+// Returns: ['calculate_revenue', 'generate_report', 'forecast_growth']
+
+// Get tool schema
+const schema = await financeNode.getToolParams('calculate_revenue');
+// Returns: { quarter: { type: 'number', required: true }, ... }
+
+// Call the tool
+const result = await financeNode.use({
+  method: 'calculate_revenue',
+  params: {
+    quarter: 4,
+    year: 2024
+  }
+});
+
+console.log(result);
+// { revenue: 150000, currency: 'USD', ... }
+```
+
+### LLM Integration (Function Calling)
+
+```typescript
+// Convert Olane tools to OpenAI function format
+import { oToolToOpenAI } from '@olane/o-tool';
+
+const financeNode = await oAddress.resolve('o://finance/analyst');
+
+// Get tools in OpenAI format
+const openaiTools = await oToolToOpenAI(financeNode);
+
+// Use with OpenAI
+const response = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [
+    { role: 'user', content: 'Calculate Q4 2024 revenue' }
+  ],
+  tools: openaiTools,
+  tool_choice: 'auto'
+});
+
+// Execute tool calls
+for (const toolCall of response.choices[0].message.tool_calls) {
+  const result = await financeNode.use({
+    method: toolCall.function.name,
+    params: JSON.parse(toolCall.function.arguments)
+  });
+}
+```
+
+## Tool organization patterns
+
+### Pattern 1: Single-Purpose Node
+
+Best for simple utilities with 1-3 related tools.
+
+```typescript
+// Currency conversion node with 3 tools
+class CurrencyNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://utilities/currency')
+    });
+  }
+
+  async _tool_convert(request: oRequest) {
+    // Convert between currencies
+  }
+
+  async _tool_get_rate(request: oRequest) {
+    // Get exchange rate
+  }
+
+  async _tool_list_currencies(request: oRequest) {
+    // List supported currencies
+  }
+}
+```
+
+### Pattern 2: Domain-Specific Node
+
+Best for comprehensive domain coverage with 5-15 tools.
+
+```typescript
+// Financial analysis node with many tools
+class FinancialNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://company/finance')
+    });
+  }
+
+  // Revenue tools
+  async _tool_calculate_revenue(request: oRequest) { }
+  async _tool_forecast_revenue(request: oRequest) { }
+  
+  // Expense tools
+  async _tool_calculate_expenses(request: oRequest) { }
+  async _tool_categorize_expenses(request: oRequest) { }
+  
+  // Analysis tools
+  async _tool_calculate_margin(request: oRequest) { }
+  async _tool_identify_trends(request: oRequest) { }
+  
+  // Reporting tools
+  async _tool_generate_report(request: oRequest) { }
+  async _tool_export_data(request: oRequest) { }
+}
+```
+
+### Pattern 3: Hierarchical Organization
+
+Best for large domains with 20+ tools across subdomains.
+
+```
+o://company/finance/
+├─ o://company/finance/revenue     (3 revenue tools)
+├─ o://company/finance/expenses    (4 expense tools)
+├─ o://company/finance/analytics   (6 analysis tools)
+└─ o://company/finance/reporting   (5 reporting tools)
+```
+
+```typescript
+// Revenue node
+class RevenueNode extends oNodeTool {
+  constructor() {
+    super({ address: new oAddress('o://company/finance/revenue') });
+  }
+  
+  async _tool_calculate(request: oRequest) { }
+  async _tool_forecast(request: oRequest) { }
+  async _tool_breakdown(request: oRequest) { }
+}
+
+// Expense node
+class ExpenseNode extends oNodeTool {
+  constructor() {
+    super({ address: new oAddress('o://company/finance/expenses') });
+  }
+  
+  async _tool_calculate(request: oRequest) { }
+  async _tool_categorize(request: oRequest) { }
+  async _tool_approve(request: oRequest) { }
+  async _tool_track(request: oRequest) { }
+}
+
+// Agents discover the hierarchy
+const financeNodes = await leader.search({ 
+  addressPrefix: 'o://company/finance' 
+});
+// Returns: [revenue, expenses, analytics, reporting]
+```
+
+## Built-in tools
+
+Every node has built-in system tools for basic operations:
+
+<AccordionGroup>
+  <Accordion title="handshake - Node information">
+    ```typescript
+    // Returns node metadata
+    const info = await node.use({ method: 'handshake' });
+    
+    // Result:
+    {
+      address: 'o://company/finance/analyst',
+      type: 'TOOL',
+      capabilities: ['calculate', 'analyze', 'report'],
+      tools: ['calculate_revenue', 'generate_report', ...],
+      version: '1.0.0',
+      description: 'Financial analysis node'
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="get_tools - Tool discovery">
+    ```typescript
+    // Returns available tools
+    const tools = await node.use({ method: 'get_tools' });
+    
+    // Result:
+    [
+      {
+        name: 'calculate_revenue',
+        params: { quarter: {...}, year: {...} },
+        description: 'Calculate quarterly revenue',
+        examples: [...]
+      },
+      ...
+    ]
+    ```
+  </Accordion>
+  
+  <Accordion title="get_params - Parameter schema">
+    ```typescript
+    // Get schema for specific tool
+    const schema = await node.use({ 
+      method: 'get_params',
+      params: { toolName: 'calculate_revenue' }
+    });
+    
+    // Result:
+    {
+      quarter: { type: 'number', required: true, min: 1, max: 4 },
+      year: { type: 'number', required: true }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="register - Network registration">
+    ```typescript
+    // Register with leader node (automatic)
+    await node.use({
+      method: 'register',
+      params: {
+        leaderAddress: 'o://leader'
+      }
+    });
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Tool validation
+
+Parameters are automatically validated before execution:
+
+<Tabs>
+  <Tab title="Type Validation">
+    ```typescript
+    class MyNode extends oNodeTool {
+      _params_calculate() {
+        return {
+          amount: { type: 'number', required: true },
+          currency: { type: 'string', required: true }
+        };
+      }
+      
+      async _tool_calculate(request: oRequest) {
+        // Guaranteed to have correct types
+        const { amount, currency } = request.params;
+      }
+    }
+    
+    // ❌ This will fail validation
+    await node.use({
+      method: 'calculate',
+      params: { amount: "100" }  // Wrong type (string instead of number)
+    });
+    // Error: Parameter 'amount' must be of type 'number'
+    
+    // ❌ This will fail validation
+    await node.use({
+      method: 'calculate',
+      params: { amount: 100 }  // Missing 'currency'
+    });
+    // Error: Required parameter 'currency' is missing
+    ```
+  </Tab>
+  
+  <Tab title="Range Validation">
+    ```typescript
+    class MyNode extends oNodeTool {
+      _params_set_temperature() {
+        return {
+          value: { 
+            type: 'number', 
+            required: true,
+            min: -273.15,  // Absolute zero
+            max: 1000
+          }
+        };
+      }
+    }
+    
+    // ❌ This will fail validation
+    await node.use({
+      method: 'set_temperature',
+      params: { value: -300 }  // Below minimum
+    });
+    // Error: Parameter 'value' must be >= -273.15
+    ```
+  </Tab>
+  
+  <Tab title="Enum Validation">
+    ```typescript
+    class MyNode extends oNodeTool {
+      _params_generate_report() {
+        return {
+          format: { 
+            type: 'string', 
+            required: true,
+            enum: ['pdf', 'csv', 'json']
+          }
+        };
+      }
+    }
+    
+    // ❌ This will fail validation
+    await node.use({
+      method: 'generate_report',
+      params: { format: 'xml' }  // Not in enum
+    });
+    // Error: Parameter 'format' must be one of: pdf, csv, json
+    ```
+  </Tab>
+</Tabs>
+
+## Tool discovery
+
+Agents discover tools through three mechanisms:
+
+### 1. Direct Query
+
+```typescript
+// Get all tools from a known node
+const node = await oAddress.resolve('o://finance/analyst');
+const tools = await node.use({ method: 'get_tools' });
+```
+
+### 2. Registry Search
+
+```typescript
+// Search for nodes with specific tools
+const nodes = await leader.search({
+  toolName: 'calculate_revenue'
+});
+// Returns all nodes that have this tool
+```
+
+### 3. Vector Search (Optional)
+
+```typescript
+// Semantic search for capabilities
+const nodes = await leader.search({
+  capability: 'financial analysis and reporting'
+});
+// Returns nodes with semantically similar tools
+```
+
+## Real-world example
+
+Complete weather service node with multiple tools:
+
+<CodeGroup>
+```typescript Node Definition
+import { oNodeTool } from '@olane/o-node';
+import { oAddress, oRequest } from '@olane/o-core';
+
+class WeatherNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://services/weather')
+    });
+  }
+
+  // Tool 1: Get current weather
+  async _tool_get_current(request: oRequest) {
+    const { location } = request.params;
+    const weather = await this.fetchWeather(location);
+    
+    return {
+      location,
+      temperature: weather.temp,
+      conditions: weather.conditions,
+      humidity: weather.humidity,
+      timestamp: Date.now()
+    };
+  }
+
+  _params_get_current() {
+    return {
+      location: { 
+        type: 'string', 
+        required: true,
+        description: 'City name or zip code'
+      }
+    };
+  }
+
+  // Tool 2: Get forecast
+  async _tool_get_forecast(request: oRequest) {
+    const { location, days } = request.params;
+    const forecast = await this.fetchForecast(location, days);
+    
+    return {
+      location,
+      days: forecast.map(day => ({
+        date: day.date,
+        high: day.high,
+        low: day.low,
+        conditions: day.conditions
+      }))
+    };
+  }
+
+  _params_get_forecast() {
+    return {
+      location: { 
+        type: 'string', 
+        required: true,
+        description: 'City name or zip code'
+      },
+      days: {
+        type: 'number',
+        required: false,
+        default: 5,
+        min: 1,
+        max: 10,
+        description: 'Number of days to forecast'
+      }
+    };
+  }
+
+  // Tool 3: Get alerts
+  async _tool_get_alerts(request: oRequest) {
+    const { location } = request.params;
+    const alerts = await this.fetchAlerts(location);
+    
+    return {
+      location,
+      alerts: alerts.map(alert => ({
+        type: alert.type,
+        severity: alert.severity,
+        message: alert.message,
+        expires: alert.expires
+      }))
+    };
+  }
+
+  _params_get_alerts() {
+    return {
+      location: { 
+        type: 'string', 
+        required: true,
+        description: 'City name or zip code'
+      }
+    };
+  }
+
+  // Private helper methods (not tools)
+  private async fetchWeather(location: string) {
+    // Call external weather API
+  }
+
+  private async fetchForecast(location: string, days: number) {
+    // Call external forecast API
+  }
+
+  private async fetchAlerts(location: string) {
+    // Call external alerts API
+  }
+}
+```
+
+```typescript Starting the Node
+import { WeatherNode } from './weather-node';
+
+const node = new WeatherNode();
+await node.start();
+
+console.log('Weather node started at o://services/weather');
+console.log('Available tools:', await node.getTools());
+// ['get_current', 'get_forecast', 'get_alerts']
+```
+
+```typescript Human Agent Usage
+# Get current weather
+$ olane call o://services/weather get_current --location "San Francisco"
+
+# Result:
+{
+  "location": "San Francisco",
+  "temperature": 68,
+  "conditions": "Partly cloudy",
+  "humidity": 65,
+  "timestamp": 1696185600000
+}
+
+# Get 7-day forecast
+$ olane call o://services/weather get_forecast \
+  --location "San Francisco" \
+  --days 7
+```
+
+```typescript AI Agent Usage
+// AI agent discovers and uses weather tools
+const weather = await oAddress.resolve('o://services/weather');
+
+// Get current weather
+const current = await weather.use({
+  method: 'get_current',
+  params: { location: 'San Francisco' }
+});
+
+// Get forecast
+const forecast = await weather.use({
+  method: 'get_forecast',
+  params: { location: 'San Francisco', days: 7 }
+});
+
+// Check for alerts
+const alerts = await weather.use({
+  method: 'get_alerts',
+  params: { location: 'San Francisco' }
+});
+```
+</CodeGroup>
+
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Keep tools atomic">
+    Each tool should do one thing well:
+    
+    ```typescript
+    // ✅ Good: Atomic operations
+    _tool_calculate_revenue()
+    _tool_calculate_expenses()
+    _tool_calculate_margin()
+    
+    // ❌ Bad: Do everything
+    _tool_do_financial_analysis()  // Too broad
+    ```
+  </Accordion>
+  
+  <Accordion title="Use descriptive names">
+    Tool names should clearly indicate what they do:
+    
+    ```typescript
+    // ✅ Good: Clear and specific
+    _tool_send_email_notification()
+    _tool_calculate_quarterly_revenue()
+    _tool_validate_credit_card()
+    
+    // ❌ Bad: Vague
+    _tool_process()
+    _tool_handle()
+    _tool_do_thing()
+    ```
+  </Accordion>
+  
+  <Accordion title="Validate comprehensively">
+    Use all available validation options:
+    
+    ```typescript
+    _params_create_user() {
+      return {
+        email: {
+          type: 'string',
+          required: true,
+          pattern: '^[^@]+@[^@]+\\.[^@]+$',  // Email regex
+          description: 'User email address'
+        },
+        age: {
+          type: 'number',
+          required: true,
+          min: 18,
+          max: 120,
+          description: 'User age'
+        },
+        role: {
+          type: 'string',
+          required: true,
+          enum: ['admin', 'user', 'guest'],
+          description: 'User role'
+        }
+      };
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Handle errors gracefully">
+    Provide helpful error messages:
+    
+    ```typescript
+    async _tool_charge_payment(request: oRequest) {
+      const { amount, paymentMethod } = request.params;
+      
+      try {
+        const result = await this.stripe.charges.create({
+          amount: amount * 100,
+          currency: 'usd',
+          source: paymentMethod
+        });
+        
+        return { success: true, chargeId: result.id };
+      } catch (error) {
+        // Transform Stripe errors into helpful messages
+        if (error.code === 'card_declined') {
+          throw new Error('Payment declined: insufficient funds');
+        }
+        if (error.code === 'expired_card') {
+          throw new Error('Payment declined: card expired');
+        }
+        throw new Error(`Payment failed: ${error.message}`);
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Document with examples">
+    Include usage examples for complex tools:
+    
+    ```typescript
+    _description_generate_report() {
+      return 'Generate financial report for specified period and format';
+    }
+    
+    _examples_generate_report() {
+      return [
+        {
+          description: 'Generate Q4 2024 PDF report',
+          params: {
+            period: { quarter: 4, year: 2024 },
+            format: 'pdf',
+            includeCharts: true
+          }
+        },
+        {
+          description: 'Generate monthly CSV report',
+          params: {
+            period: { month: 12, year: 2024 },
+            format: 'csv',
+            includeCharts: false
+          }
+        }
+      ];
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Use streaming for long operations">
+    Stream progress for operations that take >10 seconds:
+    
+    ```typescript
+    async _tool_generate_report(request: oRequest) {
+      const { period, format } = request.params;
+      
+      // Stream progress to agent
+      request.stream?.write({ status: 'Fetching data...', progress: 0.1 });
+      const data = await this.fetchData(period);
+      
+      request.stream?.write({ status: 'Analyzing trends...', progress: 0.4 });
+      const analysis = await this.analyze(data);
+      
+      request.stream?.write({ status: 'Generating charts...', progress: 0.7 });
+      const charts = await this.generateCharts(analysis);
+      
+      request.stream?.write({ status: 'Formatting report...', progress: 0.9 });
+      const report = await this.format(analysis, charts, format);
+      
+      return { report, format };
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Tools" icon="hammer" href="/concepts/tools/creating-tools">
+    Build your first tool node
+  </Card>
+  <Card title="Tool Conventions" icon="book" href="/concepts/tools/conventions">
+    Naming and organization patterns
+  </Card>
+  <Card title="Parameter Validation" icon="shield-check" href="/concepts/tools/parameter-validation">
+    Advanced validation techniques
+  </Card>
+  <Card title="Tool Discovery" icon="magnifying-glass" href="/concepts/tools/discovery">
+    How agents find and use tools
+  </Card>
+  <Card title="MCP Integration" icon="bridge" href="/concepts/tools/mcp-integration">
+    Bridge MCP servers into Olane
+  </Card>
+  <Card title="Built-in Tools" icon="toolbox" href="/concepts/tools/built-in-tools">
+    System tools reference
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Tools, Nodes, and Applications](/concepts/tools-nodes-applications) - Architectural levels
+- **Concept**: [Simple vs Complex Nodes](/concepts/tool-nodes/overview) - When to use which
+- **Package**: [o-tool Reference](/packages/o-tool) - Complete API documentation
+- **Package**: [o-mcp Reference](/packages/o-mcp) - MCP bridge package
+- **Guide**: [Built-in Tools](/concepts/tools/built-in-tools) - System tools reference
+- **External**: [Model Context Protocol](https://modelcontextprotocol.io) - MCP specification
+

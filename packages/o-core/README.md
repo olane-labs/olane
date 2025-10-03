@@ -1,194 +1,544 @@
-<p align="center">
-  <img src="/docs/assets/logo-white.png" width="120" alt="Olane Logo">
-</p>
+# @olane/o-core
 
-## Olane — Superintelligent network infrastructure
+The kernel layer of Olane OS - an agentic operating system where AI agents are the users, and you build tool nodes as applications.
 
-*Try Self-hosted Version:* 
-Open-sourced with Apache 2.0 license *maintained by olane labs and the OSS community* 
+[![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-**Request Hosted Version:**
-[Join waitlist](https://olane.com)
+## What is o-core?
 
-**Benefits of running everything on a personal and private superintelligent network**
+**o-core** is the **kernel layer** of Olane OS - the foundational runtime for building tool nodes that AI agents use. Think of it as the Linux kernel: it defines how processes work (lifecycle, IPC, addressing, routing) but doesn't implement specific transport layers.
 
-- Infrastructure *that **thinks***
-- Infrastructure *that **self-improves***
-- Infrastructure *that **communicates with anything**
-(Humans, AI agents, protocols like HTTP, TCP, A2A, MCP, APIs, Tools, etc.)*
-- Infrastructure *that's **owned by you** and is **device & system agnostic***
-- Infrastructure *that’s **zero trust, quantum-encrypted, with continuous MFA enabled***
+### The Three-Layer Model
 
-## Olane Overview
-
-**Olane** is a peer-to-peer, secure, hierarchical AI network designed to organize data, resources, tools, and intelligent processes.
-
-Within an olane network, AI agents can perform long-running tasks using sensitive tooling inside a dedicated, private, and secure sandboxed environment.
-
-**Key Concepts**
-
-1. **o:// o-protocol**
-    
-    The `o://` protocol enables seamless communication and coordination across agents, tools, and networks.
-    
-2. **o-networks**
-    
-    Olane networks (`o-network`) transform every tool, data point, or intelligent action into a resolvable [o-address](https://github.com/olane-labs/o-protocol-private) — for example:
-    
-    `o://my-o-network/mcp/send email to client`
-
-    More on [olane hierarchical organization](/docs/NETWORK_HIERARCHY.md) and why it is the [future of AI infrastructure](/docs/FUTURE_AI_INFRA.md).
-    
-3. **Interconnected Intelligence**
-    
-    o-addresses can be shared across networks, enabling secure, intelligent communication and knowledge sharing between organizations or agents:
-    
-    `o://share "o://my-network/mcp/send email" with my company's o-network`
-    
-![simple o-network diagram](/docs/assets/simple-network.png)
-
-## **Get started**
-
-Building on olane is easy, this section will quickly teach you how to:
-
-1. [Create your own network](#create-a-network)
-2. [Use your own network](#use-your-network)
-    1. Build and Personalize
-    2. Monitor and Track
-3. [Connect with other networks](#learning)
-    1. Access knowledge skills
-    2. Share knowledge skills
-    3. Communicate across bridges
-4. Checkout out our [start building](/docs/START_BUILDING.md) page for more advanced topics and use cases
-
-## **INSTALL 🎉**
-
-**Create your intelligent network 🌐**
-
-Follow these steps to create and start your olane network called `my-network`. 
-
-```bash
-# install the cli tool
-# clone the cli repo
-npm install -g @olane/o-cli
-
-# create your first network
-olane create -p 4444 my-network
-
-# start your network
-olane start -d my-network
+```
+AI Agents (LLMs) → use → Tool Nodes (you build) → run on → Olane OS (o-core)
 ```
 
-*About your intelligent network:*
-*Every network comes out of the box with [tools](https://github.com/olane-labs/o-network-private/blob/main) 
+- **AI Agents (Users)**: GPT-4, Claude, etc. - the intelligent users
+- **Tool Nodes (Applications)**: Domain-specific capabilities you build
+- **o-core (OS Kernel)**: The runtime infrastructure that makes it all work
 
->Network needs Node.js v20+ to run [update node.js tutorial](/docs/UPDATE_NODEJS.md)
+This is **NOT** a network framework or API library - it's the abstract operating system layer that makes inter-process communication (IPC), resource addressing, and hierarchical organization possible.
 
-> Congrats!! 
-Here’s what you just unlocked
-Play Video
-> 
+## Key Features
 
-## RUN 🏃
+- 🏗️ **Tool Node Runtime**: Base infrastructure for creating tool node processes that agents use
+- 📍 **Hierarchical Addressing**: `o://` protocol for filesystem-like tool node addressing
+- 🔀 **Intelligent Routing**: Automatic request routing through tool node hierarchies
+- 🔌 **Transport-Agnostic**: Abstract layer - works with any communication layer (libp2p, HTTP, custom)
+- 🌳 **Hierarchy Management**: Built-in parent-child relationships between tool nodes
+- 🔄 **Lifecycle Management**: Complete process state management and graceful shutdown
+- 📊 **Observable**: Built-in metrics, logging, and request tracking
+- 🛡️ **Fault-Tolerant**: Error handling, graceful degradation, and automatic cleanup
 
-**Use your intelligent network**
-
-1. Join your network ➕
-```bash
-olane chat my-network
-```
-- Not only can *you* talk to your network, but your network can talk to you now
-2. Talk to your network via "intent" (resolution) 🗣️
+## Installation
 
 ```bash
-# a secure network connection is created
-# Add new functionality like an MCP server
-> Add linear to my network
-.....Searching for linear context
-.....OAuth access is required, continue to login? (You will need browser access)
-.....Confirmed login success, creating a new node at location "o://my-network/mcp/linear"
-.....44 New skills discovered through this node!
-.....Intent success. Result: Network node added! Knowledge captured at o://plan/12345678910
-.....Your network "my-network" will now analyze linear to understand more about it and how you use it.
-
-# Assess your network's understanding of the data and tooling it contains
-> Who am I?
-.....Searching "my-network" for context
-.....Analyzing "my-network" context
-.....Summarizing
-.....You are a software engineer with a passion for anime. Your daily routine revolves around a mixture of client projects.... 
-
-# Assign jobs to your network (*coming soon)
-> Update me on the S&P 500 through Warren Buffet's perspective every morning 
-when the markets open
-
------teach your network with policies----
-
-> Policy creation intent: "Whenever someone tries to join my network, ask me first"
-....Confirmed, I will make sure to follow this policy (undo?)
-> Policy creation intent: "When trying to send a message to someone, first check my contact list for their phone number"
-> "Whenever I chat with Dillon, use slack and use the appropriate slack thread"
-...Thinking, can you confirm which Dillon? (Dillon Morgan or Dillon Johnson)
+npm install @olane/o-core @olane/o-protocol
 ```
 
-**When running your intelligent network:**
-- Your network self-heals and learns to become deterministic & stateful (read advance mode)
-- Add policies to your network to customize (read policy to learn more)
-- Pro tip: Visualize your network with the [cli tool](/docs/CLI.md)
+## Quick Start
 
-> Magic moments we personally love 
-running on olane
-Play video
-> 
+### Creating Your First Tool Node
 
-## **NETWORK TO NETWORK 🛜**
+```typescript
+import { oCore, oAddress, NodeType, NodeState } from '@olane/o-core';
+import { oRequest, oResponse } from '@olane/o-core';
 
-**Connect to other intelligent networks 🧠**
+// Extend oCore to create your tool node
+class MyToolNode extends oCore {
+  constructor(address: string) {
+    super({
+      address: new oAddress(address),
+      type: NodeType.AGENT, // Type remains AGENT for now (legacy naming)
+      description: 'My first tool node',
+      methods: {
+        greet: {
+          name: 'greet',
+          description: 'Greets the user',
+          parameters: {
+            name: { type: 'string', required: true }
+          }
+        }
+      }
+    });
+  }
 
-1. Collaboration leads to super intelligence (think hive mind / AI-social network)
-2. Simple share anything via “o-addresses” (think AI-telepathy)
+  // Implement required abstract methods
+  async execute(request: oRequest): Promise<any> {
+    const { method, params } = request;
+    
+    if (method === 'greet') {
+      return { message: `Hello, ${params.name}!` };
+    }
+    
+    throw new Error(`Unknown method: ${method}`);
+  }
+
+  configureTransports(): any[] {
+    // Configure your transport layer (libp2p, HTTP, etc.)
+    return [];
+  }
+
+  async connect(nextHop: oAddress, target: oAddress) {
+    // Implement connection logic
+    return this.connectionManager.connect({ nextHop, target });
+  }
+
+  initializeRouter(): void {
+    // Initialize routing logic
+    this.router = new MyRouter();
+  }
+
+  async register(): Promise<void> {
+    // Register with parent or leader node
+    console.log('Tool node registered');
+  }
+
+  async unregister(): Promise<void> {
+    // Cleanup registration
+    console.log('Tool node unregistered');
+  }
+}
+
+// Create and start your tool node
+const toolNode = new MyToolNode('o://company/customer-service');
+await toolNode.start();
+
+// AI agents can now use this tool node via its o:// address
+const response = await toolNode.use(
+  new oAddress('o://company/customer-service'),
+  {
+    method: 'greet',
+    params: { name: 'Alice' }
+  }
+);
+
+console.log(response.result); // { message: "Hello, Alice!" }
+
+// Stop the tool node gracefully
+await toolNode.stop();
+```
+
+### Tool Node Communication (IPC)
+
+```typescript
+// Tool Node A can communicate with Tool Node B using o:// addresses
+const salesTool = new MyToolNode('o://company/sales');
+const analyticsTool = new MyToolNode('o://company/analytics');
+
+await salesTool.start();
+await analyticsTool.start();
+
+// Sales tool calls analytics tool (inter-process communication)
+const result = await salesTool.use(
+  new oAddress('o://company/analytics'),
+  {
+    method: 'analyze',
+    params: { data: salesData }
+  }
+);
+```
+
+### Hierarchical Organization
+
+```typescript
+// Create a parent-child hierarchy of tool nodes
+const parent = new MyToolNode('o://company');
+const child1 = new MyToolNode('o://company/sales');
+const child2 = new MyToolNode('o://company/marketing');
+
+await parent.start();
+await child1.start();
+await child2.start();
+
+// Register children with parent
+parent.addChildNode(child1);
+parent.addChildNode(child2);
+
+// Child tool nodes automatically inherit context from parent
+// Routing happens automatically through the hierarchy
+```
+
+## Core Concepts
+
+### Tool Node Lifecycle States
+
+Tool nodes (processes) transition through the following states:
+
+- `STOPPED` - Initial state, tool node is not running
+- `STARTING` - Tool node is initializing
+- `RUNNING` - Tool node is active and processing requests
+- `STOPPING` - Tool node is shutting down gracefully
+- `ERROR` - Tool node encountered an error
+
+```typescript
+console.log(toolNode.state); // NodeState.RUNNING
+
+await toolNode.stop();
+console.log(toolNode.state); // NodeState.STOPPED
+```
+
+### The o:// Protocol
+
+Addresses in Olane OS follow a hierarchical filesystem-like pattern:
+
+```typescript
+// Hierarchical addresses
+const address1 = new oAddress('o://company/finance/accounting');
+const address2 = new oAddress('o://users/alice/inbox');
+
+// Address operations
+console.log(address1.paths);        // "company/finance/accounting"
+console.log(address1.root);         // "o://company"
+console.log(address1.validate());   // true
+
+// Static vs dynamic addresses
+const staticAddr = address1.toStaticAddress();
+console.log(staticAddr.toString()); // "o://accounting"
+```
+
+**📖 For complete details on address resolution, routing algorithms, and custom resolvers, see the [Router System documentation](./src/router/README.md).**
+
+### Request/Response Pattern
+
+All inter-process communication (IPC) follows a request/response pattern using JSON-RPC 2.0:
+
+```typescript
+// Making a request from one tool node to another
+const response: oResponse = await toolNode.use(
+  new oAddress('o://target/toolnode'),
+  {
+    method: 'processData',
+    params: { key: 'value' },
+    id: 'unique-request-id'
+  }
+);
+
+// Handling errors
+try {
+  const response = await toolNode.use(targetAddress, requestData);
+  console.log(response.result);
+} catch (error) {
+  if (error instanceof oError) {
+    console.error(`Error ${error.code}: ${error.message}`);
+  }
+}
+```
+
+**📖 Learn more about JSON-RPC messaging, request states, and connection lifecycle in the [Connection System documentation](./src/connection/README.md).**
+
+### Metrics and Observability
+
+Every tool node tracks metrics automatically:
+
+```typescript
+// Access tool node metrics
+console.log(toolNode.metrics.successCount);
+console.log(toolNode.metrics.errorCount);
+
+// Built-in logging
+toolNode.logger.debug('Debug message');
+toolNode.logger.info('Info message');
+toolNode.logger.warn('Warning message');
+toolNode.logger.error('Error message');
+```
+
+## Architecture
+
+### Abstract Base Class
+
+`oCore` is an abstract base class that provides:
+
+- **Lifecycle Management**: `start()`, `stop()`, `initialize()`, `teardown()`
+- **Communication**: `use()`, `use()`, `connect()`
+- **Routing**: `router`, `initializeRouter()`
+- **Hierarchy**: `addChildNode()`, `removeChildNode()`, `hierarchyManager`
+- **State Management**: `state`, `NodeState` enum
+- **Observability**: `metrics`, `logger`, `requestManager`
+
+### Key Components
+
+#### 1. Router System (oAddress & oRouter)
+Hierarchical addressing and intelligent routing for tool nodes
+
+```typescript
+const addr = new oAddress('o://domain/subdomain/resource');
+addr.validate();           // Check if address is valid
+addr.toStaticAddress();   // Convert to static address
+addr.toCID();             // Convert to Content ID
+
+// Router determines the next hop in the network
+const { nextHopAddress, targetAddress } = await router.translate(
+  address,
+  node
+);
+```
+
+**📚 [View detailed Router System documentation →](./src/router/README.md)**
+
+#### 2. Connection System (oConnection & oConnectionManager)
+Inter-Process Communication (IPC) layer for tool-node-to-tool-node messaging
+
+```typescript
+// Connections are cached and reused
+const connection = await connectionManager.connect({
+  nextHop: nextHopAddress,
+  target: targetAddress
+});
+
+// Send data over the connection
+const response = await connection.send({
+  address: 'o://target/service',
+  payload: { key: 'value' }
+});
+```
+
+**📚 [View detailed Connection System documentation →](./src/connection/README.md)**
+
+#### 3. oHierarchyManager
+Manages parent-child relationships between tool nodes
+
+```typescript
+toolNode.hierarchyManager.addChild(childAddress);
+toolNode.hierarchyManager.removeChild(childAddress);
+console.log(toolNode.hierarchyManager.children);
+```
+
+## Advanced Usage
+
+### Custom Transport & Connection Implementation
+
+```typescript
+import { oTransport, TransportType, oConnection, oConnectionConfig } from '@olane/o-core';
+
+class MyCustomTransport extends oTransport {
+  constructor() {
+    super(TransportType.CUSTOM);
+  }
+
+  async send(data: any): Promise<any> {
+    // Implement your transport logic (HTTP, WebSocket, etc.)
+  }
+}
+
+// Custom connection implementation
+class MyConnection extends oConnection {
+  async transmit(request: oRequest): Promise<oResponse> {
+    // Implement your connection logic
+    const response = await fetch(this.nextHopAddress.toString(), {
+      method: 'POST',
+      body: request.toString()
+    });
+    return new oResponse(await response.json());
+  }
+}
+
+class MyToolNode extends oCore {
+  configureTransports(): any[] {
+    return [new MyCustomTransport()];
+  }
+}
+```
+
+**📖 For connection pooling, retry logic, middleware, and transport-specific implementations, see the [Connection System documentation](./src/connection/README.md).**
+
+### Custom Router Implementation
+
+```typescript
+import { oRouter, RouteResponse } from '@olane/o-core';
+
+class MyRouter extends oRouter {
+  async translate(address: oAddress, node: oCore): Promise<RouteResponse> {
+    // Implement custom routing logic
+    return {
+      nextHopAddress: calculatedNextHop,
+      targetAddress: address
+    };
+  }
+
+  isInternal(address: oAddress, node: oCore): boolean {
+    // Determine if address is internal to this node
+    return address.root === node.address.root;
+  }
+
+  async route(request: oRouterRequest, node: oCore): Promise<RouteResponse> {
+    // Handle routing requests
+  }
+}
+```
+
+**📖 For advanced routing patterns, custom resolvers, and hierarchical routing strategies, see the [Router System documentation](./src/router/README.md).**
+
+### Error Handling
+
+```typescript
+import { oError, oErrorCodes } from '@olane/o-core';
+
+// In your execute method
+async execute(request: oRequest): Promise<any> {
+  if (!isValid(request.params)) {
+    throw new oError(
+      oErrorCodes.INVALID_PARAMS,
+      'Invalid parameters provided'
+    );
+  }
+
+  try {
+    return await processRequest(request);
+  } catch (error) {
+    throw new oError(
+      oErrorCodes.EXECUTION_ERROR,
+      error.message
+    );
+  }
+}
+```
+
+### Graceful Shutdown
+
+```typescript
+import { setupGracefulShutdown } from '@olane/o-core';
+
+const toolNode = new MyToolNode('o://my/toolnode');
+await toolNode.start();
+
+// Setup graceful shutdown handlers
+setupGracefulShutdown(async () => {
+  console.log('Shutting down gracefully...');
+  await toolNode.stop();
+});
+
+// Tool node will automatically stop on SIGINT/SIGTERM
+```
+
+## API Reference
+
+### oCore Class
+
+Abstract base class for building tool nodes.
+
+#### Properties
+- `address: oAddress` - The tool node's hierarchical address
+- `state: NodeState` - Current lifecycle state
+- `metrics: oMetrics` - Performance and usage metrics
+- `hierarchyManager: oHierarchyManager` - Manages child nodes
+- `router: oRouter` - Routing logic
+- `connectionManager: oConnectionManager` - Connection pooling
+
+#### Methods
+- `async start(): Promise<void>` - Start the tool node
+- `async stop(): Promise<void>` - Stop the tool node gracefully
+- `async use(address, data?): Promise<oResponse>` - Communicate with another tool node (IPC)
+- `async execute(request): Promise<any>` - Execute a request (abstract - you implement this)
+- `addChildNode(node): void` - Add a child tool node
+- `removeChildNode(node): void` - Remove a child tool node
+- `async whoami(): Promise<any>` - Get tool node information
+
+### oAddress Class
+
+#### Methods
+- `validate(): boolean` - Validate address format
+- `toStaticAddress(): oAddress` - Convert to static address
+- `toString(): string` - Get string representation
+- `equals(other): boolean` - Compare addresses
+- `async toCID(): Promise<CID>` - Convert to Content ID
+
+### oError Class
+
+#### Constructor
+```typescript
+new oError(code: oErrorCodes, message: string, data?: any)
+```
+
+#### Methods
+- `toJSON(): object` - Serialize error
+- `static fromJSON(json): oError` - Deserialize error
+
+## Testing
 
 ```bash
-# request to join network
-# olane request to join public-intelligent-network
-olane connect o://my-network --to=o://olane
-....Connected!
-....Discovered 232 skills, do you want to remember these?[y/n]
-....Your network shares 31 o-addresses, would you like to collaborate with olane to help with intents involving these addresses in the future?
+# Run tests
+npm test
 
-# network requests accepted
-# Request or contribute knowledge to connected networks
-# Share my knowledge of how to connect to MCPs
-# Share my compute resources for projects that align with my personal beliefs
-# Request knowledge for creating 3D DNA structures
+# Run tests in Node.js
+npm run test:node
 
-# Collaborate with networks to solve challenging problems
-> Create a non-hardware product that solves one key aspect of world hunger for 
-under $10
+# Run tests in browser
+npm run test:browser
 ```
 
-**When communicating with other intelligent networks:**
-- Your networks are building shared intelligence
-- How to register with olane to enable human readable network name
-- If you want to connect directly to another network that is not verified with olane, simply share the transport with the other network [What is a transport](url)
+## Development
 
-> Does this feel like ASI to you?
-We think so
-Play video
-> 
+```bash
+# Install dependencies
+npm install
 
-> **P2P Network Connection**: to connect directly to another network via the p2p functionality, simply share the network leader node transport with your intended collaborator. To learn more, read about [direct networking](/docs/DIRECT_NETWORKING.md)
+# Build the package
+npm run build
 
-## Enjoy growing your AI network ❤️
+# Run in development mode
+npm run dev
+
+# Lint the code
+npm run lint
+```
+
+## Use Cases
+
+o-core enables you to:
+
+1. **Build Specialized Tool Nodes** with unique o:// addresses and capabilities
+2. **Create Hierarchical Tool Networks** that AI agents discover and use
+3. **Route Requests Intelligently** through tool node hierarchies
+4. **Manage Tool Node Lifecycles** with automatic cleanup and error handling
+5. **Share Knowledge and Capabilities** across tool networks through addressable resources
+
+## What o-core is NOT
+
+- ❌ **Not a network framework** - It's the OS kernel for tool nodes
+- ❌ **Not an orchestration tool** - It enables emergent coordination, not explicit workflows
+- ❌ **Not a REST API** - It's a runtime for inter-process communication (IPC)
+- ❌ **Not a complete solution** - It's an abstract foundation; use o-node for production
+- ❌ **Not what you use directly** - Extend it or use higher-level packages (o-node, o-tool, o-lane)
+
+## Related Packages
+
+- `@olane/o-protocol` - Protocol definitions and types
+- `@olane/o-node` - Complete node implementation (extends o-core)
+- `@olane/o-tool` - Tool system for agent capabilities
+- `@olane/o-storage` - Storage layer for agent state
+- `@olane/o-network-cli` - CLI for managing agent networks
+
+## Component Documentation
+
+For in-depth documentation on specific o-core components, see:
+
+- **[Router System](./src/router/README.md)** - Deep dive into the `o://` protocol, address resolution, routing logic, and custom resolvers
+- **[Connection System](./src/connection/README.md)** - Complete guide to IPC, JSON-RPC messaging, connection pooling, and transport implementations
+
+## Documentation
+
+- [Full Documentation](https://olane.com/docs)
+- [Quickstart Guide](https://olane.com/docs/quickstart)
+- [Architecture Overview](https://olane.com/docs/architecture/overview)
+- [API Reference](https://olane.com/docs/api)
+
+## Support
+
+- [GitHub Issues](https://github.com/olane-labs/olane/issues)
+- [Community Forum](https://olane.com/community)
+- [Email Support](mailto:support@olane.com)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
+
+## License
+
+ISC © Olane Inc.
 
 ---
 
-**Stay connected**
-
-1. **Shoutout Feed!**
-2. Join our private olane groupchat
-3. Subscribe to ASI newsletter & podcast
-4. Follow the olane story
-5. Join the team
-6. Share olane with your friends (we greatly appreciate it!)
-
+**Part of the Olane OS ecosystem** - An agentic operating system where AI agents are the users and you build tool nodes as applications.

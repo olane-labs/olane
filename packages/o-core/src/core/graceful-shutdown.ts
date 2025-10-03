@@ -1,4 +1,4 @@
-import { Logger } from './utils/logger.js';
+import { Logger } from '../utils/logger.js';
 
 export interface CleanupFunction {
   (): Promise<void> | void;

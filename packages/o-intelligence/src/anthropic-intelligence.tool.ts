@@ -1,6 +1,8 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -98,11 +100,11 @@ interface AnthropicListModelsResponse {
   object: string;
 }
 
-export class AnthropicIntelligenceTool extends oVirtualTool {
-  private defaultModel = 'claude-sonnet-4-20250514';
+export class AnthropicIntelligenceTool extends oLaneTool {
+  private defaultModel = 'claude-sonnet-4-5-20250929';
   private apiKey: string = process.env.ANTHROPIC_API_KEY || '';
 
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://anthropic'),

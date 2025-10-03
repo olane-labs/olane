@@ -1,0 +1,79 @@
+import { oAddress, oRequest } from '@olane/o-core';
+import { oNodeConfig, oNodeTool } from '@olane/o-node';
+import { oHandshakeResult } from './interfaces/index.js';
+import { oCapabilityType } from './capabilities/index.js';
+import { oIntent } from './intent/index.js';
+import { oLaneContext } from './o-lane.context.js';
+import { oLaneManager } from './manager/o-lane.manager.js';
+import { oCapabilityResult } from './capabilities/o-capability.result.js';
+
+export class oLaneTool extends oNodeTool {
+  private manager: oLaneManager;
+
+  constructor(config: oNodeConfig) {
+    super(config);
+    this.manager = new oLaneManager();
+  }
+
+  async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
+    this.logger.debug(
+      'Performing handshake with intent: ',
+      handshake.params.intent,
+    );
+
+    let tools = await this.myTools();
+    let methods = this.methods;
+
+    const { tool }: { tool: string } = handshake.params as any;
+
+    if (tool) {
+      tools = tools.filter((t) => t === tool);
+      methods = { tool: this.methods[tool] };
+    }
+
+    return new oCapabilityResult({
+      result: {
+        tools: tools.filter((t) => t !== 'handshake' && t !== 'intent'),
+        methods: methods,
+      },
+      type: oCapabilityType.HANDSHAKE,
+    });
+  }
+
+  /**
+   * Where all intents go to be resolved.
+   * @param request
+   * @returns
+   */
+  async _tool_intent(request: oRequest): Promise<any> {
+    this.logger.debug('Intent resolution called: ', request.params);
+    const { intent, context, streamTo } = request.params;
+    const pc = await this.manager.createLane({
+      intent: new oIntent({ intent: intent as string }),
+      currentNode: this,
+      caller: this.address,
+      streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
+      context: context
+        ? new oLaneContext([
+            `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
+          ])
+        : undefined,
+    });
+
+    const response = await pc.execute();
+    this.logger.debug('Intent resolution response: ', response);
+    return {
+      result: response?.result,
+      error: response?.error,
+      cycles: pc.sequence.length,
+      sequence: pc.sequence.map((s: oCapabilityResult) => {
+        return s.result;
+      }),
+    };
+  }
+
+  async teardown(): Promise<void> {
+    await this.manager.teardown();
+    await super.teardown();
+  }
+}

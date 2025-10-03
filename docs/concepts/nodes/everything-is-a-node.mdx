@@ -1,0 +1,1051 @@
+---
+title: "Everything is a Node"
+description: "Understanding Olane OS's uniform interface philosophy - how treating everything as a node creates a simpler, more powerful system"
+---
+
+## Overview
+
+In Olane OS, **everything is a node**. Leaders, workers, coordinators, tools, and even special-purpose components all share the same fundamental interface. This uniform design principle simplifies the system while enabling powerful emergent behaviors.
+
+**TL;DR**: Just as Unix says "everything is a file," Olane OS says "everything is a node." One interface, consistent behavior, infinite flexibility.
+
+## The core principle
+
+Every component in Olane OS - from the root leader to the simplest worker - is fundamentally a **node** running on the same runtime.
+
+```
+┌─────────────────────────────────────────────────┐
+│  All nodes share:                                │
+│  • o:// address for discovery                   │
+│  • Same lifecycle (start/stop/states)           │
+│  • Same IPC patterns (request/response)         │
+│  • Same networking layer (libp2p)               │
+│  • Same error handling                          │
+│  • Same metrics and observability              │
+└─────────────────────────────────────────────────┘
+```
+
+### What this means in practice
+
+<CardGroup cols={2}>
+  <Card title="Leaders are Nodes" icon="crown" color="#0D9373">
+    The root coordinator is just a node with a special role
+  </Card>
+  <Card title="Workers are Nodes" icon="wrench" color="#0D9373">
+    Tool-bearing processes are nodes with capabilities
+  </Card>
+  <Card title="Coordinators are Nodes" icon="sitemap" color="#0D9373">
+    Orchestration nodes are nodes that call other nodes
+  </Card>
+  <Card title="You are a Node" icon="user" color="#0D9373">
+    Even your CLI or agent can be represented as a node
+  </Card>
+</CardGroup>
+
+## Quick example
+
+Here's the same base interface used for three different "types" of nodes:
+
+<CodeGroup>
+```typescript Leader Node
+import { oLeaderNode } from '@olane/o-leader';
+
+// Leader is a node
+const leader = new oLeaderNode({
+  address: new oAddress('o://leader')
+});
+
+// Uses standard node interface
+await leader.start();
+console.log(leader.status); // RUNNING
+await leader.stop();
+```
+
+```typescript Worker Node
+import { oNodeTool } from '@olane/o-node';
+
+// Worker is a node
+const worker = new oNodeTool({
+  address: new oAddress('o://worker')
+});
+
+// Same interface as leader
+await worker.start();
+console.log(worker.status); // RUNNING
+await worker.stop();
+```
+
+```typescript Coordinator Node
+import { oLaneTool } from '@olane/o-lane';
+
+// Coordinator is a node
+const coordinator = new oLaneTool({
+  address: new oAddress('o://coordinator')
+});
+
+// Identical interface
+await coordinator.start();
+console.log(coordinator.status); // RUNNING
+await coordinator.stop();
+```
+</CodeGroup>
+
+<Note>
+  **Real-World Analogy**: Just as everything in Unix is a file (devices, pipes, sockets), everything in Olane OS is a node.
+</Note>
+
+## Why this matters
+
+### 1. Conceptual simplicity
+
+You only need to learn **one mental model**:
+
+```typescript
+// Every node follows this pattern
+const anyNode = new AnyNodeType({
+  address: new oAddress('o://path')
+});
+
+await anyNode.start();          // Always the same
+const result = await anyNode.use({...}); // Always the same
+await anyNode.stop();           // Always the same
+```
+
+<AccordionGroup>
+  <Accordion title="Compare: Without Uniform Interface">
+    Different components with different interfaces:
+    ```typescript
+    // Hypothetical non-uniform system
+    const leader = new Leader({ config1 });
+    leader.initialize();
+    leader.run();
+    
+    const worker = new Worker({ config2 });
+    worker.boot();
+    worker.execute();
+    
+    const coordinator = new Coordinator({ config3 });
+    coordinator.setup();
+    coordinator.orchestrate();
+    
+    // Three different patterns = three different mental models
+    ```
+  </Accordion>
+  
+  <Accordion title="With Uniform Interface">
+    One pattern for everything:
+    ```typescript
+    // Uniform Olane system
+    const leader = new oLeaderNode({ address });
+    const worker = new oNodeTool({ address });
+    const coordinator = new oLaneTool({ address });
+    
+    // All use identical interface
+    await leader.start();
+    await worker.start();
+    await coordinator.start();
+    
+    // All communicate the same way
+    await leader.use({...});
+    await worker.use({...});
+    await coordinator.use({...});
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### 2. Composability
+
+Nodes can call other nodes without knowing their "type":
+
+```typescript
+class CoordinatorNode extends oLaneTool {
+  async _tool_execute_workflow(request: oRequest) {
+    // Discover nodes by capability, not type
+    const nodes = await this.leader.search({ 
+      capability: 'data_processing' 
+    });
+    
+    // Call all discovered nodes the same way
+    for (const node of nodes) {
+      // Don't care if it's a worker, coordinator, or leader
+      // They all respond to .use()
+      await node.use({
+        method: 'process',
+        params: { data: request.params.data }
+      });
+    }
+  }
+}
+```
+
+### 3. Role flexibility
+
+Nodes can change roles dynamically:
+
+```typescript
+// Start as simple worker
+const node = new oNodeTool({
+  address: new oAddress('o://flexible-node')
+});
+
+// Add coordination capabilities
+node.addTool('coordinate', async (request) => {
+  // Now it can coordinate other nodes
+  const workers = await node.leader.search({ type: 'worker' });
+  // Orchestrate...
+});
+
+// Still the same node, just augmented with new capabilities
+```
+
+### 4. Emergent hierarchy
+
+Leaders aren't fundamentally different from workers - they're just nodes with registry capabilities:
+
+```
+o://company                    ← Node (could be a leader)
+  ├── o://company/finance      ← Node (could be a leader)
+  │   ├── o://company/finance/accounting   ← Node (worker)
+  │   └── o://company/finance/reporting    ← Node (worker)
+  └── o://company/engineering  ← Node (could be a leader)
+      ├── o://company/engineering/backend  ← Node (worker)
+      └── o://company/engineering/frontend ← Node (worker)
+
+All nodes can:
+- Have children
+- Register with parents
+- Discover siblings
+- Coordinate workflows
+```
+
+## The uniform interface
+
+Every node implements the same core interface from `oCore`:
+
+### Lifecycle
+
+```typescript
+// All nodes have identical lifecycle
+interface NodeLifecycle {
+  start(): Promise<void>;        // Initialize and connect
+  stop(): Promise<void>;         // Graceful shutdown
+  status: NodeStatus;            // Current state
+}
+
+enum NodeStatus {
+  STOPPED = 'stopped',
+  STARTING = 'starting',
+  RUNNING = 'running',
+  STOPPING = 'stopping',
+  ERROR = 'error'
+}
+```
+
+**Example**:
+```typescript
+// Works the same for any node
+const node = new AnyNodeClass({ address });
+
+console.log(node.status);      // STOPPED
+await node.start();
+console.log(node.status);      // RUNNING
+await node.stop();
+console.log(node.status);      // STOPPED
+```
+
+### Communication
+
+```typescript
+// All nodes communicate via .use()
+interface NodeCommunication {
+  use(request: oRequest): Promise<oResponse>;
+}
+
+interface oRequest {
+  method: string;
+  params?: Record<string, any>;
+  timeout?: number;
+}
+```
+
+**Example**:
+```typescript
+// Call any node the same way
+const result = await anyNode.use({
+  method: 'operation_name',
+  params: { key: 'value' }
+});
+```
+
+### Addressing
+
+```typescript
+// All nodes have o:// addresses
+interface NodeAddressing {
+  address: oAddress;
+  resolve(address: string): Promise<Node>;
+}
+```
+
+**Example**:
+```typescript
+// Discover and call any node
+const node = await oAddress.resolve('o://company/finance/analyst');
+const result = await node.use({ method: 'analyze', params: {...} });
+```
+
+### Discovery
+
+```typescript
+// All nodes can be discovered via leaders
+interface NodeDiscovery {
+  search(query: SearchQuery): Promise<Node[]>;
+}
+```
+
+**Example**:
+```typescript
+// Find nodes by capability
+const analysts = await leader.search({ 
+  capability: 'financial_analysis' 
+});
+
+// Use them all the same way
+for (const analyst of analysts) {
+  await analyst.use({ method: 'analyze', params: {...} });
+}
+```
+
+## How special nodes work
+
+Special-purpose nodes (like leaders) are **just nodes with additional capabilities**.
+
+### Leader nodes
+
+```typescript
+// Leader = Node + Registry + Coordination
+class oLeaderNode extends oNode {
+  // Inherits all node capabilities
+  // start(), stop(), use(), status, address...
+  
+  // PLUS: Additional registry capabilities
+  async search(query: SearchQuery) {
+    return this.registry.search(query);
+  }
+  
+  async commit(nodeInfo: NodeInfo) {
+    return this.registry.commit(nodeInfo);
+  }
+}
+```
+
+**Usage**:
+```typescript
+const leader = new oLeaderNode({
+  address: new oAddress('o://leader')
+});
+
+// Use as regular node
+await leader.start();
+await leader.use({ method: 'hello_world', params: {} });
+
+// ALSO use registry capabilities
+const nodes = await leader.search({ capability: 'analysis' });
+```
+
+<Note>
+  A leader is just a node that happens to maintain a registry. Nothing more, nothing less.
+</Note>
+
+### Complex nodes (with o-lane)
+
+```typescript
+// Complex Node = Node + Intent Processing
+class oLaneTool extends oNodeTool {
+  // Inherits all node + tool capabilities
+  
+  // PLUS: Intent-driven execution
+  async processIntent(intent: string) {
+    // Use capability loop
+  }
+}
+```
+
+**Usage**:
+```typescript
+const analyst = new oLaneTool({
+  address: new oAddress('o://analyst')
+});
+
+// Use as regular node
+await analyst.start();
+
+// Call tools directly
+await analyst.use({ method: 'calculate_revenue', params: {...} });
+
+// OR: Send intents
+await analyst.use({
+  method: 'intent',
+  params: { intent: 'Analyze Q4 revenue and trends' }
+});
+```
+
+## Beyond server processes
+
+Because nodes are just an interface, they can run **anywhere** - not just on servers.
+
+### Nodes in browsers
+
+<CodeGroup>
+```typescript Browser Tab as Node
+import { oNode } from '@olane/o-node';
+
+// Each browser tab can be a node
+class BrowserTabNode extends oNode {
+  constructor() {
+    super({
+      address: new oAddress('o://browser/tab-' + tabId)
+    });
+  }
+  
+  async _tool_get_page_content(request: oRequest) {
+    return { 
+      title: document.title,
+      url: window.location.href,
+      content: document.body.innerText
+    };
+  }
+}
+
+// Tab joins network
+const tabNode = new BrowserTabNode();
+await tabNode.start();
+
+// Now server nodes can call this browser tab
+// o://browser/tab-123 is discoverable!
+```
+
+```typescript React Component as Node
+import { oNodeTool } from '@olane/o-node';
+import { useState, useEffect } from 'react';
+
+function NodeComponent() {
+  const [node, setNode] = useState(null);
+  
+  useEffect(() => {
+    // Component becomes a node
+    const componentNode = new oNodeTool({
+      address: new oAddress('o://ui/dashboard')
+    });
+    
+    // Add UI-specific tools
+    componentNode.addTool('update_chart', async (request) => {
+      // Update React state based on network calls
+      setChartData(request.params.data);
+      return { updated: true };
+    });
+    
+    componentNode.start();
+    setNode(componentNode);
+    
+    return () => componentNode.stop();
+  }, []);
+  
+  return <div>This component is a network node!</div>;
+}
+```
+</CodeGroup>
+
+### Nodes on mobile
+
+```typescript iOS App as Node
+import { oNodeTool } from '@olane/o-node';
+
+// iOS app becomes a node
+class iOSAppNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://mobile/ios/' + deviceId)
+    });
+  }
+  
+  async _tool_get_location(request: oRequest) {
+    const location = await getCurrentLocation();
+    return { 
+      latitude: location.latitude,
+      longitude: location.longitude
+    };
+  }
+  
+  async _tool_send_notification(request: oRequest) {
+    await showLocalNotification(request.params.message);
+    return { sent: true };
+  }
+}
+
+// Mobile device joins your network
+const appNode = new iOSAppNode();
+await appNode.start();
+
+// Now server can send notifications to this specific device:
+// await deviceNode.use({ 
+//   method: 'send_notification', 
+//   params: { message: 'Order shipped!' }
+// });
+```
+
+### Why this matters
+
+<CardGroup cols={2}>
+  <Card title="UI as First-Class Citizen" icon="browser" color="#0D9373">
+    Your UI isn't just consuming APIs - it's a peer in the network
+  </Card>
+  <Card title="Direct Device Communication" icon="mobile" color="#0D9373">
+    Server can call mobile devices directly, no push notification service needed
+  </Card>
+  <Card title="Cross-Platform Uniformity" icon="globe" color="#0D9373">
+    Browser, mobile, server - all use same interface
+  </Card>
+  <Card title="Distributed UIs" icon="window-restore" color="#0D9373">
+    Multiple browser tabs can coordinate as distributed system
+  </Card>
+</CardGroup>
+
+<Note>
+  **Mind-Blowing Implication**: Your entire application - backend services, database nodes, browser tabs, mobile apps - can all be nodes in one unified network. No distinction between "frontend" and "backend" from the network's perspective.
+</Note>
+
+## Real-world examples
+
+### Example 1: Treating the leader as a regular node
+
+```typescript
+// Leader is just another node
+const leader = new oLeaderNode({
+  address: new oAddress('o://leader')
+});
+
+await leader.start();
+
+// Call leader's tools like any other node
+const registeredNodes = await leader.use({
+  method: 'find_all',
+  params: {}
+});
+
+console.log(registeredNodes);
+// Returns list of all nodes in network
+```
+
+### Example 2: Node calling itself
+
+Because everything is a node, a node can even call itself:
+
+```typescript
+class SelfReferentialNode extends oNodeTool {
+  async _tool_recursive_process(request: oRequest) {
+    const { depth } = request.params;
+    
+    if (depth === 0) {
+      return { result: 'Base case' };
+    }
+    
+    // Call myself
+    const result = await this.use({
+      method: 'recursive_process',
+      params: { depth: depth - 1 }
+    });
+    
+    return { result: `Depth ${depth}: ${result.result}` };
+  }
+}
+```
+
+### Example 3: Dynamic role switching
+
+```typescript
+const node = new oNodeTool({
+  address: new oAddress('o://flexible-node')
+});
+
+await node.start();
+
+// Initially: Simple worker
+await node.use({ method: 'work', params: {} });
+
+// Add registry capability
+node.registry = new RegistryMemoryTool();
+
+// Now it can act as a leader
+const results = await node.search({ capability: 'analysis' });
+
+// Still the same node object
+console.log(node.address); // o://flexible-node
+```
+
+### Example 4: Network of equals
+
+No hierarchy needed - all nodes can coordinate:
+
+```typescript
+// Create 5 identical nodes
+const nodes = [];
+for (let i = 0; i < 5; i++) {
+  const node = new oLaneTool({
+    address: new oAddress(`o://peer-${i}`)
+  });
+  await node.start();
+  nodes.push(node);
+}
+
+// Each node discovers and coordinates with peers
+// No "leader" required for peer-to-peer workflows
+for (const node of nodes) {
+  // Find peers
+  const peers = await node.leader.search({ 
+    addressPattern: 'o://peer-*' 
+  });
+  
+  // Coordinate directly
+  for (const peer of peers) {
+    if (peer.address !== node.address) {
+      await peer.use({ method: 'collaborate', params: {...} });
+    }
+  }
+}
+```
+
+### Example 5: Real-time collaboration across platforms
+
+Browser tabs, mobile apps, and servers - all as peers:
+
+```typescript
+// SERVER: Order processing node
+class OrderNode extends oNodeTool {
+  async _tool_ship_order(request: oRequest) {
+    const { orderId } = request.params;
+    
+    // Process shipping...
+    
+    // Find customer's devices (browser + mobile)
+    const devices = await this.leader.search({ 
+      customer: request.params.customerId 
+    });
+    
+    // Notify ALL customer devices directly
+    for (const device of devices) {
+      await device.use({
+        method: 'notify',
+        params: { 
+          message: `Order ${orderId} has shipped!`,
+          action: 'track_shipment'
+        }
+      });
+    }
+  }
+}
+
+// BROWSER: Customer dashboard tab
+class DashboardNode extends oNodeTool {
+  async _tool_notify(request: oRequest) {
+    // Show browser notification
+    new Notification(request.params.message);
+    
+    // Update UI
+    this.updateOrderStatus(request.params);
+    
+    return { displayed: true };
+  }
+}
+
+// MOBILE: Customer iOS app
+class CustomerAppNode extends oNodeTool {
+  async _tool_notify(request: oRequest) {
+    // Show push notification
+    await showNotification(request.params.message);
+    
+    // Update app badge
+    updateBadgeCount();
+    
+    return { displayed: true };
+  }
+}
+
+// RESULT: Server directly coordinates browser + mobile
+// No Firebase, no Pusher, no WebSocket server
+// Just nodes talking to nodes
+```
+
+## Benefits of uniform interface
+
+<CardGroup cols={2}>
+  <Card title="Simple Mental Model" icon="brain" color="#0D9373">
+    One interface to learn, applies everywhere
+  </Card>
+  <Card title="Composability" icon="cubes" color="#0D9373">
+    Mix and match nodes without type concerns
+  </Card>
+  <Card title="Emergent Behavior" icon="diagram-project" color="#0D9373">
+    Complex systems from simple, identical parts
+  </Card>
+  <Card title="Role Flexibility" icon="arrows-rotate" color="#0D9373">
+    Nodes can dynamically change responsibilities
+  </Card>
+  <Card title="Testing Ease" icon="vial" color="#0D9373">
+    Mock any node with same interface
+  </Card>
+  <Card title="Network Symmetry" icon="network-wired" color="#0D9373">
+    No special-case routing or communication
+  </Card>
+</CardGroup>
+
+### Benefit 1: Testing is simple
+
+Because everything is a node, mocking is trivial:
+
+```typescript
+// Mock any node type
+class MockNode extends oNode {
+  async use(request: oRequest) {
+    return { 
+      result: 'mocked',
+      method: request.method 
+    };
+  }
+}
+
+// Use mock in place of leader
+const mockLeader = new MockNode({
+  address: new oAddress('o://leader')
+});
+
+// Or worker
+const mockWorker = new MockNode({
+  address: new oAddress('o://worker')
+});
+
+// Tests work the same for both
+```
+
+### Benefit 2: Network rewiring
+
+Change network topology without changing code:
+
+```typescript
+// Configuration 1: Flat network
+const config1 = [
+  { address: 'o://leader' },
+  { address: 'o://worker-1' },
+  { address: 'o://worker-2' }
+];
+
+// Configuration 2: Hierarchical
+const config2 = [
+  { address: 'o://leader' },
+  { address: 'o://leader/team-a' },    // Sub-leader
+  { address: 'o://leader/team-a/worker-1' },
+  { address: 'o://leader/team-b' },    // Sub-leader
+  { address: 'o://leader/team-b/worker-2' }
+];
+
+// Application code doesn't change
+// All nodes still use .use() to communicate
+```
+
+### Benefit 3: Progressive capability addition
+
+Start simple, add capabilities incrementally:
+
+```typescript
+// Day 1: Simple node
+const node = new oNode({ address });
+await node.start();
+
+// Day 7: Add tools
+const node = new oNodeTool({ address });
+await node.start();
+// Now has tool system
+
+// Day 30: Add intent processing
+const node = new oLaneTool({ address });
+await node.start();
+// Now handles natural language
+
+// Same interface throughout evolution
+```
+
+## Comparison: Other systems
+
+### Traditional microservices
+
+```typescript
+// Different types = different interfaces
+const authService = new AuthService({ port: 3000 });
+await authService.listen();
+await authService.authenticate(user);
+
+const dataService = new DataService({ port: 3001 });
+await dataService.connect();
+await dataService.query(sql);
+
+const queueService = new QueueService({ port: 3002 });
+await queueService.start();
+await queueService.enqueue(job);
+
+// Three services, three patterns
+```
+
+### Olane OS
+
+```typescript
+// Same type = same interface
+const authNode = new oNodeTool({ address: new oAddress('o://auth') });
+const dataNode = new oNodeTool({ address: new oAddress('o://data') });
+const queueNode = new oNodeTool({ address: new oAddress('o://queue') });
+
+// All start the same way
+await authNode.start();
+await dataNode.start();
+await queueNode.start();
+
+// All called the same way
+await authNode.use({ method: 'authenticate', params: { user } });
+await dataNode.use({ method: 'query', params: { sql } });
+await queueNode.use({ method: 'enqueue', params: { job } });
+
+// One service type, one pattern
+```
+
+## The Unix parallel
+
+### Unix: Everything is a file
+
+```bash
+# Regular file
+cat document.txt
+
+# Device
+cat /dev/random
+
+# Process info
+cat /proc/cpuinfo
+
+# Network socket
+cat /dev/tcp/google.com/80
+
+# Same interface (cat) works for all
+```
+
+### Olane OS: Everything is a node
+
+```typescript
+// Regular worker
+await node.use({ method: 'work', params: {} });
+
+// Leader (registry)
+await leader.use({ method: 'search', params: {} });
+
+// Coordinator
+await coordinator.use({ method: 'intent', params: {} });
+
+// External API
+await apiNode.use({ method: 'fetch', params: {} });
+
+// Same interface (.use()) works for all
+```
+
+## Design implications
+
+### Implication 1: No special cases
+
+Every component follows the same patterns:
+
+```typescript
+// No special initialization logic
+// All nodes: new Constructor({ address })
+
+// No special communication protocols
+// All nodes: await node.use({ method, params })
+
+// No special shutdown sequences
+// All nodes: await node.stop()
+```
+
+### Implication 2: Symmetric networks
+
+Any node can talk to any other node:
+
+```
+     Leader
+    /   |   \
+Worker Worker Worker
+
+vs.
+
+Worker ← → Worker
+  ↑  ↘   ↗  ↑
+  ↓    ×    ↓
+Worker ← → Worker
+
+Both work because all are nodes
+```
+
+### Implication 3: Introspection
+
+Any node can inspect any other node:
+
+```typescript
+// Get node's capabilities
+const capabilities = await node.use({
+  method: 'handshake',
+  params: {}
+});
+
+console.log(capabilities);
+// Works for leaders, workers, coordinators, etc.
+```
+
+## Common patterns
+
+### Pattern 1: Node acting as leader
+
+```typescript
+class LeaderCapableNode extends oNodeTool {
+  constructor() {
+    super({ address });
+    this.registry = new RegistryMemoryTool();
+  }
+  
+  // Regular tool
+  async _tool_work(request: oRequest) {
+    return { result: 'worked' };
+  }
+  
+  // Leader-like capability
+  async _tool_search(request: oRequest) {
+    return this.registry.search(request.params);
+  }
+}
+
+// It's both worker and leader
+const node = new LeaderCapableNode({ address });
+await node.use({ method: 'work', params: {} });      // As worker
+await node.use({ method: 'search', params: {} });    // As leader
+```
+
+### Pattern 2: Leader acting as worker
+
+```typescript
+class LeaderWithTools extends oLeaderNode {
+  // Leader capabilities inherited
+  
+  // Add worker tools
+  async _tool_analyze(request: oRequest) {
+    return { analysis: 'result' };
+  }
+}
+
+// It's both leader and worker
+const leader = new LeaderWithTools({ address });
+await leader.use({ method: 'search', params: {} });   // As leader
+await leader.use({ method: 'analyze', params: {} });  // As worker
+```
+
+### Pattern 3: Coordinator without special status
+
+```typescript
+// No special "coordinator" type needed
+class RegularNode extends oLaneTool {
+  async _tool_coordinate_team(request: oRequest) {
+    // Discover other nodes
+    const team = await this.leader.search({ team: 'alpha' });
+    
+    // Coordinate them
+    for (const member of team) {
+      await member.use({ method: 'execute', params: {...} });
+    }
+  }
+}
+
+// Just a regular node with coordination capability
+```
+
+## Troubleshooting
+
+### "Which type of node should I use?"
+
+There's no "type" - there's just nodes with different capabilities:
+
+- Need networking? → `oNode`
+- Need tools? → `oNodeTool` (= `oNode` + tools)
+- Need intents? → `oLaneTool` (= `oNodeTool` + intents)
+- Need registry? → `oLeaderNode` (= `oNode` + registry)
+
+### "How do I make a special-purpose node?"
+
+Add capabilities to the base node:
+
+```typescript
+// Start with base node
+class SpecialNode extends oNodeTool {
+  // Add your special capabilities
+  async _tool_special_operation(request: oRequest) {
+    // Custom logic
+  }
+}
+
+// Still just a node
+const node = new SpecialNode({ address });
+await node.start();
+```
+
+### "Can a node be both leader and worker?"
+
+Yes! Everything is a node:
+
+```typescript
+const node = new oLeaderNode({
+  address: new oAddress('o://hybrid')
+});
+
+// Add worker capabilities
+node.addTool('work', async (request) => {
+  return { result: 'working' };
+});
+
+// Now it's both
+await node.use({ method: 'search', params: {} });  // Leader
+await node.use({ method: 'work', params: {} });    // Worker
+```
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Node Types" icon="list" href="/concepts/nodes/overview">
+    Explore simple vs complex nodes
+  </Card>
+  <Card title="Node Lifecycle" icon="rotate" href="/concepts/nodes/lifecycle">
+    Understand start, run, stop
+  </Card>
+  <Card title="Build Your First Node" icon="rocket" href="/guides/first-node">
+    Create a working node
+  </Card>
+  <Card title="Browser Nodes" icon="browser" href="/guides/browser-nodes">
+    Run nodes in browser tabs
+  </Card>
+  <Card title="React Integration" icon="react" href="/guides/react-nodes">
+    Build React components as nodes
+  </Card>
+  <Card title="Mobile Nodes" icon="mobile" href="/guides/mobile-nodes">
+    Create iOS/Android app nodes
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Concept**: [Nodes Overview](/concepts/nodes/overview)
+- **Concept**: [Tools, Nodes, and Applications](/concepts/tools-nodes-applications)
+- **Package**: [o-core Reference](/packages/o-core) - Base node interface
+- **Package**: [o-node Reference](/packages/o-node) - Network implementation
+- **Guide**: [Unix Philosophy in Olane](/guides/unix-philosophy)
+

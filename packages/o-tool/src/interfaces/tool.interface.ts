@@ -1,3 +1,3 @@
-import { CoreConfig } from '@olane/o-core';
+import { oCoreConfig } from '@olane/o-core';
 
-export interface oToolConfig extends Omit<CoreConfig, 'address'> {}
+export interface oToolConfig extends Omit<oCoreConfig, 'address'> {}

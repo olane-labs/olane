@@ -1,17 +1,22 @@
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
-import { oAddress, oRequest, oToolError } from '@olane/o-core';
+import { ToolResult } from '@olane/o-tool';
+import { oAddress, oRequest } from '@olane/o-core';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { McpTool } from './mcp.tool.js';
 import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
-export class McpBridgeTool extends oVirtualTool {
-  constructor(config: oToolConfig) {
+export class McpBridgeTool extends oLaneTool {
+  private addedRemoteServers: Set<string> = new Set();
+
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://mcp'),
-      description: 'Tool to help add MCP servers to the network',
+      description:
+        'Model context protocol (MCP) tool for adding MCP servers to the network',
       methods: MCP_BRIDGE_METHODS,
     });
   }
@@ -34,7 +39,7 @@ export class McpBridgeTool extends oVirtualTool {
     });
 
     return {
-      result: response.result.data.message,
+      result: (response.result.data as any).message,
     };
   }
 
@@ -42,8 +47,11 @@ export class McpBridgeTool extends oVirtualTool {
     const params = request.params;
 
     // params have already been validated
-    const { mcpServerUrl, headers } = params;
+    const { mcpServerUrl, headers, name, description } = params;
     try {
+      if (this.addedRemoteServers.has(mcpServerUrl as string)) {
+        throw new Error('MCP server already added: ' + mcpServerUrl);
+      }
       this.logger.debug('Adding MCP server: ' + mcpServerUrl);
       const transport = new StreamableHTTPClientTransport(
         new URL(mcpServerUrl as string),
@@ -60,11 +68,17 @@ export class McpBridgeTool extends oVirtualTool {
         headers: headers,
       });
       await mcpClient.connect(transport);
-      await this.createMcpTool(mcpClient, mcpServerUrl as string);
+      await this.createMcpTool(
+        mcpClient,
+        mcpServerUrl as string,
+        name as string,
+        description as string,
+      );
+      this.addedRemoteServers.add(mcpServerUrl as string);
       return {
         message:
           'Successfully added MCP server with ' +
-          this.childNodes.length +
+          this.hierarchyManager.getChildren().length +
           ' tools',
       };
     } catch (e: any) {
@@ -128,7 +142,7 @@ export class McpBridgeTool extends oVirtualTool {
       },
     });
     return {
-      result: response.result.data.message,
+      result: (response.result.data as any).message,
     };
   }
 
@@ -136,23 +150,24 @@ export class McpBridgeTool extends oVirtualTool {
     mcpClient: Client,
     url: string,
     name?: string,
+    description?: string,
   ): Promise<McpTool> {
     this.logger.debug('Creating MCP tool: ', name, url);
 
     const mcpTool = new McpTool({
       name: name || 'mcp-' + Date.now(),
-      description: 'MCP server for ' + url,
+      description: description || 'MCP server for ' + url,
       address: new oAddress(`o://${name || `mcp-${Date.now()}`}`),
       mcpClient: mcpClient,
       dependencies: [],
-      leader: this.config.leader,
+      leader: this.leader,
       parent: this.address,
     });
-    this.addChildNode(mcpTool);
-    await this.startChildren();
     await mcpTool.setupTools();
+    await mcpTool.start();
+    this.addChildNode(mcpTool);
 
-    await this.use(new oAddress(mcpTool.address.toString()), {
+    await this.useChild(mcpTool.address, {
       method: 'index_network',
       params: {},
     });

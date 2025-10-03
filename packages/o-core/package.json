@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.6.12",
+  "version": "0.7.0",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -61,8 +61,7 @@
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.6.11",
-    "@olane/o-protocol": "^0.6.11"
+    "@olane/o-protocol": "^0.7.0"
   },
   "dependencies": {
     "chalk": "^5.4.1",

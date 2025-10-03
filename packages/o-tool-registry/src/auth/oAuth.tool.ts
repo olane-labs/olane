@@ -1,15 +1,17 @@
-import { oToolConfig, oVirtualTool } from '@olane/o-tool';
+import { oToolConfig } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
 import { OAuthConfig } from './interfaces/oAuth.config.js';
 import { OAuthTokens } from './interfaces/oAuth-tokens.interface.js';
 import { OAuthUserInfo } from './interfaces/oAuth-user-info.interface.js';
 import { oauthMethods } from './methods/auth.methods.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
-export class OAuthTool extends oVirtualTool {
+export class OAuthTool extends oLaneTool {
   private oauthConfigs: Map<string, OAuthConfig> = new Map();
   private tokenStore: Map<string, OAuthTokens> = new Map();
 
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://oauth'),

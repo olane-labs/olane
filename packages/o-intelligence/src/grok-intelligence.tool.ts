@@ -1,6 +1,8 @@
 import { oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, oVirtualTool, ToolResult } from '@olane/o-tool';
+import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeToolConfig } from '@olane/o-node';
 
 interface GrokMessage {
   role: 'system' | 'user' | 'assistant';
@@ -45,12 +47,12 @@ interface GrokListModelsResponse {
   data: GrokModelInfo[];
 }
 
-export class GrokIntelligenceTool extends oVirtualTool {
+export class GrokIntelligenceTool extends oLaneTool {
   private baseUrl: string = 'https://api.x.ai/v1';
   private defaultModel: string = 'grok-3-mini';
   private apiKey: string = process.env.GROK_API_KEY || '';
 
-  constructor(config: oToolConfig) {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://grok'),

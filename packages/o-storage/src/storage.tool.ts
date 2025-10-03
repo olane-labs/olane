@@ -1,61 +1,56 @@
-import { LocalSearch, oAddress, oRequest } from '@olane/o-core';
-import { oToolConfig, ToolResult } from '@olane/o-tool';
+import { oAddress } from '@olane/o-core';
 import { DiskStorageProvider } from './providers/disk-storage-provider.tool.js';
 import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.js';
-import { StorageProviderTool } from './providers/storage-provider.tool.js';
-import { GetDataResponse } from './interfaces/get-data.response.js';
 import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
 import { PlaceholderTool } from './placeholder.tool.js';
+import { oNodeToolConfig } from '@olane/o-node';
+import { oLaneTool } from '@olane/o-lane';
 
-export class StorageTool extends StorageProviderTool {
-  constructor(config: oToolConfig) {
+export class StorageTool extends oLaneTool {
+  constructor(config: oNodeToolConfig) {
     super({
       ...config,
       address: new oAddress('o://storage'),
-      description: 'Tool to store and retrieve data from the network',
+      description:
+        'Storage application tool for routing storage requests to the appropriate storage provider',
     });
-    this.addChildNode(
-      new DiskStorageProvider({
-        name: 'disk',
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new MemoryStorageProvider({
-        name: 'memory',
-        address: new oAddress('o://memory'),
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new SecureStorageProvider({
-        name: 'secure',
-        address: new oAddress('o://secure'),
-        ...config,
-      }),
-    );
-    this.addChildNode(
-      new PlaceholderTool({
-        name: 'placeholder storage',
-        ...config,
-      }),
-    );
   }
 
-  async _tool_put(request: oRequest): Promise<ToolResult> {
-    // return this.use()
-    throw new Error('Not implemented');
-  }
+  async initialize(): Promise<void> {
+    await super.initialize();
+    let node: any = new DiskStorageProvider({
+      name: 'disk',
+      parent: this.address,
+      leader: this.leader,
+      address: new oAddress('o://disk'),
+    });
+    await node.start();
+    this.addChildNode(node);
 
-  async _tool_get(request: oRequest): Promise<GetDataResponse> {
-    throw new Error('Not implemented');
-  }
+    node = new MemoryStorageProvider({
+      name: 'memory',
+      parent: this.address,
+      leader: this.leader,
+      address: new oAddress('o://memory'),
+    });
+    await node.start();
+    this.addChildNode(node);
 
-  async _tool_delete(request: oRequest): Promise<ToolResult> {
-    throw new Error('Not implemented');
-  }
+    node = new SecureStorageProvider({
+      name: 'secure',
+      parent: this.address,
+      leader: this.leader,
+      address: new oAddress('o://secure'),
+    });
+    await node.start();
+    this.addChildNode(node);
 
-  async _tool_has(request: oRequest): Promise<ToolResult> {
-    throw new Error('Not implemented');
+    node = new PlaceholderTool({
+      name: 'placeholder storage',
+      parent: this.address,
+      leader: this.leader,
+    });
+    await node.start();
+    this.addChildNode(node);
   }
 }

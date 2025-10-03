@@ -4,8 +4,8 @@ import { oLeaderNode, RegistryMemoryTool } from '@olane/o-leader';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { StorageTool } from '../src/index.js';
 import { bigfile } from './data/bigfile.js';
-import { oVirtualTool } from '@olane/o-tool';
 import dotenv from 'dotenv';
+import { oLaneTool } from '@olane/o-lane';
 
 dotenv.config();
 
@@ -13,51 +13,47 @@ const leader = new oLeaderNode({
   parent: null,
   leader: null,
 });
-const node = new oVirtualTool({
-  parent: null,
-  leader: null,
-  address: new oAddress('o://node'),
-});
-leader.addChildNode(node);
 
 describe('o-storage @placeholder', () => {
   it('should be able to start a node', async () => {
-    const registryTool = new RegistryMemoryTool({
+    await leader.start();
+    const node = new oLaneTool({
       parent: leader.address,
       leader: leader.address,
+      address: new oAddress('o://node'),
     });
-    leader.addChildNode(registryTool);
+    await node.start();
+    leader.addChildNode(node);
     const intelligenceTool = new IntelligenceTool({
       parent: node.address,
-      leader: node.address,
+      leader: leader.address,
     });
-    leader.addChildNode(intelligenceTool);
+    await intelligenceTool.start();
+    node.addChildNode(intelligenceTool);
     const storageTool = new StorageTool({
       parent: node.address,
-      leader: node.address,
+      leader: leader.address,
     });
-    leader.addChildNode(storageTool);
-    await leader.start();
+    await storageTool.start();
+    node.addChildNode(storageTool);
     expect(intelligenceTool.state).to.equal(NodeState.RUNNING);
   });
   it('should be able to perform a put', async () => {
-    const result = await leader.use(
-      new oAddress('o://leader/storage/placeholder'),
-      {
-        method: 'put',
-        params: {
-          key: 'test-key-1234',
-          value: bigfile,
-          intent: 'I want to copy file "bigfile.txt" to "bigfile.txt.copy"',
-        },
+    console.log('[TEST START] Performing put!');
+    const result = await leader.use(new oAddress('o://placeholder'), {
+      method: 'put',
+      params: {
+        key: 'test-key-1234',
+        value: bigfile,
+        intent: 'I want to copy file "bigfile.txt" to "bigfile.txt.copy"',
       },
-    );
-    console.log(result.result.data);
+    });
+    console.log('[TEST END] Performed put!');
   });
 
   it('should be able to perform a get', async () => {
     const result = await leader.use(
-      new oAddress('o://leader/storage/placeholder/test-key-1234'),
+      new oAddress('o://placeholder/test-key-1234'),
     );
     const data = result.result.data as any;
     expect(data.value.length > 0).to.be.true;
@@ -65,7 +61,7 @@ describe('o-storage @placeholder', () => {
 
   it('should be able to perform an explicit get', async () => {
     const result = await leader.use(
-      new oAddress('o://leader/storage/placeholder/test-key-1234/get'),
+      new oAddress('o://placeholder/test-key-1234/get'),
     );
     const data = result.result.data as any;
     expect(data.value.length > 0).to.be.true;
