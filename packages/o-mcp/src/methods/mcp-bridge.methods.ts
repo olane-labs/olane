@@ -32,7 +32,7 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
         type: 'string',
         value: 'string',
         description:
-          'The name for the MCP server. Generate this if not provided.',
+          'The name for the MCP server. Generate this in lowercase snake_case if not provided.',
         required: true,
       },
       {

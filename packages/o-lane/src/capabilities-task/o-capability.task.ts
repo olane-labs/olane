@@ -3,7 +3,6 @@ import { oCapability } from '../capabilities/o-capability.js';
 import { oCapabilityTaskConfig } from './interfaces/o-capability.task-config.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 import { oCapabilityTaskResult } from './o-capability.task-result.js';
-import { oCapabilityConfigure } from '../capabilities-configure/o-capability.configure.js';
 
 export class oCapabilityTask extends oCapability {
   public config!: oCapabilityTaskConfig;
@@ -81,13 +80,13 @@ export class oCapabilityTask extends oCapability {
       if (error instanceof oError) {
         return new oCapabilityTaskResult({
           error: error.toString(),
-          type: oCapabilityType.ERROR,
+          type: oCapabilityType.EVALUATE,
           config: this.config,
         });
       }
       return new oCapabilityTaskResult({
         error: error?.message || error || 'Unknown error',
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         config: this.config,
       });
     }

@@ -36,7 +36,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
     } catch (error: any) {
       return new oCapabilityIntelligenceResult({
         result: null,
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         config: this.config,
         error: error?.message || error || 'Unknown error',
       });

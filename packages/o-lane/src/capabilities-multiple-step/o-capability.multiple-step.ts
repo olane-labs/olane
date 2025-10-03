@@ -39,7 +39,7 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
     }
     return new oCapabilityResult({
       result: results,
-      type: oCapabilityType.RESULT,
+      type: oCapabilityType.EVALUATE,
     });
   }
 }

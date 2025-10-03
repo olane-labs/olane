@@ -68,7 +68,8 @@ All Return Step Instructions:
 2. Determine what type of results we have
 3. Output the respective results using the matching output type.
 4. Generate a reasoning key value pair for why this result was returned.
-5. Do not include \`\`\`json or \`\`\` in your output.
+5. The reasoning should be no longer than 1 sentence.
+6. Do not include \`\`\`json or \`\`\` in your output.
 
 Complex Intent Results:
 {

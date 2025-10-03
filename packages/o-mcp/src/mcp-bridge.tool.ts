@@ -9,6 +9,8 @@ import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
 
 export class McpBridgeTool extends oLaneTool {
+  private addedRemoteServers: Set<string> = new Set();
+
   constructor(config: oNodeToolConfig) {
     super({
       ...config,
@@ -47,6 +49,9 @@ export class McpBridgeTool extends oLaneTool {
     // params have already been validated
     const { mcpServerUrl, headers, name, description } = params;
     try {
+      if (this.addedRemoteServers.has(mcpServerUrl as string)) {
+        throw new Error('MCP server already added: ' + mcpServerUrl);
+      }
       this.logger.debug('Adding MCP server: ' + mcpServerUrl);
       const transport = new StreamableHTTPClientTransport(
         new URL(mcpServerUrl as string),
@@ -69,6 +74,7 @@ export class McpBridgeTool extends oLaneTool {
         name as string,
         description as string,
       );
+      this.addedRemoteServers.add(mcpServerUrl as string);
       return {
         message:
           'Successfully added MCP server with ' +

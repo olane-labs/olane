@@ -68,7 +68,7 @@ export class oCapabilitySearch extends oCapability {
 
     return new oCapabilitySearchResult({
       result: searchResultContext,
-      type: oCapabilityType.RESULT,
+      type: oCapabilityType.EVALUATE,
       config: this.config,
     });
   }

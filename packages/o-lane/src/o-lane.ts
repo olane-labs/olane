@@ -115,23 +115,23 @@ export class oLane extends oObject {
           added[s.id] = true;
           return true;
         })
-        ?.map(
-          (s, index) =>
-            `[Cycle ${index + 1} Begin ${s.id}]\n
+        ?.map((s, index) => {
+          const result = s.result || s.error;
+          return `[Cycle ${index + 1} Begin ${s.id}]\n
             Cycle Intent: ${s.config?.intent}\n
             Cycle Result:\n
             ${
-              typeof s.result === 'string'
-                ? s.result
+              typeof result === 'string'
+                ? result
                 : JSON.stringify(
                     {
-                      ...s.result,
+                      ...result,
                     },
                     null,
                     2,
                   )
-            } \n[Cycle ${index + 1} End ${s.id}]`,
-        )
+            } \n[Cycle ${index + 1} End ${s.id}]`;
+        })
         .join('\n') || ''
     );
   }
@@ -160,10 +160,11 @@ export class oLane extends oObject {
   }
 
   resultToConfig(result: any): oCapabilityConfig {
+    const obj = result.result || result.error;
     return {
       ...result.config,
       history: this.agentHistory,
-      params: typeof result.result === 'object' ? result.result : {},
+      params: typeof obj === 'object' ? obj : {},
       laneConfig: {
         ...this.config,
         sequence: this.sequence, // pass the full sequence to the next capability
@@ -174,8 +175,6 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
-    this.logger.debug('Doing capability: ', currentStep);
-    const nextStep = currentStep.result;
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {

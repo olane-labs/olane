@@ -63,7 +63,8 @@ export class oLaneTool extends oNodeTool {
     const response = await pc.execute();
     this.logger.debug('Intent resolution response: ', response);
     return {
-      ...response,
+      result: response?.result,
+      error: response?.error,
       cycles: pc.sequence.length,
       sequence: pc.sequence.map((s: oCapabilityResult) => {
         return s.result;
