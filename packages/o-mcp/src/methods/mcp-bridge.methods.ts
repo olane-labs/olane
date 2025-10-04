@@ -84,7 +84,7 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
   add_local_server: {
     name: 'add_local_server',
     description:
-      'Add a local MCP server to the bridge using command and arguments',
+      'Add a local MCP server to the bridge using command and arguments. If a command line argument is provided, use this method.',
     dependencies: [],
     parameters: [
       {
@@ -107,72 +107,6 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
         value: 'string',
         description: 'The name for the MCP server',
         required: true,
-      },
-    ],
-  },
-  add_oauth_server: {
-    name: 'add_oauth_server',
-    description: 'Add an OAuth-protected MCP server to the network',
-    dependencies: [],
-    parameters: [
-      {
-        name: 'mcpServerUrl',
-        type: 'string',
-        value: 'string',
-        description: 'The URL of the OAuth-protected MCP server',
-        required: true,
-      },
-      {
-        name: 'name',
-        type: 'string',
-        value: 'string',
-        description:
-          'Name for the MCP server (lowercase snake_case). Generate if not provided.',
-        required: true,
-      },
-      {
-        name: 'description',
-        type: 'string',
-        value: 'string',
-        description: 'Description of the MCP server. Generate if not provided.',
-        required: false,
-      },
-      {
-        name: 'clientName',
-        type: 'string',
-        value: 'string',
-        description:
-          'OAuth client name for dynamic registration (defaults to server name)',
-        required: false,
-      },
-      {
-        name: 'scope',
-        type: 'string',
-        value: 'string',
-        description: 'OAuth scopes to request',
-        required: false,
-      },
-      {
-        name: 'staticClientInfo',
-        type: 'object',
-        value: 'object',
-        description:
-          'Pre-registered OAuth client credentials (client_id, client_secret, authorization_endpoint, token_endpoint)',
-        required: false,
-      },
-      {
-        name: 'useDynamicRegistration',
-        type: 'boolean',
-        value: 'boolean',
-        description: 'Use RFC 7591 dynamic client registration (default: true)',
-        required: false,
-      },
-      {
-        name: 'callbackPort',
-        type: 'number',
-        value: 'number',
-        description: 'Port for OAuth callback server (default: 3334)',
-        required: false,
       },
     ],
   },

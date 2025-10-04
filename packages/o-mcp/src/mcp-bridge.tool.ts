@@ -7,9 +7,6 @@ import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
-import { McpOAuthManager } from './oauth/mcp-oauth-manager.js';
-import { OAuthAwareMcpTransport } from './oauth/oauth-aware-transport.js';
-import { McpOAuthStorage } from './oauth/mcp-oauth-storage.js';
 
 export class McpBridgeTool extends oLaneTool {
   private addedRemoteServers: Set<string> = new Set();
@@ -149,84 +146,6 @@ export class McpBridgeTool extends oLaneTool {
     };
   }
 
-  async _tool_add_oauth_server(request: oRequest): Promise<ToolResult> {
-    const {
-      mcpServerUrl,
-      name,
-      description,
-      clientName,
-      scope,
-      staticClientInfo,
-      useDynamicRegistration = true,
-      callbackPort = 3334,
-    } = request.params;
-
-    try {
-      this.logger.info(`Adding OAuth-protected MCP server: ${mcpServerUrl}`);
-
-      // 1. Get or create OAuth manager
-      const oauthManager = await this.getOAuthManager();
-
-      // 2. Authenticate with the server
-      this.logger.info(
-        `Starting OAuth authentication flow for ${mcpServerUrl}`,
-      );
-      await this.useChild(oauthManager.address!, {
-        method: 'authenticate_server',
-        params: {
-          serverUrl: mcpServerUrl,
-          clientName: clientName || name,
-          scope,
-          staticClientInfo,
-          useDynamicRegistration,
-          callbackPort,
-        },
-      });
-
-      this.logger.info(`OAuth authentication successful for ${mcpServerUrl}`);
-
-      // 3. Create OAuth-aware transport
-      const transport = await this.createOAuthTransport(
-        mcpServerUrl as string,
-        oauthManager,
-      );
-
-      // 4. Create MCP client with OAuth transport
-      const mcpClient = new Client({
-        name: 'o-node:mcp:oauth:' + this.peerId.toString(),
-        version: '1.0.0',
-      });
-
-      await mcpClient.connect(transport);
-
-      // 5. Create and register MCP tool
-      await this.createMcpTool(
-        mcpClient,
-        mcpServerUrl as string,
-        name as string,
-        description as string,
-      );
-
-      this.logger.info(
-        `Successfully added OAuth-protected MCP server: ${name}`,
-      );
-
-      return {
-        _save: true,
-        message: `Successfully added OAuth-protected MCP server: ${name}`,
-        serverUrl: mcpServerUrl,
-        name,
-      };
-    } catch (error: any) {
-      this.logger.error(
-        `Failed to add OAuth MCP server (${mcpServerUrl}): ${error.message}`,
-      );
-      throw new Error(
-        `Failed to add OAuth MCP server (${mcpServerUrl}): ${error.message}`,
-      );
-    }
-  }
-
   async createMcpTool(
     mcpClient: Client,
     url: string,
@@ -254,92 +173,5 @@ export class McpBridgeTool extends oLaneTool {
     });
 
     return mcpTool;
-  }
-
-  /**
-   * Get or create the OAuth manager as a child tool
-   */
-  private async getOAuthManager(): Promise<McpOAuthManager> {
-    // Check if OAuth manager already exists as a child
-    const children = this.hierarchyManager.getChildren();
-    const existingManager = children.find(
-      (child) => child.toString() === 'o://mcp-oauth-manager',
-    );
-
-    if (existingManager) {
-      return existingManager as unknown as McpOAuthManager;
-    }
-
-    // Create new OAuth manager
-    this.logger.debug('Creating MCP OAuth manager');
-    const manager = new McpOAuthManager({
-      name: 'mcp-oauth-manager',
-      dependencies: [],
-      leader: this.leader,
-      parent: this.address,
-    });
-
-    await manager.start();
-    this.addChildNode(manager);
-
-    return manager;
-  }
-
-  /**
-   * Create an OAuth-aware transport for an MCP server
-   */
-  private async createOAuthTransport(
-    serverUrl: string,
-    oauthManager: McpOAuthManager,
-  ): Promise<OAuthAwareMcpTransport> {
-    this.logger.debug(`Creating OAuth-aware transport for ${serverUrl}`);
-
-    // Create storage instance for token access
-    const storage = new McpOAuthStorage({
-      storageAddress: new oAddress('o://secure'),
-      useFunction: this.use.bind(this),
-    });
-
-    // Get access token for transport configuration
-    const tokens = await storage.getTokens(serverUrl);
-    if (!tokens) {
-      throw new Error(
-        `No OAuth tokens found for ${serverUrl}. Authentication may have failed.`,
-      );
-    }
-
-    // Create inner HTTP transport with OAuth headers
-    const innerTransport = new StreamableHTTPClientTransport(
-      new URL(serverUrl),
-      {
-        requestInit: {
-          headers: {
-            Authorization: `Bearer ${tokens.access_token}`,
-          },
-        },
-      },
-    );
-
-    // Wrap with OAuth-aware transport
-    const oauthTransport = new OAuthAwareMcpTransport(
-      innerTransport,
-      storage,
-      serverUrl,
-      async (url: string) => {
-        // Refresh callback
-        await oauthManager.refreshTokens(url);
-        // Update transport headers with new token
-        const newTokens = await storage.getTokens(url);
-        if (newTokens) {
-          // Note: We'd need to recreate the transport with new headers
-          // For now, this is a known limitation
-          this.logger.warn(
-            'Token refreshed, but transport may need reconnection',
-          );
-        }
-      },
-    );
-
-    return oauthTransport;
   }
 }
