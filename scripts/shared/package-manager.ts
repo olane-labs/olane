@@ -471,65 +471,65 @@ export class PackageManager {
    * Convert dependencies to workspace references
    */
   public convertToWorkspaceReferences(packageName: string): number {
-    const pkg = this.packages.get(packageName);
-    if (!pkg) throw new Error(`Package ${packageName} not found`);
+    // const pkg = this.packages.get(packageName);
+    // if (!pkg) throw new Error(`Package ${packageName} not found`);
 
-    let convertedCount = 0;
-    const updatedPackageJson = { ...pkg.packageJson };
-    const olanePackages = this.getOlanePackageNames();
+    // let convertedCount = 0;
+    // const updatedPackageJson = { ...pkg.packageJson };
+    // const olanePackages = this.getOlanePackageNames();
 
-    // Convert peerDependencies to dependencies with workspace references
-    if (updatedPackageJson.peerDependencies) {
-      updatedPackageJson.dependencies = updatedPackageJson.dependencies || {};
+    // // Convert peerDependencies to dependencies with workspace references
+    // if (updatedPackageJson.peerDependencies) {
+    //   updatedPackageJson.dependencies = updatedPackageJson.dependencies || {};
 
-      for (const [dep, version] of Object.entries(
-        updatedPackageJson.peerDependencies,
-      )) {
-        if (olanePackages.includes(dep)) {
-          updatedPackageJson.dependencies[dep] = 'workspace:*';
-          console.log(`  📦 ${dep}: ${version} → workspace:*`);
-          convertedCount++;
-        }
-      }
-    }
+    //   for (const [dep, version] of Object.entries(
+    //     updatedPackageJson.peerDependencies,
+    //   )) {
+    //     if (olanePackages.includes(dep)) {
+    //       updatedPackageJson.dependencies[dep] = 'workspace:*';
+    //       console.log(`  📦 ${dep}: ${version} → workspace:*`);
+    //       convertedCount++;
+    //     }
+    //   }
+    // }
 
-    // Convert regular dependencies to workspace references for Olane packages
-    if (updatedPackageJson.dependencies) {
-      for (const [dep, version] of Object.entries(
-        updatedPackageJson.dependencies,
-      )) {
-        if (
-          olanePackages.includes(dep) &&
-          !String(version).startsWith('workspace:')
-        ) {
-          updatedPackageJson.dependencies[dep] = 'workspace:*';
-          console.log(`  📦 ${dep}: ${version} → workspace:*`);
-          convertedCount++;
-        }
-      }
-    }
+    // // Convert regular dependencies to workspace references for Olane packages
+    // if (updatedPackageJson.dependencies) {
+    //   for (const [dep, version] of Object.entries(
+    //     updatedPackageJson.dependencies,
+    //   )) {
+    //     if (
+    //       olanePackages.includes(dep) &&
+    //       !String(version).startsWith('workspace:')
+    //     ) {
+    //       updatedPackageJson.dependencies[dep] = 'workspace:*';
+    //       console.log(`  📦 ${dep}: ${version} → workspace:*`);
+    //       convertedCount++;
+    //     }
+    //   }
+    // }
 
-    // Also check devDependencies for internal Olane packages
-    if (updatedPackageJson.devDependencies) {
-      for (const [dep, version] of Object.entries(
-        updatedPackageJson.devDependencies,
-      )) {
-        if (
-          olanePackages.includes(dep) &&
-          !String(version).startsWith('workspace:')
-        ) {
-          updatedPackageJson.devDependencies[dep] = 'workspace:*';
-          console.log(`  📦 ${dep}: ${version} → workspace:* (dev)`);
-          convertedCount++;
-        }
-      }
-    }
+    // // Also check devDependencies for internal Olane packages
+    // if (updatedPackageJson.devDependencies) {
+    //   for (const [dep, version] of Object.entries(
+    //     updatedPackageJson.devDependencies,
+    //   )) {
+    //     if (
+    //       olanePackages.includes(dep) &&
+    //       !String(version).startsWith('workspace:')
+    //     ) {
+    //       updatedPackageJson.devDependencies[dep] = 'workspace:*';
+    //       console.log(`  📦 ${dep}: ${version} → workspace:* (dev)`);
+    //       convertedCount++;
+    //     }
+    //   }
+    // }
 
-    if (convertedCount > 0) {
-      this.updatePackageJson(packageName, updatedPackageJson);
-    }
+    // if (convertedCount > 0) {
+    //   this.updatePackageJson(packageName, updatedPackageJson);
+    // }
 
-    return convertedCount;
+    return 0;
   }
 
   /**

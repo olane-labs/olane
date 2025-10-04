@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-mcp",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -37,15 +37,15 @@
   "description": "oLane Core",
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",
-    "@olane/o-config": "^0.7.1",
-    "@olane/o-core": "^0.7.1",
-    "@olane/o-intelligence": "^0.7.1",
-    "@olane/o-leader": "^0.7.1",
-    "@olane/o-protocol": "^0.7.1",
-    "@olane/o-tool": "^0.7.1",
-    "@olane/o-lane": "^0.7.1",
-    "@olane/o-node": "^0.7.1",
-    "@olane/o-storage": "^0.7.1"
+    "@olane/o-config": "^0.7.2",
+    "@olane/o-core": "^0.7.2",
+    "@olane/o-intelligence": "^0.7.2",
+    "@olane/o-leader": "^0.7.2",
+    "@olane/o-protocol": "^0.7.2",
+    "@olane/o-tool": "^0.7.2",
+    "@olane/o-lane": "^0.7.2",
+    "@olane/o-node": "^0.7.2",
+    "@olane/o-storage": "^0.7.2"
   },
   "dependencies": {
     "debug": "^4.4.1",
