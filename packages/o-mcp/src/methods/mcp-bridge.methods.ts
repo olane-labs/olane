@@ -84,7 +84,7 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
   add_local_server: {
     name: 'add_local_server',
     description:
-      'Add a local MCP server to the bridge using command and arguments',
+      'Add a local MCP server to the bridge using command and arguments. If a command line argument is provided, use this method.',
     dependencies: [],
     parameters: [
       {

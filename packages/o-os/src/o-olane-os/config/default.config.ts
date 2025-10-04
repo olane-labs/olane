@@ -19,6 +19,7 @@ export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
       {
         type: NodeType.LEADER,
         address: new oAddress('o://leader'),
+        description: 'leader for my olane os instance',
         leader: null,
         parent: null,
         network: {
@@ -28,6 +29,7 @@ export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
       {
         type: NodeType.NODE,
         address: new oAddress('o://node'),
+        description: 'host node for my olane os instance',
         leader: null,
         parent: null,
       },

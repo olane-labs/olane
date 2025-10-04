@@ -509,6 +509,88 @@ export class PackageManager {
       }
     }
 
+    // Also check devDependencies for internal Olane packages
+    if (updatedPackageJson.devDependencies) {
+      for (const [dep, version] of Object.entries(
+        updatedPackageJson.devDependencies,
+      )) {
+        if (
+          olanePackages.includes(dep) &&
+          !String(version).startsWith('workspace:')
+        ) {
+          updatedPackageJson.devDependencies[dep] = 'workspace:*';
+          console.log(`  📦 ${dep}: ${version} → workspace:* (dev)`);
+          convertedCount++;
+        }
+      }
+    }
+
+    if (convertedCount > 0) {
+      this.updatePackageJson(packageName, updatedPackageJson);
+    }
+
+    return convertedCount;
+  }
+
+  /**
+   * Convert workspace references back to version ranges for publishing
+   */
+  public convertFromWorkspaceReferences(packageName: string): number {
+    const pkg = this.packages.get(packageName);
+    if (!pkg) throw new Error(`Package ${packageName} not found`);
+
+    let convertedCount = 0;
+    const updatedPackageJson = { ...pkg.packageJson };
+    const currentVersion = pkg.version;
+
+    // Convert dependencies from workspace:* to version ranges
+    if (updatedPackageJson.dependencies) {
+      for (const [dep, version] of Object.entries(
+        updatedPackageJson.dependencies,
+      )) {
+        if (String(version).startsWith('workspace:')) {
+          const depPkg = this.packages.get(dep);
+          if (depPkg) {
+            updatedPackageJson.dependencies[dep] = `^${depPkg.version}`;
+            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version}`);
+            convertedCount++;
+          }
+        }
+      }
+    }
+
+    // Convert devDependencies from workspace:* to version ranges
+    if (updatedPackageJson.devDependencies) {
+      for (const [dep, version] of Object.entries(
+        updatedPackageJson.devDependencies,
+      )) {
+        if (String(version).startsWith('workspace:')) {
+          const depPkg = this.packages.get(dep);
+          if (depPkg) {
+            updatedPackageJson.devDependencies[dep] = `^${depPkg.version}`;
+            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version} (dev)`);
+            convertedCount++;
+          }
+        }
+      }
+    }
+
+    // Convert peerDependencies from workspace:* to version ranges
+    if (updatedPackageJson.peerDependencies) {
+      for (const [dep, version] of Object.entries(
+        updatedPackageJson.peerDependencies,
+      )) {
+        if (String(version).startsWith('workspace:')) {
+          const depPkg = this.packages.get(dep);
+          if (depPkg) {
+            updatedPackageJson.peerDependencies[dep] = `^${depPkg.version}`;
+            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version} (peer)`);
+            convertedCount++;
+          }
+        }
+      }
+    }
+
     if (convertedCount > 0) {
       this.updatePackageJson(packageName, updatedPackageJson);
     }
