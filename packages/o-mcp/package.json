@@ -35,10 +35,29 @@
   "author": "oLane Inc.",
   "license": "ISC",
   "description": "oLane Core",
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.1",
+    "@olane/o-config": "^0.7.1",
+    "@olane/o-core": "^0.7.1",
+    "@olane/o-intelligence": "^0.7.1",
+    "@olane/o-leader": "^0.7.1",
+    "@olane/o-protocol": "^0.7.1",
+    "@olane/o-tool": "^0.7.1",
+    "@olane/o-lane": "^0.7.1",
+    "@olane/o-node": "^0.7.1",
+    "@olane/o-storage": "^0.7.1"
+  },
+  "dependencies": {
+    "debug": "^4.4.1",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "open": "^10.0.0"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
+    "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
@@ -54,19 +73,5 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "5.4.5"
-  },
-  "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.18.1",
-    "@olane/o-config": "^0.7.1",
-    "@olane/o-core": "^0.7.1",
-    "@olane/o-intelligence": "^0.7.1",
-    "@olane/o-leader": "^0.7.1",
-    "@olane/o-protocol": "^0.7.1",
-    "@olane/o-tool": "^0.7.1",
-    "@olane/o-lane": "^0.7.1"
-  },
-  "dependencies": {
-    "debug": "^4.4.1",
-    "dotenv": "^16.5.0"
   }
 }

@@ -88,6 +88,16 @@ export class ConfigManager {
     return null;
   }
 
+  static async updateOSConfig(
+    config: OlaneOSInstanceConfig,
+  ): Promise<OlaneOSInstanceConfig | null> {
+    const c = await this.getOSConfig(config.name);
+    if (c) {
+      await this.saveOSConfig({ ...c, ...config });
+    }
+    return c;
+  }
+
   static async saveOSConfig(config: OlaneOSInstanceConfig): Promise<void> {
     const osPath = path.join(ConfigManager.instancesPath, config.name);
     await fs.ensureDir(osPath);

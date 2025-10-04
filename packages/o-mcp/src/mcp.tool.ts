@@ -5,7 +5,7 @@ import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
 
 export class McpTool extends oLaneTool {
-  private mcpClient: Client;
+  protected mcpClient: Client;
 
   constructor(
     config: oNodeToolConfig & { address: oAddress; mcpClient: Client },

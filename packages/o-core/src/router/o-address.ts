@@ -77,6 +77,16 @@ export class oAddress extends oObject {
     return this.value;
   }
 
+  toJSON(): {
+    value: string;
+    transports: string[];
+  } {
+    return {
+      value: this.value,
+      transports: this.transports.map((t) => t.toString()),
+    };
+  }
+
   supportsTransport(transport: oTransport): boolean {
     return this.transports.some((t) => t.type === transport.type);
   }
