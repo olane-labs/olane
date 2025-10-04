@@ -70,14 +70,6 @@
     "@langchain/core": "^0.3.61",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "langchain": "^0.3.29",
-    "@olane/o-config": "workspace:*",
-    "@olane/o-core": "workspace:*",
-    "@olane/o-intelligence": "workspace:*",
-    "@olane/o-mcp": "workspace:*",
-    "@olane/o-protocol": "workspace:*",
-    "@olane/o-tool": "workspace:*",
-    "@olane/o-tools-common": "workspace:*",
-    "@olane/o-lane": "workspace:*"
+    "langchain": "^0.3.29"
   }
 }

@@ -163,7 +163,7 @@ class ReleaseManager {
     if (!this.options.dryRun) {
       console.log('🔄 Restoring workspace references...');
       for (const pkg of buildOrder) {
-        this.packageManager.convertToWorkspaceReferences(pkg);
+        // this.packageManager.convertToWorkspaceReferences(pkg);
       }
     }
   }
