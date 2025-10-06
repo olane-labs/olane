@@ -12,10 +12,10 @@ The kernel layer of Olane OS - an agentic operating system where AI agents are t
 ### The Three-Layer Model
 
 ```
-AI Agents (LLMs) → use → Tool Nodes (you build) → run on → Olane OS (o-core)
+AI Agents (LLMs|Humans) → use → Tool Nodes (you build) → run on → Olane OS (o-core)
 ```
 
-- **AI Agents (Users)**: GPT-4, Claude, etc. - the intelligent users
+- **Agents (Users)**: GPT-4, Claude, Humans, etc. - the intelligent users
 - **Tool Nodes (Applications)**: Domain-specific capabilities you build
 - **o-core (OS Kernel)**: The runtime infrastructure that makes it all work
 
