@@ -1,0 +1,15 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/olane-labs/olane/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔒 Security Vulnerability
+    url: mailto:developer@olane.com
+    about: Report security vulnerabilities privately (DO NOT create public issue)
+  - name: 📖 Documentation
+    url: https://olane.com/docs
+    about: Read the official documentation
+  - name: 💬 Discord Community
+    url: https://discord.gg/olane
+    about: Join our Discord for real-time help and discussion
+

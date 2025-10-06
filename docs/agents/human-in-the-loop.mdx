@@ -1,0 +1,1621 @@
+---
+title: "Human in the Loop"
+description: "Integrate human oversight and approval into AI-driven workflows with o-login"
+---
+
+## Overview
+
+**Human in the loop** enables humans to provide oversight, approval, and intervention in automated AI workflows. Using the `@olane/o-login` package, humans become addressable nodes on the network that AI agents can query, ask for approval, or escalate complex decisions to.
+
+**TL;DR**: Humans register as nodes at `o://human` addresses. AI agents send intents, questions, or streams to these human nodes. Humans approve, reject, or provide input. System proceeds based on human response.
+
+<CardGroup cols={3}>
+  <Card title="Approval Workflows" icon="circle-check" color="#0D9373">
+    AI requests human approval
+    - Budget approvals
+    - Risk assessments
+    - Policy exceptions
+  </Card>
+  
+  <Card title="Expert Input" icon="brain" color="#07C983">
+    AI asks humans for expertise
+    - Complex decisions
+    - Nuanced judgments
+    - Domain knowledge
+  </Card>
+  
+  <Card title="Quality Control" icon="shield-check" color="#0D9373">
+    Humans validate AI outputs
+    - Content review
+    - Data verification
+    - Output refinement
+  </Card>
+</CardGroup>
+
+## Why human-in-the-loop matters
+
+### The challenge
+
+AI agents are powerful for automation, but some decisions require human judgment:
+- **High-stakes actions**: Financial transactions, legal decisions, policy changes
+- **Nuanced situations**: Context requiring human experience and intuition
+- **Compliance requirements**: Regulatory mandates for human oversight
+- **Edge cases**: Scenarios AI hasn't seen before
+
+### The solution
+
+Make humans addressable participants in the system, not external gatekeepers:
+
+```
+Traditional Approach (Gatekeeping):
+AI System → [Manual Step: Email Human] → Wait → Human Clicks Link → Continue
+
+Olane OS Approach (Participation):
+AI Agent → Send Intent to o://human → Human Responds → AI Continues
+```
+
+Humans become **first-class nodes** in the network, enabling seamless integration of human oversight.
+
+## How it works
+
+### Registration with o-login
+
+Humans register themselves as addressable nodes using `@olane/o-login`:
+
+<CodeGroup>
+
+```typescript Human Agent Registration
+import { oHumanLoginTool } from '@olane/o-login';
+import { oNodeAddress } from '@olane/o-node';
+
+// Create human agent node
+const humanAgent = new oHumanLoginTool({
+  address: new oNodeAddress('o://approvals/manager'),
+  
+  // Handle approval requests
+  respond: async (intent: string) => {
+    console.log('Approval Request:', intent);
+    
+    // Show prompt to human
+    const response = await promptHuman({
+      type: 'approval',
+      message: intent,
+      options: ['Approve', 'Reject', 'Needs Review']
+    });
+    
+    if (response === 'Approve') {
+      return 'Approved by human operator';
+    } else if (response === 'Reject') {
+      return 'Rejected: ' + await promptHuman({ type: 'text', message: 'Reason?' });
+    } else {
+      return 'Escalated for further review';
+    }
+  },
+  
+  // Answer specific questions
+  answer: async (question: string) => {
+    console.log('Question from AI:', question);
+    
+    const response = await promptHuman({
+      type: 'text',
+      message: question
+    });
+    
+    return response;
+  },
+  
+  // Receive progress updates
+  receiveStream: async (data: any) => {
+    console.log('Progress Update:', data);
+    // Display in dashboard, send notification, etc.
+  }
+});
+
+// Start the human agent node
+await humanAgent.start();
+
+console.log('Human agent ready at:', humanAgent.address.toString());
+// Human agent ready at: o://approvals/manager
+```
+
+```typescript AI Agent Requesting Approval
+import { oAddress } from '@olane/o-core';
+
+// AI agent encounters decision requiring human approval
+class AutomatedPurchasing extends oLaneTool {
+  async _tool_purchase_order(request: oRequest) {
+    const { vendor, amount, items } = request.params;
+    
+    // Check if amount requires human approval
+    if (amount > 10000) {
+      // Request human approval
+      const approval = await this.use(
+        new oAddress('o://approvals/manager'),
+        {
+          method: 'intent',
+          params: {
+            intent: `Approve purchase order: ${vendor}, $${amount} for ${items.length} items`
+          }
+        }
+      );
+      
+      if (!approval.resolution.includes('Approved')) {
+        return {
+          status: 'rejected',
+          reason: approval.resolution,
+          requiresReview: true
+        };
+      }
+    }
+    
+    // Proceed with purchase
+    return await this.executePurchase({ vendor, amount, items });
+  }
+}
+```
+
+</CodeGroup>
+
+### Three interaction modes
+
+`o-login` provides three tools for different interaction patterns:
+
+<Tabs>
+  <Tab title="_tool_intent">
+    **Purpose**: Complex, multi-step requests requiring human reasoning
+    
+    ```typescript
+    // AI sends intent to human
+    const result = await humanNode.use({
+      method: 'intent',
+      params: {
+        intent: 'Review this contract and approve if terms are acceptable'
+      }
+    });
+    
+    // Human receives intent, reviews, decides
+    // Returns: { success: true, resolution: "Approved with modifications" }
+    ```
+    
+    **Use when**: The request requires human judgment, review, or multi-step action
+  </Tab>
+  
+  <Tab title="_tool_question">
+    **Purpose**: Direct questions with specific answers
+    
+    ```typescript
+    // AI asks human a specific question
+    const result = await humanNode.use({
+      method: 'question',
+      params: {
+        question: 'What is the approved budget for Q4 marketing campaigns?'
+      }
+    });
+    
+    // Human provides answer
+    // Returns: { success: true, answer: "$50,000" }
+    ```
+    
+    **Use when**: AI needs specific information only humans know
+  </Tab>
+  
+  <Tab title="_tool_receive_stream">
+    **Purpose**: Progress updates and notifications
+    
+    ```typescript
+    // AI streams progress to human dashboard
+    await humanNode.use({
+      method: 'receive_stream',
+      params: {
+        data: {
+          type: 'progress',
+          stage: 'Processing customer orders',
+          progress: 45,
+          message: '450/1000 orders processed'
+        }
+      }
+    });
+    
+    // Human sees update in real-time dashboard
+    ```
+    
+    **Use when**: Human needs visibility into long-running processes
+  </Tab>
+</Tabs>
+
+## Common patterns
+
+### Pattern 1: Approval workflow
+
+AI requests human approval before taking high-stakes actions.
+
+<CodeGroup>
+
+```typescript Complete Example - Approval System
+import { oHumanLoginTool } from '@olane/o-login';
+import { oLaneTool } from '@olane/o-lane';
+import { oNodeAddress } from '@olane/o-node';
+import readline from 'readline';
+
+// Set up command-line interface for human input
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function promptHuman(question: string): Promise<string> {
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      resolve(answer);
+    });
+  });
+}
+
+// Human approval node
+const approvalManager = new oHumanLoginTool({
+  address: new oNodeAddress('o://approvals/financial'),
+  
+  respond: async (intent: string) => {
+    console.log('\n=== APPROVAL REQUEST ===');
+    console.log(intent);
+    console.log('========================\n');
+    
+    const decision = await promptHuman('Approve? (yes/no/details): ');
+    
+    if (decision.toLowerCase() === 'yes') {
+      return 'APPROVED by financial manager';
+    } else if (decision.toLowerCase() === 'no') {
+      const reason = await promptHuman('Rejection reason: ');
+      return `REJECTED: ${reason}`;
+    } else {
+      const details = await promptHuman('What additional details do you need? ');
+      return `PENDING: Requires ${details}`;
+    }
+  },
+  
+  answer: async (question: string) => {
+    console.log('\nQuestion:', question);
+    return await promptHuman('Your answer: ');
+  },
+  
+  receiveStream: async (data: any) => {
+    console.log('[Update]', data.message || JSON.stringify(data));
+  }
+});
+
+// AI-powered purchasing agent
+class PurchasingAgent extends oLaneTool {
+  constructor() {
+    super({
+      address: new oNodeAddress('o://purchasing/agent')
+    });
+  }
+  
+  async _tool_create_purchase_order(request: oRequest) {
+    const { vendor, amount, description } = request.params;
+    
+    // Create purchase order draft
+    const po = {
+      id: `PO-${Date.now()}`,
+      vendor,
+      amount,
+      description,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Check if approval needed (amounts > $5000)
+    if (amount > 5000) {
+      console.log(`Purchase order ${po.id} requires approval...`);
+      
+      // Request human approval
+      const approval = await this.use(
+        new oNodeAddress('o://approvals/financial'),
+        {
+          method: 'intent',
+          params: {
+            intent: `Purchase Order ${po.id}\nVendor: ${vendor}\nAmount: $${amount}\nDescription: ${description}\n\nApprove this purchase?`
+          }
+        }
+      );
+      
+      if (approval.resolution.includes('APPROVED')) {
+        // Proceed with purchase
+        po.status = 'approved';
+        po.approvedBy = 'Financial Manager';
+        po.approvedAt = new Date().toISOString();
+        
+        console.log(`✓ Purchase order ${po.id} approved and processed`);
+        
+        return {
+          success: true,
+          purchaseOrder: po,
+          message: 'Purchase order approved and submitted to vendor'
+        };
+      } else if (approval.resolution.includes('REJECTED')) {
+        po.status = 'rejected';
+        
+        console.log(`✗ Purchase order ${po.id} rejected`);
+        
+        return {
+          success: false,
+          purchaseOrder: po,
+          message: approval.resolution
+        };
+      } else {
+        po.status = 'pending';
+        
+        console.log(`⧗ Purchase order ${po.id} pending additional info`);
+        
+        return {
+          success: false,
+          purchaseOrder: po,
+          message: approval.resolution,
+          requiresAction: true
+        };
+      }
+    } else {
+      // Auto-approve small amounts
+      po.status = 'approved';
+      po.approvedBy = 'Auto-approved (< $5000)';
+      
+      console.log(`✓ Purchase order ${po.id} auto-approved`);
+      
+      return {
+        success: true,
+        purchaseOrder: po,
+        message: 'Purchase order auto-approved and submitted'
+      };
+    }
+  }
+}
+
+// Start both nodes
+async function main() {
+  await approvalManager.start();
+  console.log('✓ Human approval manager started');
+  
+  const purchasingAgent = new PurchasingAgent();
+  await purchasingAgent.start();
+  console.log('✓ AI purchasing agent started\n');
+  
+  // Simulate purchase requests
+  console.log('=== Testing Purchase Orders ===\n');
+  
+  // Test 1: Small purchase (auto-approved)
+  console.log('Test 1: Small purchase...');
+  await purchasingAgent._tool_create_purchase_order({
+    params: {
+      vendor: 'Office Supplies Co',
+      amount: 2500,
+      description: 'Office supplies for Q4'
+    }
+  } as any);
+  
+  console.log('\n');
+  
+  // Test 2: Large purchase (requires approval)
+  console.log('Test 2: Large purchase requiring approval...');
+  await purchasingAgent._tool_create_purchase_order({
+    params: {
+      vendor: 'Enterprise Software Inc',
+      amount: 15000,
+      description: 'Annual software licenses'
+    }
+  } as any);
+  
+  rl.close();
+  await approvalManager.stop();
+  await purchasingAgent.stop();
+}
+
+main();
+```
+
+```typescript Usage Scenario
+// In production, the AI agent would be triggered by events
+// Example: New purchase request from procurement system
+
+const result = await purchasingAgent.use({
+  method: 'create_purchase_order',
+  params: {
+    vendor: 'Cloud Services LLC',
+    amount: 25000,
+    description: 'Annual cloud infrastructure costs'
+  }
+});
+
+if (result.success) {
+  console.log('Purchase approved:', result.purchaseOrder.id);
+} else {
+  console.log('Purchase requires action:', result.message);
+}
+```
+
+</CodeGroup>
+
+**Key benefits**:
+- Human approval integrated into automated workflow
+- No external systems or email loops
+- Real-time decision-making
+- Clear audit trail
+
+### Pattern 2: Expert consultation
+
+AI consults humans for domain expertise.
+
+<CodeGroup>
+
+```typescript Expert Consultation Node
+import { oHumanLoginTool } from '@olane/o-login';
+
+// Legal expert available for consultation
+const legalExpert = new oHumanLoginTool({
+  address: new oNodeAddress('o://legal/expert'),
+  
+  respond: async (intent: string) => {
+    // Complex legal question requiring expert analysis
+    console.log('Legal Review Required:');
+    console.log(intent);
+    
+    // In production, this would show in a specialized UI
+    const analysis = await getLegalExpertAnalysis(intent);
+    
+    return analysis;
+  },
+  
+  answer: async (question: string) => {
+    // Quick legal question
+    console.log('Legal Question:', question);
+    
+    const answer = await getLegalQuickAnswer(question);
+    
+    return answer;
+  },
+  
+  receiveStream: async (data: any) => {
+    // Receive contract drafts for review
+    console.log('Document for Review:', data);
+  }
+});
+
+await legalExpert.start();
+```
+
+```typescript AI Agent Consulting Expert
+class ContractNegotiator extends oLaneTool {
+  async _tool_negotiate_contract(request: oRequest) {
+    const { clientId, terms, proposedChanges } = request.params;
+    
+    // AI analyzes proposed changes
+    const analysis = await this.analyzeTerms(terms, proposedChanges);
+    
+    // Consult legal expert for complex clauses
+    if (analysis.hasComplexClauses) {
+      const legalAdvice = await this.use(
+        new oAddress('o://legal/expert'),
+        {
+          method: 'question',
+          params: {
+            question: `Client ${clientId} proposed: ${analysis.complexClauses.join(', ')}. Are these terms acceptable?`
+          }
+        }
+      );
+      
+      if (legalAdvice.answer.includes('not acceptable')) {
+        return {
+          status: 'requires_revision',
+          legalAdvice: legalAdvice.answer,
+          suggestedRevisions: await this.generateRevisions(legalAdvice.answer)
+        };
+      }
+    }
+    
+    // Proceed with negotiation
+    return await this.finalizeNegotiation({ clientId, terms: analysis.revisedTerms });
+  }
+}
+```
+
+</CodeGroup>
+
+**Use cases**:
+- Legal review of contracts
+- Medical diagnosis confirmation
+- Financial risk assessment
+- Technical architecture decisions
+
+### Pattern 3: Quality control
+
+Humans validate AI-generated outputs before delivery.
+
+<CodeGroup>
+
+```typescript Content Review System
+import { oHumanLoginTool } from '@olane/o-login';
+
+// Content reviewer
+const contentReviewer = new oHumanLoginTool({
+  address: new oNodeAddress('o://content/reviewer'),
+  
+  respond: async (intent: string) => {
+    // Parse the review request
+    const review = JSON.parse(intent);
+    
+    console.log('\n=== CONTENT REVIEW ===');
+    console.log('Type:', review.contentType);
+    console.log('Content:', review.content);
+    console.log('=====================\n');
+    
+    const decision = await promptHuman('Approve? (approve/reject/revise): ');
+    
+    if (decision === 'approve') {
+      return JSON.stringify({
+        status: 'approved',
+        publishReady: true
+      });
+    } else if (decision === 'revise') {
+      const feedback = await promptHuman('Revision notes: ');
+      return JSON.stringify({
+        status: 'needs_revision',
+        feedback: feedback,
+        publishReady: false
+      });
+    } else {
+      const reason = await promptHuman('Rejection reason: ');
+      return JSON.stringify({
+        status: 'rejected',
+        reason: reason,
+        publishReady: false
+      });
+    }
+  },
+  
+  answer: async (question: string) => {
+    return await promptHuman(`${question}\nYour answer: `);
+  },
+  
+  receiveStream: async (data: any) => {
+    console.log('[Content Generated]', data);
+  }
+});
+```
+
+```typescript AI Content Generator with Review
+class ContentGenerator extends oLaneTool {
+  async _tool_generate_blog_post(request: oRequest) {
+    const { topic, targetAudience, length } = request.params;
+    
+    // AI generates content
+    const content = await this.generateContent({ topic, targetAudience, length });
+    
+    // Send to human for review
+    const review = await this.use(
+      new oAddress('o://content/reviewer'),
+      {
+        method: 'intent',
+        params: {
+          intent: JSON.stringify({
+            contentType: 'blog_post',
+            topic: topic,
+            content: content.text,
+            metadata: {
+              wordCount: content.wordCount,
+              readingLevel: content.readingLevel
+            }
+          })
+        }
+      }
+    );
+    
+    const reviewResult = JSON.parse(review.resolution);
+    
+    if (reviewResult.publishReady) {
+      // Publish approved content
+      const published = await this.publishContent(content);
+      
+      return {
+        status: 'published',
+        url: published.url,
+        reviewedBy: 'Human Content Reviewer'
+      };
+    } else if (reviewResult.status === 'needs_revision') {
+      // Revise based on feedback
+      const revised = await this.reviseContent(content, reviewResult.feedback);
+      
+      return {
+        status: 'revised',
+        content: revised,
+        requiresReReview: true,
+        feedback: reviewResult.feedback
+      };
+    } else {
+      return {
+        status: 'rejected',
+        reason: reviewResult.reason
+      };
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+**Use cases**:
+- Content moderation
+- Code review before deployment
+- Data quality validation
+- Customer communication review
+
+### Pattern 4: Escalation hierarchy
+
+Multi-level human oversight with automatic escalation.
+
+<CodeGroup>
+
+```typescript Multi-Level Approval System
+import { oHumanLoginTool } from '@olane/o-login';
+
+// Level 1: Team Lead
+const teamLead = new oHumanLoginTool({
+  address: new oNodeAddress('o://approvals/team-lead'),
+  
+  respond: async (intent: string) => {
+    const request = JSON.parse(intent);
+    
+    // Team lead can approve up to $10k
+    if (request.amount <= 10000) {
+      const decision = await promptHuman(`Approve $${request.amount} for ${request.purpose}? (yes/no): `);
+      
+      if (decision === 'yes') {
+        return JSON.stringify({ approved: true, level: 'team-lead' });
+      } else {
+        return JSON.stringify({ approved: false, reason: 'Team lead rejected' });
+      }
+    } else {
+      // Escalate to manager
+      return JSON.stringify({ 
+        approved: false, 
+        escalate: true, 
+        escalateTo: 'o://approvals/manager',
+        reason: 'Amount exceeds team lead authority ($10k)'
+      });
+    }
+  },
+  
+  answer: async (question: string) => {
+    return await promptHuman(`${question}\nAnswer: `);
+  },
+  
+  receiveStream: async (data: any) => {
+    console.log('[Team Lead] Update:', data);
+  }
+});
+
+// Level 2: Manager
+const manager = new oHumanLoginTool({
+  address: new oNodeAddress('o://approvals/manager'),
+  
+  respond: async (intent: string) => {
+    const request = JSON.parse(intent);
+    
+    console.log(`\n[ESCALATED] Request escalated from: ${request.escalatedFrom || 'team-lead'}`);
+    
+    // Manager can approve up to $50k
+    if (request.amount <= 50000) {
+      const decision = await promptHuman(`Approve $${request.amount} for ${request.purpose}? (yes/no): `);
+      
+      if (decision === 'yes') {
+        return JSON.stringify({ approved: true, level: 'manager' });
+      } else {
+        return JSON.stringify({ approved: false, reason: 'Manager rejected' });
+      }
+    } else {
+      // Escalate to executive
+      return JSON.stringify({ 
+        approved: false, 
+        escalate: true, 
+        escalateTo: 'o://approvals/executive',
+        reason: 'Amount exceeds manager authority ($50k)'
+      });
+    }
+  },
+  
+  answer: async (question: string) => {
+    return await promptHuman(`[Manager] ${question}\nAnswer: `);
+  },
+  
+  receiveStream: async (data: any) => {
+    console.log('[Manager] Update:', data);
+  }
+});
+
+// Level 3: Executive
+const executive = new oHumanLoginTool({
+  address: new oNodeAddress('o://approvals/executive'),
+  
+  respond: async (intent: string) => {
+    const request = JSON.parse(intent);
+    
+    console.log(`\n[EXECUTIVE APPROVAL] High-value request: $${request.amount}`);
+    console.log(`Escalated from: ${request.escalatedFrom || 'manager'}`);
+    
+    const decision = await promptHuman(`Approve $${request.amount} for ${request.purpose}? (yes/no): `);
+    
+    if (decision === 'yes') {
+      return JSON.stringify({ approved: true, level: 'executive' });
+    } else {
+      const reason = await promptHuman('Rejection reason: ');
+      return JSON.stringify({ approved: false, reason: reason, level: 'executive' });
+    }
+  },
+  
+  answer: async (question: string) => {
+    return await promptHuman(`[Executive] ${question}\nAnswer: `);
+  },
+  
+  receiveStream: async (data: any) => {
+    console.log('[Executive] Update:', data);
+  }
+});
+```
+
+```typescript AI Agent with Auto-Escalation
+class ApprovalOrchestrator extends oLaneTool {
+  async _tool_request_budget_approval(request: oRequest) {
+    const { amount, purpose, department } = request.params;
+    
+    let currentApprover = 'o://approvals/team-lead';
+    let approved = false;
+    let escalationCount = 0;
+    const maxEscalations = 3;
+    
+    const approvalRequest = JSON.stringify({
+      amount,
+      purpose,
+      department,
+      requestedAt: new Date().toISOString()
+    });
+    
+    while (!approved && escalationCount < maxEscalations) {
+      console.log(`\nSeeking approval from: ${currentApprover}`);
+      
+      const response = await this.use(
+        new oAddress(currentApprover),
+        {
+          method: 'intent',
+          params: {
+            intent: JSON.stringify({
+              ...JSON.parse(approvalRequest),
+              escalatedFrom: escalationCount > 0 ? currentApprover : undefined
+            })
+          }
+        }
+      );
+      
+      const result = JSON.parse(response.resolution);
+      
+      if (result.approved) {
+        approved = true;
+        
+        return {
+          status: 'approved',
+          approvedBy: result.level,
+          amount: amount,
+          escalationCount: escalationCount
+        };
+      } else if (result.escalate) {
+        // Escalate to next level
+        console.log(`Escalating: ${result.reason}`);
+        currentApprover = result.escalateTo;
+        escalationCount++;
+      } else {
+        // Rejected
+        return {
+          status: 'rejected',
+          reason: result.reason,
+          rejectedBy: result.level || currentApprover,
+          escalationCount: escalationCount
+        };
+      }
+    }
+    
+    // Max escalations reached
+    return {
+      status: 'failed',
+      reason: 'Maximum escalation level reached without approval'
+    };
+  }
+}
+```
+
+</CodeGroup>
+
+**Benefits**:
+- Automatic routing based on request attributes
+- Clear approval hierarchy
+- Audit trail of escalations
+- Prevents bottlenecks at single approval level
+
+## Real-world use cases
+
+### Use case 1: Financial services
+
+**Scenario**: Loan application processing with risk-based human review
+
+<Steps>
+  <Step title="AI evaluates application">
+    Automated system analyzes credit score, income, debt-to-income ratio
+  </Step>
+  
+  <Step title="Risk classification">
+    - **Low risk**: Auto-approve (AI only)
+    - **Medium risk**: Team lead review required
+    - **High risk**: Senior underwriter review required
+  </Step>
+  
+  <Step title="Human review (if needed)">
+    Appropriate human reviewer receives detailed analysis and makes decision
+  </Step>
+  
+  <Step title="Decision execution">
+    AI proceeds based on human decision: approve loan, request more info, or deny
+  </Step>
+</Steps>
+
+**Implementation**:
+```typescript
+// AI Risk Analyzer
+if (riskScore < 0.3) {
+  // Auto-approve low risk
+  return { approved: true, reviewer: 'AI' };
+} else if (riskScore < 0.7) {
+  // Medium risk - team lead review
+  const review = await humanNode.use({
+    method: 'intent',
+    params: {
+      intent: `Review loan application: ${applicationSummary}`
+    }
+  });
+  return parseReview(review);
+} else {
+  // High risk - senior underwriter
+  const review = await seniorUnderwriter.use({
+    method: 'intent',
+    params: {
+      intent: `High-risk loan review required: ${detailedAnalysis}`
+    }
+  });
+  return parseReview(review);
+}
+```
+
+### Use case 2: Healthcare
+
+**Scenario**: Medical diagnosis assistant with physician oversight
+
+<Steps>
+  <Step title="AI analyzes symptoms">
+    System processes patient symptoms, medical history, lab results
+  </Step>
+  
+  <Step title="Confidence assessment">
+    - **High confidence + routine**: Suggest standard treatment protocol
+    - **Medium confidence**: Flag for physician review
+    - **Low confidence + complex**: Require specialist consultation
+  </Step>
+  
+  <Step title="Physician review">
+    Doctor reviews AI analysis, confirms or adjusts diagnosis and treatment plan
+  </Step>
+  
+  <Step title="Treatment execution">
+    Approved treatment plan sent to pharmacy, scheduling, etc.
+  </Step>
+</Steps>
+
+**Implementation**:
+```typescript
+const diagnosis = await aiDiagnosticSystem.analyze(patientData);
+
+if (diagnosis.confidence > 0.9 && diagnosis.complexity === 'routine') {
+  // Standard care pathway
+  return diagnosis.recommendedTreatment;
+} else {
+  // Physician review required
+  const physicianReview = await physicianNode.use({
+    method: 'intent',
+    params: {
+      intent: `Review AI diagnosis:\n${JSON.stringify(diagnosis, null, 2)}\n\nConfirm diagnosis and treatment plan?`
+    }
+  });
+  
+  return parsePhysicianDecision(physicianReview);
+}
+```
+
+### Use case 3: Content moderation
+
+**Scenario**: Social media content moderation at scale
+
+<Steps>
+  <Step title="AI filters content">
+    Automated system flags potentially problematic content (hate speech, violence, spam)
+  </Step>
+  
+  <Step title="Confidence-based routing">
+    - **Clear violations** (>95% confidence): Auto-remove
+    - **Likely violations** (70-95%): Human moderator review
+    - **Uncertain** (50-70%): Senior moderator review
+    - **Edge cases** (<50%): Policy team review
+  </Step>
+  
+  <Step title="Human decision">
+    Human reviewer sees content, AI analysis, and community guidelines
+  </Step>
+  
+  <Step title="Action and learning">
+    Decision executed, AI learns from human decisions to improve future accuracy
+  </Step>
+</Steps>
+
+**Implementation**:
+```typescript
+const moderation = await aiModerator.analyze(content);
+
+if (moderation.violationConfidence > 0.95) {
+  return { action: 'remove', reason: moderation.violationType };
+} else if (moderation.violationConfidence > 0.7) {
+  const review = await humanModerator.use({
+    method: 'intent',
+    params: {
+      intent: `Content review:\n${content.preview}\n\nAI flagged as: ${moderation.violationType} (${moderation.violationConfidence}%)\n\nAction?`
+    }
+  });
+  
+  // Learn from human decision
+  await aiModerator.learn({
+    content: content,
+    aiPrediction: moderation,
+    humanDecision: review.resolution
+  });
+  
+  return parseModerationDecision(review);
+}
+```
+
+## Implementation guide
+
+### Step 1: Set up human agent nodes
+
+<CodeGroup>
+
+```bash Installation
+npm install @olane/o-login @olane/o-node @olane/o-lane @olane/o-core
+```
+
+```typescript Basic Setup
+import { oHumanLoginTool } from '@olane/o-login';
+import { oNodeAddress } from '@olane/o-node';
+
+// Create human agent node
+const humanAgent = new oHumanLoginTool({
+  address: new oNodeAddress('o://human/operator'),
+  leader: leaderAddress, // Connect to network
+  
+  respond: async (intent: string) => {
+    // Handle intents
+    return 'Your response';
+  },
+  
+  answer: async (question: string) => {
+    // Answer questions
+    return 'Your answer';
+  },
+  
+  receiveStream: async (data: any) => {
+    // Receive updates
+  }
+});
+
+await humanAgent.start();
+```
+
+</CodeGroup>
+
+### Step 2: Build user interface for humans
+
+The human needs a way to see requests and respond. Options:
+
+<Tabs>
+  <Tab title="Command-Line Interface">
+    **Best for**: Developers, operators, testing
+    
+    ```typescript
+    import readline from 'readline';
+    
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    const humanAgent = new oHumanLoginTool({
+      address: new oNodeAddress('o://human'),
+      
+      respond: async (intent: string) => {
+        console.log('\n[REQUEST]', intent);
+        
+        return new Promise((resolve) => {
+          rl.question('Your decision: ', (answer) => {
+            resolve(answer);
+          });
+        });
+      },
+      
+      // ... other methods
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Web Dashboard">
+    **Best for**: Business users, approvers, reviewers
+    
+    ```typescript
+    import express from 'express';
+    import { EventEmitter } from 'events';
+    
+    const app = express();
+    const events = new EventEmitter();
+    
+    // Queue for pending requests
+    const pendingRequests = new Map();
+    
+    const humanAgent = new oHumanLoginTool({
+      address: new oNodeAddress('o://human'),
+      
+      respond: async (intent: string) => {
+        const requestId = `req-${Date.now()}`;
+        
+        // Store request
+        pendingRequests.set(requestId, {
+          intent,
+          timestamp: Date.now(),
+          status: 'pending'
+        });
+        
+        // Notify web clients
+        events.emit('new-request', { requestId, intent });
+        
+        // Wait for human response
+        return new Promise((resolve) => {
+          events.once(`response-${requestId}`, (response) => {
+            pendingRequests.delete(requestId);
+            resolve(response);
+          });
+        });
+      },
+      
+      // ... other methods
+    });
+    
+    // Web endpoints
+    app.get('/api/requests', (req, res) => {
+      res.json(Array.from(pendingRequests.entries()));
+    });
+    
+    app.post('/api/requests/:id/respond', (req, res) => {
+      const { id } = req.params;
+      const { response } = req.body;
+      
+      events.emit(`response-${id}`, response);
+      res.json({ success: true });
+    });
+    
+    app.listen(3000);
+    ```
+    
+    **Frontend (React)**:
+    ```tsx
+    function ApprovalDashboard() {
+      const [requests, setRequests] = useState([]);
+      
+      useEffect(() => {
+        // Poll for new requests
+        const interval = setInterval(async () => {
+          const res = await fetch('/api/requests');
+          const data = await res.json();
+          setRequests(data);
+        }, 1000);
+        
+        return () => clearInterval(interval);
+      }, []);
+      
+      const handleRespond = async (requestId: string, response: string) => {
+        await fetch(`/api/requests/${requestId}/respond`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ response })
+        });
+      };
+      
+      return (
+        <div>
+          <h1>Approval Requests</h1>
+          {requests.map(([id, req]) => (
+            <div key={id} className="request-card">
+              <p>{req.intent}</p>
+              <button onClick={() => handleRespond(id, 'Approved')}>
+                Approve
+              </button>
+              <button onClick={() => handleRespond(id, 'Rejected')}>
+                Reject
+              </button>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Mobile App">
+    **Best for**: On-the-go approvals, notifications
+    
+    ```typescript
+    import { io } from 'socket.io-client';
+    
+    // Connect to notification service
+    const socket = io('https://your-server.com');
+    
+    const humanAgent = new oHumanLoginTool({
+      address: new oNodeAddress('o://human/mobile'),
+      
+      respond: async (intent: string) => {
+        // Send push notification to mobile device
+        socket.emit('approval-request', {
+          userId: 'user-123',
+          intent: intent,
+          timestamp: Date.now()
+        });
+        
+        // Wait for mobile response
+        return new Promise((resolve) => {
+          socket.once('approval-response', (response) => {
+            resolve(response.decision);
+          });
+        });
+      },
+      
+      // ... other methods
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Email/SMS Gateway">
+    **Best for**: Critical alerts, offline scenarios
+    
+    ```typescript
+    import nodemailer from 'nodemailer';
+    import twilio from 'twilio';
+    
+    const emailTransporter = nodemailer.createTransport({/*...*/});
+    const smsClient = twilio(accountSid, authToken);
+    
+    const humanAgent = new oHumanLoginTool({
+      address: new oNodeAddress('o://human/alerts'),
+      
+      respond: async (intent: string) => {
+        const approvalUrl = await generateApprovalLink(intent);
+        
+        // Send email
+        await emailTransporter.sendMail({
+          to: 'manager@company.com',
+          subject: 'Approval Required',
+          html: `
+            <p>${intent}</p>
+            <a href="${approvalUrl}/approve">Approve</a>
+            <a href="${approvalUrl}/reject">Reject</a>
+          `
+        });
+        
+        // Send SMS for urgent requests
+        if (isUrgent(intent)) {
+          await smsClient.messages.create({
+            to: '+1234567890',
+            from: '+0987654321',
+            body: `Urgent approval needed: ${intent.slice(0, 100)}...`
+          });
+        }
+        
+        // Wait for response via webhook
+        return await waitForWebhookResponse(approvalUrl);
+      },
+      
+      // ... other methods
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### Step 3: Integrate AI agents
+
+Update your AI agents to call human nodes when needed:
+
+```typescript
+class IntelligentAgent extends oLaneTool {
+  async _tool_make_decision(request: oRequest) {
+    const { scenario, data } = request.params;
+    
+    // AI analyzes scenario
+    const analysis = await this.analyze(scenario, data);
+    
+    // Determine if human input needed
+    if (this.requiresHumanJudgment(analysis)) {
+      // Request human decision
+      const humanDecision = await this.use(
+        new oAddress('o://human/expert'),
+        {
+          method: 'intent',
+          params: {
+            intent: `Scenario: ${scenario}\n\nAI Analysis: ${JSON.stringify(analysis)}\n\nYour decision?`
+          }
+        }
+      );
+      
+      // Incorporate human decision
+      return this.executeDecision(humanDecision.resolution);
+    } else {
+      // AI can handle autonomously
+      return this.executeDecision(analysis.recommendation);
+    }
+  }
+  
+  private requiresHumanJudgment(analysis: any): boolean {
+    return (
+      analysis.confidence < 0.8 || // Low confidence
+      analysis.impact === 'high' || // High-stakes
+      analysis.hasEdgeCases || // Unusual scenario
+      analysis.requiresPolicy // Policy decision
+    );
+  }
+}
+```
+
+### Step 4: Add monitoring and audit
+
+Track all human-in-the-loop interactions for compliance and improvement:
+
+```typescript
+class AuditLogger {
+  async logHumanInteraction(interaction: {
+    requestId: string;
+    humanNode: string;
+    intent: string;
+    response: string;
+    duration: number;
+    outcome: string;
+  }) {
+    // Store in audit database
+    await db.audit_log.insert({
+      ...interaction,
+      timestamp: new Date(),
+      type: 'human-in-loop'
+    });
+    
+    // Track metrics
+    await metrics.record('human_interaction', {
+      node: interaction.humanNode,
+      duration: interaction.duration,
+      outcome: interaction.outcome
+    });
+  }
+}
+
+// Wrap human node with audit logging
+const auditedHumanAgent = new Proxy(humanAgent, {
+  get(target, prop) {
+    if (prop === 'use') {
+      return async (...args: any[]) => {
+        const startTime = Date.now();
+        const result = await target[prop](...args);
+        const duration = Date.now() - startTime;
+        
+        await auditLogger.logHumanInteraction({
+          requestId: generateId(),
+          humanNode: target.address.toString(),
+          intent: args[0]?.params?.intent,
+          response: result.resolution,
+          duration,
+          outcome: result.success ? 'approved' : 'rejected'
+        });
+        
+        return result;
+      };
+    }
+    return target[prop];
+  }
+});
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Minimize human interruptions">
+    Only route to humans when truly necessary:
+    - Use confidence thresholds
+    - Implement business rule automation
+    - Learn from past human decisions
+    - Auto-approve low-risk scenarios
+  </Accordion>
+  
+  <Accordion title="Provide rich context">
+    Help humans make informed decisions quickly:
+    - Include AI analysis and confidence scores
+    - Show relevant historical data
+    - Highlight key risk factors
+    - Suggest recommended action
+  </Accordion>
+  
+  <Accordion title="Set response time expectations">
+    - Define SLAs for different request types
+    - Implement timeout handling
+    - Provide escalation paths
+    - Send reminders for pending requests
+  </Accordion>
+  
+  <Accordion title="Enable offline handling">
+    Humans aren't always available:
+    - Queue requests when humans offline
+    - Send notifications via multiple channels
+    - Allow asynchronous responses
+    - Implement backup approvers
+  </Accordion>
+  
+  <Accordion title="Learn from human decisions">
+    Improve AI over time:
+    - Store all human decisions
+    - Analyze patterns in approvals/rejections
+    - Retrain AI models with human feedback
+    - Adjust confidence thresholds based on accuracy
+  </Accordion>
+  
+  <Accordion title="Maintain audit trails">
+    Track all interactions for compliance:
+    - Log every request and response
+    - Record decision timing
+    - Store reasoning/comments
+    - Enable audit reports
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Issue: Human agent not receiving requests
+
+**Symptoms**: AI agent sends intent but human node never receives it
+
+**Solutions**:
+<Steps>
+  <Step title="Verify node is running">
+    ```bash
+    # Check node status
+    olane nodes list
+    
+    # Should show: o://human [RUNNING]
+    ```
+  </Step>
+  
+  <Step title="Check network connectivity">
+    ```typescript
+    // Test direct connection
+    const result = await aiAgent.use(
+      new oAddress('o://human'),
+      { method: 'ping' }
+    );
+    console.log('Ping result:', result);
+    ```
+  </Step>
+  
+  <Step title="Verify address correctness">
+    ```typescript
+    // Ensure addresses match exactly
+    console.log('AI calling:', 'o://human/approver');
+    console.log('Human registered at:', humanAgent.address.toString());
+    // These must match!
+    ```
+  </Step>
+</Steps>
+
+### Issue: Requests timing out
+
+**Symptoms**: AI agent waits indefinitely, eventually times out
+
+**Solutions**:
+```typescript
+// Add timeout to AI agent calls
+const result = await Promise.race([
+  aiAgent.use(humanAddress, { method: 'intent', params: { intent } }),
+  new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Human response timeout')), 60000)
+  )
+]);
+
+// Handle timeout
+if (!result) {
+  // Escalate or use fallback logic
+  return handleTimeout(intent);
+}
+```
+
+### Issue: Human overwhelmed with requests
+
+**Symptoms**: Too many requests, humans can't keep up
+
+**Solutions**:
+<Tabs>
+  <Tab title="Rate limiting">
+    ```typescript
+    class RateLimitedHuman extends oHumanLoginTool {
+      private requestQueue: any[] = [];
+      private processing = false;
+      private maxConcurrent = 3;
+      
+      async respond(intent: string) {
+        // Queue if too many concurrent
+        if (this.getCurrentLoad() >= this.maxConcurrent) {
+          return 'Too many concurrent requests. Queued for later review.';
+        }
+        
+        return await super.respond(intent);
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Priority queuing">
+    ```typescript
+    const humanAgent = new oHumanLoginTool({
+      respond: async (intent: string) => {
+        const parsed = JSON.parse(intent);
+        
+        // Prioritize by urgency/value
+        if (parsed.priority === 'critical') {
+          // Handle immediately
+          return await handleCritical(intent);
+        } else {
+          // Queue for batch processing
+          await addToQueue(intent, parsed.priority);
+          return 'Queued for review within 24 hours';
+        }
+      }
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Load balancing">
+    ```typescript
+    // Multiple human agents in rotation
+    const humanAgents = [
+      new oHumanLoginTool({ address: 'o://human/alice' }),
+      new oHumanLoginTool({ address: 'o://human/bob' }),
+      new oHumanLoginTool({ address: 'o://human/charlie' })
+    ];
+    
+    // Route to least-busy human
+    async function routeToHuman(intent: string) {
+      const loads = await Promise.all(
+        humanAgents.map(agent => agent.getCurrentLoad())
+      );
+      
+      const leastBusy = humanAgents[loads.indexOf(Math.min(...loads))];
+      
+      return await leastBusy.use({
+        method: 'intent',
+        params: { intent }
+      });
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Metrics and monitoring
+
+Track human-in-the-loop effectiveness:
+
+```typescript
+interface HITLMetrics {
+  // Volume
+  totalRequests: number;
+  requestsPerHour: number;
+  
+  // Timing
+  averageResponseTime: number;
+  p95ResponseTime: number;
+  
+  // Outcomes
+  approvalRate: number;
+  rejectionRate: number;
+  escalationRate: number;
+  
+  // Quality
+  aiHumanAgreementRate: number; // % where AI and human agree
+  humanOverrideRate: number; // % where human overrides AI
+  
+  // Efficiency
+  requestsAvoidedByAI: number; // Requests AI handled without human
+  timesSaved: number; // Time saved vs. all-manual process
+}
+
+class HITLMonitor {
+  async recordInteraction(interaction: {
+    intent: string;
+    aiConfidence: number;
+    aiRecommendation: string;
+    humanDecision: string;
+    responseTime: number;
+  }) {
+    // Store for analytics
+    await db.hitl_interactions.insert({
+      ...interaction,
+      timestamp: Date.now(),
+      agreed: interaction.aiRecommendation === interaction.humanDecision
+    });
+    
+    // Update real-time metrics
+    await this.updateMetrics(interaction);
+  }
+  
+  async getMetrics(timeRange: string): Promise<HITLMetrics> {
+    const data = await db.hitl_interactions.findMany({
+      where: { timestamp: { gte: getTimeRangeStart(timeRange) } }
+    });
+    
+    return {
+      totalRequests: data.length,
+      requestsPerHour: data.length / getHoursIn(timeRange),
+      averageResponseTime: average(data.map(d => d.responseTime)),
+      p95ResponseTime: percentile(data.map(d => d.responseTime), 0.95),
+      approvalRate: data.filter(d => d.humanDecision.includes('Approved')).length / data.length,
+      rejectionRate: data.filter(d => d.humanDecision.includes('Rejected')).length / data.length,
+      escalationRate: data.filter(d => d.humanDecision.includes('Escalate')).length / data.length,
+      aiHumanAgreementRate: data.filter(d => d.agreed).length / data.length,
+      humanOverrideRate: data.filter(d => !d.agreed && d.aiConfidence > 0.8).length / data.length,
+      requestsAvoidedByAI: await this.getAIAutoHandledCount(timeRange),
+      timesSaved: await this.calculateTimeSavings(timeRange)
+    };
+  }
+}
+```
+
+**Key metrics to watch**:
+- **Response time**: How quickly humans respond (target: <5 minutes for critical, <1 hour for normal)
+- **Approval rate**: % of requests approved (should be 60-80%; too high or low indicates poor routing)
+- **AI-human agreement**: % where AI and human agree (target: >80%; improve AI if lower)
+- **Override rate**: % where human overrides high-confidence AI (target: <10%; investigate if higher)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="o-login Package" icon="right-to-bracket" href="/packages/o-login">
+    Complete API reference for human agent registration
+  </Card>
+  
+  <Card title="Hybrid Workflows" icon="arrows-split-up-and-left" href="/agents/hybrid-workflows">
+    Combine human and AI agents in complex workflows
+  </Card>
+  
+  <Card title="Complex Nodes" icon="brain" href="/concepts/nodes/complex-nodes">
+    Build intent-driven nodes that coordinate with humans
+  </Card>
+  
+  <Card title="Examples" icon="code" href="/examples/human-in-loop">
+    More human-in-the-loop implementation examples
+  </Card>
+</CardGroup>
+
+## Related resources
+
+- **Package**: [o-login Reference](/packages/o-login) - Full API documentation
+- **Concept**: [Agent-Agnostic Design](/agents/agent-agnostic-design) - Build for both humans and AI
+- **Guide**: [Testing Human-in-Loop Systems](/dev/testing-human-in-loop) - Testing strategies
+- **Pattern**: [Approval Workflows](/guides/approval-workflows) - Common approval patterns
+

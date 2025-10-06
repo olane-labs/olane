@@ -88,6 +88,7 @@
         "agents/overview",
         "agents/human-interfaces",
         "agents/ai-integration",
+        "agents/human-in-the-loop",
         "agents/hybrid-workflows",
         "agents/agent-agnostic-design"
       ]
@@ -175,6 +176,7 @@
         "packages/o-tool",
         "packages/o-lane",
         "packages/o-leader",
+        "packages/o-login",
         "packages/o-protocol",
         "packages/o-config"
       ]

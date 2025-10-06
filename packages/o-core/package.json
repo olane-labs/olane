@@ -37,7 +37,7 @@
     "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "Olane Inc.",
-  "license": "ISC",
+  "license": "(MIT OR Apache-2.0)",
   "description": "Olane addressable p2p node used to host tools, data or anything else your heart can dream of.",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

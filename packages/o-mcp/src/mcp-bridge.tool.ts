@@ -6,15 +6,15 @@ import { McpTool } from './mcp.tool.js';
 import { MCP_BRIDGE_METHODS } from './methods/mcp-bridge.methods.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig } from '@olane/o-node';
+import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
 
 export class McpBridgeTool extends oLaneTool {
   private addedRemoteServers: Set<string> = new Set();
 
-  constructor(config: oNodeToolConfig) {
+  constructor(config: oNodeConfig) {
     super({
       ...config,
-      address: new oAddress('o://mcp'),
+      address: config.address || new oAddress('o://mcp'),
       description:
         'Model context protocol (MCP) tool for adding MCP servers to the network',
       methods: MCP_BRIDGE_METHODS,
