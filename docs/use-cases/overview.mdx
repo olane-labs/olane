@@ -19,9 +19,6 @@ Olane OS is designed for building **intent-driven, agent-accessible applications
   <Card title="Long-Running Processes" icon="clock" color="#0D9373" href="/use-cases/long-running-processes">
     Fault-tolerant tasks that run hours or days with automatic recovery
   </Card>
-  <Card title="Cost Optimization" icon="piggy-bank" color="#0D9373" href="/use-cases/cost-optimization">
-    70-90% AI cost reduction with single generalist LLM
-  </Card>
 </CardGroup>
 
 ## Quick decision guide 
@@ -49,7 +46,6 @@ Does your application involve multiple tools or steps?
                            ├─ NO → Any framework works
                            │
                            └─ YES → ✅ Olane OS is ideal
-                                    (70-90% cost reduction)
 ```
 
 ## Core use cases 
@@ -370,127 +366,6 @@ const research = await researchNode.use({
 
 [Learn more about Long-Running Processes →](/use-cases/long-running-processes)
 
-### 4. Cost Optimization 
-
-**What it is**: Achieve AI capabilities with **70-90% cost reduction** by using a single generalist LLM across all tools instead of fine-tuned models per domain.
-
-**Key Benefits**:
-- One LLM serves all domains
-- No fine-tuning costs ($0 vs $50K+ per domain)
-- 80% lower per-call costs (context injection vs fine-tuned inference)
-- Instant updates (no retraining needed)
-
-**Example Scenario**: Multi-Domain Business Platform
-
-<Tabs>
-  <Tab title="Traditional (Fine-Tuned Models)">
-    ```typescript
-    // Finance domain - Fine-tuned GPT-4
-    const financeModel = await deployFineTunedModel({
-      baseModel: 'gpt-4',
-      trainingData: financialDataset,  // $50K training cost
-      domain: 'financial-analysis'
-    });
-    
-    // CRM domain - Fine-tuned GPT-4
-    const crmModel = await deployFineTunedModel({
-      baseModel: 'gpt-4',
-      trainingData: crmDataset,  // $50K training cost
-      domain: 'customer-management'
-    });
-    
-    // Support domain - Fine-tuned GPT-4
-    const supportModel = await deployFineTunedModel({
-      baseModel: 'gpt-4',
-      trainingData: supportDataset,  // $50K training cost
-      domain: 'customer-support'
-    });
-    
-    // Total setup: $150K
-    // Per-call cost: $0.03 per call (fine-tuned inference)
-    // 100K calls/month = $3,000/month
-    // New domain? Another $50K + retraining
-    // Update knowledge? Retrain all models
-    ```
-  </Tab>
-  
-  <Tab title="Olane OS (Single Generalist)">
-    ```typescript
-    import { oLaneTool } from '@olane/o-lane';
-    
-    // Finance node - Context injection (no training)
-    class FinanceNode extends oLaneTool {
-      constructor() {
-        super({
-          address: new oAddress('o://company/finance'),
-          laneContext: {
-            domain: 'Financial Analysis',
-            expertise: [
-              'Revenue recognition per GAAP',
-              'Cash flow analysis',
-              'Financial ratio interpretation'
-            ],
-            knowledge: `Our company uses accrual accounting...`
-          }
-        });
-      }
-      // Domain tools augment the generalist LLM
-    }
-    
-    // CRM node - Context injection (no training)
-    class CRMNode extends oLaneTool {
-      constructor() {
-        super({
-          address: new oAddress('o://company/crm'),
-          laneContext: {
-            domain: 'Customer Management',
-            expertise: ['Customer lifecycle', 'Health scoring', 'Retention'],
-            knowledge: `Our customer segments are...`
-          }
-        });
-      }
-    }
-    
-    // Support node - Context injection (no training)
-    class SupportNode extends oLaneTool {
-      constructor() {
-        super({
-          address: new oAddress('o://company/support'),
-          laneContext: {
-            domain: 'Customer Support',
-            expertise: ['Ticket triage', 'Resolution paths', 'Escalation'],
-            knowledge: `Our support tiers are...`
-          }
-        });
-      }
-    }
-    
-    // Total setup: $0 (context injection, no training)
-    // Per-call cost: $0.006 per call (standard GPT-4 with context)
-    // 100K calls/month = $600/month
-    // New domain? Add context, no retraining
-    // Update knowledge? Update context string
-    ```
-  </Tab>
-</Tabs>
-
-**Cost Breakdown**:
-
-| Metric | Fine-Tuned Models | Olane OS (Generalist) | Savings |
-|--------|------------------|-----------------------|---------|
-| **Setup Cost** | $50K per domain | $0 | **100%** |
-| **3 Domains Setup** | $150K | $0 | **$150K** |
-| **Per-Call Cost** | $0.03 | $0.006 | **80%** |
-| **100K Calls/Month** | $3,000 | $600 | **$2,400/mo** |
-| **Annual Operating Cost** | $36K | $7.2K | **$28.8K/year** |
-| **New Domain Cost** | $50K + time | Minutes | **$50K** |
-| **Update Knowledge** | Retrain ($50K) | Edit context (free) | **$50K** |
-
-**ROI Example** (3 domains, 100K calls/month):
-- **Year 1**: $150K (setup) + $36K (operating) = $186K vs $7.2K = **$178.8K saved**
-- **Year 2**: $36K vs $7.2K = **$28.8K saved**
-- **Total 2-year savings**: **$207.6K**
-
 **When to use**:
 - ✅ Multiple domains (finance, CRM, support, etc.)
 - ✅ Moderate to high call volumes (10K+ per month)
@@ -745,10 +620,7 @@ Follow these steps to implement your use case:
   <Card title="Multi-Tool Networks" icon="network-wired" href="/use-cases/multi-tool-networks">
     Coordinate multiple specialized tools
   </Card>
-  
-  <Card title="Cost Optimization" icon="piggy-bank" href="/use-cases/cost-optimization">
-    Achieve 70-90% AI cost reduction
-  </Card>
+
 </CardGroup>
 
 ## Common questions 

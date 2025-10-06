@@ -54,7 +54,7 @@ This directory contains templates for creating high-quality documentation pages 
 ### 1. Business Value First
 Lead with outcomes, not features. Answer "Why should I care?" before "How does it work?"
 
-✅ **Good**: "Create AI agents specialized for specific domains, reducing costs by 70-90%"  
+✅ **Good**: "Create AI agents specialized for specific domains, reducing costs by X-Y%"  
 ❌ **Bad**: "The oLaneTool class extends oNodeTool and adds capability loop functionality"
 
 ### 2. Progressive Disclosure

@@ -116,7 +116,6 @@ o://company/finance/analyst
 | Scaling cost | Linear per domain | Marginal per agent |
 | **Total (10 agents)** | **$100K-$1M** | **$1K-$10K** |
 
-<Check>70-90% cost reduction</Check>
 
 ## When to use each approach
 
