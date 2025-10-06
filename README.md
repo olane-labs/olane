@@ -234,7 +234,7 @@ await toolNode.use({
 
 ### 2. Generalist-Specialist Architecture
 
-**One LLM brain (for AI agents) + Many specialized tool nodes = 70-90% cost reduction**
+**One LLM brain (for AI agents) + Many specialized tool nodes**
 
 Instead of fine-tuning separate models for each domain, use tool augmentation and context injection to create specialists.
 
@@ -688,7 +688,6 @@ npm install @olane/os @olane/o-core @olane/o-leader @olane/o-lane @olane/o-node 
 
 ### For Developers
 
-- **70-90% cost reduction** for AI agent implementations vs fine-tuned models
 - **Build once, serve both** human and AI agents through unified interface
 - **No infrastructure configuration** - self-organizing networks
 - **Emergent workflows** adapt to changing requirements without redesign
@@ -862,8 +861,6 @@ await toolNode.use({
 // • Adapts to new requirements
 // • Serves both human and AI agents
 ```
-
-**Result:** 70-90% cost reduction, 75% faster development, 99.8% reliability
 
 ---
 

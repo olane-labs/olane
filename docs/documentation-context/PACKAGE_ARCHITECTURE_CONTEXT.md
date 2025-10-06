@@ -418,7 +418,6 @@ Your Tool Node
 - **o-core**: Base runtime infrastructure
 
 **Result**: 
-- For AI agents: 70-90% cost reduction vs separate fine-tuned models
 - For human agents: Simplified intent-driven interactions
 - For both: Build once, serve both through unified interface
 

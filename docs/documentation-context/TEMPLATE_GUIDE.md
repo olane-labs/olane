@@ -57,7 +57,6 @@ Every page links to related use cases, concepts, APIs, and examples
 ## Content Standards
 
 - ✅ **Action-oriented titles**: "Build specialist agents"
-- ✅ **Concrete metrics**: "Reduce costs by 70-90%"
 - ✅ **Complete examples**: Full, working code
 - ✅ **Both languages**: TypeScript and JavaScript
 - ✅ **Visual aids**: Diagrams, tables, cards

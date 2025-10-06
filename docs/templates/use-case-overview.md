@@ -21,9 +21,7 @@ Create AI agents specialized for specific domains (finance, customer service, da
 ## Why use specialist agents
 
 <CardGroup cols={2}>
-  <Card title="70-90% Cost Reduction" icon="dollar-sign">
-    One generalist model serves all agents instead of fine-tuning separate models
-  </Card>
+
   <Card title="Faster Development" icon="rocket">
     Deploy new specialists in hours, not weeks
   </Card>

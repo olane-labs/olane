@@ -107,7 +107,7 @@ Olane OS fundamentally rethinks how agent-driven applications work:
     Tools discover optimal workflows through exploration, not hardcoding
   </Card>
   <Card title="Generalist-Specialist" icon="users-gear" color="#0D9373">
-    Single LLM serves all tools - **70-90% cost reduction**
+    Single LLM serves all tools
   </Card>
   <Card title="Agent-Agnostic" icon="users" color="#0D9373">
     Same tools serve humans and AI - build once, serve both
@@ -241,7 +241,7 @@ const result = await customerHealthNode.use({
 
 ### 2. Generalist-Specialist Architecture 
 
-**The Innovation**: Use a **single generalist LLM** (GPT-4, Claude) to serve **multiple specialist tools**, achieving **70-90% cost reduction** vs fine-tuned models.
+**The Innovation**: Use a **single generalist LLM** (GPT-4, Claude) to serve **multiple specialist tools**
 
 <CardGroup cols={2}>
   <Card title="Traditional Approach" icon="money-bill-wave" color="#DC2626">
@@ -259,7 +259,6 @@ const result = await customerHealthNode.use({
     - One GPT-4 instance: $0/month flat
     - Context injection for specialization
     - Knowledge accumulation across domains
-    - Total: **$0 fine-tuning + 80% lower per-call costs**
   </Card>
 </CardGroup>
 
@@ -297,12 +296,6 @@ class FinancialAnalystNode extends oLaneTool {
 // Same generalist LLM now acts as financial specialist
 ```
 
-**Cost Comparison**:
-
-| Approach | Setup Cost | Monthly Cost | Flexibility | Time to Deploy |
-|----------|------------|--------------|-------------|----------------|
-| **Fine-tuned models** | $50K per domain | $5K+ per domain | ❌ Low (retraining needed) | 8-12 weeks |
-| **Olane OS** | $0 | $500-1K total | ✅ High (instant updates) | 1-2 days |
 
 ### 3. Emergent vs Explicit Orchestration 
 
@@ -501,12 +494,7 @@ await node.use({
     
     **Example**: Market research across 100+ sources over 8 hours
   </Card>
-  
-  <Card title="Cost-Sensitive AI" icon="piggy-bank" color="#0D9373">
-    Need AI capabilities but can't afford per-domain fine-tuned models
-    
-    **Example**: Startup needing financial + CRM + support AI
-  </Card>
+
   
   <Card title="Evolving Requirements" icon="arrows-spin" color="#0D9373">
     Business needs change frequently, workflows must adapt
@@ -545,12 +533,7 @@ await node.use({
 
 ## Real-world impact 
 
-### Cost Savings
-
 <CardGroup cols={3}>
-  <Card title="70-90% Lower AI Costs" icon="piggy-bank" color="#0D9373">
-    Single generalist LLM vs fine-tuned models per domain
-  </Card>
   <Card title="75% Faster Development" icon="rocket" color="#0D9373">
     Build tools, not workflows. Reuse intelligence across domains.
   </Card>
@@ -694,7 +677,6 @@ Ready to build on Olane OS? Here's your path:
   
   <Accordion title="How much does it cost to run?">
     Olane OS itself is open source (free). You pay for:
-    - LLM API calls (70-90% lower than alternatives due to single generalist model)
     - Your own infrastructure (compute, storage)
     - Optional: Hosted Olane Cloud services (coming soon)
   </Accordion>
