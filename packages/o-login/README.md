@@ -802,8 +802,9 @@ npm install @olane/o-core @olane/o-config @olane/o-protocol @olane/o-tool @olane
 ```
 
 **Related Concepts**:
-- [Tools, Nodes, and Applications](/docs/concepts/tools-nodes-applications.mdx)
-- [Complex Nodes](/concepts/tool-nodes/complex-nodes)
+- [Tools, Nodes, and Applications](/docs/concepts/tools-nodes-applications)
+- [Human in the Loop](/docs/agents/human-in-the-loop)
+- [Complex Nodes](/docs/concepts/nodes/complex-nodes)
 
 ---
 
@@ -839,53 +840,54 @@ const config: oLoginConfig = {
 
 ## Related Packages {#related-packages}
 
-- [`@olane/o-core`](https://github.com/olane-labs/olane/tree/main/packages/o-core) - Core primitives
-- [`@olane/o-node`](https://github.com/olane-labs/olane/tree/main/packages/o-node) - Node runtime
-- [`@olane/o-tool`](https://github.com/olane-labs/olane/tree/main/packages/o-tool) - Tool system
-- [`@olane/o-lane`](https://github.com/olane-labs/olane/tree/main/packages/o-lane) - Intent processing
-- [`@olane/o-leader`](https://github.com/olane-labs/olane/tree/main/packages/o-leader) - Service discovery
+- [`@olane/o-core`](../o-core) - Core primitives and base classes
+- [`@olane/o-node`](../o-node) - Network-connected nodes with P2P
+- [`@olane/o-tool`](../o-tool) - Tool augmentation system
+- [`@olane/o-lane`](../o-lane) - Intent processing and capability loops
+- [`@olane/o-leader`](../o-leader) - Service discovery and network coordination
 
 ---
 
 ## Next Steps {#next-steps}
 
-<details>
-<summary><strong>Build an Agent System</strong></summary>
+**Learn More:**
+- [Human in the Loop Patterns](https://olane.com/docs/agents/human-in-the-loop) - Understand the conceptual patterns
+- [Package Reference](https://olane.com/docs/packages/o-login) - Complete API documentation
+- [Working with Agents](https://olane.com/docs/agents/overview) - Agent integration guide
+- [Complex Nodes](https://olane.com/docs/concepts/nodes/complex-nodes) - Understanding intent-driven nodes
 
-Create a multi-agent system with human oversight:
+**Build an Agent System:**
 1. Create AI agent for routine tasks
-2. Create human agent for escalations
+2. Create human agent for escalations  
 3. Implement escalation logic
 4. Connect to existing nodes
-</details>
 
-<details>
-<summary><strong>Integrate with Your App</strong></summary>
-
-Add agent capabilities to your application:
+**Integrate with Your App:**
 1. Install `@olane/o-login`
 2. Create agent login for your app
 3. Handle intents and questions
 4. Connect to Olane OS network
-</details>
-
-<details>
-<summary><strong>Learn More</strong></summary>
-
-- **Concept**: [Understanding Agents in Olane OS](/concepts/agents)
-- **Guide**: [Building Multi-Agent Systems](/guides/multi-agent-systems)
-- **Tutorial**: [Human-in-the-Loop Workflows](/tutorials/human-in-loop)
-</details>
 
 ---
+
+## Documentation {#documentation}
+
+- [Full Documentation](https://olane.com/docs)
+- [Human in the Loop Guide](https://olane.com/docs/agents/human-in-the-loop)
+- [Package Reference](https://olane.com/docs/packages/o-login)
+- [Olane OS Overview](../../README.md)
 
 ## Support {#support}
 
-- **Issues**: [GitHub Issues](https://github.com/olane-labs/olane/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/olane-labs/olane/discussions)
-- **License**: ISC
+- [GitHub Issues](https://github.com/olane-labs/olane/issues)
+- [Community Forum](https://olane.com/community)
+- [Email Support](mailto:support@olane.com)
+
+## License
+
+ISC © Olane Inc.
 
 ---
 
-**Built with ❤️ by oLane Inc.**
+**Part of the Olane OS ecosystem** - An agentic operating system where AI agents are the intelligent users, and you build the specialized tool nodes they use.
 

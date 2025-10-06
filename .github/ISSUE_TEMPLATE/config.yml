@@ -4,7 +4,7 @@ contact_links:
     url: https://github.com/olane-labs/olane/discussions
     about: Ask questions and discuss ideas with the community
   - name: 🔒 Security Vulnerability
-    url: mailto:developers@olane.com
+    url: mailto:developer@olane.com
     about: Report security vulnerabilities privately (DO NOT create public issue)
   - name: 📖 Documentation
     url: https://olane.com/docs

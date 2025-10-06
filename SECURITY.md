@@ -37,7 +37,7 @@ We provide security updates for the following versions:
 
 ### Step 1: Email Us
 
-Send a detailed report to **security@olane.io** with:
+Send a detailed report to **developer@olane.com** with:
 
 **Subject line**: `[SECURITY] Brief description`
 
