@@ -33,7 +33,7 @@
     "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "oLane Inc.",
-  "license": "ISC",
+  "license": "(MIT OR Apache-2.0)",
   "description": "oLane Core",
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "^1.18.1",

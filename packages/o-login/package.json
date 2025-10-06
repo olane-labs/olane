@@ -33,7 +33,7 @@
     "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "oLane Inc.",
-  "license": "ISC",
+  "license": "(MIT OR Apache-2.0)",
   "description": "Olane interface for agents to login to olane OS",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

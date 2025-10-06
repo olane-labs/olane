@@ -3,7 +3,7 @@
 **An agentic operating system where agents (human or AI) are the users, and you build tool nodes as applications.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 
 ---
 
@@ -810,7 +810,25 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 ## License
 
-ISC © Olane Inc.
+Olane OS is dual-licensed under your choice of:
+
+- **[MIT License](LICENSE-MIT)** - Simple, permissive license
+- **[Apache License 2.0](LICENSE-APACHE)** - Permissive license with patent protection
+
+You may use Olane OS under the terms of either license. This provides flexibility for projects with different licensing requirements.
+
+### Why Dual Licensing?
+
+- **MIT**: Choose this if you prefer a simple, permissive license without patent provisions
+- **Apache 2.0**: Choose this if you need explicit patent grants and additional protections
+
+### Contributing
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in Olane OS by you shall be dual-licensed as above, without any additional terms or conditions.
+
+---
+
+Copyright © 2025 Olane Inc.
 
 ---
 

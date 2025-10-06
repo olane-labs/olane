@@ -33,7 +33,7 @@
     "url": "git+https://github.com/olane-labs/olane.git"
   },
   "author": "oLane Inc.",
-  "license": "ISC",
+  "license": "(MIT OR Apache-2.0)",
   "description": "HTTP server entrypoint for Olane OS nodes - exposes node's 'use' functionality via REST API",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
