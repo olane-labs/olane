@@ -5,6 +5,7 @@ import { NodeState, oAddress } from '@olane/o-core';
 const mcpTool = new McpBridgeTool({
   parent: null,
   leader: null,
+  address: new oAddress('o://mcp'),
 });
 
 describe('o-mcp verify myTools works', () => {

@@ -1,5 +1,5 @@
 {
-  "name": "@olane/o-agent",
+  "name": "@olane/o-login",
   "version": "0.7.2",
   "type": "module",
   "main": "dist/src/index.js",
@@ -34,7 +34,7 @@
   },
   "author": "oLane Inc.",
   "license": "ISC",
-  "description": "oLane Core",
+  "description": "Olane interface for agents to login to olane OS",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",

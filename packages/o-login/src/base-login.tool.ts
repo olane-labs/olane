@@ -1,19 +1,19 @@
 import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import { AGENT_METHODS } from './methods/agent.methods.js';
-import { oAgentConfig } from './interfaces/agent.config.js';
+import { AGENT_METHODS } from './methods/login.methods.js';
+import { oLoginConfig } from './interfaces/login.config.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeAddress } from '@olane/o-node';
 
-export abstract class oAgentTool extends oLaneTool {
+export abstract class oLoginTool extends oLaneTool {
   protected respond: (intent: string) => Promise<string>;
   protected answer: (intent: string) => Promise<string>;
   protected receiveStream: (data: any) => Promise<any>;
 
-  constructor(config: oAgentConfig) {
+  constructor(config: oLoginConfig) {
     super({
       ...config,
-      address: config?.address || new oNodeAddress('o://agent'),
+      address: config?.address || new oNodeAddress('o://login'),
       methods: AGENT_METHODS,
     });
     this.respond = config.respond;
