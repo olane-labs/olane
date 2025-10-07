@@ -1,6 +1,8 @@
 # Olane OS
 
-**A modular operating system where humans or AI agents are the user, and applications are tool nodes.**
+**A modular operating system where humans or AI agents are the user, and applications are nodes.**
+
+**Setup your ideal AI environment once, bring it to every AI tool you use.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
@@ -10,7 +12,39 @@
 
 ## TL;DR
 
-Olane OS is a **a modular operating system where humans or AI agents are the user, and applications are tool nodes.**. Build tool nodes with specialized capabilities that agents discover and coordinate dynamically. Works with both human agents (CLI/web) and AI agents (programmatically) through natural language.
+Olane OS is a **distributed runtime for building agent-agnostic, intent-driven applications**. Build tool nodes with specialized capabilities that agents discover and coordinate dynamically. Works with both human agents (CLI/web) and AI agents (programmatically) through natural language.
+
+**Key Features:**
+
+**Agent Layer**
+- 🤖 **Agent-agnostic design**  
+  Build once and serve both human users (CLI/web) and AI agents (programmatic) through the same natural language interface with no separate codebases to maintain.
+
+- 💬 **Natural language intents**  
+  Send high-level goals like "Analyze Q4 revenue and generate a PDF report" and tool nodes autonomously interpret intent and determine execution steps without pre-defining rigid workflows.
+
+- 🔄 **Emergent workflows**  
+  Workflows emerge through execution as tool nodes coordinate based on capability requirements, learning and optimizing paths over time without requiring StateGraphs or pre-defined DAGs.
+
+**Modular Architecture**
+- 🔍 **Auto-discovery**  
+  Tool nodes register capabilities that agents automatically discover via hierarchical `o://` addressing (e.g., `o://finance/analyst`) with network-wide search and routing handled by `o-leader`.
+
+- 🧠 **Generalist-specialist model**  
+  A single LLM brain coordinates many specialized tool nodes, each receiving domain context injection and exposing tools without requiring fine-tuning or model retraining.
+
+- 🛠️ **Tool augmentation**  
+  Extend tool node capabilities by adding methods or integrating external MCP servers, making new tools immediately discoverable and usable by all agents without modifying coordination logic.
+
+**Infrastructure**
+- 🌐 **P2P networking**  
+  Self-organizing mesh networks via libp2p enable tool nodes to discover peers, route messages, and coordinate without central servers across local networks and internet boundaries.
+
+- 📦 **Modular packages**  
+  Start minimal with `o-core` + `o-node`, add intent-driven coordination with `o-lane`, then scale to multi-node orchestration with `o-leader` by installing only what your use case requires.
+
+- 🔌 **Horizontal scaling**  
+  Distribute specialized tool nodes across machines, containers, or cloud regions where each node handles specific domains enabling organic system growth as requirements expand.
 
 ```typescript
 // Create an OS instance with a tool node
