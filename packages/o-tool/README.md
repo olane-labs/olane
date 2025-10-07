@@ -95,21 +95,44 @@ class MyNetworkTool extends oTool(oNode) {
 Tools are automatically discovered using naming conventions:
 
 - **`_tool_methodName`** - Defines an executable tool method
-- **`_params_methodName`** - Defines parameter schema (optional)
+
+Method metadata is defined using `oMethod` definition files that provide structured schemas for AI agents to understand how to use your tool methods.
 
 ```typescript
+// weather.methods.ts - Define method schemas for AI discovery
+import { oMethod } from '@olane/o-protocol';
+
+export const WEATHER_METHODS: { [key: string]: oMethod } = {
+  get_forecast: {
+    name: 'get_forecast',
+    description: 'Get weather forecast for a city',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'city',
+        type: 'string',
+        value: 'string',
+        description: 'City name to get forecast for',
+        required: true,
+      },
+    ],
+  },
+};
+
+// weather.tool.ts - Implement the tool
 class WeatherTool extends oToolBase {
+  constructor() {
+    super({
+      address: new oAddress('o://weather'),
+      description: 'Weather forecast service',
+      methods: WEATHER_METHODS,
+    });
+  }
+
   // Executable tool method
   async _tool_get_forecast(request: oRequest): Promise<ToolResult> {
     const { city } = request.params;
     return { forecast: '☀️ Sunny, 72°F' };
-  }
-
-  // Parameter schema (optional)
-  _params_get_forecast() {
-    return {
-      city: { type: 'string', required: true, description: 'City name' }
-    };
   }
 }
 ```

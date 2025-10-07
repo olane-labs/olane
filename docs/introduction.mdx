@@ -91,15 +91,45 @@ Tool nodes are **agent-agnostic** - the same tool serves both human and AI agent
 Here's a complete example showing how an agent interacts with a tool node:
 
 ```typescript
+// financial.methods.ts - Define method schemas for AI discovery
+import { oMethod } from '@olane/o-protocol';
+
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a given time period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date for revenue calculation',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date for revenue calculation',
+        required: true,
+      },
+    ],
+  },
+};
+
+// financial-analyst.node.ts - Implement the tool node
 import { OlaneOS } from '@olane/os';
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress } from '@olane/o-core';
+import { FINANCIAL_METHODS } from './financial.methods';
 
 // Define a tool node with specialized capabilities
 class FinancialAnalystNode extends oLaneTool {
   constructor() {
     super({
-      address: new oAddress('o://finance/analyst')
+      address: new oAddress('o://finance/analyst'),
+      methods: FINANCIAL_METHODS,
     });
   }
 
@@ -111,14 +141,6 @@ class FinancialAnalystNode extends oLaneTool {
       revenue: 150000, 
       currency: 'USD',
       growth: '15%'
-    };
-  }
-
-  // Parameter schema for validation
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
     };
   }
 }

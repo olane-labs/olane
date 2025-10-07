@@ -127,14 +127,93 @@ npm install @olane/os @olane/o-core @olane/o-leader @olane/o-lane @olane/o-node 
 ### Create Your First Tool Node
 
 ```typescript
+// financial.methods.ts - Define method schemas for AI discovery
+import { oMethod } from '@olane/o-protocol';
+
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a given time period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date for revenue calculation',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date for revenue calculation',
+        required: true,
+      },
+    ],
+  },
+  calculate_expenses: {
+    name: 'calculate_expenses',
+    description: 'Calculate expenses for a given time period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date for expense calculation',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date for expense calculation',
+        required: true,
+      },
+    ],
+  },
+  generate_report: {
+    name: 'generate_report',
+    description: 'Generate a financial report',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'revenue',
+        type: 'object',
+        value: 'object',
+        description: 'Revenue data',
+        required: true,
+      },
+      {
+        name: 'expenses',
+        type: 'object',
+        value: 'object',
+        description: 'Expense data',
+        required: true,
+      },
+      {
+        name: 'format',
+        type: 'string',
+        value: 'string',
+        description: 'Report format (pdf, html, etc)',
+        required: false,
+      },
+    ],
+  },
+};
+
+// financial-analyst.tool.ts - Implement the tool
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress, oRequest } from '@olane/o-core';
+import { FINANCIAL_METHODS } from './financial.methods';
 
 // Build a specialized financial analysis tool node
 class FinancialAnalystNode extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://finance/analyst'),
+      methods: FINANCIAL_METHODS,
       laneContext: {
         domain: 'Financial Analysis',
         expertise: ['Revenue Analysis', 'Expense Tracking', 'Report Generation']
@@ -149,38 +228,16 @@ class FinancialAnalystNode extends oLaneTool {
     return { revenue: 150000, growth: 12.5, currency: 'USD' };
   }
 
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
-    };
-  }
-
   // Tool 2: Calculate expenses
   async _tool_calculate_expenses(request: oRequest) {
     const { startDate, endDate } = request.params;
     return { expenses: 95000, categories: { /* ... */ } };
   }
 
-  _params_calculate_expenses() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
-    };
-  }
-
   // Tool 3: Generate report
   async _tool_generate_report(request: oRequest) {
     const { revenue, expenses, format } = request.params;
     return { report: 'Executive Summary...', format };
-  }
-
-  _params_generate_report() {
-    return {
-      revenue: { type: 'object', required: true },
-      expenses: { type: 'object', required: true },
-      format: { type: 'string', required: false, default: 'pdf' }
-    };
   }
 }
 
@@ -323,21 +380,49 @@ Olane has three levels of granularity:
 
 ### Level 1: Tool (Method)
 
-An individual executable method on a tool node.
+An individual executable method on a tool node. Method metadata is defined using oMethod definition files.
 
 ```typescript
+// financial.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a given time period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date',
+        required: true,
+      },
+    ],
+  },
+};
+
+// financial.tool.ts
 class FinancialNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://finance'),
+      methods: FINANCIAL_METHODS,
+    });
+  }
+
   // This is a TOOL - single method
   async _tool_calculate_revenue(request: oRequest) {
     const { startDate, endDate } = request.params;
     return { revenue: 150000, currency: 'USD' };
-  }
-
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
-    };
   }
 }
 ```

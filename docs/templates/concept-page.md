@@ -185,10 +185,38 @@ Complete specialist agent:
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress } from '@olane/o-core';
 
+// Define method schemas in financial.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  analyze_revenue: {
+    name: 'analyze_revenue',
+    description: 'Analyze revenue for a specific time period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'quarter',
+        type: 'number',
+        value: 'number',
+        description: 'Quarter to analyze (1-4)',
+        required: true,
+      },
+      {
+        name: 'year',
+        type: 'number',
+        value: 'number',
+        description: 'Year to analyze',
+        required: true,
+      },
+    ],
+  },
+};
+
 class FinancialSpecialist extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://company/finance/analyst'),
+      methods: FINANCIAL_METHODS,
       
       // Context specialization
       laneContext: {
@@ -203,13 +231,6 @@ class FinancialSpecialist extends oLaneTool {
   async _tool_analyze_revenue(req) {
     // Domain-specific logic
     return { revenue, growth, forecast };
-  }
-  
-  _params_analyze_revenue() {
-    return {
-      quarter: { type: 'number', required: true },
-      year: { type: 'number', required: true }
-    };
   }
 }
 

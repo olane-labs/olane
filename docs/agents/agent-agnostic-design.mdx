@@ -213,11 +213,36 @@ Best for straightforward operations where agents know exactly which tool to call
 ```typescript
 import { oNodeTool } from '@olane/o-tool';
 import { oAddress } from '@olane/o-core';
+import { oMethod } from '@olane/o-protocol';
+
+// Define method schemas
+const CURRENCY_METHODS: { [key: string]: oMethod } = {
+  convert: {
+    name: 'convert',
+    description: 'Convert currency amount',
+    dependencies: [],
+    parameters: [
+      { name: 'amount', type: 'number', value: 'number', description: 'Amount to convert', required: true },
+      { name: 'from', type: 'string', value: 'string', description: 'Source currency', required: true },
+      { name: 'to', type: 'string', value: 'string', description: 'Target currency', required: true },
+    ],
+  },
+  get_rate: {
+    name: 'get_rate',
+    description: 'Get exchange rate',
+    dependencies: [],
+    parameters: [
+      { name: 'from', type: 'string', value: 'string', description: 'Source currency', required: true },
+      { name: 'to', type: 'string', value: 'string', description: 'Target currency', required: true },
+    ],
+  },
+};
 
 class CurrencyConverter extends oNodeTool {
   constructor() {
     super({
-      address: new oAddress('o://utilities/currency')
+      address: new oAddress('o://utilities/currency'),
+      methods: CURRENCY_METHODS,
     });
   }
 
@@ -234,28 +259,12 @@ class CurrencyConverter extends oNodeTool {
     };
   }
 
-  // Parameter schema
-  _params_convert() {
-    return {
-      amount: { type: 'number', required: true },
-      from: { type: 'string', required: true },
-      to: { type: 'string', required: true }
-    };
-  }
-
   // Tool 2: Get exchange rate
   async _tool_get_rate(request: oRequest) {
     const { from, to } = request.params;
     return {
       rate: await this.getRate(from, to),
       timestamp: Date.now()
-    };
-  }
-
-  _params_get_rate() {
-    return {
-      from: { type: 'string', required: true },
-      to: { type: 'string', required: true }
     };
   }
 
@@ -321,11 +330,50 @@ Best for domains with many operations where intent-driven execution provides val
 ```typescript
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress } from '@olane/o-core';
+import { oMethod } from '@olane/o-protocol';
+
+// Define method schemas
+const ANALYTICS_METHODS: { [key: string]: oMethod } = {
+  get_customers: {
+    name: 'get_customers',
+    description: 'Get customer data with optional filters',
+    dependencies: [],
+    parameters: [
+      { name: 'filters', type: 'object', value: 'object', description: 'Optional filters', required: false },
+    ],
+  },
+  segment: {
+    name: 'segment',
+    description: 'Segment customers based on criteria',
+    dependencies: [],
+    parameters: [
+      { name: 'customers', type: 'array', value: 'array', description: 'Customer list', required: true },
+      { name: 'criteria', type: 'string', value: 'string', description: 'Segmentation criteria', required: true },
+    ],
+  },
+  calculate_ltv: {
+    name: 'calculate_ltv',
+    description: 'Calculate customer lifetime value',
+    dependencies: [],
+    parameters: [
+      { name: 'customerId', type: 'string', value: 'string', description: 'Customer ID', required: true },
+    ],
+  },
+  predict_churn: {
+    name: 'predict_churn',
+    description: 'Predict customer churn risk',
+    dependencies: [],
+    parameters: [
+      { name: 'customerId', type: 'string', value: 'string', description: 'Customer ID', required: true },
+    ],
+  },
+};
 
 class CustomerAnalytics extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://analytics/customers'),
+      methods: ANALYTICS_METHODS,
       laneContext: {
         domain: 'Customer Analytics',
         expertise: ['Segmentation', 'Churn Analysis', 'Lifetime Value']
@@ -339,23 +387,10 @@ class CustomerAnalytics extends oLaneTool {
     return { customers: await this.fetchCustomers(filters) };
   }
 
-  _params_get_customers() {
-    return {
-      filters: { type: 'object', required: false }
-    };
-  }
-
   // Internal tool 2: Segment customers
   async _tool_segment(request: oRequest) {
     const { customers, criteria } = request.params;
     return { segments: await this.segmentCustomers(customers, criteria) };
-  }
-
-  _params_segment() {
-    return {
-      customers: { type: 'array', required: true },
-      criteria: { type: 'string', required: true }
-    };
   }
 
   // Internal tool 3: Calculate lifetime value
@@ -364,22 +399,10 @@ class CustomerAnalytics extends oLaneTool {
     return { ltv: await this.calculateLTV(customerId) };
   }
 
-  _params_calculate_ltv() {
-    return {
-      customerId: { type: 'string', required: true }
-    };
-  }
-
   // Internal tool 4: Predict churn
   async _tool_predict_churn(request: oRequest) {
     const { customerId } = request.params;
     return { churnRisk: await this.predictChurn(customerId) };
-  }
-
-  _params_predict_churn() {
-    return {
-      customerId: { type: 'string', required: true }
-    };
   }
 
   // ... 10 more tools
@@ -573,35 +596,40 @@ class SalesTools extends oNodeTool {
     // Implementation
   }
 
-  _params_forecast_revenue() {
-    return {
-      historicalMonths: { 
-        type: 'number', 
-        required: true,
-        description: 'Number of historical months to analyze (3-24)'
-      },
-      method: {
-        type: 'string',
-        required: false,
-        default: 'linear',
-        enum: ['linear', 'exponential', 'moving-average'],
-        description: 'Forecasting method to use'
-      }
-    };
-  }
+}
 
-  // Optional: Tool metadata for better discovery
-  _meta_forecast_revenue() {
-    return {
-      description: 'Forecast future revenue based on historical data',
-      examples: [
-        {
-          params: { historicalMonths: 6, method: 'exponential' },
-          description: 'Forecast using 6 months of data with exponential smoothing'
-        }
-      ],
-      tags: ['forecasting', 'revenue', 'prediction']
-    };
+// Define method schemas with clear descriptions
+const SALES_METHODS: { [key: string]: oMethod } = {
+  forecast_revenue: {
+    name: 'forecast_revenue',
+    description: 'Forecast future revenue based on historical data. Supports linear, exponential, and moving-average methods.',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'historicalMonths',
+        type: 'number',
+        value: 'number',
+        description: 'Number of historical months to analyze (3-24)',
+        required: true,
+      },
+      {
+        name: 'method',
+        type: 'string',
+        value: 'string',
+        description: 'Forecasting method: linear (default), exponential, or moving-average',
+        required: false,
+      },
+    ],
+  },
+};
+
+// Pass methods to constructor
+class SalesTools extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://sales/tools'),
+      methods: SALES_METHODS,
+    });
   }
 }
 ```
@@ -653,48 +681,73 @@ async _tool_analyze_churn(request: oRequest) {
 
 ### 4. Validate inputs consistently
 
-Use parameter schemas to validate inputs from all agents uniformly.
+Use oMethod definitions to validate inputs from all agents uniformly.
 
 ```typescript
+import { oMethod } from '@olane/o-protocol';
+
+// Define method schemas with validation requirements
+const ORDER_METHODS: { [key: string]: oMethod } = {
+  create_order: {
+    name: 'create_order',
+    description: 'Create a new order with items and shipping address',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'customerId',
+        type: 'string',
+        value: 'string',
+        description: 'Customer ID (format: cust_[alphanumeric])',
+        required: true,
+      },
+      {
+        name: 'items',
+        type: 'array',
+        value: 'array',
+        description: 'Array of order items with productId and quantity',
+        required: true,
+      },
+      {
+        name: 'shippingAddress',
+        type: 'object',
+        value: 'object',
+        description: 'Shipping address with street, city, and zipCode',
+        required: true,
+      },
+    ],
+  },
+};
+
 class OrderProcessor extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://orders/processor'),
+      methods: ORDER_METHODS,
+    });
+  }
+
   async _tool_create_order(request: oRequest) {
-    // Validation happens automatically via _params_
     const { customerId, items, shippingAddress } = request.params;
+    
+    // Additional validation in implementation
+    if (!/^cust_[a-zA-Z0-9]+$/.test(customerId)) {
+      throw new Error('Invalid customer ID format');
+    }
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new Error('Items must be a non-empty array');
+    }
+    
+    if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode) {
+      throw new Error('Complete shipping address required');
+    }
+    
+    if (!/^[0-9]{5}$/.test(shippingAddress.zipCode)) {
+      throw new Error('Invalid zip code format');
+    }
     
     return {
       orderId: await this.processOrder(customerId, items, shippingAddress)
-    };
-  }
-
-  // Schema validates input from ANY agent
-  _params_create_order() {
-    return {
-      customerId: {
-        type: 'string',
-        required: true,
-        pattern: '^cust_[a-zA-Z0-9]+$'
-      },
-      items: {
-        type: 'array',
-        required: true,
-        minItems: 1,
-        items: {
-          type: 'object',
-          properties: {
-            productId: { type: 'string', required: true },
-            quantity: { type: 'number', required: true, min: 1 }
-          }
-        }
-      },
-      shippingAddress: {
-        type: 'object',
-        required: true,
-        properties: {
-          street: { type: 'string', required: true },
-          city: { type: 'string', required: true },
-          zipCode: { type: 'string', required: true, pattern: '^[0-9]{5}$' }
-        }
-      }
     };
   }
 }
@@ -1256,7 +1309,7 @@ Migrating existing code to agent-agnostic design:
   </Step>
   
   <Step title="Add parameter schemas">
-    Define `_params_` methods for all tools to enable consistent validation.
+    Define oMethod schemas in separate definition files for all tools to enable consistent validation and AI discovery.
   </Step>
   
   <Step title="Test with both agent types">

@@ -14,18 +14,38 @@ description: "Individual executable methods that make node capabilities discover
 If you're familiar with MCP (Model Context Protocol), think of Olane tools similarly: **discoverable, validated functions that agents can invoke**. The key difference is that Olane tools serve both human agents (CLI, UI) and AI agents (LLMs) through the same interface.
 
 ```typescript
-// A tool in Olane OS
+// weather.methods.ts - Define method schemas for AI discovery
+import { oMethod } from '@olane/o-protocol';
+
+const WEATHER_METHODS: { [key: string]: oMethod } = {
+  get_weather: {
+    name: 'get_weather',
+    description: 'Get current weather conditions',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'location',
+        type: 'string',
+        value: 'string',
+        description: 'Location to get weather for',
+        required: true,
+      },
+    ],
+  },
+};
+
+// weather.node.ts - Implement the tool
 class WeatherNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://weather'),
+      methods: WEATHER_METHODS,
+    });
+  }
+
   // Discoverable method with _tool_ prefix
   async _tool_get_weather(request: oRequest) {
     return { temp: 72, conditions: "sunny" };
-  }
-
-  // Parameter schema for validation
-  _params_get_weather() {
-    return {
-      location: { type: 'string', required: true }
-    };
   }
 }
 ```
@@ -128,39 +148,64 @@ class FinancialNode extends oNodeTool {
 ```
 </CodeGroup>
 
-### 2. The parameter schema
+### 2. The method schema (oMethod definition)
+
+Define method schemas in separate files using the oMethod interface:
 
 <CodeGroup>
 ```typescript Basic Schema
-class FinancialNode extends oNodeTool {
-  // The _params_ prefix defines the schema
-  _params_calculate_revenue() {
-    return {
-      quarter: { 
-        type: 'number', 
+// financial.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a specific quarter',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'quarter',
+        type: 'number',
+        value: 'number',
+        description: 'Quarter number (1-4)',
         required: true,
-        description: 'Quarter number (1-4)'
       },
-      year: { 
-        type: 'number', 
+      {
+        name: 'year',
+        type: 'number',
+        value: 'number',
+        description: 'Year (e.g., 2024)',
         required: true,
-        description: 'Year (e.g., 2024)'
-      }
-    };
+      },
+    ],
+  },
+};
+
+class FinancialNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://financial'),
+      methods: FINANCIAL_METHODS,
+    });
   }
 }
 ```
 
 ```typescript Advanced Schema
-class FinancialNode extends oNodeTool {
-  _params_calculate_revenue() {
-    return {
-      quarter: { 
-        type: 'number', 
+// Advanced parameters with validation metadata
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a specific quarter',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'quarter',
+        type: 'number',
+        value: 'number',
+        description: 'Quarter number (1-4)',
         required: true,
-        min: 1,
-        max: 4,
-        description: 'Quarter number (1-4)'
+        // Note: min/max validation would be handled in the tool implementation
       },
       year: { 
         type: 'number', 
@@ -218,7 +263,7 @@ class FinancialNode extends oNodeTool {
 
 ## Naming conventions
 
-The `_tool_` and `_params_` prefixes are **conventions**, not magic:
+The `_tool_` prefix is a **convention** for automatic discovery. Method schemas are defined separately using oMethod definition files:
 
 <Tabs>
   <Tab title="Tool Method">
@@ -234,16 +279,26 @@ The `_tool_` and `_params_` prefixes are **conventions**, not magic:
     ```
   </Tab>
   
-  <Tab title="Parameter Schema">
+  <Tab title="Method Schema">
     ```typescript
-    // ✅ Correct: _params_ prefix, same method name
-    _params_calculate_revenue() { }
+    // ✅ Correct: oMethod definition in separate file
+    import { oMethod } from '@olane/o-protocol';
     
-    // ❌ Wrong: No prefix
-    paramsCalculateRevenue() { }
+    export const METHODS: { [key: string]: oMethod } = {
+      calculate_revenue: {  // Must match tool method name (without _tool_ prefix)
+        name: 'calculate_revenue',
+        description: 'Calculate revenue',
+        dependencies: [],
+        parameters: [...]
+      }
+    };
     
-    // ❌ Wrong: Method name mismatch
-    _params_calc_revenue() { }  // Tool is _tool_calculate_revenue
+    // Then pass to constructor
+    class FinancialNode extends oNodeTool {
+      constructor() {
+        super({ address, methods: METHODS });
+      }
+    }
     ```
   </Tab>
   
@@ -534,16 +589,43 @@ Parameters are automatically validated before execution:
 <Tabs>
   <Tab title="Type Validation">
     ```typescript
+    // Define method schemas
+    import { oMethod } from '@olane/o-protocol';
+    
+    const CALC_METHODS: { [key: string]: oMethod } = {
+      calculate: {
+        name: 'calculate',
+        description: 'Perform calculation',
+        dependencies: [],
+        parameters: [
+          {
+            name: 'amount',
+            type: 'number',
+            value: 'number',
+            description: 'Amount to calculate',
+            required: true,
+          },
+          {
+            name: 'currency',
+            type: 'string',
+            value: 'string',
+            description: 'Currency code',
+            required: true,
+          },
+        ],
+      },
+    };
+    
     class MyNode extends oNodeTool {
-      _params_calculate() {
-        return {
-          amount: { type: 'number', required: true },
-          currency: { type: 'string', required: true }
-        };
+      constructor() {
+        super({
+          address: new oAddress('o://my-node'),
+          methods: CALC_METHODS,
+        });
       }
       
       async _tool_calculate(request: oRequest) {
-        // Guaranteed to have correct types
+        // Parameters are validated before reaching here
         const { amount, currency } = request.params;
       }
     }
@@ -566,16 +648,41 @@ Parameters are automatically validated before execution:
   
   <Tab title="Range Validation">
     ```typescript
-    class MyNode extends oNodeTool {
-      _params_set_temperature() {
-        return {
-          value: { 
-            type: 'number', 
+    // Define method schemas
+    import { oMethod } from '@olane/o-protocol';
+    
+    const TEMP_METHODS: { [key: string]: oMethod } = {
+      set_temperature: {
+        name: 'set_temperature',
+        description: 'Set temperature value',
+        dependencies: [],
+        parameters: [
+          {
+            name: 'value',
+            type: 'number',
+            value: 'number',
+            description: 'Temperature value (min: -273.15°C, max: 1000°C)',
             required: true,
-            min: -273.15,  // Absolute zero
-            max: 1000
-          }
-        };
+          },
+        ],
+      },
+    };
+    
+    class MyNode extends oNodeTool {
+      constructor() {
+        super({
+          address: new oAddress('o://my-node'),
+          methods: TEMP_METHODS,
+        });
+      }
+      
+      async _tool_set_temperature(request: oRequest) {
+        const { value } = request.params;
+        
+        // Implement range validation in the tool
+        if (value < -273.15 || value > 1000) {
+          throw new Error('Temperature must be between -273.15 and 1000');
+        }
       }
     }
     
@@ -584,21 +691,48 @@ Parameters are automatically validated before execution:
       method: 'set_temperature',
       params: { value: -300 }  // Below minimum
     });
-    // Error: Parameter 'value' must be >= -273.15
+    // Error: Temperature must be between -273.15 and 1000
     ```
   </Tab>
   
   <Tab title="Enum Validation">
     ```typescript
-    class MyNode extends oNodeTool {
-      _params_generate_report() {
-        return {
-          format: { 
-            type: 'string', 
+    // Define method schemas
+    import { oMethod } from '@olane/o-protocol';
+    
+    const REPORT_METHODS: { [key: string]: oMethod } = {
+      generate_report: {
+        name: 'generate_report',
+        description: 'Generate report in specified format',
+        dependencies: [],
+        parameters: [
+          {
+            name: 'format',
+            type: 'string',
+            value: 'string',
+            description: 'Report format: pdf, csv, or json',
             required: true,
-            enum: ['pdf', 'csv', 'json']
-          }
-        };
+          },
+        ],
+      },
+    };
+    
+    class MyNode extends oNodeTool {
+      constructor() {
+        super({
+          address: new oAddress('o://my-node'),
+          methods: REPORT_METHODS,
+        });
+      }
+      
+      async _tool_generate_report(request: oRequest) {
+        const { format } = request.params;
+        
+        // Implement enum validation in the tool
+        const validFormats = ['pdf', 'csv', 'json'];
+        if (!validFormats.includes(format)) {
+          throw new Error(`Format must be one of: ${validFormats.join(', ')}`);
+        }
       }
     }
     
@@ -607,7 +741,7 @@ Parameters are automatically validated before execution:
       method: 'generate_report',
       params: { format: 'xml' }  // Not in enum
     });
-    // Error: Parameter 'format' must be one of: pdf, csv, json
+    // Error: Format must be one of: pdf, csv, json
     ```
   </Tab>
 </Tabs>
@@ -652,11 +786,66 @@ Complete weather service node with multiple tools:
 ```typescript Node Definition
 import { oNodeTool } from '@olane/o-node';
 import { oAddress, oRequest } from '@olane/o-core';
+import { oMethod } from '@olane/o-protocol';
+
+// Define method schemas
+const WEATHER_METHODS: { [key: string]: oMethod } = {
+  get_current: {
+    name: 'get_current',
+    description: 'Get current weather conditions for a location',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'location',
+        type: 'string',
+        value: 'string',
+        description: 'City name or zip code',
+        required: true,
+      },
+    ],
+  },
+  get_forecast: {
+    name: 'get_forecast',
+    description: 'Get weather forecast for upcoming days',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'location',
+        type: 'string',
+        value: 'string',
+        description: 'City name or zip code',
+        required: true,
+      },
+      {
+        name: 'days',
+        type: 'number',
+        value: 'number',
+        description: 'Number of days to forecast (1-10, default: 5)',
+        required: false,
+      },
+    ],
+  },
+  get_alerts: {
+    name: 'get_alerts',
+    description: 'Get weather alerts for a location',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'location',
+        type: 'string',
+        value: 'string',
+        description: 'City name or zip code',
+        required: true,
+      },
+    ],
+  },
+};
 
 class WeatherNode extends oNodeTool {
   constructor() {
     super({
-      address: new oAddress('o://services/weather')
+      address: new oAddress('o://services/weather'),
+      methods: WEATHER_METHODS,
     });
   }
 
@@ -674,19 +863,15 @@ class WeatherNode extends oNodeTool {
     };
   }
 
-  _params_get_current() {
-    return {
-      location: { 
-        type: 'string', 
-        required: true,
-        description: 'City name or zip code'
-      }
-    };
-  }
-
   // Tool 2: Get forecast
   async _tool_get_forecast(request: oRequest) {
-    const { location, days } = request.params;
+    const { location, days = 5 } = request.params;
+    
+    // Validate range in implementation
+    if (days < 1 || days > 10) {
+      throw new Error('Days must be between 1 and 10');
+    }
+    
     const forecast = await this.fetchForecast(location, days);
     
     return {
@@ -697,24 +882,6 @@ class WeatherNode extends oNodeTool {
         low: day.low,
         conditions: day.conditions
       }))
-    };
-  }
-
-  _params_get_forecast() {
-    return {
-      location: { 
-        type: 'string', 
-        required: true,
-        description: 'City name or zip code'
-      },
-      days: {
-        type: 'number',
-        required: false,
-        default: 5,
-        min: 1,
-        max: 10,
-        description: 'Number of days to forecast'
-      }
     };
   }
 
@@ -731,16 +898,6 @@ class WeatherNode extends oNodeTool {
         message: alert.message,
         expires: alert.expires
       }))
-    };
-  }
-
-  _params_get_alerts() {
-    return {
-      location: { 
-        type: 'string', 
-        required: true,
-        description: 'City name or zip code'
-      }
     };
   }
 
@@ -848,31 +1005,71 @@ const alerts = await weather.use({
   </Accordion>
   
   <Accordion title="Validate comprehensively">
-    Use all available validation options:
+    Define comprehensive method schemas and implement validation in your tools:
     
     ```typescript
-    _params_create_user() {
-      return {
-        email: {
-          type: 'string',
-          required: true,
-          pattern: '^[^@]+@[^@]+\\.[^@]+$',  // Email regex
-          description: 'User email address'
-        },
-        age: {
-          type: 'number',
-          required: true,
-          min: 18,
-          max: 120,
-          description: 'User age'
-        },
-        role: {
-          type: 'string',
-          required: true,
-          enum: ['admin', 'user', 'guest'],
-          description: 'User role'
+    import { oMethod } from '@olane/o-protocol';
+    
+    // Define comprehensive method schemas
+    const USER_METHODS: { [key: string]: oMethod } = {
+      create_user: {
+        name: 'create_user',
+        description: 'Create a new user with validated email, age, and role',
+        dependencies: [],
+        parameters: [
+          {
+            name: 'email',
+            type: 'string',
+            value: 'string',
+            description: 'User email address (valid email format)',
+            required: true,
+          },
+          {
+            name: 'age',
+            type: 'number',
+            value: 'number',
+            description: 'User age (18-120)',
+            required: true,
+          },
+          {
+            name: 'role',
+            type: 'string',
+            value: 'string',
+            description: 'User role: admin, user, or guest',
+            required: true,
+          },
+        ],
+      },
+    };
+    
+    class UserNode extends oNodeTool {
+      constructor() {
+        super({
+          address: new oAddress('o://users'),
+          methods: USER_METHODS,
+        });
+      }
+      
+      async _tool_create_user(request: oRequest) {
+        const { email, age, role } = request.params;
+        
+        // Implement validation in the tool
+        const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new Error('Invalid email format');
         }
-      };
+        
+        if (age < 18 || age > 120) {
+          throw new Error('Age must be between 18 and 120');
+        }
+        
+        const validRoles = ['admin', 'user', 'guest'];
+        if (!validRoles.includes(role)) {
+          throw new Error(`Role must be one of: ${validRoles.join(', ')}`);
+        }
+        
+        // Create user...
+      }
     }
     ```
   </Accordion>

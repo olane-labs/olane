@@ -53,7 +53,7 @@ A **tool** is an individual executable method on a node that performs a single o
     Performs one specific operation
   </Card>
   <Card title="Discoverable" icon="magnifying-glass" color="#0D9373">
-    Has parameter schema via `_params_` method
+    Has parameter schema defined via oMethod definition files
   </Card>
   <Card title="Directly Callable" icon="phone" color="#0D9373">
     Invoked by agents (human or AI)
@@ -64,7 +64,41 @@ A **tool** is an individual executable method on a node that performs a single o
 
 <CodeGroup>
 ```typescript Tool Definition
+// Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a date range',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date',
+        required: true,
+      },
+    ],
+  },
+};
+
 class FinancialNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://financial'),
+      methods: FINANCIAL_METHODS,
+    });
+  }
+
   // This is a TOOL - a single executable method
   async _tool_calculate_revenue(request: oRequest) {
     const { startDate, endDate } = request.params;
@@ -76,14 +110,6 @@ class FinancialNode extends oNodeTool {
       revenue: 150000, 
       currency: 'USD',
       period: { startDate, endDate }
-    };
-  }
-
-  // Parameter schema for the tool
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
     };
   }
 }

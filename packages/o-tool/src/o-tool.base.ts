@@ -127,17 +127,6 @@ export class oToolBase extends oCore {
     return (await this.myTools()).find((key) => key.startsWith(method));
   }
 
-  myToolParams(tool: string): Record<string, any> {
-    const func = Object.keys(this).find((key) =>
-      key.startsWith('_params_' + tool),
-    );
-    if (!func) {
-      throw new Error(`Tool ${tool} not found`);
-    }
-    // @ts-ignore
-    return this[func]();
-  }
-
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
     this.logger.debug(

@@ -93,11 +93,38 @@ result = workflow.invoke({"input": "Analyze Q4 revenue"})
 ```typescript
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress } from '@olane/o-core';
+import { oMethod } from '@olane/o-protocol';
+
+// Define method schemas
+const ANALYSIS_METHODS: { [key: string]: oMethod } = {
+  execute_analysis: {
+    name: 'execute_analysis',
+    description: 'Execute analysis on data source',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'dataSource',
+        type: 'string',
+        value: 'string',
+        description: 'Data source to analyze',
+        required: true,
+      },
+      {
+        name: 'period',
+        type: 'string',
+        value: 'string',
+        description: 'Time period for analysis',
+        required: true,
+      },
+    ],
+  },
+};
 
 class AnalysisAgent extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://company/analyst'),
+      methods: ANALYSIS_METHODS,
       laneContext: {
         domain: 'Analysis',
         expertise: ['Planning', 'Execution', 'Reporting']
@@ -109,13 +136,6 @@ class AnalysisAgent extends oLaneTool {
     const { dataSource, period } = request.params;
     // Analysis logic
     return { results };
-  }
-
-  _params_execute_analysis() {
-    return {
-      dataSource: { type: 'string', required: true },
-      period: { type: 'string', required: true }
-    };
   }
 }
 

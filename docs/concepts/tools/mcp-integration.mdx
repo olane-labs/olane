@@ -248,24 +248,41 @@ MCP tools are automatically mapped to Olane tools:
   }
 }
 
+// Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+const MCP_FILESYSTEM_METHODS: { [key: string]: oMethod } = {
+  read_file: {
+    name: 'read_file',
+    description: 'Read a file',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'path',
+        type: 'string',
+        value: 'string',
+        description: 'Path to the file',
+        required: true,
+      },
+    ],
+  },
+};
+
 // Becomes Olane tool
 class McpFilesystemNode extends oLaneTool {
+  constructor() {
+    super({
+      address: new oAddress('o://mcp/filesystem'),
+      methods: MCP_FILESYSTEM_METHODS,
+    });
+  }
+
   async _tool_read_file(request: oRequest) {
     // Forwards to MCP server
     return await this.mcpClient.callTool({
       name: 'read_file',
       arguments: request.params
     });
-  }
-
-  _params_read_file() {
-    return {
-      path: {
-        type: 'string',
-        required: true,
-        description: 'Path to the file'
-      }
-    };
   }
 }
 ```

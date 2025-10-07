@@ -95,15 +95,55 @@ The class extends `oNodeTool` which combines:
 
 ## Step 3: Add domain-specific tools
 
-Add methods to perform financial analysis:
+First, define method schemas for AI discovery:
+
+```typescript financial.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  analyze_revenue: {
+    name: 'analyze_revenue',
+    description: 'Analyze revenue for a specific quarter and year',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'quarter',
+        type: 'number',
+        value: 'number',
+        description: 'Quarter number (1-4)',
+        required: true,
+      },
+      {
+        name: 'year',
+        type: 'number',
+        value: 'number',
+        description: 'Year (e.g., 2024)',
+        required: true,
+      },
+      {
+        name: 'data',
+        type: 'object',
+        value: 'object',
+        description: 'Revenue data object',
+        required: true,
+      },
+    ],
+  },
+};
+```
+
+Then implement the tool methods:
 
 ```typescript financial-agent.ts
+import { FINANCIAL_METHODS } from './financial.methods';
+
 export class FinancialAgent extends oNodeTool {
   constructor() {
     super({
       address: new oAddress('o://company/finance/analyst'),
       name: 'Financial Analyst',
-      description: 'Specialist agent for financial analysis'
+      description: 'Specialist agent for financial analysis',
+      methods: FINANCIAL_METHODS,
     });
   }
 
@@ -123,27 +163,6 @@ export class FinancialAgent extends oNodeTool {
       growth,
       forecast,
       analysis: `Revenue for Q${quarter} ${year}: $${revenue}M (${growth}% growth)`
-    };
-  }
-
-  // Parameter validation - prefix with _params_
-  _params_analyze_revenue() {
-    return {
-      quarter: { 
-        type: 'number', 
-        required: true,
-        description: 'Quarter number (1-4)'
-      },
-      year: { 
-        type: 'number', 
-        required: true,
-        description: 'Year (e.g., 2024)'
-      },
-      data: {
-        type: 'object',
-        required: true,
-        description: 'Revenue data object'
-      }
     };
   }
 
@@ -168,7 +187,7 @@ export class FinancialAgent extends oNodeTool {
 ### Validate Step 3
 
 <Check>Tool method has `_tool_` prefix</Check>
-<Check>Parameter schema has `_params_` prefix with same name</Check>
+<Check>Method schemas defined in separate oMethod definition file</Check>
 <Check>Method returns structured data</Check>
 
 **Test it**:
@@ -389,29 +408,62 @@ Full year analysis shows consistent growth trajectory...
   </Accordion>
 
   <Accordion title="Tools not being discovered">
-    **Solution**: Check your method naming:
+    **Solution**: Check your method naming and definitions:
     - Tool methods must start with `_tool_`
-    - Parameter schemas must start with `_params_` and match tool name
+    - Method schemas must be defined in oMethod definition files
+    - Methods must be passed to constructor via `methods` parameter
     
     ```typescript
     // ✅ Correct
-    async _tool_analyze(req) { }
-    _params_analyze() { }
+    const METHODS = {
+      analyze: {
+        name: 'analyze',
+        description: 'Analyze data',
+        dependencies: [],
+        parameters: [...]
+      }
+    };
+    
+    class Agent extends oNodeTool {
+      constructor() {
+        super({ address, methods: METHODS });
+      }
+      async _tool_analyze(req) { }
+    }
     
     // ❌ Won't be discovered
-    async analyze(req) { }
+    class Agent extends oNodeTool {
+      async analyze(req) { } // Missing _tool_ prefix
+    }
     ```
   </Accordion>
 
   <Accordion title="Parameter validation failing">
-    **Solution**: Ensure parameter schemas match actual parameters:
+    **Solution**: Ensure parameter schemas in oMethod definitions match actual parameters:
     
     ```typescript
-    _params_analyze() {
-      return {
-        quarter: { type: 'number', required: true },
-        // ... match all expected params
-      };
+    // Method definition - define all parameters
+    const METHODS = {
+      analyze: {
+        name: 'analyze',
+        description: 'Analyze data',
+        dependencies: [],
+        parameters: [
+          {
+            name: 'quarter',
+            type: 'number',
+            value: 'number',
+            description: 'Quarter to analyze',
+            required: true,
+          },
+          // ... all expected params
+        ],
+      },
+    };
+    
+    // Implementation must match schema
+    async _tool_analyze(req) {
+      const { quarter } = req.params; // ✅ Matches schema
     }
     ```
   </Accordion>

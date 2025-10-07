@@ -69,11 +69,20 @@ describe('FinancialAgent Tools', () => {
   });
 
   it('should validate parameters', async () => {
-    const schema = agent._params_analyze_revenue();
+    // Check method definitions from oMethod schema
+    const methods = agent.methods; // Assuming methods are accessible
+    const analyzeMethod = methods['analyze_revenue'];
     
-    expect(schema.quarter.required).toBe(true);
-    expect(schema.year.required).toBe(true);
-    expect(schema.data.required).toBe(true);
+    expect(analyzeMethod).toBeDefined();
+    expect(analyzeMethod.parameters).toBeDefined();
+    
+    const quarterParam = analyzeMethod.parameters.find(p => p.name === 'quarter');
+    const yearParam = analyzeMethod.parameters.find(p => p.name === 'year');
+    const dataParam = analyzeMethod.parameters.find(p => p.name === 'data');
+    
+    expect(quarterParam?.required).toBe(true);
+    expect(yearParam?.required).toBe(true);
+    expect(dataParam?.required).toBe(true);
   });
 
   it('should handle missing data gracefully', async () => {

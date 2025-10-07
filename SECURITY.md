@@ -242,20 +242,37 @@ const node = new oLaneTool({
 
 **Input Validation:**
 ```typescript
-// ✅ Validate all parameters
-_params_process_data() {
-  return {
-    data: { 
-      type: 'string', 
-      required: true,
-      validate: (value: string) => {
-        if (value.length > 10000) {
-          throw new Error('Data too large');
-        }
-        return true;
-      }
-    }
-  };
+// ✅ Define parameter validation in oMethod definitions
+import { oMethod } from '@olane/o-protocol';
+
+export const DATA_METHODS: { [key: string]: oMethod } = {
+  process_data: {
+    name: 'process_data',
+    description: 'Process data with validation',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'data',
+        type: 'string',
+        value: 'string',
+        description: 'Data to process (max 10000 chars)',
+        required: true,
+      },
+    ],
+  },
+};
+
+// Validate in tool implementation
+async _tool_process_data(request: oRequest) {
+  const { data } = request.params;
+  
+  // Additional validation in implementation
+  if (data.length > 10000) {
+    throw new Error('Data too large');
+  }
+  
+  // Process data
+  return { processed: true };
 }
 ```
 
