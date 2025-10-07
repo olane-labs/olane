@@ -1,6 +1,6 @@
 # Olane OS
 
-**An agentic operating system where agents (human or AI) are the users, and you build tool nodes as applications.**
+**A modular operating system where humans or AI agents are the user, and applications are tool nodes.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
