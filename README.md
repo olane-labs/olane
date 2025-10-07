@@ -14,6 +14,8 @@ Olane OS is the shared workspace for AI, humans and tools. Build your hyper-pers
 
 **What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience.
 
+**In practice:** Say `"Add the Filesystem MCP server to this folder"` and Olane discovers, configures, and connects it automatically—no code, no config files, no manual wiring. [See it in action →](#quick-start)
+
 ---
 
 ## Table of Contents
@@ -37,28 +39,41 @@ Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **wor
 <tr>
 <td width="50%">
 
-**Other Frameworks**
+**Other Frameworks** (~100 lines)
 ```typescript
-// Pre-define entire workflow
+// 1. Define state schema
+interface State { data: any; analysis: any; }
+
+// 2. Create nodes
+const fetch = (state) => { /* ... */ };
+const analyze = (state) => { /* ... */ };
+
+// 3. Wire graph
 const workflow = new StateGraph({
-  nodes: ['fetch', 'analyze', 'report'],
-  edges: [/* wire connections */]
+  nodes: { fetch, analyze },
+  edges: [{ from: 'fetch', to: 'analyze' }]
 });
+
+// 4. Compile & execute
+const app = workflow.compile();
+await app.invoke({ data: null });
 ```
 ❌ Rigid, brittle, no learning
 
 </td>
 <td width="50%">
 
-**Olane OS**
+**Olane OS** (3 lines)
 ```typescript
-// Send intent, workflow emerges
+// Just express intent
 await node.use({
   method: 'intent',
-  params: { intent: 'Analyze Q4 data' }
+  params: { intent: 'Fetch and analyze Q4 data' }
 });
 ```
 ✅ Adaptive, learning, resilient
+
+**Result:** Olane discovers tools, determines optimal path, coordinates execution—all automatically.
 
 </td>
 </tr>
@@ -73,11 +88,22 @@ await node.use({
 Build once and serve **both human users** (CLI/web) and **AI agents** (programmatic) through the same natural language interface.
 
 ```typescript
-// Same tool node serves both agent types
-await toolNode.use({ method: 'intent', params: { intent: 'Create report' } });
+// Build a customer analytics tool once
+class CustomerAnalytics extends oLaneTool {
+  async _tool_get_customers(req) { /* ... */ }
+  async _tool_calculate_ltv(req) { /* ... */ }
+}
 
-// Human via CLI: $ olane intent "Create report"
-// AI programmatically: await toolNode.use({ method: 'intent', ... })
+// Human analyst (CLI): 
+// $ olane intent "Find high-value customers at risk of churning"
+
+// AI agent (programmatic):
+// await analytics.use({ 
+//   method: 'intent', 
+//   params: { intent: 'Find high-value customers at risk of churning' }
+// });
+
+// Same tool, same interface, same result—agent type doesn't matter
 ```
 
 [**Learn more about agent-agnostic design →**](/docs/agents/agent-agnostic-design)
@@ -101,13 +127,25 @@ Agent (GPT-4/Claude) → Coordinates → Specialized Tool Nodes
 
 ### 🌐 P2P Discovery & Coordination
 
-Self-organizing mesh networks via libp2p. Tool nodes automatically discover each other—no manual configuration.
+Self-organizing mesh networks via libp2p. Tool nodes automatically discover each other—no service registry, no manual configuration, no hardcoded endpoints.
 
 ```typescript
-// Tools auto-register and become discoverable
-const nodes = await leader.search({ capability: 'financial_analysis' });
-// Instant discovery across the network
+// Add a tool anywhere in the network
+const analytics = new CustomerAnalytics();
+await analytics.start(); // Auto-registers at o://analytics/customers
+
+// From anywhere else, just search
+const nodes = await leader.search({ capability: 'customer_analysis' });
+// → Finds o://analytics/customers automatically
+
+// Or address directly
+await leader.use(new oAddress('o://analytics/customers'), {
+  method: 'intent',
+  params: { intent: 'Find churning customers' }
+});
 ```
+
+**Result:** Horizontal scaling, zero config, self-healing network.
 
 [**Learn more about networking →**](/packages/o-node/README.md)
 
@@ -124,27 +162,29 @@ const nodes = await leader.search({ capability: 'financial_analysis' });
 </p>
 
 
-1. Install the `olane` cli tool
+**Get running in 2 minutes:**
+
 ```bash
+# 1. Install
 npm install -g @olane/o-cli
-```
 
-2. Run the `olane` command
-```bash
+# 2. Start Olane OS
 olane
-```
 
-3. Configure AI & add MCP tools
-```bash
+# 3. Just talk to it
+> Add the Filesystem MCP server to this folder /Users/me/Documents
+# ✓ Olane discovers, configures, and connects it automatically
+
+> How many files are in that folder?
+# ✓ Olane finds the right tool and executes it
+
 > Add the Linear MCP server with API Key "XYZ"
-> Add the Filesystem MCP server for the directory "/Users/me/Development/project123"
+# ✓ Linear tools now available at o://leader/node/mcp/linear
 ```
 
-4. Connect your OS to other tools
-```bash
-> Add Olane to cursor
-> Add Olane Claude Code
-```
+**That's it.** No config files, no manual wiring, no code. Tools discover each other and coordinate automatically.
+
+[**📚 Full setup guide →**](./docs/getting-started/installation.mdx)
 
 ---
 
