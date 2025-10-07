@@ -159,71 +159,27 @@ An operating system where **agents are the users** and **tool nodes are the appl
 
 ## Quick Start
 
-### 1. Installation
-
+1. Install the `olane` cli tool
 ```bash
-npm install @olane/os @olane/o-core @olane/o-leader @olane/o-lane @olane/o-node @olane/o-tool
+npm install -g @olane/o-cli
 ```
 
-### 2. Create Your First Tool Node
-
-```typescript
-// financial-analyst.tool.ts
-import { oLaneTool } from '@olane/o-lane';
-import { oAddress, oRequest } from '@olane/o-core';
-
-class FinancialAnalystNode extends oLaneTool {
-  constructor() {
-    super({
-      address: new oAddress('o://finance/analyst'),
-      methods: FINANCIAL_METHODS, // Define in separate file
-      laneContext: {
-        domain: 'Financial Analysis',
-        expertise: ['Revenue Analysis', 'Expense Tracking', 'Report Generation']
-      }
-    });
-  }
-
-  // Tool 1: Calculate revenue
-  async _tool_calculate_revenue(request: oRequest) {
-    const { startDate, endDate } = request.params;
-    // Your domain logic here
-    return { revenue: 150000, growth: 12.5, currency: 'USD' };
-  }
-
-  // Tool 2: Calculate expenses
-  async _tool_calculate_expenses(request: oRequest) {
-    const { startDate, endDate } = request.params;
-    return { expenses: 95000, categories: { /* ... */ } };
-  }
-
-  // Tool 3: Generate report
-  async _tool_generate_report(request: oRequest) {
-    const { revenue, expenses, format } = request.params;
-    return { report: 'Executive Summary...', format };
-  }
-}
-
-// Start the node
-const analyst = new FinancialAnalystNode();
-await analyst.start();
-
-// Agents send natural language intents
-const result = await analyst.use({
-  method: 'intent',
-  params: { intent: 'Analyze Q4 2024 and generate PDF report' }
-});
-
-// Node autonomously coordinates: calculate_revenue → calculate_expenses → generate_report
+2. Run the `olane` command
+```bash
+olane
 ```
 
-### 3. Choose Your Path
+3. Configure AI & add MCP tools
+```bash
+> Add the Linear MCP server with API Key "XYZ"
+> Add the Filesystem MCP server for the directory "/Users/me/Development/project123"
+```
 
-| Path | Use Case | Packages | Example |
-|------|----------|----------|---------|
-| **Simple Tool Node** | 1-5 tools, direct invocation | `o-core` + `o-tool` + `o-node` | Currency converter, validator |
-| **Intent-Driven Node** | 5-20+ tools, autonomous coordination | Add `o-lane` | Financial analyst, data pipeline |
-| **Multi-Node Application** | Complete platforms, multiple domains | Add `o-leader` + `o-os` | CRM, e-commerce, analytics |
+4. Connect your OS to other tools
+```bash
+> Add Olane to cursor
+> Add Olane Claude Code
+```
 
 ---
 
