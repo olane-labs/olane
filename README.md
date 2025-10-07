@@ -111,50 +111,6 @@ const nodes = await leader.search({ capability: 'financial_analysis' });
 
 [**Learn more about networking →**](/packages/o-node/README.md)
 
-```typescript
-// Create an OS instance with a tool node
-const os = new OlaneOS();
-await os.start();
-
-// Agents send natural language intents
-const result = await os.use(
-  new oAddress('o://messaging'),
-  {
-    method: 'intent',
-    params: {
-      intent: 'Send an email to dillon explaining what Olane OS is'
-    }
-  }
-);
-```
-
-
-**What just happened?** The tool node accepted natural language, autonomously determined which tools to use, coordinated multi-step analysis, and returned results—no pre-defined workflows required.
-
-![Olane OS Architecture](./docs/assets/olane-os.png)
-
-
----
-
-## What is Olane OS?
-
-An operating system where **agents are the users** and **tool nodes are the applications**.
-
-| Traditional Software | Olane OS |
-|---------------------|----------|
-| Users = Humans | **Users = Agents** (human or AI) |
-| Apps = Fixed programs | **Apps = Tool Nodes** (discoverable capabilities) |
-| Communication = APIs | **Communication = Natural language** |
-| Workflows = Pre-defined | **Workflows = Emergent** |
-
-**Core Concepts:**
-- 🤖 **Agents** - Humans (CLI/web) or AI (GPT-4/Claude) expressing goals
-- 🛠️ **Tool Nodes** - Specialized capabilities you build (`o://finance`, `o://crm`)
-- 🌐 **o:// Protocol** - Hierarchical addressing like URLs
-- 🔄 **Emergent Workflows** - Discovered through execution, not hardcoded
-
-[**Deep dive into architecture →**](/docs/concepts/architecture)
-
 ---
 
 ## Quick Start
@@ -180,6 +136,27 @@ olane
 > Add Olane to cursor
 > Add Olane Claude Code
 ```
+
+---
+
+## What is Olane OS?
+
+An operating system where **agents are the users** and **tool nodes are the applications**.
+
+| Traditional Software | Olane OS |
+|---------------------|----------|
+| Users = Humans | **Users = Agents** (human or AI) |
+| Apps = Fixed programs | **Apps = Tool Nodes** (discoverable capabilities) |
+| Communication = APIs | **Communication = Natural language** |
+| Workflows = Pre-defined | **Workflows = Emergent** |
+
+**Core Concepts:**
+- 🤖 **Agents** - Humans (CLI/web) or AI (GPT-4/Claude) expressing goals
+- 🛠️ **Tool Nodes** - Specialized capabilities you build (`o://finance`, `o://crm`)
+- 🌐 **o:// Protocol** - Hierarchical addressing like URLs
+- 🔄 **Emergent Workflows** - Discovered through execution, not hardcoded
+
+[**Deep dive into architecture →**](/docs/concepts/architecture)
 
 ---
 
