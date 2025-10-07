@@ -1,6 +1,6 @@
 # Olane OS
 
-**A modular operating system where humans or AI agents are the user, and applications are nodes.**
+**A graph-based operating system where humans or AI agents are the user, and applications are nodes.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
@@ -10,11 +10,20 @@
 
 ## TL;DR
 
-Olane OS is the shared workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
+Olane OS is the secure workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
 
-**What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience.
+**What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience. This allows:
+- Agents to discover new workflows
+- Agents to operate securely with sensitive data
+- Agents to solve complex tasks
+- Agents to perform long-running tasks
+- Agents to learn from past mistakes
+- Agents to learn to use smaller models
+- Agents to self-improve
+- Agents to collaborate with humans
+- Agents to collaborate with other Agents
 
-**In practice:** Say `"Add the Filesystem MCP server to this folder"` and Olane discovers, configures, and connects it automatically—no code, no config files, no manual wiring. [See it in action →](#quick-start)
+[**Why emergent workflows are the future of AI Agents →**](/docs/concepts/emergent-workflows)
 
 ---
 
@@ -33,32 +42,15 @@ Olane OS is the shared workspace for AI, humans and tools. Build your hyper-pers
 
 ### 🔄 Emergent Workflows (Not Prebuilt)
 
-Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **workflows emerge through execution** and learn optimal paths over time.
+Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **workflows emerge through agentic exploration**.
 
 <table>
 <tr>
 <td width="50%">
 
-**Other Frameworks** (~100 lines)
-```typescript
-// 1. Define state schema
-interface State { data: any; analysis: any; }
-
-// 2. Create nodes
-const fetch = (state) => { /* ... */ };
-const analyze = (state) => { /* ... */ };
-
-// 3. Wire graph
-const workflow = new StateGraph({
-  nodes: { fetch, analyze },
-  edges: [{ from: 'fetch', to: 'analyze' }]
-});
-
-// 4. Compile & execute
-const app = workflow.compile();
-await app.invoke({ data: null });
-```
-❌ Rigid, brittle, no learning
+**OpenAI Workflow Builder**
+![openai workflow workflow](/docs/assets/openai-workflow-builder.png)
+❌ Rigid, brittle, no learning or improvisation
 
 </td>
 <td width="50%">
