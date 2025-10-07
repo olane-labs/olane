@@ -10,7 +10,7 @@
 
 ## TL;DR
 
-Olane OS is a **distributed runtime for building agent-agnostic, intent-driven applications**. Build tool nodes with specialized capabilities that agents discover and coordinate dynamically. Works with both human agents (CLI/web) and AI agents (programmatically) through natural language.
+Olane OS is a **a modular operating system where humans or AI agents are the user, and applications are tool nodes.**. Build tool nodes with specialized capabilities that agents discover and coordinate dynamically. Works with both human agents (CLI/web) and AI agents (programmatically) through natural language.
 
 ```typescript
 // Create an OS instance with a tool node
