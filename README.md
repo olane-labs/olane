@@ -12,37 +12,104 @@
 
 Olane OS is the shared workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
 
-## Key Features
+**What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience.
 
-**Agent Layer**
-- 🤖 **Agent-agnostic design**  
-  Build once and serve both human users (CLI/web) and AI agents (programmatic) through the same natural language interface with no separate codebases to maintain.
+---
 
-- 💬 **Natural language intents**  
-  Send high-level goals like "Analyze Q4 revenue and generate a PDF report" and tool nodes autonomously interpret intent and determine execution steps without pre-defining rigid workflows.
+## Table of Contents
 
-- 🔄 **Emergent workflows**  
-  Workflows emerge through execution as tool nodes coordinate based on capability requirements, learning and optimizing paths over time without requiring StateGraphs or pre-defined DAGs.
+- [Why Olane OS?](#why-olane-os) - Key differentiators
+- [What is Olane OS?](#what-is-olane-os) - Core concepts
+- [Quick Start](#quick-start) - Get running in 5 minutes
+- [Documentation](#documentation) - Guides and API reference
+- [Framework Comparison](#framework-comparison) - vs LangGraph, n8n, CrewAI
+- [Community](#community--support) - Get help and contribute
 
-**Modular Architecture**
-- 🔍 **Auto-discovery**  
-  Tool nodes register capabilities that agents automatically discover via hierarchical `o://` addressing (e.g., `o://finance/analyst`) with network-wide search and routing handled by `o-leader`.
+---
 
-- 🧠 **Generalist-specialist model**  
-  A single LLM brain coordinates many specialized tool nodes, each receiving domain context injection and exposing tools without requiring fine-tuning or model retraining.
+## Why Olane OS?
 
-- 🛠️ **Tool augmentation**  
-  Extend tool node capabilities by adding methods or integrating external MCP servers, making new tools immediately discoverable and usable by all agents without modifying coordination logic.
+### 🔄 Emergent Workflows (Not Prebuilt)
 
-**Infrastructure**
-- 🌐 **P2P networking**  
-  Self-organizing mesh networks via libp2p enable tool nodes to discover peers, route messages, and coordinate without central servers across local networks and internet boundaries.
+Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **workflows emerge through execution** and learn optimal paths over time.
 
-- 📦 **Modular packages**  
-  Start minimal with `o-core` + `o-node`, add intent-driven coordination with `o-lane`, then scale to multi-node orchestration with `o-leader` by installing only what your use case requires.
+<table>
+<tr>
+<td width="50%">
 
-- 🔌 **Horizontal scaling**  
-  Distribute specialized tool nodes across machines, containers, or cloud regions where each node handles specific domains enabling organic system growth as requirements expand.
+**Other Frameworks**
+```typescript
+// Pre-define entire workflow
+const workflow = new StateGraph({
+  nodes: ['fetch', 'analyze', 'report'],
+  edges: [/* wire connections */]
+});
+```
+❌ Rigid, brittle, no learning
+
+</td>
+<td width="50%">
+
+**Olane OS**
+```typescript
+// Send intent, workflow emerges
+await node.use({
+  method: 'intent',
+  params: { intent: 'Analyze Q4 data' }
+});
+```
+✅ Adaptive, learning, resilient
+
+</td>
+</tr>
+</table>
+
+[**Learn more about emergent workflows →**](/docs/concepts/emergent-workflows)
+
+---
+
+### 🤖 Agent-Agnostic Design
+
+Build once and serve **both human users** (CLI/web) and **AI agents** (programmatic) through the same natural language interface.
+
+```typescript
+// Same tool node serves both agent types
+await toolNode.use({ method: 'intent', params: { intent: 'Create report' } });
+
+// Human via CLI: $ olane intent "Create report"
+// AI programmatically: await toolNode.use({ method: 'intent', ... })
+```
+
+[**Learn more about agent-agnostic design →**](/docs/agents/agent-agnostic-design)
+
+---
+
+### 🧠 Generalist-Specialist Architecture
+
+One LLM brain + many specialized tool nodes. No fine-tuning needed—specialization through context injection and tool augmentation.
+
+```
+Agent (GPT-4/Claude) → Coordinates → Specialized Tool Nodes
+                                    ├─ o://finance/analyst
+                                    ├─ o://data/pipeline  
+                                    └─ o://customer/crm
+```
+
+[**Learn more about the architecture →**](/docs/concepts/architecture)
+
+---
+
+### 🌐 P2P Discovery & Coordination
+
+Self-organizing mesh networks via libp2p. Tool nodes automatically discover each other—no manual configuration.
+
+```typescript
+// Tools auto-register and become discoverable
+const nodes = await leader.search({ capability: 'financial_analysis' });
+// Instant discovery across the network
+```
+
+[**Learn more about networking →**](/packages/o-node/README.md)
 
 ```typescript
 // Create an OS instance with a tool node
@@ -71,25 +138,22 @@ const result = await os.use(
 
 ## What is Olane OS?
 
-Olane OS inverts the traditional software stack:
+An operating system where **agents are the users** and **tool nodes are the applications**.
 
-```
-Traditional Software              Olane OS
-┌──────────────────┐             ┌──────────────────┐
-│  Users (Humans)  │             │  Agents (AI/Human)│
-│  ↓               │             │  ↓               │
-│  Applications    │             │  Tool Nodes      │
-│  ↓               │    VS       │  ↓               │
-│  Operating System│             │  Olane OS        │
-└──────────────────┘             └──────────────────┘
-```
+| Traditional Software | Olane OS |
+|---------------------|----------|
+| Users = Humans | **Users = Agents** (human or AI) |
+| Apps = Fixed programs | **Apps = Tool Nodes** (discoverable capabilities) |
+| Communication = APIs | **Communication = Natural language** |
+| Workflows = Pre-defined | **Workflows = Emergent** |
 
-**Key Concepts:**
-- **Agents** (human or AI) express goals in natural language
-- **Tool Nodes** are specialized applications with discoverable capabilities
-- **o:// Protocol** enables hierarchical addressing and routing
-- **Emergent Workflows** discovered through execution, not pre-defined
-- **Agent-Agnostic** - build once, serve both human and AI agents
+**Core Concepts:**
+- 🤖 **Agents** - Humans (CLI/web) or AI (GPT-4/Claude) expressing goals
+- 🛠️ **Tool Nodes** - Specialized capabilities you build (`o://finance`, `o://crm`)
+- 🌐 **o:// Protocol** - Hierarchical addressing like URLs
+- 🔄 **Emergent Workflows** - Discovered through execution, not hardcoded
+
+[**Deep dive into architecture →**](/docs/concepts/architecture)
 
 ---
 
@@ -163,98 +227,51 @@ const result = await analyst.use({
 
 ---
 
-## Key Features
-
-### 🤖 **Agent-Agnostic Design**
-Build once, serve both human agents (CLI/web) and AI agents (programmatically) through unified natural language interface.
-
-### 🔄 **Emergent Workflows**
-No pre-defined graphs. Workflows emerge through execution and adapt to changing requirements. Tool nodes learn optimal paths over time.
-
-### 🧠 **Generalist-Specialist Architecture**
-One LLM brain + many specialized tool nodes with context injection and tool augmentation. No fine-tuning needed.
-
-### 🌲 **Hierarchical Organization**
-Filesystem-like `o://` addressing with automatic context inheritance:
-```
-o://company/finance/analyst  # Inherits company + finance context
-```
-
-### 📦 **Modular Packages**
-Install only what you need. Start minimal, scale to distributed multi-node systems.
-
-### 🔌 **P2P Networking**
-Self-organizing networks via libp2p. No central servers required.
-
----
-
 ## Documentation
 
-### Core Documentation
-- **[Getting Started Guide](./docs/getting-started/installation.mdx)** - Complete setup tutorial
-- **[Core Concepts](./docs/concepts/overview.mdx)** - Architecture, tools, nodes, applications
-- **[Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx)** - Build for human and AI agents
-- **[Why Olane?](./docs/why-olane.mdx)** - Comparison to LangGraph, CrewAI, AutoGen
+| Category | Links |
+|----------|-------|
+| 🚀 **Getting Started** | [Installation](./docs/getting-started/installation.mdx) • [Quick Start](./docs/getting-started/quickstart.mdx) • [Core Concepts](./docs/concepts/overview.mdx) |
+| 🎯 **Key Features** | [Emergent Workflows](/docs/concepts/emergent-workflows.mdx) • [Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx) • [Architecture](./docs/concepts/architecture.mdx) |
+| 📦 **Packages** | [o-core](./packages/o-core/) • [o-node](./packages/o-node/) • [o-tool](./packages/o-tool/) • [o-lane](./packages/o-lane/) • [o-leader](./packages/o-leader/) • [o-os](./packages/o-os/) |
+| 📖 **Guides** | [Building Tool Nodes](./docs/guides/building-tool-nodes.mdx) • [Multi-Node Apps](./docs/guides/multi-node-applications.mdx) • [Testing](./docs/guides/testing.mdx) |
+| 💡 **Examples** | [Financial Analyst](./examples/financial-analyst) • [CRM Application](./examples/crm-application) • [All Examples](./examples/) |
+| 🔄 **Comparisons** | [vs LangGraph](./docs/comparisons/langgraph.mdx) • [vs CrewAI](./docs/comparisons/crewai.mdx) • [All Frameworks](./docs/comparisons/frameworks.mdx) |
 
-### Package Documentation
-- **[o-core](./packages/o-core/README.md)** - Kernel layer and core abstractions
-- **[o-node](./packages/o-node/README.md)** - P2P networking implementation
-- **[o-tool](./packages/o-tools-common/README.md)** - Tool system and conventions
-- **[o-lane](./packages/o-lane/README.md)** - Intent-driven execution
-- **[o-leader](./packages/o-leader/README.md)** - Network coordination
-- **[o-os](./packages/o-os/README.md)** - Runtime system
-
-### Guides & Examples
-- **[Building Tool Nodes](./docs/guides/building-tool-nodes.mdx)** - Step-by-step guide
-- **[Multi-Node Applications](./docs/guides/multi-node-applications.mdx)** - Coordinated systems
-- **[Example: Financial Analyst](./examples/financial-analyst)** - Intent-driven node
-- **[Example: CRM Application](./examples/crm-application)** - Multi-node coordination
-- **[All Examples](./examples/)** - Browse all examples
+[**📚 Browse all documentation →**](https://olane.com/docs)
 
 ---
 
-## Architecture Overview
+## Architecture
 
-### Three-Layer Model
+Olane OS uses a **three-layer architecture**:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 1: AGENTS (Users)                                │
-│  • Humans via CLI, web UI, API                          │
-│  • AI models (GPT-4, Claude, Gemini)                    │
-│  • Express goals in natural language                    │
-└─────────────────────────────────────────────────────────┘
-                        ⬇ sends intents
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 2: TOOL NODES (Applications)                     │
-│  • Domain-specific capabilities you build               │
-│  • Agent-agnostic interface                             │
-│  • Discoverable via o:// addressing                     │
-└─────────────────────────────────────────────────────────┘
-                        ⬇ runs on
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 3: OLANE OS (Infrastructure)                     │
-│  • Runtime system and lifecycle management              │
-│  • Network discovery and routing                        │
-│  • Message passing and coordination                     │
-└─────────────────────────────────────────────────────────┘
+Agents (humans/AI) → Tool Nodes (your apps) → Olane OS (infrastructure)
 ```
 
-**Learn more:** [Architecture Documentation](./docs/architecture/overview.mdx)
+| Layer | What It Is | Examples |
+|-------|-----------|----------|
+| **Agents** | Intelligent users | Humans (CLI/web), AI (GPT-4/Claude) |
+| **Tool Nodes** | Applications you build | `o://finance/analyst`, `o://crm/customers` |
+| **Olane OS** | Runtime infrastructure | Discovery, routing, networking |
+
+[**Read the architecture guide →**](/docs/concepts/architecture) | [**Package details →**](/docs/packages/overview)
 
 ---
 
-## Comparison to Other Frameworks
+## Framework Comparison
 
-| Feature | LangGraph | CrewAI | AutoGen | Olane OS |
-|---------|-----------|--------|---------|----------|
-| **Workflows** | Pre-defined graphs | Fixed crews | Message groups | Emergent patterns |
-| **Discovery** | Manual | Manual config | Manual | Automatic (o-leader) |
-| **Agents** | Python only | AI only | AI only | Human + AI |
-| **Learning** | Per-workflow | Limited | Limited | Cross-execution |
-| **Scaling** | Vertical | Vertical | Limited | Horizontal P2P |
+| Feature | LangGraph | n8n | CrewAI | **Olane OS** |
+|---------|-----------|-----|--------|----------|
+| **Workflows** | Pre-defined StateGraph | Visual DAG | Fixed crews | **Emergent patterns** |
+| **Flexibility** | Update graph manually | Rewire canvas | Redefine roles | **Adapts automatically** |
+| **Learning** | Per-workflow only | Template-based | Limited | **Cross-execution** |
+| **Discovery** | Manual wiring | Manual config | Manual config | **Automatic P2P** |
+| **Agents** | Python only | Visual + code | AI only | **Human + AI** |
+| **Scaling** | Vertical | Vertical | Vertical | **Horizontal** |
 
-**Learn more:** [Detailed Comparison](./docs/comparisons/frameworks.mdx)
+**Need more details?** Read the [in-depth framework comparison →](/docs/comparisons/frameworks) or [emergent workflows guide →](/docs/concepts/emergent-workflows)
 
 ---
 
@@ -294,31 +311,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ---
 
-## What Makes Olane Different?
-
-**Traditional Approach:**
-```typescript
-// Pre-define every step
-const workflow = new StateGraph({
-  nodes: ['step1', 'step2', 'step3'],
-  edges: [['step1', 'step2'], ['step2', 'step3']]
-});
-```
-
-**Olane Approach:**
-```typescript
-// Send high-level intent, workflow emerges
-await toolNode.use({
-  method: 'intent',
-  params: { intent: 'Accomplish complex goal' }
-});
-// Discovers optimal path, learns, adapts, serves human + AI agents
-```
-
-**Learn more:** [Why Olane?](./docs/why-olane.mdx)
-
----
-
-**Ready to build?** Start with [Quick Start](#quick-start) | [Full Documentation](https://olane.com/docs) | [Examples](./examples/)
+**Ready to build?** 
+- 🚀 [Quick Start Guide](#quick-start)
+- 📚 [Full Documentation](https://olane.com/docs)
+- 💡 [Browse Examples](./examples/)
+- 💬 [Join Discord](https://discord.gg/olane)
 
 Copyright © 2025 Olane Inc.
