@@ -13,47 +13,27 @@
 Olane OS is a **distributed runtime for building agent-agnostic, intent-driven applications**. Build tool nodes with specialized capabilities that agents discover and coordinate dynamically. Works with both human agents (CLI/web) and AI agents (programmatically) through natural language.
 
 ```typescript
-import { OlaneOS } from '@olane/os';
-import { oLaneTool } from '@olane/o-lane';
-import { NodeType, oAddress } from '@olane/o-core';
-
 // Create an OS instance with a tool node
-const os = new OlaneOS({
-  nodes: [
-    {
-      type: NodeType.LEADER,
-      address: new oAddress('o://leader'),
-      leader: null,
-      parent: null,
-    },
-    {
-      type: NodeType.NODE,
-      address: new oAddress('o://financial-analyst'),
-      leader: null,
-      parent: null,
-    },
-  ],
-});
-
+const os = new OlaneOS();
 await os.start();
 
 // Agents send natural language intents
 const result = await os.use(
-  new oAddress('o://financial-analyst'),
+  new oAddress('o://messaging'),
   {
     method: 'intent',
     params: {
-      intent: 'Analyze Q4 2024 revenue trends and generate executive summary'
+      intent: 'Send an email to dillon explaining what Olane OS is'
     }
   }
 );
-
-console.log(result); // Complete financial analysis
-
-await os.stop();
 ```
 
+
 **What just happened?** The tool node accepted natural language, autonomously determined which tools to use, coordinated multi-step analysis, and returned results—no pre-defined workflows required.
+
+![Olane OS Architecture](./olane-os.png)
+
 
 ---
 
