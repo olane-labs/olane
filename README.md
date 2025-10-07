@@ -42,10 +42,14 @@ Olane OS is the secure workspace for AI, humans and tools. Build your hyper-pers
 
 ### 🔄 Emergent Workflows (Not Prebuilt)
 
-Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **workflows emerge through agentic exploration**.
+Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **Olane's workflows emerge through agentic exploration**. We call these **Lanes**.
 
+### Comparing OpenAI to Olane
+
+A student in 2027 asks "How did emergent workflows become the industry standard?"
 
 **OpenAI Workflow Builder**
+OpenAI's Homework Helper agent design:
 ![openai workflow workflow](/docs/assets/openai-workflow-builder.png)
 ❌ Rigid, brittle, non-modular
 
@@ -53,6 +57,13 @@ Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **wor
 <td width="50%">
 
 **Olane OS**
+Create the OpenAI Homework Helper agent with 3 addresses in Olane:
+1. o://start/summarizer
+2. o://start/agents
+3. o://start/end
+New workflow stored as o://lane/homework-helper. To re-use this, simply call the lane address o://lane/homework-helper with the user's question.
+
+*What Olane did:*
 ```
 1. o://start/summarizer [Olane OS - calls the summarizer]
   |--o://start/knowledge/search [Summarizer depends upon o://knowledge/search]
@@ -66,12 +77,6 @@ Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **wor
   |--o://start/end [Q&A finished]
   |--Completed step 3
 ```
-
-Create the OpenAI Homework Helper agent with 3 addresses in Olane:
-1. o://start/summarizer
-2. o://start/agents
-3. o://start/end
-Workflow stored as o://lane/homework-helper. To re-use this, simply call o://lane/homework-helper with the user's question.
 
 
 **Result:** Olane discovers tools, determines optimal path, coordinates execution—all automatically.
