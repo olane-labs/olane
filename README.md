@@ -46,7 +46,7 @@ Olane OS is the secure workspace for AI, humans and tools. Build your hyper-pers
 
 Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **Olane's workflows emerge through agentic exploration**.
 
-> 💡 **We call these Lanes.**
+> 🏎️ **We call these Lanes.** 🏎️
 
 ### Comparing OpenAI to Olane
 
@@ -62,24 +62,11 @@ OpenAI's Homework Helper agent design:
 
 **Olane OS**
 Create the OpenAI Homework Helper agent with 3 addresses in Olane:
+```bash
 1. o://start/summarizer
 2. o://start/agents
 3. o://start/end
-New workflow stored as o://lane/homework-helper. To re-use this, simply call the lane address o://lane/homework-helper with the user's question.
-
-*What Olane did:*
-```
-1. o://start/summarizer [Olane OS - calls the summarizer]
-  |--o://start/knowledge/search [Summarizer depends upon o://knowledge/search]
-  |--o://start/llm [Summarizer needs an LLM to rewrite the user's question]
-  |--Completed step 1
-2. o://start/agents [Olane OS - calls the agents node "is a specialized agent necessary?"]
-  |--o://start/end [If no, go to end and stop]
-  |--Completed Step 2
-3. o://start/agents/q&a [o://start/agents calls the o://q&a node to complete the question]
-  |--o://start/llm [Q&A is needs an LLM to complete the question]
-  |--o://start/end [Q&A finished]
-  |--Completed step 3
+# New workflow stored as o://lane/homework-helper. To re-use this, simply call the lane address o://lane/homework-helper with the user's question.
 ```
 
 
