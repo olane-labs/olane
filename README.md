@@ -115,6 +115,15 @@ const nodes = await leader.search({ capability: 'financial_analysis' });
 
 ## Quick Start
 
+<!--
+  Demo: Olane OS in action
+  This GIF shows a real workflow using Olane OS.
+-->
+<p align="center">
+  <img src="/docs/assets/demo-olane.gif" alt="Olane OS Demo" width="600"/>
+</p>
+
+
 1. Install the `olane` cli tool
 ```bash
 npm install -g @olane/o-cli
