@@ -13,15 +13,17 @@
 Olane OS is the secure workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
 
 **What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience. This allows:
-- Agents to discover new workflows
-- Agents to operate securely with sensitive data
-- Agents to solve complex tasks
-- Agents to perform long-running tasks
-- Agents to learn from past mistakes
-- Agents to learn to use smaller models
-- Agents to self-improve
-- Agents to collaborate with humans
-- Agents to collaborate with other Agents
+- Agents to **discover new workflows**
+- Agents to **create plans**
+- Agents to **operate securely with sensitive data**
+- Agents to **solve complex tasks**
+- Agents to **perform long-running tasks**
+- Agents to **learn from past mistakes**
+- Agents to **learn to use smaller models**
+- Agents to **self-improve**
+- Agents to **collaborate with humans**
+- Agents to **collaborate with other Agents**
+- Agents to **collaborate with other Olane OS**
 
 [**Why emergent workflows are the future of AI Agents →**](/docs/concepts/emergent-workflows)
 
@@ -44,7 +46,7 @@ Olane OS is the secure workspace for AI, humans and tools. Build your hyper-pers
 
 Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **Olane's workflows emerge through agentic exploration**.
 
-## We call these **Lanes**.
+> 💡 **We call these Lanes.**
 
 ### Comparing OpenAI to Olane
 
