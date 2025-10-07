@@ -46,19 +46,14 @@ Olane OS is the secure workspace for AI, humans and tools. Build your hyper-pers
 
 Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **Olane's workflows emerge through agentic exploration**.
 
-> 🏎️ **We call these Lanes.** 🏎️
+<p align="center"><b style="color: black;">🏎️ We call these Lanes. 🏎️</b></p>
 
 ### Comparing OpenAI to Olane
 
 A student in 2027 asks "How did emergent workflows become the industry standard?"
 
 **OpenAI Workflow Builder**
-- Build the workflow
-- compile
-- host
-
 ![openai workflow workflow](/docs/assets/openai-workflow-builder.png)
-❌ Rigid, brittle, non-modular
 
 </td>
 <td width="50%">
