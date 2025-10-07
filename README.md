@@ -2,8 +2,6 @@
 
 **A modular operating system where humans or AI agents are the user, and applications are nodes.**
 
-**Setup your ideal AI environment once, bring it to every AI tool you use.**
-
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Documentation](https://img.shields.io/badge/docs-olane.com-blue)](https://olane.com/docs)
@@ -12,7 +10,7 @@
 
 ## TL;DR
 
-Olane OS is the shared workspace for AI, humans and tools. Build your dream AI workspace and let agents do MORE for you.
+Olane OS is the shared workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
 
 ## Key Features
 
