@@ -32,7 +32,7 @@ const result = await os.use(
 
 **What just happened?** The tool node accepted natural language, autonomously determined which tools to use, coordinated multi-step analysis, and returned results—no pre-defined workflows required.
 
-![Olane OS Architecture](./olane-os.png)
+![Olane OS Architecture](./docs/assets/olane-os.png)
 
 
 ---
