@@ -48,106 +48,103 @@ Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI'
 
 <p align="center"><b style="color: black;">🏎️ We call these Lanes. 🏎️</b></p>
 
-### Comparing OpenAI to Olane
-
-A student in 2027 asks "How did emergent workflows become the industry standard?"
-
-**OpenAI Workflow Builder**
-![openai workflow workflow](/docs/assets/openai-workflow-builder.png)
-
-</td>
-<td width="50%">
-
-**Olane OS**
-
-Create the OpenAI Homework Helper agent with 3 addresses in Olane:
-
-```bash
---------o://lane-----------
-| 1. o://start/summarizer |
-| 2. o://start/agents     |
-| 3. o://start/end        |
----------------------------
-# New workflow stored as o://lane/homework-helper. To re-use this, simply call the lane address o://lane/homework-helper with the user's question.
-```
-
-
-**Result:** Olane discovers tools, determines optimal path, coordinates execution—all automatically.
+Lanes (Olane workflows) capture agentic behavior.
 
 
 [**Learn more about emergent workflows →**](/docs/concepts/emergent-workflows)
 
 ---
 
-### 🤖 Agent-Agnostic Design
+### 🤖 Log into your Olane OS
 
-Build once and serve **both human users** (CLI/web) and **AI agents** (programmatic) through the same natural language interface.
+Both humans and AI agents can log into Olane OS, becoming addressable nodes that can receive intents, answer questions, and process streamed data. Once logged in, you're part of the network—other nodes can discover and interact with you.
 
-```typescript
-// Build a customer analytics tool once
-class CustomerAnalytics extends oLaneTool {
-  async _tool_get_customers(req) { /* ... */ }
-  async _tool_calculate_ltv(req) { /* ... */ }
-}
+<table>
+<tr>
+<td width="50%">
 
-// Human analyst (CLI): 
-// $ olane intent "Find high-value customers at risk of churning"
-
-// AI agent (programmatic):
-// await analytics.use({ 
-//   method: 'intent', 
-//   params: { intent: 'Find high-value customers at risk of churning' }
-// });
-
-// Same tool, same interface, same result—agent type doesn't matter
-```
-
-[**Learn more about agent-agnostic design →**](/docs/agents/agent-agnostic-design)
-
----
-
-### 🧠 Generalist-Specialist Architecture
-
-One LLM brain + many specialized tool nodes. No fine-tuning needed—specialization through context injection and tool augmentation.
-
-```
-Agent (GPT-4/Claude) → Coordinates → Specialized Tool Nodes
-                                    ├─ o://finance/analyst
-                                    ├─ o://data/pipeline  
-                                    └─ o://customer/crm
-```
-
-[**Learn more about the architecture →**](/docs/concepts/architecture)
-
----
-
-### 🌐 P2P Discovery & Coordination
-
-Self-organizing mesh networks via libp2p. Tool nodes automatically discover each other—no service registry, no manual configuration, no hardcoded endpoints.
+**Human Agent Login**
 
 ```typescript
-// Add a tool anywhere in the network
-const analytics = new CustomerAnalytics();
-await analytics.start(); // Auto-registers at o://analytics/customers
+import { oHumanLoginTool } from '@olane/o-login';
 
-// From anywhere else, just search
-const nodes = await leader.search({ capability: 'customer_analysis' });
-// → Finds o://analytics/customers automatically
-
-// Or address directly
-await leader.use(new oAddress('o://analytics/customers'), {
-  method: 'intent',
-  params: { intent: 'Find churning customers' }
+const humanAgent = new oHumanLoginTool({
+  respond: async (intent: string) => {
+    // Handle intents (approvals, decisions)
+    console.log('Received intent:', intent);
+    return 'Intent resolved successfully';
+  },
+  answer: async (question: string) => {
+    // Answer questions from other nodes
+    return 'Human answer';
+  },
+  receiveStream: async (data: any) => {
+    // Process streamed data
+    console.log('Received stream:', data);
+  }
 });
+
+await humanAgent.start();
+// Now reachable at o://human
 ```
 
-**Result:** Horizontal scaling, zero config, self-healing network.
+</td>
+<td width="50%">
+
+**AI Agent Login**
+
+```typescript
+import { oAILoginTool } from '@olane/o-login';
+
+const aiAgent = new oAILoginTool({
+  respond: async (intent: string) => {
+    // AI processes autonomously
+    const result = await processWithAI(intent);
+    return result;
+  },
+  answer: async (question: string) => {
+    // AI answers questions
+    return await aiAnswers(question);
+  },
+  receiveStream: async (data: any) => {
+    // AI processes streamed data
+    await processStream(data);
+  }
+});
+
+await aiAgent.start();
+// Now reachable at o://ai
+```
+
+</td>
+</tr>
+</table>
+
+**Same network, same capabilities, different execution models.** Human agents bring judgment and oversight. AI agents bring automation and scale. Both are first-class citizens in Olane OS.
+
+[**Learn more about agent login →**](/packages/o-login/) | [**Agent-agnostic design →**](/docs/agents/agent-agnostic-design)
+
+---
+
+### 🧠 Intent-Driven Workflows
+
+
+
+---
+
+### 🌐 Olane transports unlock AI Agent functionality
+
+Olane OS nodes are special. You can place them anywhere and securely talk to them from within your OS. We support Agents using TCP, Websockets, WebRTC, UDP, QUIC, Bluetooth (coming soon) through our underlying stable Libp2p networking layer.
+
+By doing so, we have enabled:
+- Agents talking to your browser
+- Agents talking to your react web app
 
 [**Learn more about networking →**](/packages/o-node/README.md)
 
 ---
 
-## Quick Start
+## Quick Start (run Olane OS locally)
 
 <!--
   Demo: Olane OS in action
@@ -161,7 +158,7 @@ await leader.use(new oAddress('o://analytics/customers'), {
 **Get running in 2 minutes:**
 
 ```bash
-# 1. Install
+# 1. Install the cli - a lightweight version of Olane OS
 npm install -g @olane/o-cli
 
 # 2. Start Olane OS
