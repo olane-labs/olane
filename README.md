@@ -132,15 +132,69 @@ await aiAgent.start();
 
 ---
 
-### 🌐 Olane transports unlock AI Agent functionality
+### 🌐 Run tool nodes anywhere. Connect from everywhere.
 
-Olane OS nodes are special. You can place them anywhere and securely talk to them from within your OS. We support Agents using TCP, Websockets, WebRTC, UDP, QUIC, Bluetooth (coming soon) through our underlying stable Libp2p networking layer.
+Olane OS nodes use [libp2p](https://libp2p.io/) for it's networking layer. This means tool nodes can run in browsers, mobile apps, IoT devices, edge servers, or the cloud—and AI agents can securely discover and use them all.
 
-By doing so, we have enabled:
-- Agents talking to your browser
-- Agents talking to your react web app
+<table>
+<tr>
+<td width="50%">
 
-[**Learn more about networking →**](/packages/o-node/README.md)
+**Tool Node in Browser**
+
+```typescript
+import { oWebSocketNode } from '@olane/o-node';
+
+// Runs in any browser
+const browserTool = new oWebSocketNode({
+  address: new oAddress('o://browser/analytics'),
+  leader: leaderAddress
+});
+
+await browserTool.start();
+// AI agents can now call o://browser/analytics
+```
+
+</td>
+<td width="50%">
+
+**Tool Node on Mobile/IoT**
+
+```typescript
+import { oClientNode } from '@olane/o-node';
+
+// Runs on mobile, Raspberry Pi, etc.
+const deviceTool = new oClientNode({
+  address: new oAddress('o://device/sensors'),
+  leader: leaderAddress
+});
+
+await deviceTool.start();
+// AI agents can now access device sensors
+```
+
+</td>
+</tr>
+</table>
+
+**What this enables:**
+
+| Traditional Limitation | Olane Solution |
+|------------------------|----------------|
+| AI agents can't access browser tools | **Agents call o://browser tools via WebRTC** |
+| AI agents can't reach mobile/IoT | **Agents discover devices via DHT** |
+| Tools require central servers | **P2P communication, no middleman** |
+| Complex firewall/NAT setup | **Automatic hole-punching** |
+| Insecure connections | **Encrypted by default (Noise protocol)** |
+
+**Supported Transports:**
+- 🌐 **WebSocket** - Browser-compatible
+- 🔌 **TCP** - Server-to-server
+- 📡 **WebRTC** - Direct browser connections
+- ⚡ **QUIC** - Low-latency UDP-based
+- 📱 **Bluetooth** - Coming soon for local devices
+
+[**Learn more about P2P networking →**](/packages/o-node/README.md) | [**Network architecture patterns →**](/packages/o-node/README.md#network-architecture-patterns)
 
 ---
 
