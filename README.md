@@ -53,6 +53,7 @@ Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI'
 A student in 2027 asks "How did emergent workflows become the industry standard?"
 
 **OpenAI Workflow Builder**
+
 OpenAI's Homework Helper agent design:
 ![openai workflow workflow](/docs/assets/openai-workflow-builder.png)
 ❌ Rigid, brittle, non-modular
@@ -61,6 +62,7 @@ OpenAI's Homework Helper agent design:
 <td width="50%">
 
 **Olane OS**
+
 Create the OpenAI Homework Helper agent with 3 addresses in Olane:
 ```bash
 1. o://start/summarizer
