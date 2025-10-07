@@ -132,19 +132,45 @@ Tools are the applications in Olane OS. They come in three levels of granularity
 A single executable method that does one specific thing.
 
 ```typescript
+// financial.methods.ts - Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a date range',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date',
+        required: true,
+      },
+    ],
+  },
+};
+
 class FinancialNode extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://financial'),
+      methods: FINANCIAL_METHODS,
+    });
+  }
+
   // This is a TOOL - single method
   async _tool_calculate_revenue(request: oRequest) {
     const { startDate, endDate } = request.params;
     return { revenue: 150000, currency: 'USD' };
-  }
-
-  // Parameter schema for the tool
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
-    };
   }
 }
 ```

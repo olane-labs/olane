@@ -276,7 +276,7 @@ function createToolNode(config: any) {
 - **Constants**: `UPPER_SNAKE_CASE` (e.g., `DEFAULT_PORT`)
 - **Files**: `kebab-case.ts` (e.g., `o-node-tool.ts`)
 - **Tool Methods**: `_tool_` prefix (e.g., `_tool_analyze_data`)
-- **Param Methods**: `_params_` prefix (e.g., `_params_analyze_data`)
+- **Method Definition Files**: `*.methods.ts` suffix (e.g., `financial.methods.ts`) - Define oMethod schemas for AI discovery
 
 ### Code Style
 

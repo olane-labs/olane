@@ -104,8 +104,8 @@ Tools use a prefix-based naming convention:
 | Prefix | Purpose | Required |
 |--------|---------|----------|
 | `_tool_` | Executable tool method | Yes |
-| `_params_` | Parameter schema | Recommended |
-| `_description_` | Tool description | Optional |
+
+Method schemas are defined using **oMethod definition files** (e.g., `*.methods.ts`) that provide structured metadata for AI discovery.
 
 ### Tool Method
 
@@ -180,21 +180,30 @@ async _tool_processUser(request: oRequest) {
 ```
 </CodeGroup>
 
-### Parameter Schema
+### Method Schema (oMethod Definition)
 
-Define parameter schemas for automatic validation:
+Define method schemas using oMethod definition files for AI discovery and automatic validation. Method definitions provide structured metadata that AI agents use to understand how to call your tool methods.
 
 ```typescript
-_params_methodName() {
-  return {
-    paramName: {
-      type: 'string' | 'number' | 'boolean' | 'object' | 'array',
-      required: boolean,
-      description: string,
-      default: any
-    }
-  };
-}
+// method-name.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+export const METHOD_DEFINITIONS: { [key: string]: oMethod } = {
+  methodName: {
+    name: 'methodName',
+    description: 'Description of what this method does',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'paramName',
+        type: 'string' | 'number' | 'boolean' | 'object' | 'array',
+        value: 'string' | 'number' | 'boolean' | 'object' | 'array',
+        description: 'Parameter description',
+        required: boolean,
+      },
+    ],
+  },
+};
 ```
 
 <ParamField path="type" type="string" required>
@@ -216,24 +225,50 @@ _params_methodName() {
 **Example**:
 
 ```typescript
-_params_calculate() {
-  return {
-    a: {
-      type: 'number',
-      required: true,
-      description: 'First operand'
-    },
-    b: {
-      type: 'number',
-      required: true,
-      description: 'Second operand'
-    },
-    operation: {
-      type: 'string',
-      required: true,
-      description: 'Operation to perform (add, multiply, etc.)'
-    }
-  };
+// calculator.methods.ts - Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+export const CALCULATOR_METHODS: { [key: string]: oMethod } = {
+  calculate: {
+    name: 'calculate',
+    description: 'Perform a calculation operation',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'a',
+        type: 'number',
+        value: 'number',
+        description: 'First operand',
+        required: true,
+      },
+      {
+        name: 'b',
+        type: 'number',
+        value: 'number',
+        description: 'Second operand',
+        required: true,
+      },
+      {
+        name: 'operation',
+        type: 'string',
+        value: 'string',
+        description: 'Operation to perform (add, multiply, etc.)',
+        required: true,
+      },
+    ],
+  },
+};
+
+// calculator.tool.ts - Use in tool
+import { CALCULATOR_METHODS } from './calculator.methods';
+
+class CalculatorTool extends oToolBase {
+  constructor() {
+    super({
+      address: new oAddress('o://calculator'),
+      methods: CALCULATOR_METHODS,
+    });
+  }
 }
 ```
 
@@ -410,15 +445,66 @@ Full implementation of a tool-enabled agent:
 
 <CodeGroup>
 ```typescript Complete Example
+// calculator.methods.ts - Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+export const CALCULATOR_METHODS: { [key: string]: oMethod } = {
+  add: {
+    name: 'add',
+    description: 'Adds two numbers together',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'a',
+        type: 'number',
+        value: 'number',
+        description: 'First number',
+        required: true,
+      },
+      {
+        name: 'b',
+        type: 'number',
+        value: 'number',
+        description: 'Second number',
+        required: true,
+      },
+    ],
+  },
+  divide: {
+    name: 'divide',
+    description: 'Divides first number by second number. Throws error if divisor is zero.',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'a',
+        type: 'number',
+        value: 'number',
+        description: 'Dividend',
+        required: true,
+      },
+      {
+        name: 'b',
+        type: 'number',
+        value: 'number',
+        description: 'Divisor',
+        required: true,
+      },
+    ],
+  },
+};
+
+// calculator.agent.ts - Implement the tool
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress } from '@olane/o-core';
+import { CALCULATOR_METHODS } from './calculator.methods';
 
 export class CalculatorAgent extends oLaneTool {
   constructor() {
     super({
       address: new oAddress('o://tools/calculator'),
       name: 'Calculator',
-      description: 'Mathematical calculation agent'
+      description: 'Mathematical calculation agent',
+      methods: CALCULATOR_METHODS,
     });
   }
 
@@ -426,17 +512,6 @@ export class CalculatorAgent extends oLaneTool {
   async _tool_add(request: oRequest) {
     const { a, b } = request.params;
     return { result: a + b, operation: 'addition' };
-  }
-
-  _params_add() {
-    return {
-      a: { type: 'number', required: true, description: 'First number' },
-      b: { type: 'number', required: true, description: 'Second number' }
-    };
-  }
-
-  _description_add() {
-    return 'Adds two numbers together';
   }
 
   // Division tool
@@ -452,17 +527,6 @@ export class CalculatorAgent extends oLaneTool {
       operation: 'division',
       precision: 2 
     };
-  }
-
-  _params_divide() {
-    return {
-      a: { type: 'number', required: true },
-      b: { type: 'number', required: true }
-    };
-  }
-
-  _description_divide() {
-    return 'Divides first number by second number. Throws error if divisor is zero.';
   }
 }
 

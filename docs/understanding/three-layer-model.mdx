@@ -184,12 +184,42 @@ class FinancialNode extends oNodeTool {
     };
   }
 
-  // Schema defines parameters
-  _params_calculate_revenue() {
-    return {
-      startDate: { type: 'string', required: true },
-      endDate: { type: 'string', required: true }
-    };
+}
+
+// Define method schemas in separate file
+import { oMethod } from '@olane/o-protocol';
+
+const ANALYST_METHODS: { [key: string]: oMethod } = {
+  calculate_revenue: {
+    name: 'calculate_revenue',
+    description: 'Calculate revenue for a date range',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'startDate',
+        type: 'string',
+        value: 'string',
+        description: 'Start date',
+        required: true,
+      },
+      {
+        name: 'endDate',
+        type: 'string',
+        value: 'string',
+        description: 'End date',
+        required: true,
+      },
+    ],
+  },
+};
+
+// Pass methods to constructor
+class FinancialAnalyst extends oNodeTool {
+  constructor() {
+    super({
+      address: new oAddress('o://finance/analyst'),
+      methods: ANALYST_METHODS,
+    });
   }
 }
 ```

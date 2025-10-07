@@ -188,12 +188,28 @@ Production-ready implementations and agent augmentation systems.
 
 **Convention Pattern**:
 ```typescript
+// Define method schemas in separate file
+import { oMethod } from '@olane/o-protocol';
+
+const TOOL_METHODS: { [key: string]: oMethod } = {
+  analyze: {
+    name: 'analyze',
+    description: 'Analyze data',
+    dependencies: [],
+    parameters: [/* parameter definitions */],
+  },
+};
+
 class MyTool extends oToolBase {
+  constructor() {
+    super({
+      address: new oAddress('o://my-tool'),
+      methods: TOOL_METHODS,
+    });
+  }
+  
   // _tool_ prefix = executable method
   async _tool_analyze(request) { }
-  
-  // _params_ prefix = parameter schema
-  _params_analyze() { return { /* schema */ } }
 }
 ```
 
@@ -703,11 +719,39 @@ Second execution uses proven approach (75% faster)
 **Packages Used**: o-node → o-tool → o-lane
 
 ```typescript
+// Define method schemas
+import { oMethod } from '@olane/o-protocol';
+
+const FINANCIAL_METHODS: { [key: string]: oMethod } = {
+  analyze_revenue: {
+    name: 'analyze_revenue',
+    description: 'Analyze revenue for a specific period',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'quarter',
+        type: 'string',
+        value: 'string',
+        description: 'Quarter to analyze',
+        required: true,
+      },
+      {
+        name: 'year',
+        type: 'number',
+        value: 'number',
+        description: 'Year to analyze',
+        required: true,
+      },
+    ],
+  },
+};
+
 // Step 1: Create tool-enabled network node (o-node + o-tool)
 class FinancialToolNode extends oNodeTool {
   constructor() {
     super({
       address: new oAddress('o://company/finance/analyst'),
+      methods: FINANCIAL_METHODS,
       leader: leaderAddress,
       parent: parentAddress
     });
@@ -718,13 +762,6 @@ class FinancialToolNode extends oNodeTool {
     const { quarter, year } = request.params;
     // Domain logic here
     return { revenue, growth, trends };
-  }
-
-  _params_analyze_revenue() {
-    return {
-      quarter: { type: 'string', required: true },
-      year: { type: 'number', required: true }
-    };
   }
 }
 
