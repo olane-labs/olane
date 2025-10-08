@@ -44,18 +44,91 @@ Olane OS is the secure workspace for AI, humans and tools. Build your hyper-pers
 
 ### 🔄 Emergent Workflows (Not Prebuilt)
 
-Unlike OpenAI's workflows, LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **Olane's workflows emerge through agentic exploration**.
+Avoid hardcoding prebuilt workflows, instead engineer capabilities for AI agents to  **Olane's workflows emerge through agentic exploration**.
 
 <p align="center"><b style="color: black;">🏎️ We call these Lanes. 🏎️</b></p>
 
-Lanes (Olane workflows) capture agentic behavior.
+Lanes (Olane workflows) capture agentic behavior as it develops. Emergent workflows capture how work actually happens mirroring human work patterns.
 
+**How it works technically:**
+
+- **Runtime workflow formation** - Execution paths are traced and stored as reusable workflows, not pre-compiled graphs
+- **Automatic optimization** - Lanes track success/failure metrics and adjust tool selection based on historical performance
+- **Usage-based pattern extraction** - Workflow patterns emerge from actual execution logs, not developer-defined state machines  
+- **Zero configuration overhead** - No DAG definitions, YAML files, or visual editors—workflows are recorded from agent behavior
+- **Probabilistic routing** - Agents choose tools based on semantic matching and past execution outcomes, not hardcoded paths
+
+#### Why Multi-Human and Multi-Agent Workflows Require Emergent Capabilities
+
+When multiple humans and AI agents collaborate, prebuilt workflows break down completely. Here's why emergent capabilities are essential:
+
+| Challenge | Prebuilt Workflow Problem | Emergent Workflow Solution |
+|-----------|---------------------------|----------------------------|
+| **Unpredictable coordination** | Must predefine every handoff between agents | Agents discover optimal coordination patterns through execution |
+| **Varying decision speeds** | Assumes synchronous, uniform timing | Adapts to human delays and AI speed automatically |
+| **Dynamic availability** | Breaks when designated agent is unavailable | Routes work to available agents with similar capabilities |
+| **Context switching** | Loses context when work passes between agent types | Maintains intent and context across all agent transitions |
+| **Evolving roles** | Rigid role assignments (human approver, AI executor) | Agents naturally specialize based on performance history |
+| **Distributed coordination** | Requires central orchestrator | P2P coordination emerges from agent interactions |
+
+**Real-world example:**
+
+```typescript
+// Scenario: Generate compliance report requiring both AI analysis and human approval
+
+// ❌ Prebuilt Workflow (LangGraph/CrewAI)
+const workflow = new StateGraph({
+  nodes: [
+    'ai_agent_1_fetch_data',
+    'ai_agent_2_analyze',
+    'human_agent_1_review',   // What if they're offline?
+    'ai_agent_1_format',
+    'human_agent_2_approve'   // What if approval isn't needed?
+  ],
+  edges: [/* hardcoded transitions */]
+});
+// Breaks if: human is unavailable, AI finds no issues, priorities change
+
+// ✅ Emergent Workflow (Olane OS)
+const result = await complianceNode.use({
+  method: 'intent',
+  params: {
+    intent: 'Generate Q4 compliance report with appropriate oversight'
+  }
+});
+```
+
+**What happens with emergent workflows:**
+
+```
+Cycle 1:  AI Agent A   → Fetches data, discovers 127 transactions
+Cycle 2:  AI Agent A   → Analyzes transactions, flags 3 anomalies
+Cycle 3:  AI Agent A   → Evaluates: "Anomalies found, need human review"
+Cycle 4:  System       → Searches for available human agents
+Cycle 5:  Human Agent  → Reviews flagged items (takes 2 hours - emergent workflow waits)
+Cycle 6:  Human Agent  → Approves 2, requests deeper analysis on 1
+Cycle 7:  AI Agent B   → Picks up deep analysis task (Agent A is busy)
+Cycle 8:  AI Agent B   → Completes analysis, no issues found
+Cycle 9:  AI Agent B   → Routes back to human (learned they want final approval)
+Cycle 10: Human Agent  → Approves final report
+Cycle 11: AI Agent A   → Formats and delivers compliance report
+```
+
+**Key emergent behaviors:**
+
+- 🔄 **Adaptive handoffs** - Work naturally flowed between 2 AI agents and 1 human based on availability
+- ⏱️ **Asynchronous coordination** - System paused for human review without breaking workflow  
+- 🎯 **Context preservation** - Each agent maintained understanding of compliance requirements
+- 📊 **Pattern learning** - System learned that this human prefers final approval on anomalies
+- 🔀 **Dynamic routing** - AI Agent B picked up analysis when AI Agent A was busy
+
+This coordination pattern wasn't programmed—it **emerged** from agents pursuing the shared intent while respecting each other's availability and capabilities.
 
 [**Learn more about emergent workflows →**](/docs/concepts/emergent-workflows)
 
 ---
 
-### 🤖 Log into your Olane OS
+### 🤖 Log into Olane OS
 
 Both humans and AI agents can log into Olane OS, becoming addressable nodes that can receive intents, answer questions, and process streamed data. Once logged in, you're part of the network—other nodes can discover and interact with you.
 
