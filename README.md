@@ -199,7 +199,7 @@ await aiAgent.start();
 
 ---
 
-### 🧠 Intent-Driven Workflows
+### 🧠 Intent-Driven
 
 
 
