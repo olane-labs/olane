@@ -1,5 +1,4 @@
 import {
-  bootstrap,
   createNode,
   defaultLibp2pConfig,
   Libp2p,
@@ -47,7 +46,10 @@ export class oNode extends oToolBase {
   }
 
   get networkConfig(): Libp2pConfig {
-    return this.config.network || defaultLibp2pConfig;
+    return {
+      ...defaultLibp2pConfig,
+      ...(this.config.network || {}),
+    };
   }
 
   get parentPeerId(): string | null {
@@ -153,11 +155,11 @@ export class oNode extends oToolBase {
 
   async start(): Promise<void> {
     await super.start();
-    await NetworkUtils.advertiseToNetwork(
-      this.address,
-      this.staticAddress,
-      this.p2pNode,
-    );
+    // await NetworkUtils.advertiseToNetwork(
+    //   this.address,
+    //   this.staticAddress,
+    //   this.p2pNode,
+    // );
   }
 
   async validateJoinRequest(request: oRequest): Promise<any> {
@@ -169,11 +171,9 @@ export class oNode extends oToolBase {
    */
   async configure(): Promise<Libp2pConfig> {
     const params: Libp2pConfig = {
+      ...defaultLibp2pConfig,
       ...this.networkConfig,
       transports: this.configureTransports(),
-      connectionManager: {
-        ...(this.networkConfig.connectionManager || {}),
-      },
       listeners: (
         this.config.network?.listeners ||
         defaultLibp2pConfig.listeners ||
@@ -199,15 +199,21 @@ export class oNode extends oToolBase {
       // peer discovery is only allowed through the parent transports
       const transports =
         this.parentTransports.map((t) => t.toMultiaddr().toString()) || [];
-      this.logger.debug('Parent transports: ', transports);
-      params.peerDiscovery = [
-        bootstrap({
-          list: transports.concat(
-            this.leader?.libp2pTransports.map((t) => t.toString()) || [],
-          ),
-        }),
-        ...(defaultLibp2pConfig.peerDiscovery || []),
-      ];
+      // this.logger.debug('Parent transports: ', transports);
+      // this.logger.debug(
+      //   'Bootstrap transports: ',
+      //   transports.concat(
+      //     this.leader?.libp2pTransports.map((t) => t.toString()) || [],
+      //   ),
+      // );
+      // params.peerDiscovery = [
+      //   bootstrap({
+      //     list: transports.concat(
+      //       this.leader?.libp2pTransports.map((t) => t.toString()) || [],
+      //     ),
+      //   }),
+      //   ...(defaultLibp2pConfig.peerDiscovery || []),
+      // ];
 
       //   // let's make sure we only allow communication through the parent transports
       params.connectionGater = {
@@ -244,18 +250,19 @@ export class oNode extends oToolBase {
       !this.address.protocol.includes(this.config.leader.protocol)
     ) {
       const parentAddress = this.config.parent || this.config.leader;
-      this.logger.debug(
-        'Encapsulating address: ' + this.address.toString(),
-        parentAddress.toString(),
-      );
       this.address = CoreUtils.childAddress(
         parentAddress,
         this.address,
       ) as oNodeAddress;
-      this.logger.debug('Encapsulated address: ' + this.address.toString());
     }
 
     return params;
+  }
+
+  protected async createNode(): Promise<Libp2p> {
+    const params = await this.configure();
+    this.p2pNode = await createNode(params);
+    return this.p2pNode;
   }
 
   async connect(
@@ -296,8 +303,7 @@ export class oNode extends oToolBase {
       throw new Error('Invalid address');
     }
 
-    const params = await this.configure();
-    this.p2pNode = await createNode(params);
+    await this.createNode();
 
     await this.initializeRouter();
 

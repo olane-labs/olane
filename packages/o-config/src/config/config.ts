@@ -31,4 +31,11 @@ export const defaultLibp2pConfig: Libp2pConfig = {
       kBucketSize: 20, // peer size
     }),
   },
+  connectionManager: {
+    maxConnections: Infinity,
+    maxParallelDials: Infinity,
+    maxDialQueueLength: Infinity,
+    maxPeerAddrsToDial: Infinity,
+    inboundConnectionThreshold: Infinity,
+  },
 };

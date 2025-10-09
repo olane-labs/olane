@@ -6,9 +6,9 @@ import {
   oRequest,
   oResponse,
 } from '@olane/o-core';
-import { IncomingStreamData } from '@olane/o-config';
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
+import { Connection, Stream } from '@olane/o-config';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -18,7 +18,10 @@ import { oServerNode } from './nodes/server.node.js';
 export class oNodeTool extends oTool(oServerNode) {
   async handleProtocol(address: oAddress) {
     this.logger.debug('Handling protocol: ' + address.protocol);
-    await this.p2pNode.handle(address.protocol, this.handleStream.bind(this));
+    await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
+      maxInboundStreams: Infinity,
+      maxOutboundStreams: Infinity,
+    });
   }
 
   async initialize(): Promise<void> {
@@ -32,36 +35,46 @@ export class oNodeTool extends oTool(oServerNode) {
     }
   }
 
-  async handleStream(streamData: IncomingStreamData): Promise<void> {
-    const { stream } = streamData;
-    const requestConfig: oRequest = await CoreUtils.processStream(stream);
-    const request = new oRequest(requestConfig);
-    let success = true;
-    const result = await this.execute(request, stream).catch((error) => {
-      this.logger.error('Error executing tool: ', error, typeof error);
-      success = false;
-      const responseError: oError =
-        error instanceof oError
-          ? error
-          : new oError(oErrorCodes.UNKNOWN, error.message);
-      return {
-        error: responseError.toJSON(),
-      };
+  async handleStream(stream: Stream, connection: Connection): Promise<void> {
+    stream.addEventListener('message', async (event) => {
+      if (!event.data) {
+        this.logger.warn('Malformed event data');
+        return;
+      }
+      const requestConfig: oRequest = await CoreUtils.processStream(event);
+      const request = new oRequest(requestConfig);
+      let success = true;
+      const result = await this.execute(request, stream).catch((error) => {
+        this.logger.error(
+          'Error executing tool: ',
+          request.toString(),
+          error,
+          typeof error,
+        );
+        success = false;
+        const responseError: oError =
+          error instanceof oError
+            ? error
+            : new oError(oErrorCodes.UNKNOWN, error.message);
+        return {
+          error: responseError.toJSON(),
+        };
+      });
+      if (success) {
+        this.metrics.successCount++;
+      } else {
+        this.metrics.errorCount++;
+      }
+      // compose the response & add the expected connection + request fields
+
+      const response: oResponse = CoreUtils.buildResponse(
+        request,
+        result,
+        result?.error,
+      );
+
+      // add the request method to the response
+      await CoreUtils.sendResponse(response, stream);
     });
-    if (success) {
-      this.metrics.successCount++;
-    } else {
-      this.metrics.errorCount++;
-    }
-    // compose the response & add the expected connection + request fields
-
-    const response: oResponse = CoreUtils.buildResponse(
-      request,
-      result,
-      result?.error,
-    );
-
-    // add the request method to the response
-    return CoreUtils.sendResponse(response, stream);
   }
 }

@@ -4,6 +4,7 @@ import {
   Stream,
   Uint8ArrayList,
   pushable,
+  StreamMessageEvent,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
@@ -75,24 +76,20 @@ export class CoreUtils {
       return;
     }
 
-    const responseStream = pushable();
-    responseStream.push(new TextEncoder().encode(response.toString()));
-    responseStream.end();
-    return await stream.sink(responseStream);
+    try {
+      await stream.send(new TextEncoder().encode(response.toString()));
+      await stream.close();
+    } catch (error) {
+      console.error('Error sending response: ', error);
+    }
   }
 
-  public static async processStream(stream: any): Promise<oRequest> {
-    const chunks: Uint8Array[] = [];
-
-    for await (const chunk of stream.source) {
-      chunks.push(chunk.subarray());
-    }
-
-    const data = new Uint8ArrayList(...chunks).slice();
-    if (!data || data.length === 0) {
-      throw new Error('No data received');
-    }
-    return new oRequest(JSON.parse(new TextDecoder().decode(data)));
+  public static async processStream(
+    event: StreamMessageEvent,
+  ): Promise<oRequest> {
+    const bytes =
+      event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
+    return new oRequest(JSON.parse(new TextDecoder().decode(bytes)));
   }
 
   public static async toCID(data: any): Promise<CID> {

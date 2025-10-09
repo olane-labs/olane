@@ -23,18 +23,23 @@ export class oNodeConnectionManager extends oConnectionManager {
 
     // check if we already have a connection to this address
     // TODO: how can we enable caching of connections & connection lifecycles
-    // if (this.isCached(nextHopAddress)) {
-    //   const cachedConnection = this.getCachedConnection(nextHopAddress);
-    //   if (cachedConnection) {
-    //     this.logger.debug(
-    //       'Using cached connection for address: ' + address.toString(),
-    //     );
-    //     return cachedConnection;
-    //   } else {
-    //     // cached item is not valid, remove it
-    //     this.cache.delete(nextHopAddress.toString());
-    //   }
-    // }
+    if (this.isCached(nextHopAddress)) {
+      const cachedConnection = this.getCachedConnection(
+        nextHopAddress,
+      ) as oNodeConnection;
+      if (
+        cachedConnection &&
+        cachedConnection.p2pConnection.status === 'open'
+      ) {
+        this.logger.debug(
+          'Using cached connection for address: ' + address.toString(),
+        );
+        return cachedConnection as oNodeConnection;
+      } else {
+        // cached item is not valid, remove it
+        this.cache.delete(nextHopAddress.toString());
+      }
+    }
 
     // first time setup connection
     try {
@@ -49,7 +54,7 @@ export class oNodeConnectionManager extends oConnectionManager {
         p2pConnection: p2pConnection,
         callerAddress: callerAddress,
       });
-      // this.cache.set(address.toString(), connection);
+      // this.cache.set(nextHopAddress.toString(), connection);
       return connection;
     } catch (error) {
       this.logger.error(

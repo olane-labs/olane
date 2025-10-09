@@ -1,4 +1,11 @@
-import { Connection, Uint8ArrayList, pushable, all } from '@olane/o-config';
+import {
+  Connection,
+  Uint8ArrayList,
+  pushable,
+  all,
+  Stream,
+  byteStream,
+} from '@olane/o-config';
 import {
   oConnection,
   oError,
@@ -9,21 +16,22 @@ import {
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 export class oNodeConnection extends oConnection {
-  protected p2pConnection: Connection;
+  public p2pConnection: Connection;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
   }
 
-  async read(source: any) {
-    const chunks: any = await all(source);
-
-    const data = new Uint8ArrayList(...chunks).slice();
-    if (!data || data.length === 0) {
-      throw new Error('No data received');
-    }
-    return JSON.parse(new TextDecoder().decode(data));
+  async read(source: Stream) {
+    const bytes = byteStream(source);
+    const output = await bytes.read({
+      signal: AbortSignal.timeout(5_000),
+    });
+    const outputObj =
+      output instanceof Uint8ArrayList ? output.subarray() : output;
+    const jsonStr = new TextDecoder().decode(outputObj);
+    return JSON.parse(jsonStr);
   }
 
   validate() {
@@ -37,16 +45,27 @@ export class oNodeConnection extends oConnection {
     try {
       const stream = await this.p2pConnection.newStream(
         this.nextHopAddress.protocol,
+        {
+          maxOutboundStreams: Infinity,
+        },
       );
 
-      // Create a pushable stream
-      const pushableStream = pushable();
-      pushableStream.push(new TextEncoder().encode(request.toString()));
-      pushableStream.end();
+      if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
+        throw new oError(
+          oErrorCodes.FAILED_TO_DIAL_TARGET,
+          'Failed to dial target',
+        );
+      }
+      if (stream.status === 'reset') {
+        throw new oError(
+          oErrorCodes.CONNECTION_LIMIT_REACHED,
+          'Connection limit reached',
+        );
+      }
 
       // Send the data
-      await stream.sink(pushableStream);
-      const res = await this.read(stream.source);
+      await stream.send(new TextEncoder().encode(request.toString()));
+      const res = await this.read(stream);
 
       // process the response
       const response = new oResponse({
