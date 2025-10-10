@@ -53,7 +53,8 @@ export abstract class oConnection extends oObject {
   async send(data: ConnectionSendParams): Promise<oResponse> {
     // proxy through the router tool
     const request = this.createRequest(oProtocolMethods.ROUTE, data);
-    return this.transmit(request);
+    const result = await this.transmit(request);
+    return result;
   }
 
   async close() {

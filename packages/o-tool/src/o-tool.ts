@@ -75,6 +75,12 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       return result;
     }
 
+    async _tool_ping(request: oRequest): Promise<ToolResult> {
+      return {
+        message: 'Pong!',
+      };
+    }
+
     async _tool_route(
       request: oRouterRequest & { stream?: Stream },
     ): Promise<any> {

@@ -38,9 +38,6 @@ export class oHierarchyManager extends oObject {
 
   addChild(address: oAddress): void {
     // deduplicate
-    this.logger.debug(
-      `Adding child: ${address.toString()}, transports: ${address.transports.map((t) => t.toString()).join(', ')}`,
-    );
     this.children = this.deduplicate([...this.children, address]);
   }
 

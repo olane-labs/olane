@@ -1,6 +1,6 @@
 # Olane OS
 
-**A modular operating system where humans or AI agents are the user, and applications are nodes.**
+**A graph-based operating system where humans or AI agents are the user, and applications are nodes.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
@@ -10,11 +10,22 @@
 
 ## TL;DR
 
-Olane OS is the shared workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
+Olane OS is the secure workspace for AI, humans and tools. Build your hyper-personalized AI environment and let agents do MORE *with* you.
 
-**What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience.
+**What makes Olane different?** While other frameworks require you to pre-define workflows upfront (LangGraph's StateGraph, n8n's visual DAGs, CrewAI's fixed crews), Olane enables **emergent workflows** that discover optimal paths through execution and learn from experience. This allows:
+- Agents to **discover new workflows**
+- Agents to **create plans**
+- Agents to **operate securely with sensitive data**
+- Agents to **solve complex tasks**
+- Agents to **perform long-running tasks**
+- Agents to **learn from past mistakes**
+- Agents to **learn to use smaller models**
+- Agents to **self-improve**
+- Agents to **collaborate with humans**
+- Agents to **collaborate with other Agents**
+- Agents to **collaborate with other Olane OS**
 
-**In practice:** Say `"Add the Filesystem MCP server to this folder"` and Olane discovers, configures, and connects it automatically—no code, no config files, no manual wiring. [See it in action →](#quick-start)
+[**Why emergent workflows are the future of AI Agents →**](/docs/concepts/emergent-workflows)
 
 ---
 
@@ -33,125 +44,234 @@ Olane OS is the shared workspace for AI, humans and tools. Build your hyper-pers
 
 ### 🔄 Emergent Workflows (Not Prebuilt)
 
-Unlike LangGraph's StateGraph, n8n's visual DAGs, or CrewAI's fixed crews, **workflows emerge through execution** and learn optimal paths over time.
+Avoid hardcoding prebuilt workflows, instead engineer capabilities for AI agents to  **Olane's workflows emerge through agentic exploration**.
 
-<table>
-<tr>
-<td width="50%">
+<p align="center"><b style="color: black;">🏎️ We call these Lanes. 🏎️</b></p>
 
-**Other Frameworks** (~100 lines)
+Lanes (Olane workflows) capture agentic behavior as it develops. Emergent workflows capture how work actually happens mirroring human work patterns.
+
+**How it works technically:**
+
+- **Runtime workflow formation** - Execution paths are traced and stored as reusable workflows, not pre-compiled graphs
+- **Automatic optimization** - Lanes track success/failure metrics and adjust tool selection based on historical performance
+- **Usage-based pattern extraction** - Workflow patterns emerge from actual execution logs, not developer-defined state machines  
+- **Zero configuration overhead** - No DAG definitions, YAML files, or visual editors—workflows are recorded from agent behavior
+- **Probabilistic routing** - Agents choose tools based on semantic matching and past execution outcomes, not hardcoded paths
+
+#### Why Multi-Human and Multi-Agent Workflows Require Emergent Capabilities
+
+When multiple humans and AI agents collaborate, prebuilt workflows break down completely. Here's why emergent capabilities are essential:
+
+| Challenge | Prebuilt Workflow Problem | Emergent Workflow Solution |
+|-----------|---------------------------|----------------------------|
+| **Unpredictable coordination** | Must predefine every handoff between agents | Agents discover optimal coordination patterns through execution |
+| **Varying decision speeds** | Assumes synchronous, uniform timing | Adapts to human delays and AI speed automatically |
+| **Dynamic availability** | Breaks when designated agent is unavailable | Routes work to available agents with similar capabilities |
+| **Context switching** | Loses context when work passes between agent types | Maintains intent and context across all agent transitions |
+| **Evolving roles** | Rigid role assignments (human approver, AI executor) | Agents naturally specialize based on performance history |
+| **Distributed coordination** | Requires central orchestrator | P2P coordination emerges from agent interactions |
+
+**Real-world example:**
+
 ```typescript
-// 1. Define state schema
-interface State { data: any; analysis: any; }
+// Scenario: Generate compliance report requiring both AI analysis and human approval
 
-// 2. Create nodes
-const fetch = (state) => { /* ... */ };
-const analyze = (state) => { /* ... */ };
-
-// 3. Wire graph
+// ❌ Prebuilt Workflow (LangGraph/CrewAI)
 const workflow = new StateGraph({
-  nodes: { fetch, analyze },
-  edges: [{ from: 'fetch', to: 'analyze' }]
+  nodes: [
+    'ai_agent_1_fetch_data',
+    'ai_agent_2_analyze',
+    'human_agent_1_review',   // What if they're offline?
+    'ai_agent_1_format',
+    'human_agent_2_approve'   // What if approval isn't needed?
+  ],
+  edges: [/* hardcoded transitions */]
 });
+// Breaks if: human is unavailable, AI finds no issues, priorities change
 
-// 4. Compile & execute
-const app = workflow.compile();
-await app.invoke({ data: null });
-```
-❌ Rigid, brittle, no learning
-
-</td>
-<td width="50%">
-
-**Olane OS** (3 lines)
-```typescript
-// Just express intent
-await node.use({
+// ✅ Emergent Workflow (Olane OS)
+const result = await complianceNode.use({
   method: 'intent',
-  params: { intent: 'Fetch and analyze Q4 data' }
+  params: {
+    intent: 'Generate Q4 compliance report with appropriate oversight'
+  }
 });
 ```
-✅ Adaptive, learning, resilient
 
-**Result:** Olane discovers tools, determines optimal path, coordinates execution—all automatically.
+**What happens with emergent workflows:**
 
-</td>
-</tr>
-</table>
+```
+Cycle 1:  AI Agent A   → Fetches data, discovers 127 transactions
+Cycle 2:  AI Agent A   → Analyzes transactions, flags 3 anomalies
+Cycle 3:  AI Agent A   → Evaluates: "Anomalies found, need human review"
+Cycle 4:  System       → Searches for available human agents
+Cycle 5:  Human Agent  → Reviews flagged items (takes 2 hours - emergent workflow waits)
+Cycle 6:  Human Agent  → Approves 2, requests deeper analysis on 1
+Cycle 7:  AI Agent B   → Picks up deep analysis task (Agent A is busy)
+Cycle 8:  AI Agent B   → Completes analysis, no issues found
+Cycle 9:  AI Agent B   → Routes back to human (learned they want final approval)
+Cycle 10: Human Agent  → Approves final report
+Cycle 11: AI Agent A   → Formats and delivers compliance report
+```
+
+**Key emergent behaviors:**
+
+- 🔄 **Adaptive handoffs** - Work naturally flowed between 2 AI agents and 1 human based on availability
+- ⏱️ **Asynchronous coordination** - System paused for human review without breaking workflow  
+- 🎯 **Context preservation** - Each agent maintained understanding of compliance requirements
+- 📊 **Pattern learning** - System learned that this human prefers final approval on anomalies
+- 🔀 **Dynamic routing** - AI Agent B picked up analysis when AI Agent A was busy
+
+This coordination pattern wasn't programmed—it **emerged** from agents pursuing the shared intent while respecting each other's availability and capabilities.
 
 [**Learn more about emergent workflows →**](/docs/concepts/emergent-workflows)
 
 ---
 
-### 🤖 Agent-Agnostic Design
+### 🤖 Log into Olane OS
 
-Build once and serve **both human users** (CLI/web) and **AI agents** (programmatic) through the same natural language interface.
+Both humans and AI agents can log into Olane OS, becoming addressable nodes that can receive intents, answer questions, and process streamed data. Once logged in, you're part of the network—other nodes can discover and interact with you.
 
-```typescript
-// Build a customer analytics tool once
-class CustomerAnalytics extends oLaneTool {
-  async _tool_get_customers(req) { /* ... */ }
-  async _tool_calculate_ltv(req) { /* ... */ }
-}
+<table>
+<tr>
+<td width="50%">
 
-// Human analyst (CLI): 
-// $ olane intent "Find high-value customers at risk of churning"
-
-// AI agent (programmatic):
-// await analytics.use({ 
-//   method: 'intent', 
-//   params: { intent: 'Find high-value customers at risk of churning' }
-// });
-
-// Same tool, same interface, same result—agent type doesn't matter
-```
-
-[**Learn more about agent-agnostic design →**](/docs/agents/agent-agnostic-design)
-
----
-
-### 🧠 Generalist-Specialist Architecture
-
-One LLM brain + many specialized tool nodes. No fine-tuning needed—specialization through context injection and tool augmentation.
-
-```
-Agent (GPT-4/Claude) → Coordinates → Specialized Tool Nodes
-                                    ├─ o://finance/analyst
-                                    ├─ o://data/pipeline  
-                                    └─ o://customer/crm
-```
-
-[**Learn more about the architecture →**](/docs/concepts/architecture)
-
----
-
-### 🌐 P2P Discovery & Coordination
-
-Self-organizing mesh networks via libp2p. Tool nodes automatically discover each other—no service registry, no manual configuration, no hardcoded endpoints.
+**Human Agent Login**
 
 ```typescript
-// Add a tool anywhere in the network
-const analytics = new CustomerAnalytics();
-await analytics.start(); // Auto-registers at o://analytics/customers
+import { oHumanLoginTool } from '@olane/o-login';
 
-// From anywhere else, just search
-const nodes = await leader.search({ capability: 'customer_analysis' });
-// → Finds o://analytics/customers automatically
-
-// Or address directly
-await leader.use(new oAddress('o://analytics/customers'), {
-  method: 'intent',
-  params: { intent: 'Find churning customers' }
+const humanAgent = new oHumanLoginTool({
+  respond: async (intent: string) => {
+    // Handle intents (approvals, decisions)
+    console.log('Received intent:', intent);
+    return 'Intent resolved successfully';
+  },
+  answer: async (question: string) => {
+    // Answer questions from other nodes
+    return 'Human answer';
+  },
+  receiveStream: async (data: any) => {
+    // Process streamed data
+    console.log('Received stream:', data);
+  }
 });
+
+await humanAgent.start();
+// Now reachable at o://human
 ```
 
-**Result:** Horizontal scaling, zero config, self-healing network.
+</td>
+<td width="50%">
 
-[**Learn more about networking →**](/packages/o-node/README.md)
+**AI Agent Login**
+
+```typescript
+import { oAILoginTool } from '@olane/o-login';
+
+const aiAgent = new oAILoginTool({
+  respond: async (intent: string) => {
+    // AI processes autonomously
+    const result = await processWithAI(intent);
+    return result;
+  },
+  answer: async (question: string) => {
+    // AI answers questions
+    return await aiAnswers(question);
+  },
+  receiveStream: async (data: any) => {
+    // AI processes streamed data
+    await processStream(data);
+  }
+});
+
+await aiAgent.start();
+// Now reachable at o://ai
+```
+
+</td>
+</tr>
+</table>
+
+**Same network, same capabilities, different execution models.** Human agents bring judgment and oversight. AI agents bring automation and scale. Both are first-class citizens in Olane OS.
+
+[**Learn more about agent login →**](/packages/o-login/) | [**Agent-agnostic design →**](/docs/agents/agent-agnostic-design)
 
 ---
 
-## Quick Start
+### 🧠 Intent-Driven
+
+
+
+---
+
+### 🌐 Run tool nodes anywhere. Connect from everywhere.
+
+Olane OS nodes use [libp2p](https://libp2p.io/) for it's networking layer. This means tool nodes can run in browsers, mobile apps, IoT devices, edge servers, or the cloud—and AI agents can securely discover and use them all.
+
+<table>
+<tr>
+<td width="50%">
+
+**Tool Node in Browser**
+
+```typescript
+import { oWebSocketNode } from '@olane/o-node';
+
+// Runs in any browser
+const browserTool = new oWebSocketNode({
+  address: new oAddress('o://browser/analytics'),
+  leader: leaderAddress
+});
+
+await browserTool.start();
+// AI agents can now call o://browser/analytics
+```
+
+</td>
+<td width="50%">
+
+**Tool Node on Mobile/IoT**
+
+```typescript
+import { oClientNode } from '@olane/o-node';
+
+// Runs on mobile, Raspberry Pi, etc.
+const deviceTool = new oClientNode({
+  address: new oAddress('o://device/sensors'),
+  leader: leaderAddress
+});
+
+await deviceTool.start();
+// AI agents can now access device sensors
+```
+
+</td>
+</tr>
+</table>
+
+**What this enables:**
+
+| Traditional Limitation | Olane Solution |
+|------------------------|----------------|
+| AI agents can't access browser tools | **Agents call o://browser tools via WebRTC** |
+| AI agents can't reach mobile/IoT | **Agents discover devices via DHT** |
+| Tools require central servers | **P2P communication, no middleman** |
+| Complex firewall/NAT setup | **Automatic hole-punching** |
+| Insecure connections | **Encrypted by default (Noise protocol)** |
+
+**Supported Transports:**
+- 🌐 **WebSocket** - Browser-compatible
+- 🔌 **TCP** - Server-to-server
+- 📡 **WebRTC** - Direct browser connections
+- ⚡ **QUIC** - Low-latency UDP-based
+- 📱 **Bluetooth** - Coming soon for local devices
+
+[**Learn more about P2P networking →**](/packages/o-node/README.md) | [**Network architecture patterns →**](/packages/o-node/README.md#network-architecture-patterns)
+
+---
+
+## Quick Start (run Olane OS locally)
 
 <!--
   Demo: Olane OS in action
@@ -165,7 +285,7 @@ await leader.use(new oAddress('o://analytics/customers'), {
 **Get running in 2 minutes:**
 
 ```bash
-# 1. Install
+# 1. Install the cli - a lightweight version of Olane OS
 npm install -g @olane/o-cli
 
 # 2. Start Olane OS

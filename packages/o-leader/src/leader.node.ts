@@ -7,8 +7,9 @@ import {
 } from '@olane/o-core';
 import { START_METHOD } from './methods/start.method.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeConfig, oNodeToolConfig, oSearchResolver } from '@olane/o-node';
+import { oNodeToolConfig, oSearchResolver } from '@olane/o-node';
 import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
+import { oGatewayResolver } from '@olane/o-gateway-olane';
 
 export class oLeaderNode extends oLaneTool {
   constructor(config: oNodeToolConfig) {
@@ -25,6 +26,7 @@ export class oLeaderNode extends oLaneTool {
   async initialize(): Promise<void> {
     await super.initialize();
     this.router.addResolver(new oSearchResolver(this.address));
+    this.router.addResolver(new oGatewayResolver(this.address));
     const registryTool = new RegistryMemoryTool({
       name: 'registry',
       parent: this.address,

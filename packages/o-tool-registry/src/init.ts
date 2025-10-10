@@ -4,7 +4,7 @@ import { LangchainMemoryVectorStoreTool } from './vector-store/index.js';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { McpBridgeTool } from '@olane/o-mcp';
 import { oLaneTool } from '@olane/o-lane';
-import { NodeType } from '@olane/o-core';
+import { NodeType, oAddress } from '@olane/o-core';
 
 export const initRegistryTools = async (oNode: oLaneTool): Promise<void> => {
   const params = {
@@ -33,6 +33,7 @@ export const initRegistryTools = async (oNode: oLaneTool): Promise<void> => {
     }),
     new McpBridgeTool({
       name: 'mcp',
+      address: new oAddress('o://mcp'),
       ...params,
     }),
   ];

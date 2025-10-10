@@ -180,7 +180,7 @@ export abstract class oCore extends oObject {
     });
     let success = true;
     const result = await this.execute(request).catch((error) => {
-      this.logger.error('Error executing tool: ', error);
+      this.logger.error('Error executing tool [self]: ', error);
       success = false;
       const responseError: oError =
         error instanceof oError
@@ -236,7 +236,6 @@ export abstract class oCore extends oObject {
 
   // hierarchy
   addChildNode(node: oCore): void {
-    this.logger.debug('Adding virtual node: ' + node.address.toString());
     this.hierarchyManager.addChild(node.address);
   }
 

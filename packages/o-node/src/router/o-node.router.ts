@@ -1,7 +1,6 @@
 import { oNodeAddress } from './o-node.address.js';
 import {
   CoreUtils,
-  NodeType,
   oAddress,
   oError,
   oErrorCodes,
@@ -11,9 +10,8 @@ import {
 } from '@olane/o-core';
 import type { oNode } from '../o-node.js';
 import { oToolRouter } from '@olane/o-tool';
-import { pipe, pushable, Stream } from '@olane/o-config';
 import { RequestParams } from '@olane/o-protocol';
-
+import { oNodeConnection } from '../connection/o-node-connection.js';
 export class oNodeRouter extends oToolRouter {
   constructor() {
     super();
@@ -78,23 +76,18 @@ export class oNodeRouter extends oToolRouter {
 
     // dial the target
     try {
-      const targetStream = await node?.p2pNode.dialProtocol(
+      const connection = await node?.p2pNode.dial(
         address.libp2pTransports.map((t) => t.toMultiaddr()),
-        address.protocol,
       );
+      const nodeConnection = new oNodeConnection({
+        p2pConnection: connection,
+        nextHopAddress: address,
+        address: node.address,
+        callerAddress: node.address,
+      });
 
-      if (!targetStream) {
-        throw new oError(
-          oErrorCodes.FAILED_TO_DIAL_TARGET,
-          'Failed to dial target',
-        );
-      }
-
-      const pushableStream = pushable();
-      pushableStream.push(new TextEncoder().encode(nextHopRequest.toString()));
-      pushableStream.end();
-      await targetStream.sink(pushableStream);
-      await pipe(targetStream.source, stream?.sink);
+      await nodeConnection.transmit(nextHopRequest);
+      // await stream.send(new TextEncoder().encode(response.toString()));
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
@@ -128,6 +121,7 @@ export class oNodeRouter extends oToolRouter {
   async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
     const externalRoute = this.handleExternalAddress(address, node);
     if (externalRoute) {
+      this.logger.debug('External route found', externalRoute);
       return externalRoute;
     }
 
