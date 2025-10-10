@@ -129,11 +129,7 @@ export class oToolBase extends oCore {
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
-    this.logger.debug(
-      'Calling tool: ' + method,
-      'Origin caller address: ',
-      request?.params?._callerAddress,
-    );
+    this.logger.debug('Calling tool: ' + method);
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore

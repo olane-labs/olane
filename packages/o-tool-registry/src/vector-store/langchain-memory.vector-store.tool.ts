@@ -3,7 +3,11 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { oToolConfig } from '@olane/o-tool';
 import { VectorMemoryStorageTool } from './vector-memory.tool.js';
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
-import { Document, DocumentInput } from '@langchain/core/documents';
+import {
+  Document,
+  DocumentInput,
+  DocumentInterface,
+} from '@langchain/core/documents';
 import { VECTOR_STORE_PARAMS } from './methods/vector-store.methods.js';
 import { oNodeToolConfig } from '@olane/o-node';
 
@@ -19,7 +23,7 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
 
   private embeddingsTool(): EmbeddingsInterface {
     return {
-      embedDocuments: async (documents: string[]) => {
+      embedDocuments: async (documents: string[]): Promise<number[][]> => {
         const response = await this.use(new oAddress('o://embeddings-text'), {
           method: 'embed_documents',
           params: {
@@ -45,11 +49,15 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
     this.vectorStore = new MemoryVectorStore(this.embeddingsTool());
   }
 
-  async _tool_add_documents(request: oRequest): Promise<any> {
+  async _tool_add_documents(request: oRequest): Promise<{ success: boolean }> {
     const { documents }: any = request.params;
-    const docs = documents.map((doc: DocumentInput) => new Document(doc));
-    const result = await this.vectorStore.addDocuments(docs);
-    return result;
+    const formattedDocs = (Array.from(documents) as DocumentInput[]).map(
+      (doc) => new Document(doc),
+    );
+    await this.vectorStore.addDocuments(formattedDocs);
+    return {
+      success: true,
+    };
   }
 
   async _tool_delete_documents(request: oRequest): Promise<any> {
@@ -60,7 +68,7 @@ export class LangchainMemoryVectorStoreTool extends VectorMemoryStorageTool {
     throw new Error('Not implemented');
   }
 
-  async _tool_search_similar(request: oRequest): Promise<any> {
+  async _tool_search_similar(request: oRequest): Promise<DocumentInterface[]> {
     const params = request.params;
     const query = params.query as string;
     const limit = params.limit as number;
