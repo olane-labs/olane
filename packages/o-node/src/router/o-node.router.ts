@@ -53,7 +53,7 @@ export class oNodeRouter extends oToolRouter {
       );
 
       // add the request method to the response
-      return CoreUtils.sendResponse(response, stream);
+      return response;
     }
 
     // next hop is the destination address
@@ -85,9 +85,8 @@ export class oNodeRouter extends oToolRouter {
         address: node.address,
         callerAddress: node.address,
       });
-
-      await nodeConnection.transmit(nextHopRequest);
-      // await stream.send(new TextEncoder().encode(response.toString()));
+      const response = await nodeConnection.transmit(nextHopRequest);
+      return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
