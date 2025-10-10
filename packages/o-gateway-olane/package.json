@@ -1,13 +1,13 @@
 {
-  "name": "@olane/o-leader",
+  "name": "@olane/o-gateway-olane",
   "version": "0.7.2",
   "type": "module",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -16,16 +16,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "aegir test",
-    "test:node": "aegir test -t node",
-    "test:browser": "aegir test -t browser",
+    "test": "echo 'No tests'",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
-    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest",
+    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
@@ -34,7 +32,7 @@
   },
   "author": "oLane Inc.",
   "license": "(MIT OR Apache-2.0)",
-  "description": "oLane leader node used as the root node for a network",
+  "description": "oLane gateway interface",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
@@ -59,8 +57,7 @@
     "@olane/o-core": "^0.7.2",
     "@olane/o-protocol": "^0.7.2",
     "@olane/o-tool": "^0.7.2",
-    "@olane/o-lane": "^0.7.2",
-    "@olane/o-gateway-olane": "^0.7.2"
+    "@olane/o-node": "^0.7.2"
   },
   "dependencies": {
     "debug": "^4.4.1",
