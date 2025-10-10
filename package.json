@@ -4,6 +4,9 @@
   "homepage": "https://olane.com",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "files": [
     "dist/**/*",
     "README.md",
