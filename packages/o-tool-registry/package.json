@@ -65,7 +65,7 @@
     "@olane/o-lane": "^0.7.2"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.5.2",
+    "@huggingface/transformers": "^3.7.5",
     "@langchain/community": "^0.3.47",
     "@langchain/core": "^0.3.61",
     "debug": "^4.4.1",
