@@ -9,6 +9,7 @@ import {
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
+import { oNodeTransport } from './router/o-node.transport.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -76,5 +77,27 @@ export class oNodeTool extends oTool(oServerNode) {
       // add the request method to the response
       await CoreUtils.sendResponse(response, stream);
     });
+  }
+
+  async _tool_identify(): Promise<any> {
+    return {
+      address: this.address.toString(),
+      staticAddress: this.staticAddress?.toString(),
+      transports: this.transports.map((t) => t.toMultiaddr().toString()),
+    };
+  }
+
+  async _tool_child_register(request: oRequest): Promise<any> {
+    this.logger.debug('Child register: ', request.params);
+    const { address, transports }: any = request.params;
+    const childAddress = new oAddress(
+      address,
+      transports.map((t: string) => new oNodeTransport(t)),
+    );
+    this.hierarchyManager.addChild(childAddress);
+    return {
+      message: `Child node registered with parent! ${childAddress.toString()}`,
+      parentTransports: this.parentTransports.map((t) => t.toString()),
+    };
   }
 }

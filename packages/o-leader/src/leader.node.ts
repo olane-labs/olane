@@ -51,7 +51,7 @@ export class oLeaderNode extends oLaneTool {
     await this.validateJoinRequest(request);
 
     await this.use(new oAddress(parent), {
-      method: 'add_child',
+      method: 'child_register',
       params: {
         address: caller,
         transports: transports,

@@ -17,4 +17,5 @@ export interface oCoreConfig {
   methods?: { [key: string]: oMethod };
   cwd?: string;
   systemName?: string;
+  joinToken?: string;
 }
