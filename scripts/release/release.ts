@@ -211,7 +211,7 @@ class ReleaseManager {
       });
 
       console.log(`✅ Created release branch: ${branchName}`);
-      console.log(`✅ Created tag: v${newVersion}`);
+      // console.log(`✅ Created tag: v${newVersion}`);
     } catch (error) {
       console.error('❌ Git operations failed:', error);
       throw error;
