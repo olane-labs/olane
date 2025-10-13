@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -21,7 +21,7 @@
     "test:browser": "aegir test -t browser",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
-    "update:peers": "npm install @olane/o-config@latest @olane/o-protocol@latest --save-peer",
+    "update:peers": "npm install @olane/o-protocol@latest --save-peer",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
