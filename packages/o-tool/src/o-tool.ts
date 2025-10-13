@@ -1,9 +1,11 @@
 import {
   oAddress,
+  oCustomTransport,
   oError,
   oErrorCodes,
   oRequest,
   oRouterRequest,
+  oTransport,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { oToolBase } from './o-tool.base.js';
@@ -102,20 +104,11 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       return this.router.route(request, this);
     }
 
-    async _tool_add_child(request: oRequest): Promise<any> {
+    async _tool_child_register(request: oRequest): Promise<any> {
       throw new oError(
         oErrorCodes.NOT_IMPLEMENTED,
-        'Add child not implemented',
+        'Child register not implemented',
       );
-    }
-
-    async _tool_child_register(request: oRequest): Promise<any> {
-      const { address }: any = request.params;
-      const childAddress = new oAddress(address);
-      this.hierarchyManager.addChild(childAddress);
-      return {
-        message: 'Child node registered with parent!',
-      };
     }
 
     // TODO: implement this

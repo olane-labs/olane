@@ -89,6 +89,7 @@ export class oNode extends oToolBase {
   }
 
   async unregister(): Promise<void> {
+    this.logger.debug('Unregistering node...');
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
@@ -108,6 +109,32 @@ export class oNode extends oToolBase {
     };
 
     await this.use(address, params);
+  }
+
+  async registerParent(): Promise<void> {
+    if (this.type === NodeType.LEADER) {
+      this.logger.debug('Skipping parent registration, node is leader');
+      return;
+    }
+
+    // if no parent transports, register with the parent to get them
+    if (this.config.parent && this.config.parent.transports.length === 0) {
+      this.logger.debug('Registering node with parent...', this.config.parent);
+      const parentRegistration = await this.use(this.config.parent, {
+        method: 'child_register',
+        params: {
+          address: this.address.toString(),
+          transports: this.transports.map((t) => t.toString()),
+          peerId: this.peerId.toString(),
+          _token: this.config.joinToken,
+        },
+      });
+      const { parentTransports } = parentRegistration.result.data as any;
+      // update the parent transports
+      this.config.parent.setTransports(
+        parentTransports.map((t: string) => new oNodeTransport(t)),
+      );
+    }
   }
 
   async register(): Promise<void> {
@@ -132,6 +159,7 @@ export class oNode extends oToolBase {
       this.logger.debug('Registering node with leader...');
     }
 
+    await this.registerParent();
     const address = oAddress.registry();
 
     const params = {
@@ -331,6 +359,7 @@ export class oNode extends oToolBase {
   }
 
   async teardown(): Promise<void> {
+    await this.unregister();
     await super.teardown();
     if (this.p2pNode) {
       await this.p2pNode.stop();

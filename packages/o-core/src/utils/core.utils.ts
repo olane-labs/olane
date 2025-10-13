@@ -20,6 +20,57 @@ export class CoreUtils {
     return peerId;
   }
 
+  static doHealthCheck(address: oAddress, node: any): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error('Health check timed out'));
+      }, 30_000); // 30 seconds
+
+      const response = await node.use(
+        new oAddress(address.toString() + '/ping', address.transports),
+      );
+      clearTimeout(timer);
+      if (response.result.error) {
+        reject(new Error('Health check failed'));
+      } else {
+        resolve(true);
+      }
+    });
+  }
+
+  static async healthCheck(config: {
+    type?: 'leader' | 'parent' | 'child';
+    address?: oAddress;
+    node: any;
+    timeout?: number;
+  }): Promise<boolean> {
+    if (!config.node) {
+      throw new Error('Node is required');
+    }
+
+    const { type, address, node } = config;
+    if (type === 'leader') {
+      return CoreUtils.doHealthCheck(node.leader, node);
+    } else if (type === 'parent') {
+      return CoreUtils.doHealthCheck(node.parent, node);
+    } else if (type === 'child') {
+      const children = node.hierarchyManager.getChildren();
+      return (
+        await Promise.all(
+          children.map((child: oAddress) =>
+            CoreUtils.doHealthCheck(child, node),
+          ),
+        )
+      ).every((result) => result === true);
+    }
+
+    if (address) {
+      return CoreUtils.doHealthCheck(address, node);
+    }
+
+    throw new Error('Address is required');
+  }
+
   static buildResponse(request: oRequest, result: any, error: any): oResponse {
     let success = true;
     if (error) {

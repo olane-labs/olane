@@ -112,6 +112,7 @@ export abstract class oCore extends oObject {
     },
   ): Promise<oResponse> {
     if (!this.isRunning) {
+      this.logger.error('Node is not running', this.state);
       throw new Error('Node is not running');
     }
     if (!address.validate()) {
@@ -260,7 +261,11 @@ export abstract class oCore extends oObject {
   async initialize(): Promise<void> {}
 
   get isRunning(): boolean {
-    return this.state < NodeState.STOPPING;
+    return (
+      this.state === NodeState.RUNNING ||
+      this.state === NodeState.STOPPING ||
+      this.state === NodeState.STARTING
+    );
   }
 
   /**

@@ -26,7 +26,7 @@ export class oNodeConnection extends oConnection {
   async read(source: Stream) {
     const bytes = byteStream(source);
     const output = await bytes.read({
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(120_000), // 2 min timeout
     });
     const outputObj =
       output instanceof Uint8ArrayList ? output.subarray() : output;
