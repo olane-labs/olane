@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-server",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -25,7 +25,7 @@
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
-    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
+    "update:peers": "npm install @olane/o-core@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {

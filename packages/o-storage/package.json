@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-storage",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -23,7 +23,7 @@
     "build": "rm -rf dist && tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
-    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
+    "update:peers": "npm install @olane/o-config@latest @olane/o-core@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-lane@latest @olane/o-node@latest --save-peer",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
     "lint": "eslint src/**/*.ts"
@@ -58,10 +58,10 @@
   "peerDependencies": {
     "@olane/o-config": "^0.7.4",
     "@olane/o-core": "^0.7.4",
-    "@olane/o-protocol": "^0.7.4",
-    "@olane/o-tool": "^0.7.4",
     "@olane/o-lane": "^0.7.4",
-    "@olane/o-node": "^0.7.4"
+    "@olane/o-node": "^0.7.4",
+    "@olane/o-protocol": "^0.7.4",
+    "@olane/o-tool": "^0.7.4"
   },
   "dependencies": {
     "debug": "^4.4.1",
