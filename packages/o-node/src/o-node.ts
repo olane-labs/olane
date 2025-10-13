@@ -89,6 +89,7 @@ export class oNode extends oToolBase {
   }
 
   async unregister(): Promise<void> {
+    this.logger.debug('Unregistering node...');
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
@@ -358,6 +359,7 @@ export class oNode extends oToolBase {
   }
 
   async teardown(): Promise<void> {
+    await this.unregister();
     await super.teardown();
     if (this.p2pNode) {
       await this.p2pNode.stop();

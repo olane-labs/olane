@@ -7,6 +7,7 @@ export interface oRegistrationParams extends RequestParams {
   address: string;
   protocols: string[];
   ttl?: number;
+  registeredAt?: number;
 }
 
 export interface oRegisterRequest extends oRequest {

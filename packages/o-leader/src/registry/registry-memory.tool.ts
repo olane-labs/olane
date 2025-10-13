@@ -13,7 +13,10 @@ export class RegistryMemoryTool extends RegistryTool {
       params?.protocols?.length,
     );
     // TODO: Implement TTL
-    this.registry.set(params.peerId, params);
+    this.registry.set(params.peerId, {
+      ...params,
+      registeredAt: params.registeredAt || Date.now(),
+    });
     if (params.protocols) {
       params.protocols.forEach((protocol) => {
         this.protocolMapping.set(protocol, [
@@ -58,7 +61,10 @@ export class RegistryMemoryTool extends RegistryTool {
         }),
       );
     }
-    return result;
+
+    return result.sort(
+      (a, b) => (Number(b.registeredAt) || 0) - (Number(a.registeredAt) || 0),
+    );
   }
 
   async _tool_remove(request: oRequest): Promise<any> {
