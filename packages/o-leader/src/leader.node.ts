@@ -31,6 +31,9 @@ export class oLeaderNode extends oLaneTool {
       name: 'registry',
       parent: this.address,
       leader: this.address,
+      network: {
+        listeners: [],
+      },
     });
     await registryTool.start();
     this.addChildNode(registryTool);
