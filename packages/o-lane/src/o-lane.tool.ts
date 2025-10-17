@@ -66,10 +66,47 @@ export class oLaneTool extends oNodeTool {
       result: response?.result,
       error: response?.error,
       cycles: pc.sequence.length,
+      cid: pc.cid?.toString(),
       sequence: pc.sequence.map((s: oCapabilityResult) => {
         return s.result;
       }),
     };
+  }
+
+  /**
+   * Replay a stored lane from storage by CID
+   * This restores network state from a previously executed lane
+   * @param request - Request containing the CID of the lane to replay
+   * @returns The result of the replayed lane
+   */
+  async _tool_replay(request: oRequest): Promise<any> {
+    this.logger.debug('Lane replay called: ', request.params);
+    const { cid } = request.params;
+
+    if (!cid || typeof cid !== 'string') {
+      throw new Error('CID parameter is required and must be a string');
+    }
+
+    // Create a lane instance for replay
+    const lane = await this.manager.createLane({
+      intent: new oIntent({ intent: 'replay' }),
+      currentNode: this,
+      caller: this.address,
+    });
+
+    try {
+      const response = await lane.replay(cid);
+      this.logger.debug('Lane replay response: ', response);
+      return {
+        result: response?.result,
+        error: response?.error,
+        cycles: lane.sequence.length,
+        cid: cid,
+      };
+    } catch (error) {
+      this.logger.error('Lane replay failed: ', error);
+      throw error;
+    }
   }
 
   async teardown(): Promise<void> {

@@ -137,4 +137,58 @@ export class ConfigManager {
       await fs.remove(osInstancePath);
     }
   }
+
+  /**
+   * Add a lane CID to the startup lanes list for an OS instance
+   * @param name - The name of the OS instance
+   * @param cid - The Content ID of the lane to add
+   */
+  static async addLaneToCID(name: string, cid: string): Promise<void> {
+    const config = await this.getOSConfig(name);
+    if (!config) {
+      throw new Error(`OS instance not found: ${name}`);
+    }
+
+    // Initialize lanes array if it doesn't exist
+    if (!config.oNetworkConfig) {
+      config.oNetworkConfig = {};
+    }
+    if (!config.oNetworkConfig.lanes) {
+      config.oNetworkConfig.lanes = [];
+    }
+
+    // Add the CID if it's not already in the list
+    if (!config.oNetworkConfig.lanes.includes(cid)) {
+      config.oNetworkConfig.lanes.push(cid);
+      await this.saveOSConfig(config);
+    }
+  }
+
+  /**
+   * Get the list of startup lane CIDs for an OS instance
+   * @param name - The name of the OS instance
+   * @returns Array of lane CIDs
+   */
+  static async getLanes(name: string): Promise<string[]> {
+    const config = await this.getOSConfig(name);
+    return config?.oNetworkConfig?.lanes || [];
+  }
+
+  /**
+   * Remove a lane CID from the startup lanes list
+   * @param name - The name of the OS instance
+   * @param cid - The Content ID of the lane to remove
+   */
+  static async removeLane(name: string, cid: string): Promise<void> {
+    const config = await this.getOSConfig(name);
+    if (!config || !config.oNetworkConfig?.lanes) {
+      return;
+    }
+
+    const index = config.oNetworkConfig.lanes.indexOf(cid);
+    if (index > -1) {
+      config.oNetworkConfig.lanes.splice(index, 1);
+      await this.saveOSConfig(config);
+    }
+  }
 }

@@ -48,6 +48,11 @@ export class oCapabilityConfigure extends oCapabilityIntelligence {
   }
 
   async run(): Promise<oCapabilityResult> {
+    // Check if we're in replay mode
+    if (this.config.isReplay) {
+      this.logger.debug('Configure capability is being replayed - re-executing to restore state');
+    }
+
     const handshake = await this.handshake();
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');

@@ -33,6 +33,11 @@ export class oCapabilityTask extends oCapability {
       // do MCP handshake to get the method + parameters + dependencies
       this.logger.debug('Running task: ', this.config);
 
+      // Check if we're in replay mode
+      if (this.config.isReplay) {
+        this.logger.debug('Task is being replayed - re-executing to restore state');
+      }
+
       const { task } = this.config.params;
       this.logger.debug('Task to do: ', task);
       if (!task || !task.address) {

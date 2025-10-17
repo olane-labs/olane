@@ -21,4 +21,7 @@ export interface oLaneConfig {
   parentLaneId?: string;
 
   maxCycles?: number;
+
+  // Mark this lane as one that should be persisted to config for replay on startup
+  persistToConfig?: boolean;
 }
