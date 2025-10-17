@@ -7,6 +7,7 @@ import {
 } from '@olane/o-core';
 import { OlaneOSSystemStatus } from '../o-olane-os/enum/o-os.status-enum.js';
 import { OlaneOSConfig } from '../o-olane-os/index.js';
+import { oNodeAddress } from '@olane/o-node';
 
 export interface OlaneOSInstanceConfig {
   name: string;
@@ -20,6 +21,7 @@ export interface OlaneOSInstanceConfig {
   peerId?: string;
   transports?: string[];
   oNetworkConfig?: OlaneOSConfig;
+  remoteLeaderAddress?: oNodeAddress;
 }
 
 export interface CLIConfig {

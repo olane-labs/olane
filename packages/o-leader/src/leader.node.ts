@@ -1,13 +1,7 @@
-import {
-  NodeType,
-  oAddress,
-  oRequest,
-  oResponse,
-  RestrictedAddresses,
-} from '@olane/o-core';
+import { NodeType, oAddress, oRequest } from '@olane/o-core';
 import { START_METHOD } from './methods/start.method.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig, oSearchResolver } from '@olane/o-node';
+import { oNodeAddress, oNodeToolConfig, oSearchResolver } from '@olane/o-node';
 import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oGatewayResolver } from '@olane/o-gateway-olane';
 
