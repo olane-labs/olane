@@ -6,8 +6,6 @@ import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oGatewayResolver } from '@olane/o-gateway-olane';
 
 export class oLeaderNode extends oLaneTool {
-  private laneAddHandler?: (cid: string) => Promise<void>;
-
   constructor(config: oNodeToolConfig) {
     super({
       ...config,
@@ -17,14 +15,6 @@ export class oLeaderNode extends oLaneTool {
         start: START_METHOD,
       },
     });
-  }
-
-  /**
-   * Set a handler to be called when a lane should be added to startup config
-   * This allows the OS manager to handle persistence without circular dependencies
-   */
-  public setLaneAddHandler(handler: (cid: string) => Promise<void>): void {
-    this.laneAddHandler = handler;
   }
 
   async initialize(): Promise<void> {
@@ -77,39 +67,6 @@ export class oLeaderNode extends oLaneTool {
     if (!this.config.systemName) {
       this.logger.warn('No network name provided, cannot update config');
       return;
-    }
-  }
-
-  /**
-   * Add a lane CID to the startup lanes configuration
-   * This lane will be replayed on next startup to restore network state
-   */
-  async _tool_add_startup_lane(request: oRequest): Promise<any> {
-    const { cid } = request.params;
-    this.logger.debug('Adding lane to startup config: ' + cid);
-
-    if (!this.laneAddHandler) {
-      this.logger.warn('No lane add handler configured, cannot persist lane');
-      return {
-        success: false,
-        message: 'Lane persistence handler not configured',
-      };
-    }
-
-    try {
-      await this.laneAddHandler(cid as string);
-      this.logger.info('Lane CID added to startup config: ' + cid);
-      return {
-        success: true,
-        message: 'Lane added to startup configuration',
-        cid: cid,
-      };
-    } catch (error) {
-      this.logger.error('Failed to add lane to startup config: ', error);
-      return {
-        success: false,
-        message: `Failed to add lane: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      };
     }
   }
 
