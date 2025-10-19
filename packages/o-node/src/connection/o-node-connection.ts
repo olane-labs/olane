@@ -47,6 +47,7 @@ export class oNodeConnection extends oConnection {
         this.nextHopAddress.protocol,
         {
           maxOutboundStreams: Infinity,
+          runOnLimitedConnection: true, // TODO: should this be configurable?
         },
       );
 

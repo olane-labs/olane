@@ -8,4 +8,5 @@ export interface oCapabilityConfig {
   laneConfig: oLaneConfig;
   history: string;
   params?: any;
+  isReplay?: boolean;
 }

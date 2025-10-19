@@ -89,7 +89,7 @@ export class oLane extends oObject {
     return cid;
   }
 
-  async store() {
+  async store(): Promise<CID> {
     this.logger.debug('Storing plan...');
     const cid = await this.toCID();
 
@@ -98,10 +98,11 @@ export class oLane extends oObject {
       value: JSON.stringify(this.toJSON()),
     };
     this.logger.debug('Storing plan params: ', params);
-    // await this.node.use(oAddress.lane(), {
-    //   method: 'put',
-    //   params: params,
-    // });
+    await this.node.use(oAddress.lane(), {
+      method: 'put',
+      params: params,
+    });
+    return cid;
   }
 
   get agentHistory() {
@@ -232,8 +233,24 @@ export class oLane extends oObject {
     this.logger.debug('Postflight...');
     this.status = oLaneStatus.POSTFLIGHT;
     try {
-      await this.store();
-      this.logger.debug('Saving plan...', response);
+      this.cid = await this.store();
+      this.logger.debug('Saving plan with CID: ', this.cid.toString(), response);
+
+      // If this lane is marked for persistence to config, store it
+      if (this.config.persistToConfig && this.cid) {
+        this.logger.debug('Lane marked for persistence, saving to config...');
+        try {
+          await this.node.use(new oAddress('o://leader'), {
+            method: 'add_startup_lane',
+            params: {
+              cid: this.cid.toString(),
+            },
+          });
+          this.logger.debug('Lane CID added to startup config');
+        } catch (error) {
+          this.logger.error('Failed to add lane to startup config: ', error);
+        }
+      }
     } catch (error) {
       this.logger.error('Error in postflight: ', error);
     }
@@ -243,6 +260,98 @@ export class oLane extends oObject {
   cancel() {
     this.logger.debug('Cancelling lane...');
     this.status = oLaneStatus.CANCELLED;
+  }
+
+  /**
+   * Replay a stored lane from storage by CID
+   * This method loads a lane's execution sequence and replays it to restore network state
+   */
+  async replay(cid: string): Promise<oCapabilityResult | undefined> {
+    this.logger.debug('Replaying lane from CID: ', cid);
+    this.status = oLaneStatus.RUNNING;
+
+    try {
+      // Load the lane data from storage
+      const laneData = await this.node.use(oAddress.lane(), {
+        method: 'get',
+        params: { key: cid },
+      });
+
+      if (!laneData || !laneData.result) {
+        throw new Error(`Lane not found in storage for CID: ${cid}`);
+      }
+
+      const storedLane = typeof laneData.result === 'string'
+        ? JSON.parse(laneData.result)
+        : laneData.result;
+      this.logger.debug('Loaded lane data: ', storedLane);
+
+      // Replay the sequence
+      if (!storedLane.sequence || !Array.isArray(storedLane.sequence)) {
+        throw new Error('Invalid lane data: missing or invalid sequence');
+      }
+
+      // Iterate through the stored sequence and replay capabilities
+      for (const sequenceItem of storedLane.sequence) {
+        const capabilityType = sequenceItem.type;
+
+        // Determine if this capability should be replayed
+        if (this.shouldReplayCapability(capabilityType)) {
+          this.logger.debug(`Replaying capability: ${capabilityType}`);
+
+          // Create a capability result with replay flag
+          const replayStep = new oCapabilityResult({
+            type: capabilityType,
+            config: {
+              ...sequenceItem.config,
+              isReplay: true,
+              node: this.node,
+              history: this.agentHistory,
+            },
+            result: sequenceItem.result,
+            error: sequenceItem.error,
+          });
+
+          // Execute the capability in replay mode
+          const result = await this.doCapability(replayStep);
+          this.addSequence(result);
+
+          // If the capability is STOP, end replay
+          if (result.type === oCapabilityType.STOP) {
+            this.result = result;
+            break;
+          }
+        } else {
+          this.logger.debug(
+            `Skipping capability (using cached result): ${capabilityType}`,
+          );
+          // Add the cached result to sequence without re-executing
+          this.addSequence(sequenceItem);
+        }
+      }
+
+      this.status = oLaneStatus.COMPLETED;
+      this.logger.debug('Lane replay completed successfully');
+      return this.result;
+    } catch (error) {
+      this.logger.error('Error during lane replay: ', error);
+      this.status = oLaneStatus.FAILED;
+      throw error;
+    }
+  }
+
+  /**
+   * Determine if a capability should be re-executed during replay
+   * Task and Configure capabilities are re-executed as they modify network state
+   * Other capabilities use cached results
+   */
+  private shouldReplayCapability(capabilityType: oCapabilityType): boolean {
+    const replayTypes = [
+      oCapabilityType.TASK,
+      oCapabilityType.CONFIGURE,
+      oCapabilityType.MULTIPLE_STEP,
+    ];
+    return replayTypes.includes(capabilityType);
   }
 
   get node() {

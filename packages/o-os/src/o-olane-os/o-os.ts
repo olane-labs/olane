@@ -127,6 +127,15 @@ export class OlaneOS extends oObject {
         if (!this.rootLeader) {
           this.rootLeader = leaderNode;
         }
+
+        // Set up the lane add handler to allow the leader to persist lanes
+        // This avoids circular dependency between o-leader and o-os
+        if (osInstanceName) {
+          leaderNode.setLaneAddHandler(async (cid: string) => {
+            await ConfigManager.addLaneToCID(osInstanceName, cid);
+          });
+        }
+
         await leaderNode.start();
         await initCommonTools(leaderNode);
         this.leaders.push(leaderNode);
@@ -157,13 +166,30 @@ export class OlaneOS extends oObject {
   }
 
   async runSavedPlans() {
-    const plans = Array.from(new Set(this.config?.lanes || []));
-    for (const plan of plans) {
-      this.logger.debug('Running saved plan: ' + plan);
-      await this.use(new oAddress(plan), {
-        method: 'use',
-      });
+    const laneCIDs = Array.from(new Set(this.config?.lanes || []));
+    if (laneCIDs.length === 0) {
+      this.logger.debug('No saved lanes to replay');
+      return;
     }
+
+    this.logger.info(`Replaying ${laneCIDs.length} saved lane(s) to restore network state...`);
+
+    for (const cid of laneCIDs) {
+      this.logger.debug('Replaying lane with CID: ' + cid);
+      try {
+        // Use the entry node's lane tool to replay the lane
+        const result = await this.use(this.entryNode().address, {
+          method: 'replay',
+          params: { cid },
+        });
+        this.logger.info('Lane replay completed successfully: ' + cid, result);
+      } catch (error) {
+        this.logger.error('Failed to replay lane: ' + cid, error);
+        // Continue with other lanes even if one fails
+      }
+    }
+
+    this.logger.info('All saved lanes replayed');
   }
 
   async use(oAddress: oAddress, params: any) {
