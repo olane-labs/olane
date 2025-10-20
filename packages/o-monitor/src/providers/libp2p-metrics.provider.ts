@@ -1,0 +1,251 @@
+import { oAddress, oRequest } from '@olane/o-core';
+import { oNodeToolConfig, oNodeTool } from '@olane/o-node';
+import type { Libp2p } from '@olane/o-config';
+
+export interface LibP2PMetricsProviderConfig extends oNodeToolConfig {
+  libp2pNode?: Libp2p;
+}
+
+/**
+ * LibP2P Metrics Provider - Extracts metrics from libp2p node
+ * Child node: o://monitor/libp2p
+ */
+export class LibP2PMetricsProvider extends oNodeTool {
+  private libp2pNode?: Libp2p;
+
+  constructor(config: LibP2PMetricsProviderConfig) {
+    super({
+      ...config,
+      address: new oAddress('o://monitor/libp2p'),
+      name: 'libp2p-metrics-provider',
+      description: 'Extracts and exposes libp2p network metrics',
+    });
+    this.libp2pNode = config.libp2pNode;
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+
+    // Use parent's libp2p node if not provided
+    if (!this.libp2pNode && this.p2pNode) {
+      this.libp2pNode = this.p2pNode;
+    }
+  }
+
+  /**
+   * Get peer information from libp2p peer store
+   */
+  async _tool_get_peer_info(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    try {
+      const peers = await this.libp2pNode.peerStore.all();
+
+      const peerInfo = peers.map((peer) => ({
+        peerId: peer.id.toString(),
+        addresses: peer.addresses.map((addr) => ({
+          multiaddr: addr.multiaddr.toString(),
+          isCertified: addr.isCertified,
+        })),
+        protocols: peer.protocols,
+        metadata: Object.fromEntries(peer.metadata.entries()),
+        tags: Object.fromEntries(peer.tags.entries()),
+      }));
+
+      return {
+        timestamp: Date.now(),
+        peerCount: peers.length,
+        peers: peerInfo,
+        selfPeerId: this.libp2pNode.peerId.toString(),
+        selfMultiaddrs: this.libp2pNode
+          .getMultiaddrs()
+          .map((ma) => ma.toString()),
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get peer info: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get DHT (Distributed Hash Table) status
+   */
+  async _tool_get_dht_status(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    try {
+      // Get DHT service if available
+      const services = this.libp2pNode.services as any;
+      const dht = services?.dht;
+
+      if (!dht) {
+        return {
+          enabled: false,
+          message: 'DHT service not configured',
+        };
+      }
+
+      // Get routing table info
+      const routingTable = dht?.routingTable;
+      const kBuckets = routingTable?.kb || null;
+
+      return {
+        timestamp: Date.now(),
+        enabled: true,
+        mode: dht.clientMode ? 'client' : 'server',
+        routingTableSize: kBuckets ? kBuckets.length : 0,
+        // Add more DHT-specific metrics as needed
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get DHT status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get transport and connection statistics
+   */
+  async _tool_get_transport_stats(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    try {
+      const connections = this.libp2pNode.getConnections();
+      const dialQueue = (this.libp2pNode.components as any).connectionManager?.dialQueue;
+
+      const connectionStats = connections.map((conn) => ({
+        remotePeer: conn.remotePeer.toString(),
+        remoteAddr: conn.remoteAddr.toString(),
+        status: conn.status,
+        direction: conn.direction,
+        timeline: {
+          open: (conn as any).timeline?.open,
+          upgraded: (conn as any).timeline?.upgraded,
+        },
+        streams: (conn as any).streams?.map((stream: any) => ({
+          id: stream.id,
+          protocol: stream.protocol,
+          direction: stream.direction,
+          timeline: stream.timeline,
+        })) || [],
+      }));
+
+      const protocols = this.libp2pNode.getProtocols();
+
+      return {
+        timestamp: Date.now(),
+        connectionCount: connections.length,
+        connections: connectionStats,
+        protocols: Array.from(protocols),
+        multiaddrs: this.libp2pNode.getMultiaddrs().map((ma) => ma.toString()),
+        status: this.libp2pNode.status,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get transport stats: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get connection manager status
+   */
+  async _tool_get_connection_manager_status(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    try {
+      const connections = this.libp2pNode.getConnections();
+
+      // Group connections by peer
+      const peerConnections = new Map<string, number>();
+      for (const conn of connections) {
+        const peerId = conn.remotePeer.toString();
+        peerConnections.set(peerId, (peerConnections.get(peerId) || 0) + 1);
+      }
+
+      // Connection directions
+      const inbound = connections.filter((c) => c.direction === 'inbound').length;
+      const outbound = connections.filter((c) => c.direction === 'outbound').length;
+
+      return {
+        timestamp: Date.now(),
+        totalConnections: connections.length,
+        uniquePeers: peerConnections.size,
+        inboundConnections: inbound,
+        outboundConnections: outbound,
+        connectionsPerPeer: Object.fromEntries(peerConnections),
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get connection manager status: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get all libp2p metrics in one call
+   */
+  async _tool_get_all_libp2p_metrics(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    try {
+      const [peerInfo, dhtStatus, transportStats, connectionManagerStatus] =
+        await Promise.all([
+          this._tool_get_peer_info(request),
+          this._tool_get_dht_status(request),
+          this._tool_get_transport_stats(request),
+          this._tool_get_connection_manager_status(request),
+        ]);
+
+      return {
+        timestamp: Date.now(),
+        peerInfo,
+        dhtStatus,
+        transportStats,
+        connectionManagerStatus,
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to get all libp2p metrics: ${error.message}`);
+    }
+  }
+
+  /**
+   * Ping a specific peer
+   */
+  async _tool_ping_peer(request: oRequest): Promise<any> {
+    if (!this.libp2pNode) {
+      throw new Error('libp2p node not available');
+    }
+
+    const { peerId } = request.params;
+
+    if (!peerId) {
+      throw new Error('peerId is required');
+    }
+
+    try {
+      const { createEd25519PeerId } = await import('@libp2p/peer-id-factory');
+      const ping = (this.libp2pNode.services as any).ping;
+
+      if (!ping) {
+        throw new Error('Ping service not configured');
+      }
+
+      const startTime = Date.now();
+      const latency = await ping.ping(peerId);
+      const endTime = Date.now();
+
+      return {
+        peerId,
+        latency,
+        responseTime: endTime - startTime,
+        timestamp: Date.now(),
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to ping peer: ${error.message}`);
+    }
+  }
+}

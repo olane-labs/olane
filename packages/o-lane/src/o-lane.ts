@@ -234,19 +234,34 @@ export class oLane extends oObject {
     this.status = oLaneStatus.POSTFLIGHT;
     try {
       this.cid = await this.store();
-      this.logger.debug('Saving plan with CID: ', this.cid.toString(), response);
+      this.logger.debug(
+        'Saving plan with CID: ',
+        this.cid.toString(),
+        response,
+      );
 
-      // If this lane is marked for persistence to config, store it
+      // If this lane is marked for persistence to config, store it directly in os-config storage
       if (this.config.persistToConfig && this.cid) {
         this.logger.debug('Lane marked for persistence, saving to config...');
         try {
-          await this.node.use(new oAddress('o://leader'), {
-            method: 'add_startup_lane',
-            params: {
-              cid: this.cid.toString(),
-            },
-          });
-          this.logger.debug('Lane CID added to startup config');
+          // Get the OS instance name from the node's system name
+          const systemName = (this.node.config as any).systemName;
+          if (!systemName) {
+            this.logger.warn(
+              'No systemName in node config, cannot persist lane to startup config',
+            );
+          } else {
+            await this.node.use(new oAddress('o://os-config'), {
+              method: 'add_lane_to_config',
+              params: {
+                osName: systemName,
+                cid: this.cid.toString(),
+              },
+            });
+            this.logger.debug(
+              'Lane CID added to startup config via o://os-config',
+            );
+          }
         } catch (error) {
           this.logger.error('Failed to add lane to startup config: ', error);
         }
@@ -281,9 +296,10 @@ export class oLane extends oObject {
         throw new Error(`Lane not found in storage for CID: ${cid}`);
       }
 
-      const storedLane = typeof laneData.result === 'string'
-        ? JSON.parse(laneData.result)
-        : laneData.result;
+      const storedLane =
+        typeof laneData.result === 'string'
+          ? JSON.parse(laneData.result)
+          : laneData.result;
       this.logger.debug('Loaded lane data: ', storedLane);
 
       // Replay the sequence

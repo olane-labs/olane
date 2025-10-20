@@ -128,14 +128,6 @@ export class OlaneOS extends oObject {
           this.rootLeader = leaderNode;
         }
 
-        // Set up the lane add handler to allow the leader to persist lanes
-        // This avoids circular dependency between o-leader and o-os
-        if (osInstanceName) {
-          leaderNode.setLaneAddHandler(async (cid: string) => {
-            await ConfigManager.addLaneToCID(osInstanceName, cid);
-          });
-        }
-
         await leaderNode.start();
         await initCommonTools(leaderNode);
         this.leaders.push(leaderNode);
@@ -198,7 +190,8 @@ export class OlaneOS extends oObject {
       throw new Error('Entry node not found');
     }
     this.logger.debug('Using address: ' + oAddress.toString());
-    return entryNode.use(oAddress, params);
+    const result = await entryNode.use(oAddress, params);
+    return result;
   }
 
   async start(): Promise<{ peerId: string; transports: oTransport[] }> {
@@ -214,6 +207,7 @@ export class OlaneOS extends oObject {
     this.logger.debug('Leaders started...');
     await this.startNodes(NodeType.NODE);
     this.logger.debug('Nodes started...');
+
     await this.runSavedPlans();
     this.logger.debug('Saved plans run...');
     this.logger.debug('OS instance started...');
