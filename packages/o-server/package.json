@@ -37,7 +37,7 @@
   "description": "HTTP server entrypoint for Olane OS nodes - exposes node's 'use' functionality via REST API",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "^9.38.0",
     "@tsconfig/node20": "^20.1.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
