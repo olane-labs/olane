@@ -83,6 +83,19 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       };
     }
 
+    async _tool_get_metrics(request: oRequest): Promise<ToolResult> {
+      return {
+        address: this.address.toString(),
+        successCount: this.metrics.successCount,
+        errorCount: this.metrics.errorCount,
+        activeRequests: this.requestManager.activeRequests.length,
+        state: this.state,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+        children: this.hierarchyManager.getChildren().map((c) => c.toString()),
+      };
+    }
+
     async _tool_route(
       request: oRouterRequest & { stream?: Stream },
     ): Promise<any> {

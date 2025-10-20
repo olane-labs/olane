@@ -27,6 +27,7 @@ export abstract class oCore extends oObject {
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
   public router!: oRouter;
+  private heartbeatInterval?: NodeJS.Timeout;
 
   constructor(readonly config: oCoreConfig) {
     super(
@@ -311,6 +312,11 @@ export abstract class oCore extends oObject {
         this.logger.error('Failed to register node', error);
       });
       this.state = NodeState.RUNNING;
+
+      // Start optional heartbeat to monitor if enabled
+      if (process.env.MONITOR_ENABLED === 'true' && process.env.MONITOR_ADDRESS) {
+        this.startHeartbeat();
+      }
     } catch (error) {
       this.logger.error('Failed to start node', error);
       this.errors.push(error as Error);
@@ -357,6 +363,13 @@ export abstract class oCore extends oObject {
       return;
     }
     this.state = NodeState.STOPPING;
+
+    // Stop heartbeat if running
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
+
     try {
       await this.teardown();
       this.state = NodeState.STOPPED;
@@ -390,6 +403,38 @@ export abstract class oCore extends oObject {
 
   get dependencies(): oDependency[] {
     return this.config.dependencies?.map((d) => new oDependency(d)) || [];
+  }
+
+  /**
+   * Start sending periodic heartbeats to the monitor node
+   * This is optional and only runs if MONITOR_ENABLED=true and MONITOR_ADDRESS is set
+   */
+  private startHeartbeat(): void {
+    const interval = parseInt(process.env.MONITOR_HEARTBEAT_INTERVAL || '30000', 10);
+    const monitorAddress = new oAddress(process.env.MONITOR_ADDRESS || 'o://monitor');
+
+    this.logger.debug(`Starting heartbeat to ${monitorAddress.toString()} every ${interval}ms`);
+
+    this.heartbeatInterval = setInterval(async () => {
+      try {
+        await this.use(monitorAddress, {
+          method: 'record_heartbeat',
+          params: {
+            address: this.address.toString(),
+            timestamp: Date.now(),
+            metrics: {
+              successCount: this.metrics.successCount,
+              errorCount: this.metrics.errorCount,
+              activeRequests: this.requestManager.activeRequests.length,
+              state: this.state,
+            },
+          },
+        });
+      } catch (error) {
+        // Monitor unavailable, fail silently
+        this.logger.debug('Heartbeat failed (monitor unavailable):', error);
+      }
+    }, interval);
   }
 
   get methods(): { [key: string]: oMethod } {
