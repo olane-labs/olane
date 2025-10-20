@@ -1,6 +1,7 @@
 import { StorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
+import { oApprovalTool } from '@olane/o-approval';
 import { oLaneTool } from '@olane/o-lane';
 
 export const initCommonTools = async (oNode: oLaneTool) => {
@@ -20,6 +21,16 @@ export const initCommonTools = async (oNode: oLaneTool) => {
     new SearchTool({
       name: 'search',
       ...params,
+    }),
+    new oApprovalTool({
+      name: 'approval',
+      ...params,
+      mode: 'allow', // Default mode
+      preferences: {
+        whitelist: [],
+        blacklist: [],
+        timeout: 180000, // 3 minutes
+      },
     }),
   ];
   await Promise.all(

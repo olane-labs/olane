@@ -1,13 +1,13 @@
 {
-  "name": "@olane/o-tools-common",
+  "name": "@olane/o-approval",
   "version": "0.7.6",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "files": [
@@ -16,14 +16,15 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo 'No tests'",
-    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
     "build": "tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
-    "update:peers": "npm install @olane/o-config@latest @olane/o-core@latest @olane/o-leader@latest @olane/o-protocol@latest @olane/o-storage@latest @olane/o-tool@latest @olane/o-lane@latest --save-peer",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "update:lib": "npm install @olane/o-core@latest",
+    "update:peers": "npm install @olane/o-config@latest @olane/o-core@latest @olane/o-protocol@latest @olane/o-tool@latest @olane/o-lane@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
@@ -32,7 +33,7 @@
   },
   "author": "oLane Inc.",
   "license": "(MIT OR Apache-2.0)",
-  "description": "oLane common tools for most tool nodes",
+  "description": "Olane approval service for human-in-the-loop AI action approval",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
@@ -54,13 +55,10 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-approval": "^0.7.5",
     "@olane/o-config": "^0.7.5",
     "@olane/o-core": "^0.7.5",
     "@olane/o-lane": "^0.7.5",
-    "@olane/o-leader": "^0.7.5",
     "@olane/o-protocol": "^0.7.5",
-    "@olane/o-storage": "^0.7.5",
     "@olane/o-tool": "^0.7.5"
   },
   "dependencies": {
