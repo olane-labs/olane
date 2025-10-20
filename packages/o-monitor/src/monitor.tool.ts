@@ -49,8 +49,10 @@ export class MonitorTool extends oLaneTool {
     });
 
     this.metricsStore = new MetricsStore();
-    this.httpPort = config.httpPort || parseInt(process.env.MONITOR_HTTP_PORT || '9090', 10);
-    this.enableHTTP = config.enableHTTP ?? (process.env.MONITOR_HTTP_ENABLED !== 'false');
+    this.httpPort =
+      config.httpPort || parseInt(process.env.MONITOR_HTTP_PORT || '9090', 10);
+    this.enableHTTP =
+      config.enableHTTP ?? process.env.MONITOR_HTTP_ENABLED !== 'false';
   }
 
   async initialize(): Promise<void> {
@@ -122,7 +124,6 @@ export class MonitorTool extends oLaneTool {
     this.libp2pMetricsProvider = new LibP2PMetricsProvider({
       parent: this.address,
       leader: this.leader,
-      libp2pNode: this.p2pNode,
     });
     await this.libp2pMetricsProvider.start();
     this.addChildNode(this.libp2pMetricsProvider);
@@ -193,52 +194,40 @@ export class MonitorTool extends oLaneTool {
    * Record a heartbeat from a node
    */
   async _tool_record_heartbeat(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/heartbeat'),
-      {
-        method: 'record_heartbeat',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://heartbeat'), {
+      method: 'record_heartbeat',
+      params: request.params,
+    });
   }
 
   /**
    * Get service status (used by registry for fast health checks)
    */
   async _tool_get_service_status(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/heartbeat'),
-      {
-        method: 'get_service_status',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://heartbeat'), {
+      method: 'get_service_status',
+      params: request.params,
+    });
   }
 
   /**
    * Check if a service is alive
    */
   async _tool_is_service_alive(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/heartbeat'),
-      {
-        method: 'is_service_alive',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://heartbeat'), {
+      method: 'is_service_alive',
+      params: request.params,
+    });
   }
 
   /**
    * Get all stale services
    */
   async _tool_get_stale_services(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/heartbeat'),
-      {
-        method: 'get_stale_services',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://heartbeat'), {
+      method: 'get_stale_services',
+      params: request.params,
+    });
   }
 
   /**
@@ -263,13 +252,10 @@ export class MonitorTool extends oLaneTool {
       : [];
 
     // Delegate to node health provider
-    return this.useChild(
-      new oAddress('o://monitor/health'),
-      {
-        method: 'collect_node_metrics',
-        params: { addresses },
-      },
-    );
+    return this.useChild(new oAddress('o://health'), {
+      method: 'collect_node_metrics',
+      params: { addresses },
+    });
   }
 
   /**
@@ -297,13 +283,10 @@ export class MonitorTool extends oLaneTool {
     // Get libp2p metrics
     let libp2pData = null;
     try {
-      const libp2pMetrics = await this.useChild(
-        new oAddress('o://monitor/libp2p'),
-        {
-          method: 'get_connection_manager_status',
-          params: {},
-        },
-      );
+      const libp2pMetrics = await this.useChild(new oAddress('o://libp2p'), {
+        method: 'get_connection_manager_status',
+        params: {},
+      });
       libp2pData = libp2pMetrics.result;
     } catch (error: any) {
       this.logger.error('Failed to get libp2p data:', error);
@@ -346,65 +329,50 @@ export class MonitorTool extends oLaneTool {
    * Get performance report
    */
   async _tool_get_performance_report(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/health'),
-      {
-        method: 'get_performance_report',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://health'), {
+      method: 'get_performance_report',
+      params: request.params,
+    });
   }
 
   /**
    * Get libp2p peer information
    */
   async _tool_get_peer_info(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/libp2p'),
-      {
-        method: 'get_peer_info',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://libp2p'), {
+      method: 'get_peer_info',
+      params: request.params,
+    });
   }
 
   /**
    * Get libp2p DHT status
    */
   async _tool_get_dht_status(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/libp2p'),
-      {
-        method: 'get_dht_status',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://libp2p'), {
+      method: 'get_dht_status',
+      params: request.params,
+    });
   }
 
   /**
    * Get all libp2p metrics
    */
   async _tool_get_libp2p_metrics(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/libp2p'),
-      {
-        method: 'get_all_libp2p_metrics',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://libp2p'), {
+      method: 'get_all_libp2p_metrics',
+      params: request.params,
+    });
   }
 
   /**
    * Manually trigger polling of all nodes
    */
   async _tool_poll_now(request: oRequest): Promise<any> {
-    return this.useChild(
-      new oAddress('o://monitor/health'),
-      {
-        method: 'poll_now',
-        params: request.params,
-      },
-    );
+    return this.useChild(new oAddress('o://health'), {
+      method: 'poll_now',
+      params: request.params,
+    });
   }
 
   /**

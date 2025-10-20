@@ -131,8 +131,13 @@ export abstract class oCore extends oObject {
       this,
     );
 
+    const sharedTransports = this.address.transports.some((l) =>
+      nextHopAddress.transports.some((t) => t.toString() === l.toString()),
+    );
+
     if (
-      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
+      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress()) &&
+      sharedTransports
     ) {
       return this.useSelf(data);
     }
@@ -213,7 +218,16 @@ export abstract class oCore extends oObject {
       throw new Error('Node is not running');
     }
     if (!childAddress.transports) {
-      this.logger.warn('Child address has no transports, this might break!');
+      const child = this.hierarchyManager.getChild(childAddress);
+      if (!child) {
+        this.logger.warn('Child address has no transports, this might break!');
+      } else {
+        this.logger.debug(
+          'Setting transports for child: ',
+          child.transports.map((t) => t.toString()),
+        );
+        childAddress.setTransports(child?.transports || []);
+      }
     }
     const connection = await this.connect(childAddress, childAddress);
 
@@ -314,7 +328,10 @@ export abstract class oCore extends oObject {
       this.state = NodeState.RUNNING;
 
       // Start optional heartbeat to monitor if enabled
-      if (process.env.MONITOR_ENABLED === 'true' && process.env.MONITOR_ADDRESS) {
+      if (
+        process.env.MONITOR_ENABLED === 'true' &&
+        process.env.MONITOR_ADDRESS
+      ) {
         this.startHeartbeat();
       }
     } catch (error) {
@@ -410,10 +427,17 @@ export abstract class oCore extends oObject {
    * This is optional and only runs if MONITOR_ENABLED=true and MONITOR_ADDRESS is set
    */
   private startHeartbeat(): void {
-    const interval = parseInt(process.env.MONITOR_HEARTBEAT_INTERVAL || '30000', 10);
-    const monitorAddress = new oAddress(process.env.MONITOR_ADDRESS || 'o://monitor');
+    const interval = parseInt(
+      process.env.MONITOR_HEARTBEAT_INTERVAL || '30000',
+      10,
+    );
+    const monitorAddress = new oAddress(
+      process.env.MONITOR_ADDRESS || 'o://monitor',
+    );
 
-    this.logger.debug(`Starting heartbeat to ${monitorAddress.toString()} every ${interval}ms`);
+    this.logger.debug(
+      `Starting heartbeat to ${monitorAddress.toString()} every ${interval}ms`,
+    );
 
     this.heartbeatInterval = setInterval(async () => {
       try {

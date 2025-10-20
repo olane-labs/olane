@@ -2,9 +2,11 @@ import { oAddress, NodeState } from '@olane/o-core';
 import { MonitorTool } from '../src/monitor.tool.js';
 import { MetricsStore } from '../src/utils/metrics-store.js';
 import { expect } from 'chai';
+import { oLeaderNode } from '@olane/o-leader';
 
 describe('o-monitor functionality', () => {
   let monitor: MonitorTool;
+  let leader: oLeaderNode;
 
   before(async () => {
     // Disable HTTP server for tests
@@ -13,6 +15,9 @@ describe('o-monitor functionality', () => {
   });
 
   afterEach(async () => {
+    if (leader && leader.state === NodeState.RUNNING) {
+      await leader.stop();
+    }
     if (monitor && monitor.state === NodeState.RUNNING) {
       await monitor.stop();
     }
@@ -20,7 +25,15 @@ describe('o-monitor functionality', () => {
 
   describe('MonitorTool initialization', () => {
     it('should create and start monitor tool', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -30,33 +43,52 @@ describe('o-monitor functionality', () => {
     });
 
     it('should have child providers', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
 
       await monitor.start();
+      expect(monitor.state).to.equal(NodeState.RUNNING);
 
       const children = monitor.hierarchyManager.getChildren();
       expect(children.length).to.equal(3); // Heartbeat, Health, LibP2P providers
 
       const childAddresses = children.map((c) => c.toString());
-      expect(childAddresses).to.include('o://monitor/heartbeat');
-      expect(childAddresses).to.include('o://monitor/health');
-      expect(childAddresses).to.include('o://monitor/libp2p');
+      console.log(childAddresses);
+      expect(childAddresses).to.include('o://leader/monitor/heartbeat');
+      expect(childAddresses).to.include('o://leader/monitor/health');
+      expect(childAddresses).to.include('o://leader/monitor/libp2p');
     });
   });
 
   describe('Heartbeat functionality', () => {
     it('should record heartbeat', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
 
       await monitor.start();
+      expect(monitor.state).to.equal(NodeState.RUNNING);
 
-      const result = await monitor.use({
+      const result = await monitor.use(new oAddress('o://heartbeat'), {
         method: 'record_heartbeat',
         params: {
           address: 'o://test-node',
@@ -73,31 +105,43 @@ describe('o-monitor functionality', () => {
     });
 
     it('should check service status', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
 
       await monitor.start();
+      expect(monitor.state).to.equal(NodeState.RUNNING);
 
       // Record a heartbeat first
-      await monitor.use({
+      await monitor.use(new oAddress('o://leader/monitor/heartbeat'), {
         method: 'record_heartbeat',
         params: {
-          address: 'o://test-service',
+          address: 'o://leader',
           timestamp: Date.now(),
         },
       });
 
       // Check status
-      const status = await monitor.use({
-        method: 'get_service_status',
-        params: {
-          address: 'o://test-service',
+      const status = await monitor.use(
+        new oAddress('o://leader/monitor/heartbeat'),
+        {
+          method: 'get_service_status',
+          params: {
+            address: 'o://leader',
+          },
         },
-      });
+      );
 
-      expect(status.result.address).to.equal('o://test-service');
+      expect(status.result.address).to.equal('o://leader');
       expect(status.result.isAlive).to.be.true;
       expect(status.result.lastHeartbeat).to.be.a('number');
     });
@@ -180,14 +224,23 @@ describe('o-monitor functionality', () => {
 
   describe('Network monitoring', () => {
     it('should get metrics summary', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
 
       await monitor.start();
+      expect(monitor.state).to.equal(NodeState.RUNNING);
 
-      const summary = await monitor.use({
+      const summary = await monitor.useSelf({
         method: 'get_metrics_summary',
         params: {},
       });
@@ -198,14 +251,23 @@ describe('o-monitor functionality', () => {
     });
 
     it('should get stale services', async () => {
+      leader = new oLeaderNode({
+        leader: null,
+        parent: null,
+      });
+      await leader.start();
+
       monitor = new MonitorTool({
+        leader: leader.address,
+        parent: leader.address,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
 
       await monitor.start();
+      expect(monitor.state).to.equal(NodeState.RUNNING);
 
-      const stale = await monitor.use({
+      const stale = await monitor.useChild(new oAddress('o://health'), {
         method: 'get_stale_services',
         params: {},
       });
