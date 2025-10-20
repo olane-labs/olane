@@ -70,6 +70,40 @@ export class oCapabilityTask extends oCapability {
       //   }
       //   return value;
       // });
+
+      // Request approval before executing the task
+      try {
+        const approvalResponse = await this.node.use(new oAddress('o://approval'), {
+          method: 'request_approval',
+          params: {
+            toolAddress: task.address,
+            method: task.payload?.method,
+            params: params,
+            intent: this.config.intent,
+          },
+        });
+
+        const approved = approvalResponse.result.data?.approved;
+        if (!approved) {
+          const decision = approvalResponse.result.data?.decision || 'denied';
+          this.logger.warn(`Task execution denied by approval system: ${decision}`);
+          throw new oError(
+            oErrorCodes.NOT_AUTHORIZED,
+            `Action denied by approval system: ${decision}`,
+          );
+        }
+
+        this.logger.debug('Task approved, proceeding with execution');
+      } catch (error: any) {
+        // If approval service is not available, log warning and continue
+        // This ensures backward compatibility
+        if (error.message?.includes('No route found')) {
+          this.logger.warn('Approval service not available, proceeding without approval check');
+        } else {
+          throw error;
+        }
+      }
+
       const response = await this.node.use(new oAddress(task.address), {
         method: task.payload?.method,
         params: params,

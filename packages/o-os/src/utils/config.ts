@@ -27,6 +27,7 @@ export interface OlaneOSInstanceConfig {
 
 export interface CLIConfig {
   instancesPath: string;
+  approvalMode?: 'allow' | 'review' | 'auto';
 }
 
 export const CONFIG_FILE_NAME = 'config.json';
@@ -48,6 +49,7 @@ export class ConfigManager {
   static getDefaultConfig(): CLIConfig {
     return {
       instancesPath: ConfigManager.instancesPath,
+      approvalMode: 'allow',
     };
   }
 
