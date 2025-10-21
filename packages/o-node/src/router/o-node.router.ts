@@ -142,7 +142,6 @@ export class oNodeRouter extends oToolRouter {
   }
 
   isInternal(addressWithTransports: oNodeAddress, node: oNode): boolean {
-    this.logger.debug('isInternal', addressWithTransports.toJSON());
     if (
       addressWithTransports.paths.indexOf(oAddress.leader().paths) !== -1 && // if the address has a leader
       addressWithTransports.libp2pTransports?.length > 0

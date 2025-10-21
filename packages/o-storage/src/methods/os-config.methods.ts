@@ -112,4 +112,39 @@ export const OS_CONFIG_METHODS: Record<string, oMethod> = {
       },
     ],
   },
+  update_metadata: {
+    name: 'update_metadata',
+    description: 'Update metadata for an OS instance (e.g., last indexed time)',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'osName',
+        type: 'string',
+        value: 'string',
+        description: 'Name of the OS instance',
+        required: true,
+      },
+      {
+        name: 'metadata',
+        type: 'object',
+        value: 'object',
+        description: 'Metadata object to merge into the config',
+        required: true,
+      },
+    ],
+  },
+  get_metadata: {
+    name: 'get_metadata',
+    description: 'Get metadata for an OS instance',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'osName',
+        type: 'string',
+        value: 'string',
+        description: 'Name of the OS instance',
+        required: true,
+      },
+    ],
+  },
 };
