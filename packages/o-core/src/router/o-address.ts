@@ -62,7 +62,7 @@ export class oAddress extends oObject {
     if (paths.length === 0) {
       return this;
     }
-    return new oAddress(`o://${paths[paths.length - 1]}`);
+    return new oAddress(`o://${paths[paths.length - 1]}`, this.transports);
   }
 
   toRootAddress(): oAddress {

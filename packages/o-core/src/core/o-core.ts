@@ -122,6 +122,7 @@ export abstract class oCore extends oObject {
 
     this.logger.debug('Using address: ', address.toString());
 
+    // check for static match
     if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(data);
     }
@@ -131,13 +132,8 @@ export abstract class oCore extends oObject {
       this,
     );
 
-    const sharedTransports = this.address.transports.some((l) =>
-      nextHopAddress.transports.some((t) => t.toString() === l.toString()),
-    );
-
     if (
-      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress()) &&
-      sharedTransports
+      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
     ) {
       return this.useSelf(data);
     }

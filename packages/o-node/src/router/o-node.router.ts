@@ -35,7 +35,7 @@ export class oNodeRouter extends oToolRouter {
     });
 
     // are we dialing self?
-    if (node.address.toString() === address.toString()) {
+    if (node.address.equals(address)) {
       const { payload } = request.params;
       const params = payload.params as RequestParams;
       nextHopRequest = new oRequest({
@@ -103,7 +103,11 @@ export class oNodeRouter extends oToolRouter {
     const isInternal = this.isInternal(address, node);
     if (!isInternal) {
       // external address, so we need to route
-      this.logger.debug('Address is external, routing...', address);
+      this.logger.debug(
+        'Address is external, routing...',
+        address.toString(),
+        address.libp2pTransports.map((t) => t.toString()),
+      );
 
       // route to leader of external OS
       return {
@@ -120,7 +124,6 @@ export class oNodeRouter extends oToolRouter {
   async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
     const externalRoute = this.handleExternalAddress(address, node);
     if (externalRoute) {
-      this.logger.debug('External route found', externalRoute);
       return externalRoute;
     }
 

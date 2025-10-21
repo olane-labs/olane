@@ -47,6 +47,18 @@ import { oNodeTransport } from '../o-node.transport.js';
  *       result => result.status === 'active'
  *     );
  *   }
+ *
+ *   // Implement custom routing logic with transport setup
+ *   protected determineNextHop(
+ *     node: oCore,
+ *     resolvedTargetAddress: oAddress,
+ *     searchResult: any
+ *   ): oAddress {
+ *     // Always route directly to target, bypassing hierarchy
+ *     const targetTransports = this.mapTransports(searchResult);
+ *     resolvedTargetAddress.setTransports(targetTransports);
+ *     return resolvedTargetAddress;
+ *   }
  * }
  * ```
  *
@@ -60,6 +72,8 @@ import { oNodeTransport } from '../o-node.transport.js';
  * - `filterSearchResults()` - Add custom filtering logic
  * - `selectResult()` - Implement custom result selection (e.g., load balancing)
  * - `mapTransports()` - Customize how transports are mapped from results
+ * - `determineNextHop()` - Implement custom routing logic to determine the next hop address
+ * - `resolveNextHopTransports()` - Customize transport resolution for the next hop
  */
 export class oSearchResolver extends oAddressResolver {
   constructor(protected readonly address: oAddress) {
@@ -172,6 +186,67 @@ export class oSearchResolver extends oAddressResolver {
     return targetTransports;
   }
 
+  /**
+   * Determines the next hop address for routing to the target and sets up its transports.
+   *
+   * This method implements the complete routing logic including:
+   * 1. Determining the next address in the path (using `oAddress.next()`)
+   * 2. Mapping transports from the search result
+   * 3. Resolving and setting transports on the next hop address
+   * 4. Setting transports on the target address
+   *
+   * The default implementation:
+   * - Uses `oAddress.next()` for standard hierarchy-based routing
+   * - Maps transports from the registry search result
+   * - Resolves next hop transports based on leader/hierarchy
+   * - Configures both next hop and target with appropriate transports
+   *
+   * Override this method to implement custom routing logic, such as:
+   * - Direct peer-to-peer routing
+   * - Custom hierarchy traversal
+   * - Alternative transport selection strategies
+   * - Bypass leader for certain routes
+   *
+   * @param node - The current node context
+   * @param resolvedTargetAddress - The resolved target address to route to
+   * @param searchResult - The raw search result from the registry containing transport data
+   * @returns The next hop address with transports configured
+   *
+   * @example Custom direct routing
+   * ```typescript
+   * class DirectSearchResolver extends oSearchResolver {
+   *   protected determineNextHop(
+   *     node: oCore,
+   *     resolvedTargetAddress: oAddress,
+   *     searchResult: any
+   *   ): oAddress {
+   *     // Always route directly to the target, bypassing hierarchy
+   *     const targetTransports = this.mapTransports(searchResult);
+   *     resolvedTargetAddress.setTransports(targetTransports);
+   *     return resolvedTargetAddress;
+   *   }
+   * }
+   * ```
+   */
+  protected determineNextHop(
+    node: oCore,
+    resolvedTargetAddress: oAddress,
+    searchResult: any,
+  ): oAddress {
+    // Determine next hop using standard hierarchy logic
+    const nextHopAddress = oAddress.next(node.address, resolvedTargetAddress);
+
+    // Map transports from search result
+    const targetTransports = this.mapTransports(searchResult);
+
+    // Set transports on the next hop based on routing logic
+    nextHopAddress.setTransports(
+      this.resolveNextHopTransports(nextHopAddress, targetTransports, node),
+    );
+
+    return nextHopAddress;
+  }
+
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
     const { address, node, request: resolveRequest, targetAddress } = request;
 
@@ -187,7 +262,6 @@ export class oSearchResolver extends oAddressResolver {
     // Perform registry search
     const searchParams = this.buildSearchParams(address);
     const registryAddress = this.getRegistryAddress();
-    this.logger.debug('registryAddress', registryAddress.toJSON());
     const searchResponse = await node.use(registryAddress, {
       method: this.getSearchMethod(),
       params: searchParams,
@@ -199,11 +273,6 @@ export class oSearchResolver extends oAddressResolver {
       node,
     );
     const selectedResult = this.selectResult(filteredResults);
-
-    this.logger.debug(
-      'selectedResult',
-      JSON.stringify(selectedResult, null, 2),
-    );
 
     // Early return: if no result found, return original address
     if (!selectedResult) {
@@ -222,22 +291,15 @@ export class oSearchResolver extends oAddressResolver {
     const resolvedTargetAddress = new oAddress(
       selectedResult.address + extraParams,
     );
-    const nextHopAddress = oAddress.next(node.address, resolvedTargetAddress);
-    const targetTransports = this.mapTransports(selectedResult);
 
-    // Set transports on addresses
-    nextHopAddress.setTransports(
-      this.resolveNextHopTransports(nextHopAddress, targetTransports, node),
-    );
-    resolvedTargetAddress.setTransports(targetTransports);
+    // Set transports on the target address
+    resolvedTargetAddress.setTransports(this.mapTransports(selectedResult));
 
-    this.logger.debug(
-      'nextHopAddress',
-      JSON.stringify(nextHopAddress, null, 2),
-    );
-    this.logger.debug(
-      'resolvedTargetAddress',
-      JSON.stringify(resolvedTargetAddress, null, 2),
+    // Determine next hop and configure transports
+    const nextHopAddress = this.determineNextHop(
+      node,
+      resolvedTargetAddress,
+      selectedResult,
     );
 
     return {

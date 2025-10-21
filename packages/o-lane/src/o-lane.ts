@@ -2,6 +2,7 @@ import {
   oAddress,
   oError,
   oErrorCodes,
+  NodeState,
   oObject,
   RestrictedAddresses,
 } from '@olane/o-core';
@@ -92,6 +93,13 @@ export class oLane extends oObject {
   async store(): Promise<CID> {
     this.logger.debug('Storing plan...');
     const cid = await this.toCID();
+
+    if (this.node.state !== NodeState.RUNNING) {
+      throw new oError(
+        oErrorCodes.INVALID_STATE,
+        'Node is not in a valid state to store a lane',
+      );
+    }
 
     const params = {
       key: cid.toString(),

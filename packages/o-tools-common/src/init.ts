@@ -23,8 +23,8 @@ export const initCommonTools = async (oNode: oLaneTool) => {
       ...params,
     }),
     new oApprovalTool({
-      name: 'approval',
       ...params,
+      name: 'approval',
       mode: 'allow', // Default mode
       preferences: {
         whitelist: [],
