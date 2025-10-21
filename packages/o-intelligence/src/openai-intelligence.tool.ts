@@ -117,6 +117,30 @@ interface OpenAIListModelsResponse {
   data: OpenAIModel[];
 }
 
+interface OpenAIEmbeddingRequest {
+  input: string | string[];
+  model: string;
+  encoding_format?: 'float' | 'base64';
+  dimensions?: number;
+  user?: string;
+}
+
+interface OpenAIEmbeddingData {
+  object: 'embedding';
+  embedding: number[];
+  index: number;
+}
+
+interface OpenAIEmbeddingResponse {
+  object: 'list';
+  data: OpenAIEmbeddingData[];
+  model: string;
+  usage: {
+    prompt_tokens: number;
+    total_tokens: number;
+  };
+}
+
 export class OpenAIIntelligenceTool extends oLaneTool {
   private baseUrl: string = 'https://api.openai.com/v1';
   private defaultModel: string = 'gpt-5';
@@ -424,6 +448,177 @@ export class OpenAIIntelligenceTool extends oLaneTool {
         success: false,
         status: 'offline',
         error: `Connection failed: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate embeddings for multiple documents
+   */
+  async _tool_embed_documents(request: oRequest): Promise<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        input,
+        model = 'text-embedding-3-small',
+        apiKey = this.apiKey,
+        dimensions,
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        return {
+          success: false,
+          error: 'OpenAI API key is required',
+        };
+      }
+
+      if (!input || !Array.isArray(input)) {
+        return {
+          success: false,
+          error: 'input must be an array of strings',
+        };
+      }
+
+      const embeddingRequest: OpenAIEmbeddingRequest = {
+        input,
+        model: model as string,
+        encoding_format: 'float',
+      };
+
+      if (dimensions) {
+        embeddingRequest.dimensions = dimensions;
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (this.organization) {
+        headers['OpenAI-Organization'] = this.organization;
+      }
+
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(embeddingRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `OpenAI API error: ${response.status} - ${errorText}`,
+        };
+      }
+
+      const result: OpenAIEmbeddingResponse =
+        (await response.json()) as OpenAIEmbeddingResponse;
+
+      // Extract embeddings in order
+      const embeddings = result.data
+        .sort((a, b) => a.index - b.index)
+        .map((item) => item.embedding);
+
+      return {
+        success: true,
+        embeddings,
+        model: result.model,
+        usage: result.usage,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Failed to generate embeddings: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate embedding for a single query
+   */
+  async _tool_embed_query(request: oRequest): Promise<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        input,
+        model = 'text-embedding-3-small',
+        apiKey = this.apiKey,
+        dimensions,
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        return {
+          success: false,
+          error: 'OpenAI API key is required',
+        };
+      }
+
+      if (!input || typeof input !== 'string') {
+        return {
+          success: false,
+          error: 'input must be a string',
+        };
+      }
+
+      const embeddingRequest: OpenAIEmbeddingRequest = {
+        input,
+        model: model as string,
+        encoding_format: 'float',
+      };
+
+      if (dimensions) {
+        embeddingRequest.dimensions = dimensions;
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (this.organization) {
+        headers['OpenAI-Organization'] = this.organization;
+      }
+
+      const response = await fetch(`${this.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(embeddingRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `OpenAI API error: ${response.status} - ${errorText}`,
+        };
+      }
+
+      const result: OpenAIEmbeddingResponse =
+        (await response.json()) as OpenAIEmbeddingResponse;
+
+      // Return the first (and only) embedding
+      const embedding = result.data[0]?.embedding;
+
+      if (!embedding) {
+        return {
+          success: false,
+          error: 'No embedding returned from API',
+        };
+      }
+
+      return {
+        success: true,
+        embedding,
+        model: result.model,
+        usage: result.usage,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Failed to generate embedding: ${(error as Error).message}`,
       };
     }
   }
