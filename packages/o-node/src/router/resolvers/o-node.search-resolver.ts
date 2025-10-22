@@ -235,6 +235,13 @@ export class oSearchResolver extends oAddressResolver {
   ): oAddress {
     // Determine next hop using standard hierarchy logic
     const nextHopAddress = oAddress.next(node.address, resolvedTargetAddress);
+    this.logger.debug(
+      'determineNextHop with params',
+      'node.address: ' + node.address.toString(),
+      'resolvedTargetAddress: ' + resolvedTargetAddress.toString(),
+      'searchResult.address: ' + searchResult.address,
+      'next hop: ' + nextHopAddress.toString(),
+    );
 
     // Map transports from search result
     const targetTransports = this.mapTransports(searchResult);
@@ -273,6 +280,7 @@ export class oSearchResolver extends oAddressResolver {
       node,
     );
     const selectedResult = this.selectResult(filteredResults);
+    this.logger.debug('Selecting result:', selectedResult.address);
 
     // Early return: if no result found, return original address
     if (!selectedResult) {
@@ -285,8 +293,9 @@ export class oSearchResolver extends oAddressResolver {
 
     // Build route from search result
     const extraParams = address
-      .toString()
+      .toString() // o://embeddings-text replace o://embeddings-text = ''
       .replace(address.toRootAddress().toString(), '');
+    this.logger.debug('Extra params:', extraParams);
 
     const resolvedTargetAddress = new oAddress(
       selectedResult.address + extraParams,
