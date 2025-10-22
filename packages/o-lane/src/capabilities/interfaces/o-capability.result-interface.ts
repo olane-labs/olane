@@ -6,4 +6,5 @@ export interface oCapabilityResultInterface {
   type: oCapabilityType;
   error?: string;
   config?: oCapabilityConfig;
+  shouldPersist?: boolean;
 }

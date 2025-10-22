@@ -1,7 +1,7 @@
 import { oObject } from '../core/o-object.js';
 import { oAddress } from './o-address.js';
 import { oRouterRequest } from './o-request.router.js';
-import { JSONRPC_VERSION } from '@olane/o-protocol';
+import { JSONRPC_VERSION, oProtocolMethods } from '@olane/o-protocol';
 
 /**
  * Handles request transformation and preparation for routing.
@@ -45,7 +45,7 @@ export class oRequestPreparation extends oObject {
   applyHandshakeTransform(
     request: oRouterRequest,
     requestOverride: oRouterRequest | undefined,
-  ): void {
+  ): oRouterRequest {
     const params = (request.params.payload as any).params;
     const { method } = request.params.payload as any;
 
@@ -60,7 +60,8 @@ export class oRequestPreparation extends oObject {
     }
 
     // Update the method to be the handshake
-    request.params.payload.method = method;
+    request.params.payload.method = oProtocolMethods.HANDSHAKE;
+    return request;
   }
 
   /**
@@ -71,13 +72,14 @@ export class oRequestPreparation extends oObject {
   applyParameterMerge(
     request: oRouterRequest,
     originalPayload: any,
-  ): void {
+  ): oRouterRequest {
     const params = (request.params.payload as any).params;
 
     (request.params.payload as any).params = {
       ...originalPayload.params, // initial params
       ...params, // overloaded params
     };
+    return request;
   }
 
   /**

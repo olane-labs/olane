@@ -77,7 +77,7 @@ export class oNodeRouter extends oToolRouter {
     });
 
     const result = await node.execute(localRequest);
-    return CoreUtils.buildResponse(localRequest, result, result?.error);
+    return result;
   }
 
   /**

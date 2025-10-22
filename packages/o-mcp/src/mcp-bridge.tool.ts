@@ -76,6 +76,7 @@ export class McpBridgeTool extends oLaneTool {
       );
       this.addedRemoteServers.add(mcpServerUrl as string);
       return {
+        _save: true,
         message:
           'Successfully added MCP server with ' +
           this.hierarchyManager.getChildren().length +
