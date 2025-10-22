@@ -2,15 +2,16 @@ import { oMethod } from '@olane/o-protocol';
 
 export const SEARCH_PARAMS: { [key: string]: oMethod } = {
   search: {
-    name: 'search',
-    description: 'Search for data',
+    name: 'vector',
+    description:
+      'Search for data using vector similarity within the Olane OS from a global view.',
     dependencies: [],
     parameters: [
       {
         name: 'query',
         type: 'string',
         value: 'string',
-        description: 'The query to search for',
+        description: 'The vector query to search for',
         required: true,
       },
     ],
