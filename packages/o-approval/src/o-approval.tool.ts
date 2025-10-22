@@ -1,9 +1,16 @@
 import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { APPROVAL_METHODS } from './methods/approval.methods.js';
-import { oApprovalConfig, ApprovalMode, ApprovalPreferences } from './interfaces/approval-config.js';
+import {
+  oApprovalConfig,
+  ApprovalMode,
+  ApprovalPreferences,
+} from './interfaces/approval-config.js';
 import { ApprovalRequest } from './interfaces/approval-request.js';
-import { ApprovalResponse, ApprovalDecision } from './interfaces/approval-response.js';
+import {
+  ApprovalResponse,
+  ApprovalDecision,
+} from './interfaces/approval-response.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeAddress } from '@olane/o-node';
 
@@ -16,7 +23,7 @@ export class oApprovalTool extends oLaneTool {
   constructor(config: oApprovalConfig) {
     super({
       ...config,
-      address: config?.address || new oNodeAddress('o://approval'),
+      address: new oNodeAddress('o://approval'),
       description: 'Human approval service for AI actions',
       methods: APPROVAL_METHODS,
     });
@@ -101,7 +108,9 @@ export class oApprovalTool extends oLaneTool {
 
       // Check if approval is needed based on mode
       if (!this.needsApproval(toolAddress, method)) {
-        this.logger.debug(`Approval not required for ${toolMethod} (mode: ${this.mode})`);
+        this.logger.debug(
+          `Approval not required for ${toolMethod} (mode: ${this.mode})`,
+        );
         return {
           success: true,
           approved: true,
@@ -123,12 +132,14 @@ export class oApprovalTool extends oLaneTool {
 
       // Implement timeout
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Approval timeout')), timeout)
+        setTimeout(() => reject(new Error('Approval timeout')), timeout),
       );
 
       try {
         const response = await Promise.race([approvalPromise, timeoutPromise]);
-        const answer = (response.result.data as any)?.answer?.trim().toLowerCase();
+        const answer = (response.result.data as any)?.answer
+          ?.trim()
+          .toLowerCase();
 
         // Parse the response
         const decision = this.parseApprovalResponse(answer);
@@ -144,7 +155,9 @@ export class oApprovalTool extends oLaneTool {
 
         const approved = decision === 'approve' || decision === 'always';
 
-        this.logger.info(`Approval decision for ${toolMethod}: ${decision} (approved: ${approved})`);
+        this.logger.info(
+          `Approval decision for ${toolMethod}: ${decision} (approved: ${approved})`,
+        );
 
         return {
           success: true,
@@ -154,7 +167,10 @@ export class oApprovalTool extends oLaneTool {
         };
       } catch (error: any) {
         // Timeout or error - default to deny
-        this.logger.error(`Approval timeout or error for ${toolMethod}:`, error.message);
+        this.logger.error(
+          `Approval timeout or error for ${toolMethod}:`,
+          error.message,
+        );
         return {
           success: false,
           error: error.message || 'Approval timeout',
@@ -200,7 +216,11 @@ Your response:`.trim();
   private parseApprovalResponse(answer: string): ApprovalDecision {
     if (!answer) return 'deny';
 
-    if (answer.includes('approve') || answer.includes('yes') || answer.includes('allow')) {
+    if (
+      answer.includes('approve') ||
+      answer.includes('yes') ||
+      answer.includes('allow')
+    ) {
       return 'approve';
     } else if (answer.includes('always')) {
       return 'always';

@@ -18,7 +18,7 @@ export class NodeHealthProvider extends oNodeTool {
   constructor(config: NodeHealthProviderConfig) {
     super({
       ...config,
-      address: new oAddress('o://monitor/health'),
+      address: new oAddress('o://health'),
       name: 'node-health-provider',
       description: 'Polls nodes for health status and collects metrics',
     });
@@ -171,11 +171,16 @@ export class NodeHealthProvider extends oNodeTool {
           hierarchyData.push({
             address,
             children: metrics.result.children,
-            childCount: Array.isArray(metrics.result.children) ? metrics.result.children.length : 0,
+            childCount: Array.isArray(metrics.result.children)
+              ? metrics.result.children.length
+              : 0,
           });
         }
       } catch (error: any) {
-        this.logger.debug(`Could not get hierarchy for ${address}:`, error.message);
+        this.logger.debug(
+          `Could not get hierarchy for ${address}:`,
+          error.message,
+        );
       }
     }
 
@@ -200,7 +205,8 @@ export class NodeHealthProvider extends oNodeTool {
       if (!metrics) continue;
 
       const totalRequests = metrics.successCount + metrics.errorCount;
-      const errorRate = totalRequests > 0 ? metrics.errorCount / totalRequests : 0;
+      const errorRate =
+        totalRequests > 0 ? metrics.errorCount / totalRequests : 0;
 
       const nodeReport = {
         address,
@@ -232,7 +238,9 @@ export class NodeHealthProvider extends oNodeTool {
         errorProne: errorProneNodes.length,
       },
       slowNodes: slowNodes.sort((a, b) => b.activeRequests - a.activeRequests),
-      errorProneNodes: errorProneNodes.sort((a, b) => b.errorRate - a.errorRate),
+      errorProneNodes: errorProneNodes.sort(
+        (a, b) => b.errorRate - a.errorRate,
+      ),
       healthyNodes,
     };
   }
@@ -245,7 +253,9 @@ export class NodeHealthProvider extends oNodeTool {
       return; // Already polling
     }
 
-    this.logger.info(`Starting automatic node polling every ${this.pollingIntervalMs}ms`);
+    this.logger.info(
+      `Starting automatic node polling every ${this.pollingIntervalMs}ms`,
+    );
 
     this.pollingInterval = setInterval(async () => {
       try {

@@ -1,7 +1,7 @@
 import { oAddress } from './o-address.js';
 
 import { oObject } from '../core/o-object.js';
-import { oAddressResolution } from './o-address-resolution.js';
+import { oResolverChain } from './o-resolver-chain.js';
 import { oAddressResolver } from './o-address-resolver.js';
 import { oRequest } from '../connection/o-request.js';
 import type { oCore } from '../core/o-core.js';
@@ -9,11 +9,11 @@ import { RouteResponse } from './interfaces/route.response.js';
 import { oRouterRequest } from './o-request.router.js';
 
 export abstract class oRouter extends oObject {
-  public addressResolution!: oAddressResolution;
+  public addressResolution!: oResolverChain;
 
   constructor() {
     super();
-    this.addressResolution = new oAddressResolution();
+    this.addressResolution = new oResolverChain();
   }
 
   // NEXT HOP ADDRESS + TRANSPORTS

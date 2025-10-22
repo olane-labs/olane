@@ -2,6 +2,7 @@ import {
   oAddress,
   oError,
   oErrorCodes,
+  NodeState,
   oObject,
   RestrictedAddresses,
 } from '@olane/o-core';
@@ -93,6 +94,13 @@ export class oLane extends oObject {
     this.logger.debug('Storing plan...');
     const cid = await this.toCID();
 
+    if (this.node.state !== NodeState.RUNNING) {
+      throw new oError(
+        oErrorCodes.INVALID_STATE,
+        'Node is not in a valid state to store a lane',
+      );
+    }
+
     const params = {
       key: cid.toString(),
       value: JSON.stringify(this.toJSON()),
@@ -176,6 +184,7 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
+    this.logger.debug('Executing capability: ', currentStep.type, currentStep);
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {

@@ -35,7 +35,9 @@ export class oCapabilityTask extends oCapability {
 
       // Check if we're in replay mode
       if (this.config.isReplay) {
-        this.logger.debug('Task is being replayed - re-executing to restore state');
+        this.logger.debug(
+          'Task is being replayed - re-executing to restore state',
+        );
       }
 
       const { task } = this.config.params;
@@ -73,20 +75,26 @@ export class oCapabilityTask extends oCapability {
 
       // Request approval before executing the task
       try {
-        const approvalResponse = await this.node.use(new oAddress('o://approval'), {
-          method: 'request_approval',
-          params: {
-            toolAddress: task.address,
-            method: task.payload?.method,
-            params: params,
-            intent: this.config.intent,
+        const approvalResponse = await this.node.use(
+          new oAddress('o://approval'),
+          {
+            method: 'request_approval',
+            params: {
+              toolAddress: task.address,
+              method: task.payload?.method,
+              params: params,
+              intent: this.config.intent,
+            },
           },
-        });
+        );
 
-        const approved = approvalResponse.result.data?.approved;
+        const approved = (approvalResponse.result.data as any)?.approved;
         if (!approved) {
-          const decision = approvalResponse.result.data?.decision || 'denied';
-          this.logger.warn(`Task execution denied by approval system: ${decision}`);
+          const decision =
+            (approvalResponse.result.data as any)?.decision || 'denied';
+          this.logger.warn(
+            `Task execution denied by approval system: ${decision}`,
+          );
           throw new oError(
             oErrorCodes.NOT_AUTHORIZED,
             `Action denied by approval system: ${decision}`,
@@ -98,7 +106,9 @@ export class oCapabilityTask extends oCapability {
         // If approval service is not available, log warning and continue
         // This ensures backward compatibility
         if (error.message?.includes('No route found')) {
-          this.logger.warn('Approval service not available, proceeding without approval check');
+          this.logger.warn(
+            'Approval service not available, proceeding without approval check',
+          );
         } else {
           throw error;
         }

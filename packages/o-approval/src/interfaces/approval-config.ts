@@ -1,4 +1,4 @@
-import { oNodeConfig } from '@olane/o-node';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export type ApprovalMode = 'allow' | 'review' | 'auto';
 
@@ -8,7 +8,7 @@ export interface ApprovalPreferences {
   timeout?: number; // milliseconds, default 180000 (3 minutes)
 }
 
-export interface oApprovalConfig extends oNodeConfig {
+export interface oApprovalConfig extends oNodeToolConfig {
   mode?: ApprovalMode;
   preferences?: ApprovalPreferences;
 }

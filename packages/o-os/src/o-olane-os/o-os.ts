@@ -164,7 +164,9 @@ export class OlaneOS extends oObject {
       return;
     }
 
-    this.logger.info(`Replaying ${laneCIDs.length} saved lane(s) to restore network state...`);
+    this.logger.info(
+      `Replaying ${laneCIDs.length} saved lane(s) to restore network state...`,
+    );
 
     for (const cid of laneCIDs) {
       this.logger.debug('Replaying lane with CID: ' + cid);

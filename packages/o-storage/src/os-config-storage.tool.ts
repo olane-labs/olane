@@ -105,15 +105,12 @@ export class OSConfigStorageTool extends oLaneTool {
     try {
       this.logger.debug(`Loading config for OS instance: ${osName}`);
 
-      const result = await this.use(
-        new oAddress(
-          `${this.getStorageAddress().toString()}/${this.getConfigKey(osName as string)}`,
-        ),
-        {
-          method: 'get',
-          params: {},
+      const result = await this.use(this.getStorageAddress(), {
+        method: 'get',
+        params: {
+          key: this.getConfigKey(osName as string),
         },
-      );
+      });
 
       const configData = result.result.data as { value?: string } | undefined;
 
@@ -124,10 +121,7 @@ export class OSConfigStorageTool extends oLaneTool {
         };
       }
 
-      return {
-        success: true,
-        data: JSON.parse(configData.value),
-      };
+      return JSON.parse(configData.value);
     } catch (error) {
       this.logger.error('Failed to load OS config:', error);
       return {
@@ -355,8 +349,7 @@ export class OSConfigStorageTool extends oLaneTool {
 
       if (!loadResult.success) {
         return {
-          success: true,
-          data: [],
+          lanes: [],
         };
       }
 
@@ -364,8 +357,7 @@ export class OSConfigStorageTool extends oLaneTool {
       const lanes = config.oNetworkConfig?.lanes || [];
 
       return {
-        success: true,
-        data: lanes,
+        lanes,
       };
     } catch (error) {
       this.logger.error('Failed to get lanes from OS config:', error);
@@ -374,5 +366,83 @@ export class OSConfigStorageTool extends oLaneTool {
         error: `Failed to get lanes: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
+  }
+
+  /**
+   * Update metadata for an OS instance
+   */
+  async _tool_update_metadata(request: oRequest): Promise<ToolResult> {
+    const { osName, metadata } = request.params;
+
+    this.logger.debug(`Updating metadata for OS instance: ${osName}`);
+
+    // Load current config (or create new one if doesn't exist)
+    const loadResult = await this._tool_load_config(
+      new oRequest({
+        id: request.id,
+        method: request.method,
+        params: {
+          _connectionId: request.params._connectionId,
+          _requestMethod: request.params._requestMethod,
+          osName,
+        },
+      }),
+    );
+
+    let config: any = {};
+    if (loadResult.success) {
+      config = loadResult.data;
+    }
+
+    // Initialize metadata object if it doesn't exist
+    if (!config.metadata) {
+      config.metadata = {};
+    }
+
+    // Merge new metadata with existing metadata
+    config.metadata = {
+      ...(config.metadata as object),
+      ...(metadata as object),
+    };
+
+    // Save updated config
+    await this._tool_save_config(
+      new oRequest({
+        id: request.id,
+        method: request.method,
+        params: {
+          _connectionId: request.params._connectionId,
+          _requestMethod: request.params._requestMethod,
+          osName,
+          config,
+        },
+      }),
+    );
+
+    return config.metadata;
+  }
+
+  /**
+   * Get metadata for an OS instance
+   */
+  async _tool_get_metadata(request: oRequest): Promise<ToolResult> {
+    const { osName } = request.params;
+
+    this.logger.debug(`Getting metadata for OS instance: ${osName}`);
+
+    // Load current config
+    const config = await this._tool_load_config(
+      new oRequest({
+        id: request.id,
+        method: request.method,
+        params: {
+          _connectionId: request.params._connectionId,
+          _requestMethod: request.params._requestMethod,
+          osName,
+        },
+      }),
+    );
+
+    return config.metadata || {};
   }
 }

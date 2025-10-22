@@ -16,7 +16,7 @@ export class HeartbeatProvider extends oNodeTool {
   constructor(config: HeartbeatProviderConfig) {
     super({
       ...config,
-      address: new oAddress('o://monitor/heartbeat'),
+      address: new oAddress('o://heartbeat'),
       name: 'heartbeat-provider',
       description: 'Tracks service heartbeats and liveness',
     });
@@ -61,9 +61,7 @@ export class HeartbeatProvider extends oNodeTool {
       address,
       lastHeartbeat: heartbeat?.timestamp || null,
       isAlive,
-      timeSinceHeartbeat: heartbeat
-        ? Date.now() - heartbeat.timestamp
-        : null,
+      timeSinceHeartbeat: heartbeat ? Date.now() - heartbeat.timestamp : null,
       metrics: heartbeat?.metrics || null,
     };
   }
@@ -78,9 +76,7 @@ export class HeartbeatProvider extends oNodeTool {
       return {
         address,
         lastHeartbeat: heartbeat?.timestamp || null,
-        timeSinceHeartbeat: heartbeat
-          ? Date.now() - heartbeat.timestamp
-          : null,
+        timeSinceHeartbeat: heartbeat ? Date.now() - heartbeat.timestamp : null,
       };
     });
 
