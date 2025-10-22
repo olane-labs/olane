@@ -37,7 +37,7 @@
   "description": "oLane OS basic implementation",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "^9.38.0",
     "@tsconfig/node20": "^20.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
