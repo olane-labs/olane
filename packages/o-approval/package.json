@@ -36,7 +36,7 @@
   "description": "Olane approval service for human-in-the-loop AI action approval",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.29.0",
+    "@eslint/js": "^9.38.0",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
