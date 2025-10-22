@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "0.7.12-alpha.1",
+  "npmClient": "npm",
+  "command": {
+    "version": {
+      "conventionalCommits": true,
+      "changelogPreset": "conventionalcommits",
+      "createRelease": "github",
+      "exact": true,
+      "message": "Release v%s",
+      "ignoreChanges": [
+        "**/*.md",
+        "**/test/**",
+        "**/*.test.ts",
+        "**/__tests__/**"
+      ]
+    },
+    "publish": {
+      "conventionalCommits": true,
+      "message": "Publish v%s",
+      "registry": "https://registry.npmjs.org",
+      "ignoreChanges": [
+        "**/*.md",
+        "**/test/**",
+        "**/*.test.ts",
+        "**/__tests__/**"
+      ]
+    }
+  }
+}
