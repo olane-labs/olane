@@ -24,12 +24,7 @@
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "lint": "aegir lint",
-    "release": "cd scripts/release && npm run release",
-    "release:dry-run": "cd scripts/release && npm run release:dry-run",
-    "release:parallel": "cd scripts/release && npm run release:parallel",
-    "release:minor": "cd scripts/release && npm run release:minor",
-    "release:major": "cd scripts/release && npm run release:major"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",

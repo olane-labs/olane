@@ -1,236 +1,97 @@
-# Olane Release Management Scripts
+# Olane Scripts
 
-This directory contains optimized TypeScript-based scripts for managing the Olane monorepo release process. These scripts are designed to work seamlessly with npm workspaces and provide a more maintainable, efficient, and reusable solution.
+This directory contains utility scripts for the Olane monorepo.
 
-> 📖 **For a comprehensive guide on the workspace-aware release process, see [WORKSPACE_RELEASE_GUIDE.md](../docs/WORKSPACE_RELEASE_GUIDE.md)**
+## Lerna-Based Release Management
 
-## 🚀 Quick Start
+The Olane monorepo now uses [Lerna](https://lerna.js.org/) for version management and publishing. All release operations should be run from the root of the repository using the Lerna commands defined in the root [package.json](../package.json).
+
+### Available Release Commands
+
+Run these commands from the **root** of the repository:
 
 ```bash
-# Install script dependencies
-cd scripts && npm install
+# Check which packages have changed
+npm run lerna:changed
 
-# Preview what a release would do
-npm run release:dry-run
+# View diff of changed packages
+npm run lerna:diff
 
-# Run a full release with parallel processing
-npm run release:parallel
+# Version bumping (creates git tags and updates versions)
+npm run lerna:version:patch    # 0.1.0 -> 0.1.1
+npm run lerna:version:minor    # 0.1.0 -> 0.2.0
+npm run lerna:version:major    # 0.1.0 -> 1.0.0
 
-# Check package status
-npm run dev:status
+# Prerelease versions
+npm run lerna:version:alpha    # 0.1.0 -> 0.1.1-alpha.0
+npm run lerna:version:beta     # 0.1.0 -> 0.1.1-beta.0
+npm run lerna:version:rc       # 0.1.0 -> 0.1.1-rc.0
+
+# Publishing to npm
+npm run lerna:publish          # Publish packages at current versions
+npm run lerna:publish:dry      # Dry run (no push/tag)
 ```
 
-## 📁 Files Overview
+### Typical Release Workflow
 
-- **`release.ts`** - Main release management script with dependency resolution
-- **`dev-release.ts`** - Development utilities for local testing and package management
-- **`release-workflow.yaml`** - Simplified GitHub workflow (to replace existing workflow)
-- **`package.json`** - Script dependencies and npm commands
-- **`README.md`** - This documentation
+1. **Make your changes** across packages as needed
+2. **Test everything**: `npm run test`
+3. **Build all packages**: `npm run build`
+4. **Check what changed**: `npm run lerna:changed`
+5. **Version the packages**:
+   - For production: `npm run lerna:version:patch` (or minor/major)
+   - For prerelease: `npm run lerna:version:alpha` (or beta/rc)
+6. **Publish to npm**: `npm run lerna:publish`
 
-## 🔧 Release Script (`release.ts`)
+### How Lerna Works
 
-The main release script automatically:
+- **Conventional Commits**: Lerna uses conventional commit messages to determine version bumps
+- **Dependency Management**: Automatically updates inter-package dependencies
+- **Git Integration**: Creates tags and GitHub releases automatically
+- **Selective Publishing**: Only publishes packages that have changed
 
-1. **Discovers packages** - Scans workspace for all packages
-2. **Builds dependency graph** - Analyzes package.json files to determine build order
-3. **Installs dependencies** - Runs `npm install` for all packages
-4. **Builds packages** - Executes build scripts in dependency order
-5. **Runs tests** - Executes test suites (if present)
-6. **Bumps versions** - Updates package versions
-7. **Publishes packages** - Publishes to npm registry
-8. **Creates git release** - Commits changes and creates tags
+### Configuration
 
-### Usage
+Lerna is configured in [lerna.json](../lerna.json) with:
+- Conventional commits enabled
+- Exact version matching for inter-package dependencies
+- GitHub release creation
+- Ignoring changes to docs and tests
 
-```bash
-# Standard release (patch version bump)
-npm run release
+## Development Commands
 
-# Dry run (see what would happen without executing)
-npm run release:dry-run
-
-# Parallel processing (faster builds)
-npm run release:parallel
-
-# Minor version bump
-npm run release:minor
-
-# Major version bump
-npm run release:major
-
-# Custom options
-tsx release.ts --skip-tests --parallel --version minor
-```
-
-### Command Line Options
-
-- `--skip-tests` - Skip running tests
-- `--skip-build` - Skip building packages
-- `--dry-run` - Show what would be done without executing
-- `--parallel` - Enable parallel processing where possible
-- `--version TYPE` - Version bump type (patch|minor|major) [default: patch]
-- `--help` - Show help message
-
-## 🛠️ Development Script (`dev-release.ts`)
-
-Utility script for local development and package management.
-
-### Usage
+Standard workspace commands (run from root):
 
 ```bash
-# Show package status and information
-npm run dev:status
-
-# Clean all packages
-npm run dev:clean
+# Install all dependencies
+npm install
 
 # Build all packages
-npm run dev:build
+npm run build
 
-# Run tests for all packages
-npm run dev:test
+# Run tests across all packages
+npm run test
 
-# Target specific packages
-tsx dev-release.ts build --packages o-tool,o-agent
-tsx dev-release.ts test --packages o-network
+# Lint all packages
+npm run lint
+
+# Clean build artifacts
+npm run clean
+
+# Deep clean (removes node_modules)
+npm run deep:clean
 ```
 
-### Available Commands
+## Legacy Scripts Removed
 
-- `status` - Show package information and dependencies
-- `clean` - Remove node_modules and dist directories
-- `install` - Install dependencies for all packages
-- `build` - Build all packages
-- `test` - Run tests for all packages
-- `lint` - Run linter for all packages
+The following custom scripts have been removed in favor of Lerna:
 
-## 🏗️ Architecture
+- `scripts/release/` - Custom release management (replaced by Lerna)
+- `scripts/local/` - Local workspace dependency management (npm workspaces handles this)
+- `scripts/shared/` - Shared utilities for removed scripts
 
-### Dependency Resolution
+## Documentation
 
-The script automatically builds a dependency graph by analyzing:
-- `dependencies` in package.json
-- `peerDependencies` in package.json
-- `devDependencies` in package.json (for @olane packages only)
-
-It then performs a topological sort to determine the correct build order, ensuring dependencies are built before dependents.
-
-### Parallel Processing
-
-When `--parallel` is enabled, packages at the same dependency level are processed in parallel, significantly reducing build times.
-
-**Example dependency levels:**
-```
-Level 0: o-config, o-protocol, o-core (no internal deps)
-Level 1: o-tool (depends on core packages)
-Level 2: o-agent, o-intelligence (depend on o-tool)
-Level 3: o-network (depends on level 2 packages)
-```
-
-### Error Handling
-
-- **Circular dependency detection** - Prevents infinite loops
-- **Build failure handling** - Stops on first error with clear messaging
-- **Dry run validation** - Preview changes before execution
-- **Git operation safety** - Creates branches and tags safely
-
-## 📊 Performance Improvements
-
-Compared to the original GitHub workflow:
-
-- **~70% reduction in code** - From 964 lines to ~200 lines of core logic
-- **~50% faster execution** - Parallel processing and dependency optimization
-- **~90% easier maintenance** - Single script vs. 13+ workflow jobs
-- **100% reusable** - Can be run locally or in CI/CD
-
-## 🔄 Migration Guide
-
-### Replacing GitHub Workflow
-
-1. Replace `.github/workflows/release.yaml` with `scripts/release-workflow.yaml`
-2. Update any references to the old workflow
-3. Test the new workflow with a dry run
-
-### Local Development
-
-```bash
-# Old way (manual per package)
-cd packages/o-tool && npm install && npm run build
-cd ../o-agent && npm install && npm run build
-# ... repeat for each package
-
-# New way (automated)
-npm run dev:build
-```
-
-### CI/CD Integration
-
-```yaml
-# In your GitHub workflow
-- name: Run optimized release
-  run: npm run release:parallel
-  env:
-    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Circular dependencies** - Check package.json files for circular references
-2. **Missing build scripts** - Ensure all packages have necessary scripts
-3. **Permission errors** - Check npm authentication and git permissions
-4. **Version conflicts** - Use `npm run dev:clean` to reset state
-
-### Debug Mode
-
-```bash
-# Enable debug output
-DEBUG=* npm run release:dry-run
-
-# Check package status
-npm run dev:status
-
-# Validate dependency graph
-tsx release.ts --dry-run --parallel
-```
-
-## 🤝 Contributing
-
-When adding new packages:
-
-1. Ensure proper dependencies in package.json
-2. Add build/test scripts as needed
-3. Test with `npm run dev:status` to verify detection
-4. Run `npm run release:dry-run` to validate integration
-
-## 📝 Example Output
-
-```bash
-$ npm run release:dry-run
-
-🚀 Starting release process...
-
-🔍 Discovering packages...
-  ✓ @olane/o-core@0.6.7
-  ✓ @olane/o-config@0.6.7
-  ✓ @olane/o-protocol@0.6.7
-  ✓ @olane/o-tool@0.6.7
-  ✓ @olane/o-agent@0.6.7
-  ✓ @olane/o-network@0.6.7
-📦 Found 6 packages
-
-🔗 Building dependency graph...
-📋 Build order: @olane/o-config → @olane/o-protocol → @olane/o-core → @olane/o-tool → @olane/o-agent → @olane/o-network
-
-📥 Installing dependencies...
-📦 Processing level 0: @olane/o-config, @olane/o-protocol, @olane/o-core
-📦 Processing level 1: @olane/o-tool
-📦 Processing level 2: @olane/o-agent
-📦 Processing level 3: @olane/o-network
-
-✅ Release process completed successfully!
-```
-
-This optimized system provides a much more maintainable, efficient, and developer-friendly release process for the Olane monorepo.
+For more information about Lerna:
+- [Lerna Documentation](https://lerna.js.org/)
+- [Conventional Commits](https://www.conventionalcommits.org/)
