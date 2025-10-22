@@ -237,10 +237,10 @@ export class oSearchResolver extends oAddressResolver {
     const nextHopAddress = oAddress.next(node.address, resolvedTargetAddress);
     this.logger.debug(
       'determineNextHop with params',
-      node.address,
-      resolvedTargetAddress,
-      searchResult,
-      nextHopAddress,
+      'node.address: ' + node.address.toString(),
+      'resolvedTargetAddress: ' + resolvedTargetAddress.toString(),
+      'searchResult.address: ' + searchResult.address,
+      'next hop: ' + nextHopAddress.toString(),
     );
 
     // Map transports from search result
@@ -280,7 +280,7 @@ export class oSearchResolver extends oAddressResolver {
       node,
     );
     const selectedResult = this.selectResult(filteredResults);
-    this.logger.debug('Selecting result:', selectedResult);
+    this.logger.debug('Selecting result:', selectedResult.address);
 
     // Early return: if no result found, return original address
     if (!selectedResult) {

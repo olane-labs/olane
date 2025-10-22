@@ -124,11 +124,24 @@ export class oAddress extends oObject {
     if (remainingPath === '') {
       return address;
     }
+    // if remainingPath equals targetAddress.protocol, the replace didn't match
+    // this means we're either at destination (addresses are equal) or on different branch
+    if (remainingPath === targetAddress.protocol) {
+      // check if we're actually at the destination
+      if (address.value === targetAddress.value) {
+        return address;
+      }
+      // we're on a different branch, need to go back to leader for resolution
+      if (!address.equals(oAddress.leader())) {
+        return oAddress.leader();
+      }
+      // we ARE the leader, and we can't make progress - stay at leader for resolution
+      return address;
+    }
     // do we need to go back to the leader?
     if (
       !address.equals(oAddress.leader()) && // if we are a leader, do not got back to self
-      (remainingPath === targetAddress.protocol ||
-        oAddress.isStatic(targetAddress))
+      oAddress.isStatic(targetAddress)
     ) {
       return oAddress.leader();
     }
