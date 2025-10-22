@@ -1,6 +1,6 @@
 {
   "name": "@olane/os",
-  "version": "0.7.8",
+  "version": "0.7.9",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -58,16 +58,16 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@olane/o-config": "^0.7.7",
-    "@olane/o-core": "^0.7.7",
-    "@olane/o-intelligence": "^0.7.7",
-    "@olane/o-lane": "^0.7.7",
-    "@olane/o-leader": "^0.7.7",
-    "@olane/o-protocol": "^0.7.7",
-    "@olane/o-storage": "^0.7.7",
-    "@olane/o-tool": "^0.7.7",
-    "@olane/o-tool-registry": "^0.7.7",
-    "@olane/o-tools-common": "^0.7.7"
+    "@olane/o-config": "^0.7.8",
+    "@olane/o-core": "^0.7.8",
+    "@olane/o-intelligence": "^0.7.8",
+    "@olane/o-lane": "^0.7.8",
+    "@olane/o-leader": "^0.7.8",
+    "@olane/o-protocol": "^0.7.8",
+    "@olane/o-storage": "^0.7.8",
+    "@olane/o-tool": "^0.7.8",
+    "@olane/o-tool-registry": "^0.7.8",
+    "@olane/o-tools-common": "^0.7.8"
   },
   "dependencies": {
     "chalk": "^5.4.1",
