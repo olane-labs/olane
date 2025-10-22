@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-gateway-olane",
-  "version": "0.7.12-alpha.1",
+  "version": "0.7.12-alpha.2",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

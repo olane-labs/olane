@@ -1,3 +1,13 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## <small>0.7.12-alpha.2 (2025-10-22)</small>
+
+- lerna experiment ([b1e3171](https://github.com/olane-labs/olane/commit/b1e3171))
+- Release v0.7.12-alpha.1 ([c5559b0](https://github.com/olane-labs/olane/commit/c5559b0))
+
 # Changelog
 
 All notable changes to Olane OS will be documented in this file.
@@ -10,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - CONTRIBUTING.md: Comprehensive contribution guidelines
 - CODE_OF_CONDUCT.md: Community standards and behavior guidelines
 - SECURITY.md: Security vulnerability reporting policy
@@ -21,21 +32,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.3] - 2025-10-06
 
 ### Added
+
 <!-- List new features and additions -->
 
 ### Changed
+
 <!-- List changes in existing functionality -->
 
 ### Deprecated
+
 <!-- List soon-to-be removed features -->
 
 ### Removed
+
 <!-- List removed features -->
 
 ### Fixed
+
 <!-- List bug fixes -->
 
 ### Security
+
 <!-- List security fixes -->
 
 ---
@@ -55,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] - YYYY-MM-DD
 
 ### Added
+
 - Initial public release of Olane OS
 - Core packages: o-core, o-node, o-lane, o-leader, o-os
 - Tool system with discoverable capabilities
@@ -91,4 +109,3 @@ Use these categories for organizing changes:
 [0.7.2]: https://github.com/olane-labs/olane/releases/tag/v0.7.2
 [0.7.1]: https://github.com/olane-labs/olane/releases/tag/v0.7.1
 [0.7.0]: https://github.com/olane-labs/olane/releases/tag/v0.7.0
-
