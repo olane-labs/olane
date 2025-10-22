@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-login",
-  "version": "0.7.12-alpha.2",
+  "version": "0.7.12-alpha.3",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -55,10 +55,10 @@
   },
   "dependencies": {
     "@olane/o-config": "^0.7.12-alpha.2",
-    "@olane/o-core": "^0.7.12-alpha.2",
-    "@olane/o-lane": "^0.7.12-alpha.2",
+    "@olane/o-core": "0.7.12-alpha.3",
+    "@olane/o-lane": "0.7.12-alpha.3",
     "@olane/o-protocol": "^0.7.12-alpha.2",
-    "@olane/o-tool": "^0.7.12-alpha.2",
+    "@olane/o-tool": "0.7.12-alpha.3",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   }

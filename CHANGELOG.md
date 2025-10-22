@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.3 (2025-10-22)</small>
+
+- manual correction of dependencies ([3ed0d9a](https://github.com/olane-labs/olane/commit/3ed0d9a))
+- modified repo to remove unused / redundant func ([54b1eab](https://github.com/olane-labs/olane/commit/54b1eab))
+
 ## <small>0.7.12-alpha.2 (2025-10-22)</small>
 
 - lerna experiment ([b1e3171](https://github.com/olane-labs/olane/commit/b1e3171))
