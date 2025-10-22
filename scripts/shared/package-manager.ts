@@ -543,48 +543,52 @@ export class PackageManager {
     const updatedPackageJson = { ...pkg.packageJson };
     const currentVersion = pkg.version;
 
-    // Convert dependencies from workspace:* to version ranges
+    // Convert dependencies from workspace:* or * to version ranges
     if (updatedPackageJson.dependencies) {
       for (const [dep, version] of Object.entries(
         updatedPackageJson.dependencies,
       )) {
-        if (String(version).startsWith('workspace:')) {
+        const versionStr = String(version);
+        // Check if it's a workspace reference (workspace:* or just * for workspace deps)
+        if (versionStr.startsWith('workspace:') || (versionStr === '*' && this.packages.has(dep))) {
           const depPkg = this.packages.get(dep);
           if (depPkg) {
             updatedPackageJson.dependencies[dep] = `^${depPkg.version}`;
-            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version}`);
+            console.log(`  📦 ${dep}: ${version} → ^${depPkg.version}`);
             convertedCount++;
           }
         }
       }
     }
 
-    // Convert devDependencies from workspace:* to version ranges
+    // Convert devDependencies from workspace:* or * to version ranges
     if (updatedPackageJson.devDependencies) {
       for (const [dep, version] of Object.entries(
         updatedPackageJson.devDependencies,
       )) {
-        if (String(version).startsWith('workspace:')) {
+        const versionStr = String(version);
+        if (versionStr.startsWith('workspace:') || (versionStr === '*' && this.packages.has(dep))) {
           const depPkg = this.packages.get(dep);
           if (depPkg) {
             updatedPackageJson.devDependencies[dep] = `^${depPkg.version}`;
-            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version} (dev)`);
+            console.log(`  📦 ${dep}: ${version} → ^${depPkg.version} (dev)`);
             convertedCount++;
           }
         }
       }
     }
 
-    // Convert peerDependencies from workspace:* to version ranges
+    // Convert peerDependencies from workspace:* or * to version ranges
     if (updatedPackageJson.peerDependencies) {
       for (const [dep, version] of Object.entries(
         updatedPackageJson.peerDependencies,
       )) {
-        if (String(version).startsWith('workspace:')) {
+        const versionStr = String(version);
+        if (versionStr.startsWith('workspace:') || (versionStr === '*' && this.packages.has(dep))) {
           const depPkg = this.packages.get(dep);
           if (depPkg) {
             updatedPackageJson.peerDependencies[dep] = `^${depPkg.version}`;
-            console.log(`  📦 ${dep}: workspace:* → ^${depPkg.version} (peer)`);
+            console.log(`  📦 ${dep}: ${version} → ^${depPkg.version} (peer)`);
             convertedCount++;
           }
         }

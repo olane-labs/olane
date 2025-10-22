@@ -33,7 +33,16 @@
     "release:dry-run": "cd scripts/release && npm install && npm run release:dry-run",
     "release:parallel": "cd scripts/release && npm install && npm run release:parallel",
     "release:minor": "cd scripts/release && npm install && npm run release:minor",
-    "release:major": "cd scripts/release && npm install && npm run release:major"
+    "release:major": "cd scripts/release && npm install && npm run release:major",
+    "release:alpha": "cd scripts/release && npm install && npm run release:alpha",
+    "release:beta": "cd scripts/release && npm install && npm run release:beta",
+    "release:rc": "cd scripts/release && npm install && npm run release:rc",
+    "release:promote:beta": "cd scripts/release && npm install && npm run release:promote -- --to beta",
+    "release:promote:rc": "cd scripts/release && npm install && npm run release:promote -- --to rc",
+    "release:promote:prod": "cd scripts/release && npm install && npm run release:promote -- --to production",
+    "release:alpha:dry": "cd scripts/release && npm install && npm run release:alpha:dry",
+    "release:beta:dry": "cd scripts/release && npm install && npm run release:beta:dry",
+    "release:rc:dry": "cd scripts/release && npm install && npm run release:rc:dry"
   },
   "repository": {
     "type": "git",

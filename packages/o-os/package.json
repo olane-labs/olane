@@ -1,6 +1,6 @@
 {
   "name": "@olane/os",
-  "version": "0.7.11",
+  "version": "0.7.12-alpha.1",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -25,7 +25,6 @@
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "update:peers": "npm install @olane/o-config@latest @olane/o-core@latest @olane/o-intelligence@latest @olane/o-leader@latest @olane/o-protocol@latest @olane/o-storage@latest @olane/o-tool@latest @olane/o-tool-registry@latest @olane/o-tools-common@latest @olane/o-lane@latest --save-peer",
     "lint": "aegir lint"
   },
   "repository": {
@@ -57,19 +56,17 @@
     "tsx": "^4.20.3",
     "typescript": "5.4.5"
   },
-  "peerDependencies": {
-    "@olane/o-config": "^0.7.10",
-    "@olane/o-core": "^0.7.10",
-    "@olane/o-intelligence": "^0.7.10",
-    "@olane/o-lane": "^0.7.10",
-    "@olane/o-leader": "^0.7.10",
-    "@olane/o-protocol": "^0.7.10",
-    "@olane/o-storage": "^0.7.10",
-    "@olane/o-tool": "^0.7.10",
-    "@olane/o-tool-registry": "^0.7.10",
-    "@olane/o-tools-common": "^0.7.10"
-  },
   "dependencies": {
+    "@olane/o-config": "^0.7.11",
+    "@olane/o-core": "^0.7.11",
+    "@olane/o-intelligence": "^0.7.11",
+    "@olane/o-lane": "^0.7.11",
+    "@olane/o-leader": "^0.7.11",
+    "@olane/o-protocol": "^0.7.11",
+    "@olane/o-storage": "^0.7.11",
+    "@olane/o-tool": "^0.7.11",
+    "@olane/o-tool-registry": "^0.7.11",
+    "@olane/o-tools-common": "^0.7.11",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",

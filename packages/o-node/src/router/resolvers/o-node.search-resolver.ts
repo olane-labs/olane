@@ -280,10 +280,6 @@ export class oSearchResolver extends oAddressResolver {
       node,
     );
     const selectedResult = this.selectResult(filteredResults);
-    this.logger.debug(
-      'Selecting result:',
-      selectedResult?.address || 'no result found',
-    );
 
     // Early return: if no result found, return original address
     if (!selectedResult) {
