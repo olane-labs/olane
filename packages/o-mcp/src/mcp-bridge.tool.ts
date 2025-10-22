@@ -68,7 +68,7 @@ export class McpBridgeTool extends oLaneTool {
         headers: headers,
       });
       await mcpClient.connect(transport);
-      await this.createMcpTool(
+      const mcpTool = await this.createMcpTool(
         mcpClient,
         mcpServerUrl as string,
         name as string,
@@ -77,6 +77,7 @@ export class McpBridgeTool extends oLaneTool {
       this.addedRemoteServers.add(mcpServerUrl as string);
       return {
         _save: true,
+        address_to_index: mcpTool.address,
         message:
           'Successfully added MCP server with ' +
           this.hierarchyManager.getChildren().length +
@@ -111,7 +112,8 @@ export class McpBridgeTool extends oLaneTool {
       version: '1.0.0',
     });
     await mcpClient.connect(transport);
-    await this.createMcpTool(
+
+    const mcpTool = await this.createMcpTool(
       mcpClient,
       (args as string[]).join(' '),
       name as string,
@@ -119,6 +121,7 @@ export class McpBridgeTool extends oLaneTool {
 
     return {
       _save: true,
+      address_to_index: mcpTool.address,
       message: 'Successfully added local MCP server',
     };
   }
@@ -134,7 +137,7 @@ export class McpBridgeTool extends oLaneTool {
         messages: [
           {
             role: 'user',
-            content: `Search for model context protocol servers. Return all of the information necessary to connect or run the MCP server. Necessary information may include: command to run the MCP server, arguments to run the MCP server, headers to send to the MCP server, remote mcp url, and any other information necessary to run the MCP server. The MCP server is described by:
+            content: `Search for model context protocol servers that help with the user's intent. Once an MCP server is found, return the ways to connect or run the MCP server. Include concise instructions around parameters and dependencies if there are any. List MCP endpoint urls that point to the server at the very beginnging of the response.Endpoint values or runtime instructions with arguments or commands must be returned if there are any. Instructions must include: the remote mcp url endpoint, the command to run the MCP server, arguments to run the MCP server, headers to send to the MCP server, and any other information necessary to run the MCP server. If there is a local and a remote option, prefer the remote option.The MCP server is described by:
             ${provider ? `${++count}. Provider: ${provider}` : ''}
             ${name ? `${++count}. Name: ${name}` : ''}
             ${functionality ? `${++count}. Functionality: ${functionality}` : ''}`,
@@ -167,11 +170,6 @@ export class McpBridgeTool extends oLaneTool {
     await mcpTool.setupTools();
     await mcpTool.start();
     this.addChildNode(mcpTool);
-
-    await this.useChild(mcpTool.address, {
-      method: 'index_network',
-      params: {},
-    });
 
     return mcpTool;
   }

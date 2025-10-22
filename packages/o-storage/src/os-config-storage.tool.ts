@@ -108,7 +108,7 @@ export class OSConfigStorageTool extends oLaneTool {
         },
       });
 
-      const configData = result.result.data as { value?: string } | undefined;
+      const configData = result.result.data as any;
 
       if (!configData || !configData.value) {
         return {
@@ -205,11 +205,7 @@ export class OSConfigStorageTool extends oLaneTool {
         }),
       );
 
-      if (!loadResult.success) {
-        return loadResult;
-      }
-
-      const config = loadResult.data;
+      const config = loadResult;
 
       // Initialize lanes array if it doesn't exist
       if (!config.oNetworkConfig) {
@@ -237,7 +233,6 @@ export class OSConfigStorageTool extends oLaneTool {
           }),
         );
       }
-
       return {
         success: true,
         message: `Lane ${cid} added to OS configuration: ${osName}`,
@@ -343,13 +338,7 @@ export class OSConfigStorageTool extends oLaneTool {
         }),
       );
 
-      if (!loadResult.success) {
-        return {
-          lanes: [],
-        };
-      }
-
-      const config = loadResult.data;
+      const config = loadResult;
       const lanes = config.oNetworkConfig?.lanes || [];
 
       return {

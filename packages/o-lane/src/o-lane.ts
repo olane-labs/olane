@@ -50,7 +50,7 @@ export class oLane extends oObject {
 
   toCIDInput(): any {
     return {
-      intent: this.config.intent,
+      intent: this.config.intent.toString(),
       address: this.config.caller?.toString(),
       context: this.config.context?.toString() || '',
     };
@@ -127,7 +127,7 @@ export class oLane extends oObject {
         ?.map((s, index) => {
           const result = s.result || s.error;
           return `[Cycle ${index + 1} Begin ${s.id}]\n
-            Cycle Intent: ${s.config?.intent}\n
+            Cycle Intent: ${s.config?.intent.toString()}\n
             Cycle Result:\n
             ${
               typeof result === 'string'
@@ -273,6 +273,15 @@ export class oLane extends oObject {
               cid: this.cid.toString(),
             },
           });
+          const data = response?.result;
+          if (data.addresses_to_index) {
+            for (const address of data.addresses_to_index) {
+              await this.node.use(new oAddress(address), {
+                method: 'index_network',
+                params: {},
+              });
+            }
+          }
           this.logger.debug(
             'Lane CID added to startup config via o://os-config',
           );
@@ -310,11 +319,8 @@ export class oLane extends oObject {
         throw new Error(`Lane not found in storage for CID: ${cid}`);
       }
 
-      const storedLane =
-        typeof laneData.result === 'string'
-          ? JSON.parse(laneData.result)
-          : laneData.result;
-      this.logger.debug('Loaded lane data: ', storedLane);
+      const data = laneData.result.data as any;
+      const storedLane = JSON.parse(data.value);
 
       // Replay the sequence
       if (!storedLane.sequence || !Array.isArray(storedLane.sequence)) {

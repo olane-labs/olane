@@ -67,6 +67,7 @@ export class oNodeConnection extends oConnection {
       // Send the data
       await stream.send(new TextEncoder().encode(request.toString()));
       const res = await this.read(stream);
+      await stream.close();
 
       // process the response
       const response = new oResponse({

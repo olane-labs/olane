@@ -54,7 +54,8 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
   },
   search: {
     name: 'search',
-    description: 'Search for MCP servers',
+    description:
+      'Search for MCP servers based upon the name, provider, or functionality. This returns the MCP server urls or runtime instructions with arguments or commands if there are any.',
     dependencies: [],
     parameters: [
       {
