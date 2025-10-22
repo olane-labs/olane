@@ -64,7 +64,7 @@
   "dependencies": {
     "cors": "^2.8.5",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.3",
     "express": "^4.19.2"
   }
 }
