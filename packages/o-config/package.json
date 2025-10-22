@@ -39,7 +39,7 @@
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
-    "aegir": "^47.0.21",
+    "aegir": "^47.0.24",
     "buffer": "^6.0.3",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
