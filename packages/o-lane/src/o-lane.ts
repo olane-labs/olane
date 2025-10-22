@@ -184,6 +184,7 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
+    this.logger.debug('Executing capability: ', currentStep.type, currentStep);
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {

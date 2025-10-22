@@ -4,61 +4,59 @@ import {
   oRequest,
   oRouter,
   oRouterRequest,
+  oRequestPreparation,
 } from '@olane/o-core';
-import { JSONRPC_VERSION, oProtocolMethods } from '@olane/o-protocol';
+import { oProtocolMethods } from '@olane/o-protocol';
 
 export abstract class oToolRouter extends oRouter {
+  protected requestPreparation: oRequestPreparation;
+
+  constructor() {
+    super();
+    this.requestPreparation = new oRequestPreparation();
+  }
+
   protected abstract forward(
     address: oAddress,
     request: oRequest | oRouterRequest,
     node?: oCore,
   ): Promise<any>;
 
+  /**
+   * Routes a request by translating the address, preparing the request, and forwarding it.
+   * Handles handshake requests and parameter merging from resolver overrides.
+   */
   async route(request: oRouterRequest, node: oCore): Promise<any> {
     const { payload }: any = request.params;
     const { address } = request.params;
-
     const { method } = payload;
-    const isHandshake = method === oProtocolMethods.HANDSHAKE;
-    const destinationAddress = new oAddress(address as string);
 
-    // determine the next hop address from the encapsulated address
+    const destinationAddress = new oAddress(address as string);
+    const isHandshake = this.requestPreparation.isHandshakeRequest(
+      method,
+      oProtocolMethods.HANDSHAKE,
+    );
+
+    // Translate address to determine next hop and target
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.translate(destinationAddress, node);
 
-    const finalRequest = requestOverride || request;
-    const req = new oRouterRequest({
-      method: finalRequest.method,
-      params: finalRequest.params,
-      id: finalRequest.id,
-      jsonrpc: JSONRPC_VERSION,
-      stream: request.stream,
-    });
-    if (finalRequest && targetAddress) {
-      finalRequest.params.address = targetAddress.toString();
-    }
-    const params = (req.params.payload as any).params;
-    // override the method if it is a handshake
+    // Prepare the routing request
+    const req = this.requestPreparation.prepareRequest(
+      request,
+      requestOverride,
+      targetAddress,
+    );
+
+    // Apply transformations based on request type
     if (isHandshake) {
-      try {
-        if (requestOverride) {
-          // this is likely a method resolver, so we need to override the method
-          // let's specify the method in the request params to optimize on context window
-          params.tool = req.params?.payload?.method;
-        }
-      } catch (e) {
-        this.logger.error('Error assigning tool to handshake: ', e);
-      }
-      // update the method to be the handshake
-      req.params.payload.method = method;
+      this.requestPreparation.applyHandshakeTransform(req, requestOverride);
     } else if (requestOverride) {
-      // method resolved
-      (req.params.payload as any).params = {
-        ...payload.params, // initial params
-        ...params, // overloaded params
-      };
+      // Method was resolved, merge parameters
+      this.requestPreparation.applyParameterMerge(req, payload);
     }
-    // TODO: send the request to the destination
+
+    // Forward the prepared request
     return this.forward(nextHopAddress, req, node);
   }
 }

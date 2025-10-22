@@ -7,9 +7,18 @@ import { RouteResponse } from './interfaces/route.response.js';
 import { ResolveRequest } from './interfaces/resolve.request.js';
 import { oRouterRequest } from './o-request.router.js';
 
-export class oAddressResolution extends oObject {
+/**
+ * Manages a chain of address resolvers using the Chain of Responsibility pattern.
+ * Sequentially executes registered resolvers to transform addresses and routing requests.
+ */
+export class oResolverChain extends oObject {
   private readonly resolvers: oAddressResolver[] = [];
 
+  /**
+   * Registers a resolver in the chain.
+   * @param resolver The resolver to add
+   * @param isPriority If true, adds to the front of the chain; otherwise appends to the end
+   */
   addResolver(resolver: oAddressResolver, isPriority: boolean = false) {
     if (isPriority) {
       this.resolvers.unshift(resolver);
@@ -18,6 +27,11 @@ export class oAddressResolution extends oObject {
     }
   }
 
+  /**
+   * Checks if any resolver in the chain supports the given address.
+   * @param address The address to check
+   * @returns True if at least one resolver supports this address
+   */
   supportsAddress(address: oAddress): boolean {
     return this.resolvers.some((r) =>
       address.transports.some((t) => {
@@ -26,6 +40,12 @@ export class oAddressResolution extends oObject {
     );
   }
 
+  /**
+   * Executes the resolver chain to transform an address and request.
+   * Each resolver in sequence can modify the nextHopAddress, targetAddress, and request.
+   * @param request The resolve request containing address, node, and optional request override
+   * @returns The final route response after all resolvers have executed
+   */
   async resolve(request: ResolveRequest): Promise<RouteResponse> {
     let resolvedAddress = new oAddress(
       request.address.toString(),
