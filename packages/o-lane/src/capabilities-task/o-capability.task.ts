@@ -119,10 +119,19 @@ export class oCapabilityTask extends oCapability {
         params: params,
       });
 
+      // Check if the tool response contains _save flag
+      const shouldPersist = (response.result?.data as any)?._save === true;
+      if (shouldPersist) {
+        this.logger.debug(
+          'Tool response contains _save flag - lane will be persisted to config',
+        );
+      }
+
       return new oCapabilityTaskResult({
         result: `Tool Address Use output: ${JSON.stringify(response.result, null, 2)}`,
         type: oCapabilityType.EVALUATE,
         config: this.config,
+        shouldPersist,
       });
     } catch (error: any) {
       this.logger.error('Error executing task capability: ', error);

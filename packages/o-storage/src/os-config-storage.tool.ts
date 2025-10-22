@@ -9,9 +9,9 @@ export interface OSConfigStorageConfig extends oNodeToolConfig {
    * Storage backend to use for OS configuration.
    * - 'disk': Local filesystem (default for local OS)
    * - 'memory': In-memory storage (volatile)
-   * - 'supabase': Cloud database storage (Lambda/cloud deployments only)
+   * - string: Any other storage backend address
    */
-  storageBackend?: 'disk' | 'memory' | 'supabase';
+  storageBackend?: 'disk' | 'memory' | string;
 }
 
 /**
@@ -23,16 +23,12 @@ export interface OSConfigStorageConfig extends oNodeToolConfig {
  * Storage Backends:
  * - 'disk': Local filesystem storage (default for local OS deployments)
  * - 'memory': In-memory storage (volatile, for testing)
- * - 'supabase': Cloud database storage (Lambda/cloud deployments only)
- *
- * Note: The 'supabase' backend requires the SupabaseDBStorageProvider to be
- * initialized (o://supabase address). This is handled automatically in the
- * o-network-lambda repo but not in local deployments.
+ * - string: Any other storage backend address
  *
  * Address: o://os-config
  */
 export class OSConfigStorageTool extends oLaneTool {
-  private storageBackend: 'disk' | 'memory' | 'supabase';
+  private storageBackend: 'disk' | 'memory' | string;
   private configKeyPrefix = 'os-config:';
 
   constructor(config: OSConfigStorageConfig) {
@@ -46,7 +42,7 @@ export class OSConfigStorageTool extends oLaneTool {
     // Determine storage backend from config or environment
     this.storageBackend =
       config.storageBackend ||
-      (process.env.OS_CONFIG_STORAGE as 'disk' | 'memory' | 'supabase') ||
+      (process.env.OS_CONFIG_STORAGE as 'disk' | 'memory' | string) ||
       'disk';
 
     this.logger.info(`OS Config Storage using backend: ${this.storageBackend}`);
@@ -112,7 +108,7 @@ export class OSConfigStorageTool extends oLaneTool {
         },
       });
 
-      const configData = result.result.data as { value?: string } | undefined;
+      const configData = result.result.data as any;
 
       if (!configData || !configData.value) {
         return {
@@ -209,11 +205,7 @@ export class OSConfigStorageTool extends oLaneTool {
         }),
       );
 
-      if (!loadResult.success) {
-        return loadResult;
-      }
-
-      const config = loadResult.data;
+      const config = loadResult;
 
       // Initialize lanes array if it doesn't exist
       if (!config.oNetworkConfig) {
@@ -241,7 +233,6 @@ export class OSConfigStorageTool extends oLaneTool {
           }),
         );
       }
-
       return {
         success: true,
         message: `Lane ${cid} added to OS configuration: ${osName}`,
@@ -347,13 +338,7 @@ export class OSConfigStorageTool extends oLaneTool {
         }),
       );
 
-      if (!loadResult.success) {
-        return {
-          lanes: [],
-        };
-      }
-
-      const config = loadResult.data;
+      const config = loadResult;
       const lanes = config.oNetworkConfig?.lanes || [];
 
       return {

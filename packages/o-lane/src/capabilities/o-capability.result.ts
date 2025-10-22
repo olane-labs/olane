@@ -16,6 +16,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
   type: oCapabilityType;
   error?: string;
   config?: oCapabilityConfig;
+  shouldPersist?: boolean;
 
   constructor(config: oCapabilityResultInterface) {
     this.id = uuidv4();
@@ -23,6 +24,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
     this.type = config.type || oCapabilityType.UNKNOWN;
     this.error = config.error || '';
     this.config = config.config;
+    this.shouldPersist = config.shouldPersist;
   }
 
   toJSON() {
@@ -31,6 +33,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
       result: this.result,
       type: this.type,
       error: this.error,
+      shouldPersist: this.shouldPersist,
       config: {
         intent: this.config?.intent,
         params: this.config?.params,

@@ -50,7 +50,7 @@ export class oLane extends oObject {
 
   toCIDInput(): any {
     return {
-      intent: this.config.intent,
+      intent: this.config.intent.toString(),
       address: this.config.caller?.toString(),
       context: this.config.context?.toString() || '',
     };
@@ -127,7 +127,7 @@ export class oLane extends oObject {
         ?.map((s, index) => {
           const result = s.result || s.error;
           return `[Cycle ${index + 1} Begin ${s.id}]\n
-            Cycle Intent: ${s.config?.intent}\n
+            Cycle Intent: ${s.config?.intent.toString()}\n
             Cycle Result:\n
             ${
               typeof result === 'string'
@@ -184,7 +184,6 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
-    this.logger.debug('Executing capability: ', currentStep.type, currentStep);
     const capabilityType = currentStep.type;
     for (const capability of this.capabilities) {
       if (capability.type === capabilityType && currentStep.config) {
@@ -227,6 +226,15 @@ export class oLane extends oObject {
       // perform the latest capability
       const result = await this.doCapability(currentStep);
       this.addSequence(result);
+
+      // Check if the capability result indicates persistence is needed
+      if (result.shouldPersist && !this.config.persistToConfig) {
+        this.logger.debug(
+          'Capability result flagged for persistence - automatically setting persistToConfig',
+        );
+        this.config.persistToConfig = true;
+      }
+
       if (result.type === oCapabilityType.STOP) {
         return result;
       }
@@ -251,26 +259,32 @@ export class oLane extends oObject {
 
       // If this lane is marked for persistence to config, store it directly in os-config storage
       if (this.config.persistToConfig && this.cid) {
-        this.logger.debug('Lane marked for persistence, saving to config...');
+        this.logger.debug(
+          'Lane marked for persistence (auto-triggered by tool response or explicitly set), saving to config...',
+        );
         try {
           // Get the OS instance name from the node's system name
-          const systemName = (this.node.config as any).systemName;
-          if (!systemName) {
-            this.logger.warn(
-              'No systemName in node config, cannot persist lane to startup config',
-            );
-          } else {
-            await this.node.use(new oAddress('o://os-config'), {
-              method: 'add_lane_to_config',
-              params: {
-                osName: systemName,
-                cid: this.cid.toString(),
-              },
-            });
-            this.logger.debug(
-              'Lane CID added to startup config via o://os-config',
-            );
+          const systemName =
+            (this.node.config as any).systemName || 'default-os';
+          await this.node.use(new oAddress('o://os-config'), {
+            method: 'add_lane_to_config',
+            params: {
+              osName: systemName,
+              cid: this.cid.toString(),
+            },
+          });
+          const data = response?.result;
+          if (data.addresses_to_index) {
+            for (const address of data.addresses_to_index) {
+              await this.node.use(new oAddress(address), {
+                method: 'index_network',
+                params: {},
+              });
+            }
           }
+          this.logger.debug(
+            'Lane CID added to startup config via o://os-config',
+          );
         } catch (error) {
           this.logger.error('Failed to add lane to startup config: ', error);
         }
@@ -305,11 +319,8 @@ export class oLane extends oObject {
         throw new Error(`Lane not found in storage for CID: ${cid}`);
       }
 
-      const storedLane =
-        typeof laneData.result === 'string'
-          ? JSON.parse(laneData.result)
-          : laneData.result;
-      this.logger.debug('Loaded lane data: ', storedLane);
+      const data = laneData.result.data as any;
+      const storedLane = JSON.parse(data.value);
 
       // Replay the sequence
       if (!storedLane.sequence || !Array.isArray(storedLane.sequence)) {

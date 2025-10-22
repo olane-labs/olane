@@ -43,7 +43,8 @@ Step 4 - Configure the target tool address use
 1. Identify the tool address that most likely will help you complete the user intent.
 2. Review the provided context for past cycles that contain configuration instructions for the target tool address.
 3. If there is no configuration instructions for the target tool address, return the "Configure Response" using the [RETURN INSTRUCTIONS]
-4. If the tool use configuration is already known, continue to step 5
+4. Identify if there are any missing parameter values for the target tool address and search for them if so.
+5. If the tool use configuration is already known including all parameter values, continue to step 5
 
 Step 5 - Use target tool address
 1. If the target tool address configuration is known, return the "Use Tool Response" using the [RETURN INSTRUCTIONS]
@@ -107,6 +108,7 @@ Stop Response:
 {
   "result": string,
   "reasoning": string,
+  "addresses_to_index": [string], // COMMENT: If the results of a tool use include "address_to_index", list them in the "addresses_to_index" array.
   "type": "stop",
 }
 

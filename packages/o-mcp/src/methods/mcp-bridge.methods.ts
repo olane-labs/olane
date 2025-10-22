@@ -33,7 +33,7 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
         value: 'string',
         description:
           'The name for the MCP server. Generate this in lowercase snake_case if not provided.',
-        required: true,
+        required: false,
       },
       {
         name: 'description',
@@ -54,7 +54,8 @@ export const MCP_BRIDGE_METHODS: { [key: string]: oMethod } = {
   },
   search: {
     name: 'search',
-    description: 'Search for MCP servers',
+    description:
+      'Search for MCP servers based upon the name, provider, or functionality. This returns the MCP server urls or runtime instructions with arguments or commands if there are any.',
     dependencies: [],
     parameters: [
       {

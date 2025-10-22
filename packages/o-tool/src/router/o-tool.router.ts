@@ -42,7 +42,7 @@ export abstract class oToolRouter extends oRouter {
       await this.translate(destinationAddress, node);
 
     // Prepare the routing request
-    const req = this.requestPreparation.prepareRequest(
+    let req = this.requestPreparation.prepareRequest(
       request,
       requestOverride,
       targetAddress,
@@ -50,10 +50,13 @@ export abstract class oToolRouter extends oRouter {
 
     // Apply transformations based on request type
     if (isHandshake) {
-      this.requestPreparation.applyHandshakeTransform(req, requestOverride);
+      req = this.requestPreparation.applyHandshakeTransform(
+        req,
+        requestOverride,
+      );
     } else if (requestOverride) {
       // Method was resolved, merge parameters
-      this.requestPreparation.applyParameterMerge(req, payload);
+      req = this.requestPreparation.applyParameterMerge(req, payload);
     }
 
     // Forward the prepared request
