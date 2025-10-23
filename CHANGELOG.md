@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.9 (2025-10-23)</small>
+
+**Note:** Version bump only for package @olane/o-root
+
 ## <small>0.7.12-alpha.8 (2025-10-23)</small>
 
 **Note:** Version bump only for package @olane/o-root
