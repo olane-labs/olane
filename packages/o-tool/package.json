@@ -54,7 +54,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.5",
+    "@olane/o-config": "0.7.12-alpha.6",
     "@olane/o-core": "0.7.12-alpha.6",
     "@olane/o-protocol": "0.7.12-alpha.6",
     "debug": "^4.4.1",

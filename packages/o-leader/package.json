@@ -53,7 +53,7 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.5",
+    "@olane/o-config": "0.7.12-alpha.6",
     "@olane/o-core": "0.7.12-alpha.6",
     "@olane/o-gateway-olane": "0.7.12-alpha.6",
     "@olane/o-lane": "0.7.12-alpha.6",
