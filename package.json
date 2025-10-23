@@ -33,9 +33,9 @@
     "lerna:version:patch": "lerna version patch --yes",
     "lerna:version:minor": "lerna version minor --yes",
     "lerna:version:major": "lerna version major --yes",
-    "lerna:version:alpha": "lerna version prerelease --preid alpha --yes",
-    "lerna:version:beta": "lerna version prerelease --preid beta --yes",
-    "lerna:version:rc": "lerna version prerelease --preid rc --yes",
+    "lerna:version:alpha": "lerna version prerelease --force-publish --preid alpha --yes",
+    "lerna:version:beta": "lerna version prerelease --force-publish --preid beta --yes",
+    "lerna:version:rc": "lerna version prerelease --force-publish --preid rc --yes",
     "lerna:publish": "lerna publish from-package --yes",
     "lerna:publish:dry": "lerna publish from-package --no-push --no-git-tag-version"
   },
