@@ -181,5 +181,97 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
         message: `Notification ${eventType} emitted`,
       };
     }
+
+    /**
+     * Get connection health status (for nodes with heartbeat monitoring)
+     */
+    async _tool_get_connection_health(request: oRequest): Promise<ToolResult> {
+      // Check if this node has a connectionHeartbeatManager
+      const heartbeatManager = (this as any).connectionHeartbeatManager;
+
+      if (!heartbeatManager) {
+        return {
+          enabled: false,
+          message: 'Connection heartbeat not enabled on this node',
+        };
+      }
+
+      const healthStatus = heartbeatManager.getHealthStatus();
+
+      return {
+        enabled: true,
+        connections: healthStatus.map((h: any) => ({
+          address: h.address.toString(),
+          peerId: h.peerId,
+          status: h.status,
+          lastSuccessfulPing: new Date(h.lastSuccessfulPing).toISOString(),
+          consecutiveFailures: h.consecutiveFailures,
+          averageLatencyMs: Math.round(h.averageLatency),
+        })),
+      };
+    }
+
+    /**
+     * Get leader health status and retry configuration
+     */
+    async _tool_get_leader_health(
+      request: oRequest,
+    ): Promise<ToolResult> {
+      const heartbeatManager = (this as any).connectionHeartbeatManager;
+      const leaderRequestWrapper = (this as any).leaderRequestWrapper;
+
+      if (!heartbeatManager && !leaderRequestWrapper) {
+        return {
+          enabled: false,
+          message: 'Leader monitoring not available on this node',
+        };
+      }
+
+      const result: any = {
+        heartbeat: { enabled: false },
+        retry: { enabled: false },
+      };
+
+      // Get heartbeat health for leader
+      if (heartbeatManager) {
+        const config = heartbeatManager.getConfig();
+        result.heartbeat.enabled = config.checkLeader;
+
+        if (config.checkLeader) {
+          const healthStatus = heartbeatManager.getHealthStatus();
+          const leaderHealth = healthStatus.find(
+            (h: any) => h.address.toString().includes('leader'),
+          );
+
+          if (leaderHealth) {
+            result.heartbeat.status = leaderHealth.status;
+            result.heartbeat.lastSuccessfulPing = new Date(
+              leaderHealth.lastSuccessfulPing,
+            ).toISOString();
+            result.heartbeat.consecutiveFailures =
+              leaderHealth.consecutiveFailures;
+            result.heartbeat.averageLatencyMs = Math.round(
+              leaderHealth.averageLatency,
+            );
+          } else {
+            result.heartbeat.status = 'not_monitored';
+          }
+        }
+      }
+
+      // Get retry configuration
+      if (leaderRequestWrapper) {
+        const retryConfig = leaderRequestWrapper.getConfig();
+        result.retry = {
+          enabled: retryConfig.enabled,
+          maxAttempts: retryConfig.maxAttempts,
+          baseDelayMs: retryConfig.baseDelayMs,
+          maxDelayMs: retryConfig.maxDelayMs,
+          timeoutMs: retryConfig.timeoutMs,
+        };
+      }
+
+      return result;
+    }
   };
 }

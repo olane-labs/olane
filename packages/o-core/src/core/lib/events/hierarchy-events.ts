@@ -114,3 +114,33 @@ export class ParentDisconnectedEvent extends oNotificationEvent {
     };
   }
 }
+
+/**
+ * Emitted when connection to leader is lost (CRITICAL)
+ * This is a catastrophic failure - node cannot function without leader
+ */
+export class LeaderDisconnectedEvent extends oNotificationEvent {
+  readonly leaderAddress: oAddress;
+  readonly reason?: string;
+
+  constructor(config: {
+    source: oAddress;
+    leaderAddress: oAddress;
+    reason?: string;
+  }) {
+    super({
+      type: 'leader:disconnected',
+      source: config.source,
+      metadata: { reason: config.reason },
+    });
+    this.leaderAddress = config.leaderAddress;
+    this.reason = config.reason;
+  }
+
+  protected getEventData(): Record<string, any> {
+    return {
+      leaderAddress: this.leaderAddress.toString(),
+      reason: this.reason,
+    };
+  }
+}

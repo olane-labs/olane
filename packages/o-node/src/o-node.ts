@@ -28,6 +28,9 @@ import { oMethodResolver, oToolBase } from '@olane/o-tool';
 import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
 import { oLeaderResolverFallback } from './router/index.js';
 import { oNodeNotificationManager } from './o-node.notification-manager.js';
+import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
+import { oReconnectionManager } from './managers/o-reconnection.manager.js';
+import { LeaderRequestWrapper } from './utils/leader-request-wrapper.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -36,6 +39,9 @@ export class oNode extends oToolBase {
   public config: oNodeConfig;
   public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
+  public connectionHeartbeatManager?: oConnectionHeartbeatManager;
+  public reconnectionManager?: oReconnectionManager;
+  public leaderRequestWrapper!: LeaderRequestWrapper;
   protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
@@ -104,10 +110,41 @@ export class oNode extends oToolBase {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
     }
+
+    // Notify parent we're stopping (best-effort, 2s timeout)
+    if (this.config.parent) {
+      try {
+        await Promise.race([
+          this.use(this.config.parent, {
+            method: 'notify',
+            params: {
+              eventType: 'node:stopping',
+              eventData: {
+                address: this.address.toString(),
+                reason: 'graceful_shutdown',
+                expectedDowntime: null,
+              },
+              source: this.address.toString(),
+            },
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 2000),
+          ),
+        ]);
+        this.logger.debug('Notified parent of shutdown');
+      } catch (error) {
+        this.logger.warn(
+          'Failed to notify parent (will be detected by heartbeat):',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
     if (!this.config.leader) {
       this.logger.debug('No leader found, skipping unregistration');
       return;
     }
+
     const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
 
     // attempt to unregister from the network
@@ -194,6 +231,12 @@ export class oNode extends oToolBase {
 
   async start(): Promise<void> {
     await super.start();
+
+    // Start heartbeat after node is running
+    if (this.connectionHeartbeatManager) {
+      await this.connectionHeartbeatManager.start();
+    }
+
     // await NetworkUtils.advertiseToNetwork(
     //   this.address,
     //   this.staticAddress,
@@ -358,6 +401,20 @@ export class oNode extends oToolBase {
       p2pNode: this.p2pNode,
     });
 
+    // Initialize leader request wrapper
+    this.leaderRequestWrapper = new LeaderRequestWrapper({
+      enabled: this.config.leaderRetry?.enabled ?? true,
+      maxAttempts: this.config.leaderRetry?.maxAttempts ?? 20,
+      baseDelayMs: this.config.leaderRetry?.baseDelayMs ?? 2000,
+      maxDelayMs: this.config.leaderRetry?.maxDelayMs ?? 30000,
+      timeoutMs: this.config.leaderRetry?.timeoutMs ?? 10000,
+    });
+
+    this.logger.info(
+      `Leader retry config: enabled=${this.leaderRequestWrapper.getConfig().enabled}, ` +
+        `maxAttempts=${this.leaderRequestWrapper.getConfig().maxAttempts}`,
+    );
+
     // initialize address resolution
     this.router.addResolver(new oMethodResolver(this.address));
     this.router.addResolver(new oNodeResolver(this.address));
@@ -367,9 +424,73 @@ export class oNode extends oToolBase {
       this.logger.debug('Adding leader resolver fallback...');
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
+
+    // Read ENABLE_LEADER_HEARTBEAT environment variable
+    const enableLeaderHeartbeat =
+      process.env.ENABLE_LEADER_HEARTBEAT === 'true';
+
+    // Initialize connection heartbeat manager
+    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
+      this.p2pNode,
+      this.hierarchyManager,
+      this.notificationManager,
+      this.address,
+      {
+        enabled: this.config.connectionHeartbeat?.enabled ?? true,
+        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
+        timeoutMs: this.config.connectionHeartbeat?.timeoutMs ?? 5000,
+        failureThreshold:
+          this.config.connectionHeartbeat?.failureThreshold ?? 3,
+        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? true,
+        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
+        checkLeader:
+          this.config.connectionHeartbeat?.checkLeader ?? enableLeaderHeartbeat,
+      },
+    );
+
+    this.logger.info(
+      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
+        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
+    );
+
+    // Initialize reconnection manager
+    if (this.config.reconnection?.enabled !== false) {
+      this.reconnectionManager = new oReconnectionManager(this, {
+        enabled: true,
+        maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
+        baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
+        maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
+        useLeaderFallback:
+          this.config.reconnection?.useLeaderFallback ?? true,
+      });
+    }
+  }
+
+  /**
+   * Override use() to wrap leader/registry requests with retry logic
+   */
+  async use(
+    address: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+  ): Promise<any> {
+    // Wrap leader/registry requests with retry logic
+    return this.leaderRequestWrapper.execute(
+      () => super.use(address, data),
+      address,
+      data?.method,
+    );
   }
 
   async teardown(): Promise<void> {
+    // Stop heartbeat before parent teardown
+    if (this.connectionHeartbeatManager) {
+      await this.connectionHeartbeatManager.stop();
+    }
+
     await this.unregister();
     await super.teardown();
     if (this.p2pNode) {
