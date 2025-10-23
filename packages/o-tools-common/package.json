@@ -54,10 +54,10 @@
   "dependencies": {
     "@olane/o-approval": "0.7.12-alpha.5",
     "@olane/o-config": "0.7.12-alpha.5",
-    "@olane/o-core": "0.7.12-alpha.4",
+    "@olane/o-core": "0.7.12-alpha.5",
     "@olane/o-lane": "0.7.12-alpha.5",
     "@olane/o-leader": "0.7.12-alpha.5",
-    "@olane/o-protocol": "0.7.12-alpha.4",
+    "@olane/o-protocol": "0.7.12-alpha.5",
     "@olane/o-storage": "0.7.12-alpha.5",
     "@olane/o-tool": "0.7.12-alpha.5",
     "debug": "^4.4.1",
