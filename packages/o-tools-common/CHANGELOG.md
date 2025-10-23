@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.7 (2025-10-23)</small>
+
+- deps ([53164c4](https://github.com/olane-labs/olane/commit/53164c4))
+
 ## <small>0.7.12-alpha.6 (2025-10-23)</small>
 
 - chore: sync o-core, o-protocol, and o-server to v0.7.12-alpha.5 ([5c45d90](https://github.com/olane-labs/olane/commit/5c45d90))
