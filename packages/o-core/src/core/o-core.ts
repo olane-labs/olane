@@ -17,6 +17,13 @@ import { oRouter } from '../router/o-router.js';
 import { CoreUtils } from '../utils/core.utils.js';
 import { oErrorCodes } from '../error/index.js';
 import { oRequest } from '../connection/o-request.js';
+import { oNotificationManager } from './lib/o-notification.manager.js';
+import {
+  oNotificationEvent,
+  EventFilter,
+  NotificationHandler,
+  Subscription,
+} from './lib/events/index.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -27,6 +34,7 @@ export abstract class oCore extends oObject {
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
   public router!: oRouter;
+  public notificationManager!: oNotificationManager;
   private heartbeatInterval?: NodeJS.Timeout;
 
   constructor(readonly config: oCoreConfig) {
@@ -268,8 +276,38 @@ export abstract class oCore extends oObject {
   abstract unregister(): Promise<void>;
   abstract register(): Promise<void>;
 
+  // notification manager - subclasses must implement to provide transport-specific manager
+  protected abstract createNotificationManager(): oNotificationManager;
+
+  /**
+   * Emit a notification event
+   */
+  protected notify(event: oNotificationEvent): void {
+    if (this.notificationManager) {
+      this.notificationManager.emit(event);
+    }
+  }
+
+  /**
+   * Subscribe to notification events
+   */
+  protected onNotification(
+    eventType: string,
+    handler: NotificationHandler,
+    filter?: EventFilter,
+  ): Subscription {
+    if (!this.notificationManager) {
+      throw new Error('Notification manager not initialized');
+    }
+    return this.notificationManager.on(eventType, handler, filter);
+  }
+
   // initialize
-  async initialize(): Promise<void> {}
+  async initialize(): Promise<void> {
+    // Create and initialize notification manager
+    this.notificationManager = this.createNotificationManager();
+    await this.notificationManager.initialize();
+  }
 
   get isRunning(): boolean {
     return (
@@ -412,6 +450,11 @@ export abstract class oCore extends oObject {
       this.logger.debug('Child stopped: ' + child.toString());
     }
     this.hierarchyManager.clear();
+
+    // Teardown notification manager
+    if (this.notificationManager) {
+      await this.notificationManager.teardown();
+    }
   }
 
   get dependencies(): oDependency[] {

@@ -6,6 +6,7 @@ import {
   oRequest,
   oRouterRequest,
   oTransport,
+  oNotificationEvent,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { oToolBase } from './o-tool.base.js';
@@ -130,6 +131,54 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       // delete this.requestManager.remove(requestId as string);
       return {
         message: 'Request cancelled',
+      };
+    }
+
+    /**
+     * Emit a notification event to all subscribers
+     * Can be called remotely to trigger events on this node
+     */
+    async _tool_notify(request: oRequest): Promise<ToolResult> {
+      const { eventType, eventData } = request.params;
+
+      if (!eventType) {
+        throw new oError(
+          oErrorCodes.MISSING_PARAMETERS,
+          'eventType is required',
+        );
+      }
+
+      this.logger.debug(`Received remote notification: ${eventType}`);
+
+      // Create a generic notification event from the data
+      if (this.notificationManager) {
+        // Create a custom event class
+        class CustomNotificationEvent extends oNotificationEvent {
+          constructor(type: string, source: oAddress, data: any) {
+            super({
+              type,
+              source,
+              metadata: data || {},
+            });
+          }
+        }
+
+        // Emit as a custom event with the provided data
+        const sourceAddress = request.params.source
+          ? new oAddress(request.params.source as string)
+          : new oAddress('o://unknown');
+        const event = new CustomNotificationEvent(
+          eventType as string,
+          sourceAddress,
+          eventData,
+        );
+
+        this.notificationManager.emit(event);
+      }
+
+      return {
+        success: true,
+        message: `Notification ${eventType} emitted`,
       };
     }
   };

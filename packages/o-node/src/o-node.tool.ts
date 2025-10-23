@@ -5,11 +5,13 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  ChildJoinedEvent,
 } from '@olane/o-core';
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
 import { oNodeTransport } from './router/o-node.transport.js';
+import { oNodeAddress } from './router/o-node.address.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -96,11 +98,25 @@ export class oNodeTool extends oTool(oServerNode) {
   async _tool_child_register(request: oRequest): Promise<any> {
     this.logger.debug('Child register: ', request.params);
     const { address, transports }: any = request.params;
-    const childAddress = new oAddress(
+    const childAddress = new oNodeAddress(
       address,
       transports.map((t: string) => new oNodeTransport(t)),
     );
+
+    // Add child to hierarchy
     this.hierarchyManager.addChild(childAddress);
+
+    // Emit child joined event
+    if (this.notificationManager) {
+      this.notificationManager.emit(
+        new ChildJoinedEvent({
+          source: this.address,
+          childAddress,
+          parentAddress: this.address,
+        }),
+      );
+    }
+
     return {
       message: `Child node registered with parent! ${childAddress.toString()}`,
       parentTransports: this.parentTransports.map((t) => t.toString()),

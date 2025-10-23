@@ -6,6 +6,7 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  oNotificationManager,
 } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
@@ -55,6 +56,13 @@ export class oToolBase extends oCore {
   }
   register(): Promise<void> {
     throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Register not implemented');
+  }
+
+  protected createNotificationManager(): oNotificationManager {
+    throw new oError(
+      oErrorCodes.NOT_IMPLEMENTED,
+      'createNotificationManager not implemented',
+    );
   }
 
   async execute(req: oRequest, stream?: Stream): Promise<RunResult> {

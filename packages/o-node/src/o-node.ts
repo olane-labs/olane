@@ -17,6 +17,7 @@ import {
   oAddress,
   oRequest,
   RestrictedAddresses,
+  oNotificationManager,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
@@ -26,6 +27,7 @@ import { NetworkUtils } from './utils/network.utils.js';
 import { oMethodResolver, oToolBase } from '@olane/o-tool';
 import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
 import { oLeaderResolverFallback } from './router/index.js';
+import { oNodeNotificationManager } from './o-node.notification-manager.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -72,6 +74,14 @@ export class oNode extends oToolBase {
       children: [],
     });
     this.router = new oNodeRouter();
+  }
+
+  protected createNotificationManager(): oNotificationManager {
+    return new oNodeNotificationManager(
+      this.p2pNode,
+      this.hierarchyManager,
+      this.address,
+    );
   }
 
   get staticAddress(): oNodeAddress {
