@@ -8,7 +8,7 @@ import {
   LeaderDisconnectedEvent,
   ConnectionDegradedEvent,
 } from '@olane/o-core';
-import { oNode } from '../o-node.js';
+import { IReconnectableNode } from '../interfaces/i-reconnectable-node.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeTransport } from '../router/o-node.transport.js';
 
@@ -36,7 +36,7 @@ export class oReconnectionManager extends oObject {
   private reconnecting = false;
 
   constructor(
-    private node: oNode,
+    private node: IReconnectableNode,
     private config: ReconnectionConfig,
   ) {
     super();

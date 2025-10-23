@@ -386,8 +386,10 @@ export class oNode extends oToolBase {
     }
 
     await this.createNode();
-
     await this.initializeRouter();
+
+    // need to wait until our libpp2 node is initialized before calling super.initialize
+    await super.initialize();
 
     this.logger.debug(
       'Node initialized!',
@@ -460,8 +462,7 @@ export class oNode extends oToolBase {
         maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
         baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
         maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
-        useLeaderFallback:
-          this.config.reconnection?.useLeaderFallback ?? true,
+        useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
       });
     }
   }
