@@ -14,7 +14,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   }
 
   /**
-   * Connect to a given address
+   * Connect to a given address with exponential backoff retry
    * @param address - The address to connect to
    * @returns The connection object
    */
@@ -41,31 +41,66 @@ export class oNodeConnectionManager extends oConnectionManager {
       }
     }
 
-    // first time setup connection
-    try {
-      const p2pConnection = await this.p2pNode.dial(
-        (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
-          ma.toMultiaddr(),
-        ),
-      );
-      const connection = new oNodeConnection({
-        nextHopAddress: nextHopAddress,
-        address: address,
-        p2pConnection: p2pConnection,
-        callerAddress: callerAddress,
-      });
-      // this.cache.set(nextHopAddress.toString(), connection);
-      return connection;
-    } catch (error) {
-      this.logger.error(
-        `[${callerAddress?.toString() || 'unknown'}] Error connecting to address! Next hop:` +
-          nextHopAddress +
-          ' With Address:' +
-          address.toString(),
-        error,
-      );
-      throw error;
+    // Retry configuration for handling transient connection failures
+    const MAX_RETRIES = 3;
+    const BASE_DELAY_MS = 1000; // Start with 1 second
+    const MAX_DELAY_MS = 10000; // Cap at 10 seconds
+
+    // first time setup connection with retry logic
+    let lastError: any;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        if (attempt > 0) {
+          // Calculate exponential backoff delay: 1s, 2s, 4s, 8s (capped at MAX_DELAY_MS)
+          const delay = Math.min(
+            BASE_DELAY_MS * Math.pow(2, attempt - 1),
+            MAX_DELAY_MS,
+          );
+          this.logger.debug(
+            `Retry attempt ${attempt}/${MAX_RETRIES} for ${nextHopAddress.toString()} after ${delay}ms delay`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
+        const p2pConnection = await this.p2pNode.dial(
+          (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
+            ma.toMultiaddr(),
+          ),
+        );
+        const connection = new oNodeConnection({
+          nextHopAddress: nextHopAddress,
+          address: address,
+          p2pConnection: p2pConnection,
+          callerAddress: callerAddress,
+        });
+
+        if (attempt > 0) {
+          this.logger.info(
+            `Successfully connected to ${nextHopAddress.toString()} on retry attempt ${attempt}`,
+          );
+        }
+
+        // this.cache.set(nextHopAddress.toString(), connection);
+        return connection;
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(
+          `[${callerAddress?.toString() || 'unknown'}] Connection attempt ${attempt + 1}/${MAX_RETRIES + 1} failed for ${nextHopAddress.toString()}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
+        // Don't retry on the last attempt
+        if (attempt === MAX_RETRIES) {
+          break;
+        }
+      }
     }
+
+    // All retries exhausted
+    this.logger.error(
+      `[${callerAddress?.toString() || 'unknown'}] Failed to connect after ${MAX_RETRIES + 1} attempts to address! Next hop: ${nextHopAddress} With Address: ${address.toString()}`,
+      lastError,
+    );
+    throw lastError;
   }
 
   isCached(address: oAddress): boolean {

@@ -37,7 +37,10 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
-    stream.addEventListener('message', async (event) => {
+    // CRITICAL: Attach message listener immediately to prevent buffer overflow (libp2p v3)
+    // Per libp2p migration guide: "If no message event handler is added, streams will
+    // buffer incoming data until a pre-configured limit is reached, after which the stream will be reset."
+    const messageHandler = async (event: any) => {
       if (!event.data) {
         this.logger.warn('Malformed event data');
         return;
@@ -76,7 +79,10 @@ export class oNodeTool extends oTool(oServerNode) {
 
       // add the request method to the response
       await CoreUtils.sendResponse(response, stream);
-    });
+    };
+
+    // Attach listener synchronously before any async operations
+    stream.addEventListener('message', messageHandler);
   }
 
   async _tool_identify(): Promise<any> {
