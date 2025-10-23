@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.5 (2025-10-23)</small>
+
+- testing ([344682a](https://github.com/olane-labs/olane/commit/344682a))
+
 ## <small>0.7.12-alpha.4 (2025-10-23)</small>
 
 - fix for routing ([90417ca](https://github.com/olane-labs/olane/commit/90417ca))
