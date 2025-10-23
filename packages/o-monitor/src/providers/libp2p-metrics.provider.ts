@@ -23,16 +23,17 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Get peer information from libp2p peer store
    */
   async _tool_get_peer_info(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
     try {
-      const peers = await this.p2pNode.peerStore.all();
+      const peers = await p2pNode.peerStore.all();
 
-      const peerInfo = peers.map((peer) => ({
+      const peerInfo = peers.map((peer: any) => ({
         peerId: peer.id.toString(),
-        addresses: peer.addresses.map((addr) => ({
+        addresses: peer.addresses.map((addr: any) => ({
           multiaddr: addr.multiaddr.toString(),
           isCertified: addr.isCertified,
         })),
@@ -45,8 +46,8 @@ export class LibP2PMetricsProvider extends oNodeTool {
         timestamp: Date.now(),
         peerCount: peers.length,
         peers: peerInfo,
-        selfPeerId: this.p2pNode.peerId.toString(),
-        selfMultiaddrs: this.p2pNode.getMultiaddrs().map((ma) => ma.toString()),
+        selfPeerId: p2pNode.peerId.toString(),
+        selfMultiaddrs: p2pNode.getMultiaddrs().map((ma: any) => ma.toString()),
       };
     } catch (error: any) {
       throw new Error(`Failed to get peer info: ${error.message}`);
@@ -57,13 +58,14 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Get DHT (Distributed Hash Table) status
    */
   async _tool_get_dht_status(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
     try {
       // Get DHT service if available
-      const services = this.p2pNode.services as any;
+      const services = p2pNode.services as any;
       const dht = services?.dht;
 
       if (!dht) {
@@ -93,16 +95,17 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Get transport and connection statistics
    */
   async _tool_get_transport_stats(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
     try {
-      const connections = this.p2pNode.getConnections();
-      const dialQueue = (this.p2pNode.services as any).connectionManager
+      const connections = p2pNode.getConnections();
+      const dialQueue = (p2pNode.services as any).connectionManager
         ?.dialQueue;
 
-      const connectionStats = connections.map((conn) => ({
+      const connectionStats = connections.map((conn: any) => ({
         remotePeer: conn.remotePeer.toString(),
         remoteAddr: conn.remoteAddr.toString(),
         status: conn.status,
@@ -120,15 +123,15 @@ export class LibP2PMetricsProvider extends oNodeTool {
           })) || [],
       }));
 
-      const protocols = this.p2pNode.getProtocols();
+      const protocols = p2pNode.getProtocols();
 
       return {
         timestamp: Date.now(),
         connectionCount: connections.length,
         connections: connectionStats,
         protocols: Array.from(protocols),
-        multiaddrs: this.p2pNode.getMultiaddrs().map((ma) => ma.toString()),
-        status: this.p2pNode.status,
+        multiaddrs: p2pNode.getMultiaddrs().map((ma: any) => ma.toString()),
+        status: p2pNode.status,
       };
     } catch (error: any) {
       throw new Error(`Failed to get transport stats: ${error.message}`);
@@ -139,12 +142,13 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Get connection manager status
    */
   async _tool_get_connection_manager_status(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
     try {
-      const connections = this.p2pNode.getConnections();
+      const connections = p2pNode.getConnections();
 
       // Group connections by peer
       const peerConnections = new Map<string, number>();
@@ -155,10 +159,10 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
       // Connection directions
       const inbound = connections.filter(
-        (c) => c.direction === 'inbound',
+        (c: any) => c.direction === 'inbound',
       ).length;
       const outbound = connections.filter(
-        (c) => c.direction === 'outbound',
+        (c: any) => c.direction === 'outbound',
       ).length;
 
       return {
@@ -180,7 +184,8 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Get all libp2p metrics in one call
    */
   async _tool_get_all_libp2p_metrics(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
@@ -209,7 +214,8 @@ export class LibP2PMetricsProvider extends oNodeTool {
    * Ping a specific peer
    */
   async _tool_ping_peer(request: oRequest): Promise<any> {
-    if (!this.p2pNode) {
+    const p2pNode = (this as any).p2pNode;
+    if (!p2pNode) {
       throw new Error('libp2p node not available');
     }
 
@@ -220,7 +226,7 @@ export class LibP2PMetricsProvider extends oNodeTool {
     }
 
     try {
-      const ping = (this.p2pNode.services as any).ping;
+      const ping = (p2pNode.services as any).ping;
 
       if (!ping) {
         throw new Error('Ping service not configured');

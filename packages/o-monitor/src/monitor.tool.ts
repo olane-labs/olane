@@ -104,8 +104,8 @@ export class MonitorTool extends oLaneTool {
   private async initializeProviders(): Promise<void> {
     // Heartbeat Provider
     this.heartbeatProvider = new HeartbeatProvider({
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
       metricsStore: this.metricsStore,
     });
     await this.heartbeatProvider.start();
@@ -113,8 +113,8 @@ export class MonitorTool extends oLaneTool {
 
     // Node Health Provider
     this.nodeHealthProvider = new NodeHealthProvider({
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
       metricsStore: this.metricsStore,
     });
     await this.nodeHealthProvider.start();
@@ -122,8 +122,8 @@ export class MonitorTool extends oLaneTool {
 
     // LibP2P Metrics Provider
     this.libp2pMetricsProvider = new LibP2PMetricsProvider({
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await this.libp2pMetricsProvider.start();
     this.addChildNode(this.libp2pMetricsProvider);

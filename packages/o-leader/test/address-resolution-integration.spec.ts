@@ -309,8 +309,8 @@ describe('Address Resolution Integration Tests', () => {
       // Create child node
       childNode = new oNode({
         address: new oNodeAddress('o://leader/services'),
-        parent: leader.address,
-        leader: leader.address,
+        parent: leader.address as any,
+        leader: leader.address as any,
         network: {
           listeners: [],
         },

@@ -38,13 +38,13 @@
   },
   "dependencies": {
     "@libp2p/prometheus-metrics": "^4.3.29",
-    "@olane/o-config": "^0.7.12-alpha.2",
+    "@olane/o-config": "^0.7.12-alpha.3",
     "@olane/o-core": "0.7.12-alpha.3",
     "@olane/o-intelligence": "0.7.12-alpha.3",
     "@olane/o-lane": "0.7.12-alpha.3",
     "@olane/o-leader": "0.7.12-alpha.3",
     "@olane/o-node": "0.7.12-alpha.3",
-    "@olane/o-protocol": "^0.7.12-alpha.2",
+    "@olane/o-protocol": "^0.7.12-alpha.3",
     "@olane/o-storage": "0.7.12-alpha.3",
     "@olane/o-tool": "0.7.12-alpha.3",
     "debug": "^4.4.1",
@@ -73,5 +73,6 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "5.4.5"
-  }
+  },
+  "gitHead": "b34d2ad4b02fca055f222f2e6e4bf9fc715090af"
 }
