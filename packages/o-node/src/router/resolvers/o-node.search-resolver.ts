@@ -296,8 +296,14 @@ export class oSearchResolver extends oAddressResolver {
       .replace(address.toRootAddress().toString(), '');
     this.logger.debug('Extra params:', extraParams);
 
+    // Check if selectedResult.address already contains the complete path
+    // This happens when registry finds via staticAddress - the returned address
+    // is the canonical hierarchical location, so we shouldn't append extraParams
+    const resultAddress = selectedResult.address;
+    const shouldAppendParams = extraParams && !resultAddress.endsWith(extraParams);
+
     const resolvedTargetAddress = new oAddress(
-      selectedResult.address + extraParams,
+      shouldAppendParams ? resultAddress + extraParams : resultAddress,
     );
 
     // Set transports on the target address
