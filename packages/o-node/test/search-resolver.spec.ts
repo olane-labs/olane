@@ -685,6 +685,106 @@ describe('oSearchResolver', () => {
     });
   });
 
+  describe('Address duplication bug fix', () => {
+    it('should NOT duplicate path segments when registry returns full hierarchical address', async () => {
+      // This test verifies the fix for the bug where o://services/embeddings-text
+      // was being resolved to o://leader/services/embeddings-text/services/embeddings-text
+      const address = new oNodeAddress('o://services/embeddings-text');
+
+      mockNode.use = async () =>
+        createResponse({
+          data: [
+            {
+              address: 'o://leader/services/embeddings-text',
+              staticAddress: 'o://embeddings-text',
+              transports: [
+                {
+                  value: '/ip4/127.0.0.1/tcp/6001',
+                  type: TransportType.LIBP2P,
+                },
+              ],
+            },
+          ],
+        });
+
+      const result = await resolver.resolve({
+        address,
+        targetAddress: address,
+        node: mockNode as oCore,
+        request: createRouterRequest(),
+      });
+
+      // Should be o://leader/services/embeddings-text, NOT o://leader/services/embeddings-text/embeddings-text
+      expect(result.targetAddress.value).to.equal(
+        'o://leader/services/embeddings-text',
+      );
+    });
+
+    it('should NOT duplicate when calling via static address', async () => {
+      const address = new oNodeAddress('o://embeddings-text');
+
+      mockNode.use = async () =>
+        createResponse({
+          data: [
+            {
+              address: 'o://leader/services/embeddings-text',
+              staticAddress: 'o://embeddings-text',
+              transports: [
+                {
+                  value: '/ip4/127.0.0.1/tcp/6001',
+                  type: TransportType.LIBP2P,
+                },
+              ],
+            },
+          ],
+        });
+
+      const result = await resolver.resolve({
+        address,
+        targetAddress: address,
+        node: mockNode as oCore,
+        request: createRouterRequest(),
+      });
+
+      expect(result.targetAddress.value).to.equal(
+        'o://leader/services/embeddings-text',
+      );
+    });
+
+    it('should still append legitimate extra params beyond the service name', async () => {
+      // If someone calls o://embeddings-text/custom/path, we should preserve /custom/path
+      const address = new oNodeAddress('o://embeddings-text/custom/path');
+
+      mockNode.use = async () =>
+        createResponse({
+          data: [
+            {
+              address: 'o://leader/services/embeddings-text',
+              staticAddress: 'o://embeddings-text',
+              transports: [
+                {
+                  value: '/ip4/127.0.0.1/tcp/6001',
+                  type: TransportType.LIBP2P,
+                },
+              ],
+            },
+          ],
+        });
+
+      const result = await resolver.resolve({
+        address,
+        targetAddress: address,
+        node: mockNode as oCore,
+        request: createRouterRequest(),
+      });
+
+      // Should append the extra /custom/path
+      expect(result.targetAddress.value).to.equal(
+        'o://leader/services/embeddings-text/custom/path',
+      );
+    });
+  });
+
   describe('Edge cases', () => {
     it('should handle address with long nested paths', async () => {
       const address = new oNodeAddress('o://leader/a/b/c/d/e/f');
