@@ -409,7 +409,7 @@ export class oNode extends oToolBase {
       maxAttempts: this.config.leaderRetry?.maxAttempts ?? 20,
       baseDelayMs: this.config.leaderRetry?.baseDelayMs ?? 2000,
       maxDelayMs: this.config.leaderRetry?.maxDelayMs ?? 30000,
-      timeoutMs: this.config.leaderRetry?.timeoutMs ?? 10000,
+      timeoutMs: this.config.leaderRetry?.timeoutMs ?? 120_000,
     });
 
     this.logger.info(
