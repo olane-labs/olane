@@ -73,4 +73,18 @@ export const REGISTRY_PARAMS: { [key: string]: oMethod } = {
     dependencies: [],
     parameters: [],
   },
+  find_available_parent: {
+    name: 'find_available_parent',
+    description: 'Find a parent node by its address and return its transports',
+    dependencies: [],
+    parameters: [
+      {
+        name: 'parentAddress',
+        type: 'string',
+        value: 'string',
+        description: 'The static address of the parent to find',
+        required: true,
+      },
+    ],
+  },
 };

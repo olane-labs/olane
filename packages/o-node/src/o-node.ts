@@ -429,7 +429,8 @@ export class oNode extends oToolBase {
 
     // Read ENABLE_LEADER_HEARTBEAT environment variable
     const enableLeaderHeartbeat =
-      process.env.ENABLE_LEADER_HEARTBEAT === 'true';
+      this.parent?.toString() === oAddress.leader().toString();
+    this.logger.debug(`Enable leader heartbeat: ${enableLeaderHeartbeat}`);
 
     // Initialize connection heartbeat manager
     this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
@@ -445,8 +446,7 @@ export class oNode extends oToolBase {
           this.config.connectionHeartbeat?.failureThreshold ?? 3,
         checkChildren: this.config.connectionHeartbeat?.checkChildren ?? true,
         checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
-        checkLeader:
-          this.config.connectionHeartbeat?.checkLeader ?? enableLeaderHeartbeat,
+        checkLeader: enableLeaderHeartbeat,
       },
     );
 
@@ -463,6 +463,10 @@ export class oNode extends oToolBase {
         baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
         maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
         useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
+        parentDiscoveryIntervalMs:
+          this.config.reconnection?.parentDiscoveryIntervalMs ?? 10000,
+        parentDiscoveryMaxDelayMs:
+          this.config.reconnection?.parentDiscoveryMaxDelayMs ?? 60000,
       });
     }
   }

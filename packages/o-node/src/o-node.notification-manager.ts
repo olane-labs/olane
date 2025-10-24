@@ -32,15 +32,30 @@ export class oNodeNotificationManager extends oNotificationManager {
     this.logger.debug('Setting up libp2p event listeners...');
 
     // Peer connection events
-    this.p2pNode.addEventListener('peer:connect', this.handlePeerConnect.bind(this));
-    this.p2pNode.addEventListener('peer:disconnect', this.handlePeerDisconnect.bind(this));
+    this.p2pNode.addEventListener(
+      'peer:connect',
+      this.handlePeerConnect.bind(this),
+    );
+    this.p2pNode.addEventListener(
+      'peer:disconnect',
+      this.handlePeerDisconnect.bind(this),
+    );
 
     // Peer discovery events
-    this.p2pNode.addEventListener('peer:discovery', this.handlePeerDiscovery.bind(this));
+    this.p2pNode.addEventListener(
+      'peer:discovery',
+      this.handlePeerDiscovery.bind(this),
+    );
 
     // Connection events
-    this.p2pNode.addEventListener('connection:open', this.handleConnectionOpen.bind(this));
-    this.p2pNode.addEventListener('connection:close', this.handleConnectionClose.bind(this));
+    this.p2pNode.addEventListener(
+      'connection:open',
+      this.handleConnectionOpen.bind(this),
+    );
+    this.p2pNode.addEventListener(
+      'connection:close',
+      this.handleConnectionClose.bind(this),
+    );
 
     this.logger.debug('libp2p event listeners configured');
   }
@@ -50,13 +65,15 @@ export class oNodeNotificationManager extends oNotificationManager {
    */
   private handlePeerConnect(evt: CustomEvent): void {
     const peerId = evt.detail;
-    this.logger.debug(`Peer connected: ${peerId.toString()}`);
+    // this.logger.debug(`Peer connected: ${peerId.toString()}`);
 
     // Try to resolve peer ID to Olane address
     const nodeAddress = this.peerIdToAddress(peerId.toString());
 
     if (!nodeAddress) {
-      this.logger.debug(`Could not resolve peer ID ${peerId.toString()} to address`);
+      // this.logger.debug(
+      //   `Could not resolve peer ID ${peerId.toString()} to address`,
+      // );
       return;
     }
 
@@ -74,7 +91,7 @@ export class oNodeNotificationManager extends oNotificationManager {
 
     // Check if this is a child node
     if (this.isChild(nodeAddress)) {
-      this.logger.debug(`Child node connected: ${nodeAddress.toString()}`);
+      // this.logger.debug(`Child node connected: ${nodeAddress.toString()}`);
       this.emit(
         new ChildJoinedEvent({
           source: this.address,
@@ -86,7 +103,7 @@ export class oNodeNotificationManager extends oNotificationManager {
 
     // Check if this is a parent node
     if (this.isParent(nodeAddress)) {
-      this.logger.debug(`Parent node connected: ${nodeAddress.toString()}`);
+      // this.logger.debug(`Parent node connected: ${nodeAddress.toString()}`);
       this.emit(
         new ParentConnectedEvent({
           source: this.address,
@@ -101,13 +118,15 @@ export class oNodeNotificationManager extends oNotificationManager {
    */
   private handlePeerDisconnect(evt: CustomEvent): void {
     const peerId = evt.detail;
-    this.logger.debug(`Peer disconnected: ${peerId.toString()}`);
+    // this.logger.debug(`Peer disconnected: ${peerId.toString()}`);
 
     // Try to resolve peer ID to Olane address
     const nodeAddress = this.peerIdToAddress(peerId.toString());
 
     if (!nodeAddress) {
-      this.logger.debug(`Could not resolve peer ID ${peerId.toString()} to address`);
+      // this.logger.debug(
+      //   `Could not resolve peer ID ${peerId.toString()} to address`,
+      // );
       return;
     }
 
@@ -154,7 +173,7 @@ export class oNodeNotificationManager extends oNotificationManager {
    */
   private handlePeerDiscovery(evt: CustomEvent): void {
     const peerInfo = evt.detail;
-    this.logger.debug(`Peer discovered: ${peerInfo.id.toString()}`);
+    // this.logger.debug(`Peer discovered: ${peerInfo.id.toString()}`);
 
     // Try to resolve peer ID to Olane address
     const nodeAddress = this.peerIdToAddress(peerInfo.id.toString());
@@ -175,16 +194,14 @@ export class oNodeNotificationManager extends oNotificationManager {
    * Handle connection open event from libp2p
    */
   private handleConnectionOpen(evt: CustomEvent): void {
-    const remotePeer = evt.detail.remotePeer;
-    this.logger.debug(`Connection opened to: ${remotePeer.toString()}`);
+    // do nothing for now
   }
 
   /**
    * Handle connection close event from libp2p
    */
   private handleConnectionClose(evt: CustomEvent): void {
-    const remotePeer = evt.detail.remotePeer;
-    this.logger.debug(`Connection closed to: ${remotePeer.toString()}`);
+    // do nothing for now
   }
 
   /**

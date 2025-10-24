@@ -2,6 +2,7 @@ import { RegistryTool } from './registry.tool.js';
 import { oRegistrationParams } from '@olane/o-protocol';
 import { oRequest } from '@olane/o-core';
 import { oRegistrySearchParams } from './interfaces/search.interface.js';
+import { oNodeAddress } from '@olane/o-node';
 
 export class RegistryMemoryTool extends RegistryTool {
   async _tool_commit(request: oRequest): Promise<any> {
@@ -72,6 +73,40 @@ export class RegistryMemoryTool extends RegistryTool {
     this.registry.delete(params.peerId);
     return {
       success: true,
+    };
+  }
+
+  async _tool_find_available_parent(request: oRequest): Promise<any> {
+    const parentAddress = request.params?.parentAddress as string;
+
+    // Search registry for a node with matching static address
+    const parentNode = Array.from(this.registry.values()).find((node) => {
+      return (
+        node.staticAddress === parentAddress || node.address === parentAddress
+      );
+    });
+
+    if (!parentNode) {
+      this.logger.debug(`Parent not found in registry: ${parentAddress}`);
+      return {
+        parentAddress: null,
+        parentTransports: null,
+      };
+    }
+
+    // let's run a ping using the o-protocol
+    await this.use(new oNodeAddress(parentNode.address), {
+      method: 'ping',
+      params: {},
+    });
+
+    this.logger.debug(
+      `Found parent in registry: ${parentAddress} with ${parentNode.transports?.length || 0} transports`,
+    );
+
+    return {
+      parentAddress: parentNode.address,
+      parentTransports: parentNode.transports || [],
     };
   }
 }

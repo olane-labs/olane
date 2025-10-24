@@ -18,6 +18,8 @@ export interface ReconnectionConfig {
   baseDelayMs: number; // Default: 5000 (5s)
   maxDelayMs: number; // Default: 60000 (60s)
   useLeaderFallback: boolean; // Default: true
+  parentDiscoveryIntervalMs: number; // Default: 10000 (10s)
+  parentDiscoveryMaxDelayMs: number; // Default: 60000 (60s)
 }
 
 /**
@@ -174,44 +176,198 @@ export class oReconnectionManager extends oObject {
   }
 
   private async tryLeaderFallback() {
-    this.logger.info('Attempting leader fallback to find new parent');
+    // Check if parent is the leader - special case
+    const parentIsLeader =
+      this.node.config.parent?.toString() === oAddress.leader().toString();
 
-    try {
-      // Query registry for available parents at our level
-      const response = await this.node.use(new oAddress('o://registry'), {
-        method: 'find_available_parent',
-        params: {
-          currentAddress: this.node.address.toString(),
-          preferredLevel: this.calculateNodeLevel(),
-        },
-      });
+    if (parentIsLeader) {
+      this.logger.info(
+        'Parent is the leader - waiting for leader to become available',
+      );
+      await this.waitForLeaderAndReconnect();
+    } else {
+      this.logger.info('Starting infinite parent discovery via leader registry');
+      await this.waitForParentAndReconnect();
+    }
+  }
 
-      const { parentAddress, parentTransports } = response.result.data as any;
+  /**
+   * Wait for leader to become available and reconnect
+   * Leader transports are static (configured), so we just need to detect when it's back
+   */
+  private async waitForLeaderAndReconnect() {
+    const startTime = Date.now();
+    let attempt = 0;
+    let currentDelay = this.config.parentDiscoveryIntervalMs;
 
-      if (parentAddress && parentTransports) {
-        // Update parent reference
-        this.node.config.parent = new oNodeAddress(
-          parentAddress,
-          parentTransports.map((t: string) => new oNodeTransport(t)),
-        );
+    // Infinite retry loop - keep trying until leader is back
+    while (true) {
+      attempt++;
+      const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
 
-        // Register with new parent
-        await this.tryDirectParentReconnection();
+      this.logger.info(
+        `Leader discovery attempt ${attempt} (elapsed: ${elapsedMinutes}m)`,
+      );
 
-        this.reconnecting = false;
+      try {
+        // Try to ping the leader using its configured transports
+        // The leader address should already have transports configured
+        await this.node.use(this.node.config.parent!, {
+          method: 'ping',
+          params: {},
+        });
+
+        // Leader is back! Now re-register with parent and registry
         this.logger.info(
-          `Successfully reconnected via new parent: ${parentAddress}`,
+          `Leader is back online after ${elapsedMinutes}m, re-registering...`,
         );
-        return;
+
+        try {
+          // Register with parent (leader)
+          await this.node.registerParent();
+
+          // Force re-registration with registry by resetting the flag
+          (this.node as any).didRegister = false;
+          await this.node.register();
+
+          // Success!
+          this.reconnecting = false;
+          this.logger.info(
+            `Successfully reconnected to leader and re-registered after ${elapsedMinutes}m`,
+          );
+          return;
+        } catch (registrationError) {
+          this.logger.warn(
+            'Leader online but registration failed, will retry:',
+            registrationError instanceof Error
+              ? registrationError.message
+              : registrationError,
+          );
+          // Fall through to retry with backoff
+        }
+      } catch (error) {
+        // Leader not yet available
+        this.logger.debug(
+          `Leader not yet available (will retry): ${error instanceof Error ? error.message : error}`,
+        );
       }
-    } catch (error) {
-      this.logger.error(
-        'Leader fallback failed:',
-        error instanceof Error ? error.message : error,
+
+      // Calculate backoff delay
+      const delay = Math.min(currentDelay, this.config.parentDiscoveryMaxDelayMs);
+
+      // Log periodic status updates (every 5 minutes)
+      if (attempt % 30 === 0) {
+        this.logger.info(
+          `Still waiting for leader to come back online... (${elapsedMinutes}m elapsed, ${attempt} attempts)`,
+        );
+      }
+
+      this.logger.debug(`Waiting ${delay}ms before next discovery attempt...`);
+      await this.sleep(delay);
+
+      // Exponential backoff for next iteration
+      currentDelay = Math.min(
+        currentDelay * 2,
+        this.config.parentDiscoveryMaxDelayMs,
       );
     }
+  }
 
-    this.handleReconnectionFailure();
+  /**
+   * Wait for non-leader parent to appear in registry and reconnect
+   */
+  private async waitForParentAndReconnect() {
+    const startTime = Date.now();
+    let attempt = 0;
+    let currentDelay = this.config.parentDiscoveryIntervalMs;
+
+    // Infinite retry loop - keep trying until parent is found
+    while (true) {
+      attempt++;
+      const elapsedMinutes = Math.floor((Date.now() - startTime) / 60000);
+
+      this.logger.info(
+        `Parent discovery attempt ${attempt} (elapsed: ${elapsedMinutes}m)`,
+      );
+
+      try {
+        // Query registry for parent by its known address
+        const response = await this.node.use(new oAddress('o://registry'), {
+          method: 'find_available_parent',
+          params: {
+            parentAddress: this.node.config.parent?.toString(),
+          },
+        });
+
+        const { parentAddress, parentTransports } = response.result.data as any;
+
+        // Check if parent was found in registry
+        if (parentAddress && parentTransports && parentTransports.length > 0) {
+          this.logger.info(
+            `Parent found in registry: ${parentAddress} with ${parentTransports.length} transports`,
+          );
+
+          // Update parent reference with fresh transports
+          this.node.config.parent = new oNodeAddress(
+            parentAddress,
+            parentTransports.map((t: string) => new oNodeTransport(t)),
+          );
+
+          // Attempt to register with parent and re-register with registry
+          try {
+            await this.tryDirectParentReconnection();
+
+            // Force re-registration with registry by resetting the flag
+            (this.node as any).didRegister = false;
+            await this.node.register();
+
+            // Success!
+            this.reconnecting = false;
+            this.logger.info(
+              `Successfully reconnected to parent and re-registered after ${elapsedMinutes}m of discovery attempts`,
+            );
+            return;
+          } catch (registrationError) {
+            this.logger.warn(
+              'Parent found but registration failed, will retry:',
+              registrationError instanceof Error
+                ? registrationError.message
+                : registrationError,
+            );
+            // Fall through to retry with backoff
+          }
+        } else {
+          this.logger.debug(
+            `Parent not yet available in registry: ${this.node.config.parent?.toString()}`,
+          );
+        }
+      } catch (error) {
+        // Network error communicating with leader/registry
+        this.logger.warn(
+          'Error querying registry for parent (will retry):',
+          error instanceof Error ? error.message : error,
+        );
+      }
+
+      // Calculate backoff delay with exponential increase, capped at max
+      const delay = Math.min(currentDelay, this.config.parentDiscoveryMaxDelayMs);
+
+      // Log periodic status updates (every 5 minutes)
+      if (attempt % 30 === 0) {
+        this.logger.info(
+          `Still waiting for parent to appear in registry... (${elapsedMinutes}m elapsed, ${attempt} attempts)`,
+        );
+      }
+
+      this.logger.debug(`Waiting ${delay}ms before next discovery attempt...`);
+      await this.sleep(delay);
+
+      // Exponential backoff for next iteration
+      currentDelay = Math.min(
+        currentDelay * 2,
+        this.config.parentDiscoveryMaxDelayMs,
+      );
+    }
   }
 
   private handleReconnectionFailure() {

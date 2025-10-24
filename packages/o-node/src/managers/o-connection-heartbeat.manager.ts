@@ -97,7 +97,7 @@ export class oConnectionHeartbeatManager extends oObject {
     const isLeaderNode = this.hierarchyManager.getLeaders().length === 0;
 
     // Collect leader (if enabled and we're not the leader)
-    if (this.config.checkLeader && !isLeaderNode) {
+    if (!isLeaderNode) {
       const leaders = this.hierarchyManager.getLeaders();
       for (const leader of leaders) {
         targets.push({ address: leader as oNodeAddress, role: 'leader' });
@@ -130,11 +130,12 @@ export class oConnectionHeartbeatManager extends oObject {
     address: oNodeAddress,
     role: 'parent' | 'child' | 'leader',
   ) {
-    const peerId = this.extractPeerIdFromAddress(address);
-    if (!peerId) {
-      this.logger.warn(`Cannot extract peerId from ${address}`);
+    if (!address.libp2pTransports.length) {
+      this.logger.warn(`No transports found for ${address}`);
       return;
     }
+
+    const transports = address.libp2pTransports;
 
     const key = address.toString();
     let health = this.healthMap.get(key);
@@ -142,7 +143,7 @@ export class oConnectionHeartbeatManager extends oObject {
     if (!health) {
       health = {
         address,
-        peerId,
+        peerId: 'unknown',
         lastSuccessfulPing: 0,
         consecutiveFailures: 0,
         averageLatency: 0,
@@ -166,7 +167,7 @@ export class oConnectionHeartbeatManager extends oObject {
       // Race between ping and timeout
       // The ping service accepts PeerId as string or object
       await Promise.race([
-        (this.p2pNode.services.ping as any).ping(peerId),
+        (this.p2pNode.services.ping as any).ping(transports[0].toMultiaddr()),
         timeoutPromise,
       ]);
 
@@ -191,7 +192,7 @@ export class oConnectionHeartbeatManager extends oObject {
         this.emitConnectionRecoveredEvent(address, role);
       }
 
-      this.logger.debug(`Ping successful: ${address} (${latency}ms)`);
+      // this.logger.debug(`Ping successful: ${address} (${latency}ms)`);
     } catch (error) {
       health.consecutiveFailures++;
 
@@ -203,7 +204,8 @@ export class oConnectionHeartbeatManager extends oObject {
       if (health.consecutiveFailures >= this.config.failureThreshold) {
         this.handleConnectionDead(address, role, health);
       } else if (
-        health.consecutiveFailures >= Math.ceil(this.config.failureThreshold / 2)
+        health.consecutiveFailures >=
+        Math.ceil(this.config.failureThreshold / 2)
       ) {
         health.status = 'degraded';
         this.emitConnectionDegradedEvent(

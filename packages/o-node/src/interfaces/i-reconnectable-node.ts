@@ -34,6 +34,11 @@ export interface IReconnectableNode {
   registerParent(): Promise<void>;
 
   /**
+   * Register with the leader's global registry
+   */
+  register(): Promise<void>;
+
+  /**
    * Execute a method on another node
    */
   use(
