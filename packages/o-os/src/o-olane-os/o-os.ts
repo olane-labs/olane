@@ -191,7 +191,6 @@ export class OlaneOS extends oObject {
     if (!entryNode) {
       throw new Error('Entry node not found');
     }
-    this.logger.debug('Using address: ' + oAddress.toString());
     const result = await entryNode.use(oAddress, params);
     return result;
   }

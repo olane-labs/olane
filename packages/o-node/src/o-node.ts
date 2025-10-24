@@ -403,18 +403,28 @@ export class oNode extends oToolBase {
       p2pNode: this.p2pNode,
     });
 
-    // Initialize leader request wrapper
+    // Initialize leader request wrapper with circuit breaker
     this.leaderRequestWrapper = new LeaderRequestWrapper({
       enabled: this.config.leaderRetry?.enabled ?? true,
       maxAttempts: this.config.leaderRetry?.maxAttempts ?? 20,
       baseDelayMs: this.config.leaderRetry?.baseDelayMs ?? 2000,
       maxDelayMs: this.config.leaderRetry?.maxDelayMs ?? 30000,
       timeoutMs: this.config.leaderRetry?.timeoutMs ?? 120_000,
+      circuitBreaker: {
+        enabled: this.config.leaderRetry?.circuitBreaker?.enabled ?? true,
+        failureThreshold:
+          this.config.leaderRetry?.circuitBreaker?.failureThreshold ?? 3,
+        openTimeoutMs:
+          this.config.leaderRetry?.circuitBreaker?.openTimeoutMs ?? 30000,
+        halfOpenMaxAttempts:
+          this.config.leaderRetry?.circuitBreaker?.halfOpenMaxAttempts ?? 1,
+      },
     });
 
     this.logger.info(
       `Leader retry config: enabled=${this.leaderRequestWrapper.getConfig().enabled}, ` +
-        `maxAttempts=${this.leaderRequestWrapper.getConfig().maxAttempts}`,
+        `maxAttempts=${this.leaderRequestWrapper.getConfig().maxAttempts}, ` +
+        `circuitBreaker.enabled=${this.leaderRequestWrapper.getConfig().circuitBreaker?.enabled}`,
     );
 
     // initialize address resolution

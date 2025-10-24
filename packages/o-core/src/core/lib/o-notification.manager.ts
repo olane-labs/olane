@@ -115,7 +115,7 @@ export abstract class oNotificationManager extends oObject {
       this.subscriptions.delete(subscription.eventType);
     }
 
-    this.logger.debug(
+    this.logger.verbose(
       `Unsubscribed from ${subscription.eventType} with ID ${subscription.id}`,
     );
   }
@@ -124,7 +124,7 @@ export abstract class oNotificationManager extends oObject {
    * Emit a notification event
    */
   emit(event: oNotificationEvent): void {
-    this.logger.debug(`Emitting event: ${event.type}`, event.toJSON());
+    this.logger.verbose(`Emitting event: ${event.type}`, event.toJSON());
 
     const customEvent = new CustomEvent(event.type, {
       detail: event,

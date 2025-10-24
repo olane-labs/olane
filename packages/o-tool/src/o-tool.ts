@@ -104,7 +104,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
         request.params.address === this.address.toString() ||
         request.params.address === this.staticAddress.toString()
       ) {
-        this.logger.debug('Route to self, calling tool...');
+        this.logger.verbose('Route to self, calling tool...');
         const { payload }: any = request.params;
         return this.callMyTool(
           new oRequest({
@@ -214,9 +214,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
     /**
      * Get leader health status and retry configuration
      */
-    async _tool_get_leader_health(
-      request: oRequest,
-    ): Promise<ToolResult> {
+    async _tool_get_leader_health(request: oRequest): Promise<ToolResult> {
       const heartbeatManager = (this as any).connectionHeartbeatManager;
       const leaderRequestWrapper = (this as any).leaderRequestWrapper;
 
@@ -239,8 +237,8 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
 
         if (config.checkLeader) {
           const healthStatus = heartbeatManager.getHealthStatus();
-          const leaderHealth = healthStatus.find(
-            (h: any) => h.address.toString().includes('leader'),
+          const leaderHealth = healthStatus.find((h: any) =>
+            h.address.toString().includes('leader'),
           );
 
           if (leaderHealth) {

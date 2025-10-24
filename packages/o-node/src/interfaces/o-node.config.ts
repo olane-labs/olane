@@ -43,5 +43,11 @@ export interface oNodeConfig extends oCoreConfig {
     baseDelayMs?: number; // Default: 2000 (2s)
     maxDelayMs?: number; // Default: 30000 (30s)
     timeoutMs?: number; // Default: 10000 (10s per request)
+    circuitBreaker?: {
+      enabled?: boolean; // Default: true
+      failureThreshold?: number; // Default: 3
+      openTimeoutMs?: number; // Default: 30000 (30s)
+      halfOpenMaxAttempts?: number; // Default: 1
+    };
   };
 }

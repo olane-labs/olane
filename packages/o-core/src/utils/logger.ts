@@ -12,6 +12,10 @@ export class Logger {
     this.log = debug('olane-os:' + name);
   }
 
+  verbose(...args: any[]) {
+    this.log(chalk.gray('[VERBOSE]'), ...args);
+  }
+
   debug(...args: any[]) {
     this.log(chalk.blue('[DEBUG]'), ...args);
   }

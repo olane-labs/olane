@@ -56,7 +56,6 @@ export class oNodeRoutingPolicy extends oRoutingPolicy {
       this.logger.debug(
         'Address is external, routing...',
         nodeAddress.toString(),
-        nodeAddress.libp2pTransports.map((t) => t.toString()),
       );
 
       // route to leader of external OS

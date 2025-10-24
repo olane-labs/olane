@@ -128,8 +128,6 @@ export abstract class oCore extends oObject {
       throw new Error('Invalid address');
     }
 
-    this.logger.debug('Using address: ', address.toString());
-
     // check for static match
     if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(data);

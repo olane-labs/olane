@@ -137,7 +137,7 @@ export class oToolBase extends oCore {
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
-    this.logger.debug('Calling tool: ' + method);
+    this.logger.verbose('Calling tool: ' + method);
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore
@@ -154,7 +154,7 @@ export class oToolBase extends oCore {
 
   async index() {
     if (this.indexed) {
-      this.logger.debug('Tool already indexed, skipping...');
+      this.logger.verbose('Tool already indexed, skipping...');
       return {
         summary: 'Tool already indexed',
       };
