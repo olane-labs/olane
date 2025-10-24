@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.10 (2025-10-24)</small>
+
+- minor change ([21427ac](https://github.com/olane-labs/olane/commit/21427ac))
+- reactive to network notifications via libp2p + custom events ([6f72a57](https://github.com/olane-labs/olane/commit/6f72a57))
+
 ## <small>0.7.12-alpha.9 (2025-10-23)</small>
 
 **Note:** Version bump only for package @olane/o-root

@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-login",
-  "version": "0.7.12-alpha.9",
+  "version": "0.7.12-alpha.10",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -54,11 +54,11 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.9",
-    "@olane/o-core": "0.7.12-alpha.9",
-    "@olane/o-lane": "0.7.12-alpha.9",
-    "@olane/o-protocol": "0.7.12-alpha.9",
-    "@olane/o-tool": "0.7.12-alpha.9",
+    "@olane/o-config": "0.7.12-alpha.10",
+    "@olane/o-core": "0.7.12-alpha.10",
+    "@olane/o-lane": "0.7.12-alpha.10",
+    "@olane/o-protocol": "0.7.12-alpha.10",
+    "@olane/o-tool": "0.7.12-alpha.10",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   },
