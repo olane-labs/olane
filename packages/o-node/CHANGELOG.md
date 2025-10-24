@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.11 (2025-10-24)</small>
+
+- increase default timeout to 2 min ([463c311](https://github.com/olane-labs/olane/commit/463c311))
+
 ## <small>0.7.12-alpha.10 (2025-10-24)</small>
 
 - reactive to network notifications via libp2p + custom events ([6f72a57](https://github.com/olane-labs/olane/commit/6f72a57))
