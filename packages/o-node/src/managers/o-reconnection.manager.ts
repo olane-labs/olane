@@ -7,6 +7,7 @@ import {
   ParentDisconnectedEvent,
   LeaderDisconnectedEvent,
   ConnectionDegradedEvent,
+  NodeConnectedEvent,
 } from '@olane/o-core';
 import { IReconnectableNode } from '../interfaces/i-reconnectable-node.js';
 import { oNodeAddress } from '../router/o-node.address.js';
@@ -63,6 +64,24 @@ export class oReconnectionManager extends oObject {
       'connection:degraded',
       this.handleConnectionDegraded.bind(this),
     );
+
+    this.node.notificationManager.on(
+      'node:connected',
+      this.handleNodeConnected.bind(this),
+    );
+  }
+
+  async handleNodeConnected(event: any) {
+    const connectedEvent = event as NodeConnectedEvent;
+    if (
+      connectedEvent.nodeAddress.toString() === oAddress.leader().toString()
+    ) {
+      // the leader is back online, let's re-register & tell sub-graphs to re-register
+      await this.node.useSelf({
+        method: 'register_leader',
+        params: {},
+      });
+    }
   }
 
   private async handleConnectionDegraded(event: any) {

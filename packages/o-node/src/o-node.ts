@@ -192,6 +192,23 @@ export class oNode extends oToolBase {
     }
   }
 
+  async registerLeader(): Promise<void> {
+    const address = oAddress.registry();
+
+    const params = {
+      method: 'commit',
+      params: {
+        peerId: this.peerId.toString(),
+        address: this.address.toString(),
+        protocols: this.p2pNode.getProtocols(),
+        transports: this.transports,
+        staticAddress: this.staticAddress.toString(),
+      },
+    };
+
+    await this.use(address, params);
+  }
+
   async register(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping registration, node is leader');
@@ -215,20 +232,8 @@ export class oNode extends oToolBase {
     }
 
     await this.registerParent();
-    const address = oAddress.registry();
+    await this.registerLeader();
 
-    const params = {
-      method: 'commit',
-      params: {
-        peerId: this.peerId.toString(),
-        address: this.address.toString(),
-        protocols: this.p2pNode.getProtocols(),
-        transports: this.transports,
-        staticAddress: this.staticAddress.toString(),
-      },
-    };
-
-    await this.use(address, params);
     this.logger.debug('Registration successful');
   }
 

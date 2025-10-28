@@ -118,6 +118,13 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       return this.router.route(request, this);
     }
 
+    async _tool_register_leader(request: oRequest): Promise<any> {
+      await (this as any).registerLeader();
+      return {
+        message: 'Leader registered',
+      };
+    }
+
     async _tool_child_register(request: oRequest): Promise<any> {
       throw new oError(
         oErrorCodes.NOT_IMPLEMENTED,

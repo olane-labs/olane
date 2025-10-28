@@ -1,4 +1,9 @@
-import { oAddress, NodeState, oNotificationManager } from '@olane/o-core';
+import {
+  oAddress,
+  NodeState,
+  oNotificationManager,
+  oRequest,
+} from '@olane/o-core';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConfig } from './o-node.config.js';
 
@@ -37,6 +42,8 @@ export interface IReconnectableNode {
    * Register with the leader's global registry
    */
   register(): Promise<void>;
+
+  useSelf(request?: any): Promise<any>;
 
   /**
    * Execute a method on another node
