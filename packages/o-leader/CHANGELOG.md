@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.13 (2025-10-28)</small>
+
+- fix for heartbeat ping ([76d3f7b](https://github.com/olane-labs/olane/commit/76d3f7b))
+
 ## <small>0.7.12-alpha.12 (2025-10-24)</small>
 
 **Note:** Version bump only for package @olane/o-leader
