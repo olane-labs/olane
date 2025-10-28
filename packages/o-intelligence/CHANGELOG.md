@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.17 (2025-10-28)</small>
+
+**Note:** Version bump only for package @olane/o-intelligence
+
 ## <small>0.7.12-alpha.16 (2025-10-28)</small>
 
 - remove logging ([0490a55](https://github.com/olane-labs/olane/commit/0490a55))
