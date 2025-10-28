@@ -59,6 +59,17 @@ export abstract class oCore extends oObject {
   // transports
   abstract configureTransports(): any[];
 
+  async useDirect(
+    address: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+  ): Promise<oResponse> {
+    return this.use(address, data, { noRouting: true });
+  }
+
   /**
    * Sends a request to a remote node in the O-Lane network using the specified address and optional data payload.
    *
@@ -119,6 +130,9 @@ export abstract class oCore extends oObject {
       params?: { [key: string]: any };
       id?: string;
     },
+    options?: {
+      noRouting?: boolean;
+    },
   ): Promise<oResponse> {
     if (!this.isRunning) {
       this.logger.error('Node is not running', this.state);
@@ -135,10 +149,10 @@ export abstract class oCore extends oObject {
       return this.useSelf(data);
     }
 
-    const { nextHopAddress, targetAddress } = await this.router.translate(
-      address,
-      this,
-    );
+    // if no routing is requested, use the address as is
+    const { nextHopAddress, targetAddress } = options?.noRouting
+      ? { nextHopAddress: address, targetAddress: address }
+      : await this.router.translate(address, this);
 
     if (
       nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())

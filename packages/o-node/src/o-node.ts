@@ -376,6 +376,29 @@ export class oNode extends oToolBase {
     return connection;
   }
 
+  async initConnectionManager(): Promise<void> {
+    this.connectionManager = new oNodeConnectionManager({
+      p2pNode: this.p2pNode,
+    });
+  }
+
+  async initReconnectionManager(): Promise<void> {
+    // Initialize reconnection manager
+    if (this.config.reconnection?.enabled !== false) {
+      this.reconnectionManager = new oReconnectionManager(this, {
+        enabled: true,
+        maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
+        baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
+        maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
+        useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
+        parentDiscoveryIntervalMs:
+          this.config.reconnection?.parentDiscoveryIntervalMs ?? 10000,
+        parentDiscoveryMaxDelayMs:
+          this.config.reconnection?.parentDiscoveryMaxDelayMs ?? 60000,
+      });
+    }
+  }
+
   async postInitialize(): Promise<void> {
     // Initialize connection heartbeat manager
     this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
@@ -421,9 +444,7 @@ export class oNode extends oToolBase {
     this.peerId = this.p2pNode.peerId as any;
 
     // initialize connection manager
-    this.connectionManager = new oNodeConnectionManager({
-      p2pNode: this.p2pNode,
-    });
+    await this.initConnectionManager();
 
     // Initialize leader request wrapper with circuit breaker
     this.leaderRequestWrapper = new LeaderRequestWrapper({
@@ -459,25 +480,8 @@ export class oNode extends oToolBase {
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
 
-    // Read ENABLE_LEADER_HEARTBEAT environment variable
-    const enableLeaderHeartbeat =
-      this.parent?.toString() === oAddress.leader().toString();
-    this.logger.debug(`Enable leader heartbeat: ${enableLeaderHeartbeat}`);
-
-    // Initialize reconnection manager
-    if (this.config.reconnection?.enabled !== false) {
-      this.reconnectionManager = new oReconnectionManager(this, {
-        enabled: true,
-        maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
-        baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
-        maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
-        useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
-        parentDiscoveryIntervalMs:
-          this.config.reconnection?.parentDiscoveryIntervalMs ?? 10000,
-        parentDiscoveryMaxDelayMs:
-          this.config.reconnection?.parentDiscoveryMaxDelayMs ?? 60000,
-      });
-    }
+    // initialize reconnection manager
+    await this.initReconnectionManager();
   }
 
   /**
