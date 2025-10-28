@@ -295,7 +295,7 @@ export class oReconnectionManager extends oObject {
 
       try {
         // Query registry for parent by its known address
-        const response = await this.node.use(new oAddress('o://registry'), {
+        const response = await this.node.use(oAddress.registry(), {
           method: 'find_available_parent',
           params: {
             parentAddress: this.node.config.parent?.toString(),

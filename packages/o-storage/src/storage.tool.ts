@@ -19,54 +19,44 @@ export class StorageTool extends oLaneTool {
 
   async initialize(): Promise<void> {
     await super.initialize();
-    let node: any = new DiskStorageProvider({
-      name: 'disk',
-      parent: this.address,
-      leader: this.leader,
-      address: new oAddress('o://disk'),
-    });
-    await node.start();
-    this.addChildNode(node);
+    const tools = [
+      new DiskStorageProvider({
+        name: 'disk',
+        parent: this.address,
+        leader: this.leader,
+        address: new oAddress('o://disk'),
+      }),
+      new MemoryStorageProvider({
+        name: 'memory',
+        parent: this.address,
+        leader: this.leader,
+        address: new oAddress('o://memory'),
+      }),
+      new SecureStorageProvider({
+        name: 'secure',
+        parent: this.address,
+        leader: this.leader,
+        address: new oAddress('o://secure'),
+      }),
+      new PlaceholderTool({
+        name: 'placeholder storage',
+        parent: this.address,
+        leader: this.leader,
+      }),
+      new OSConfigStorageTool({
+        name: 'os-config',
+        parent: this.address,
+        leader: this.leader,
+        storageBackend:
+          (process.env.OS_CONFIG_STORAGE as 'disk' | 'memory') || 'disk',
+      }),
+    ];
 
-    node = new MemoryStorageProvider({
-      name: 'memory',
-      parent: this.address,
-      leader: this.leader,
-      address: new oAddress('o://memory'),
-    });
-    await node.start();
-    this.addChildNode(node);
-
-    node = new SecureStorageProvider({
-      name: 'secure',
-      parent: this.address,
-      leader: this.leader,
-      address: new oAddress('o://secure'),
-    });
-    await node.start();
-    this.addChildNode(node);
-
-    node = new PlaceholderTool({
-      name: 'placeholder storage',
-      parent: this.address,
-      leader: this.leader,
-    });
-    await node.start();
-    this.addChildNode(node);
-
-    // Add OS Config Storage Tool for managing OS instance configurations
-    // Note: This tool provides a unified interface that delegates to storage providers.
-    // For Lambda/cloud deployments, use 'supabase' backend (configured in o-network-lambda).
-    // For local deployments, use 'disk' or 'memory' backend.
-    node = new OSConfigStorageTool({
-      name: 'os-config',
-      parent: this.address,
-      leader: this.leader,
-      storageBackend:
-        (process.env.OS_CONFIG_STORAGE as 'disk' | 'memory') ||
-        'disk',
-    });
-    await node.start();
-    this.addChildNode(node);
+    for (const tool of tools) {
+      (tool as any).hookInitializeFinished = () => {
+        this.addChildNode(tool);
+      };
+      await tool.start();
+    }
   }
 }

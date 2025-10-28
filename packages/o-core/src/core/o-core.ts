@@ -331,7 +331,7 @@ export abstract class oCore extends oObject {
     );
   }
 
-  async postInitialize(): Promise<void> {}
+  async hookStartFinished(): Promise<void> {}
 
   /**
    * Starts the node by transitioning through initialization and registration phases.
@@ -375,7 +375,7 @@ export abstract class oCore extends oObject {
       await this.register().catch((error) => {
         this.logger.error('Failed to register node', error);
       });
-      await this.postInitialize();
+      await this.hookStartFinished();
       this.state = NodeState.RUNNING;
 
       // Start optional heartbeat to monitor if enabled

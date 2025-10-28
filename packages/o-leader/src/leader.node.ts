@@ -4,6 +4,7 @@ import { oLaneTool } from '@olane/o-lane';
 import { oNodeAddress, oNodeToolConfig, oSearchResolver } from '@olane/o-node';
 import { RegistryMemoryTool } from './registry/registry-memory.tool.js';
 import { oGatewayResolver } from '@olane/o-gateway-olane';
+import { Libp2pConfig } from '@olane/o-config';
 
 export class oLeaderNode extends oLaneTool {
   constructor(config: oNodeToolConfig) {
@@ -15,6 +16,18 @@ export class oLeaderNode extends oLaneTool {
         start: START_METHOD,
       },
     });
+  }
+
+  async configure(): Promise<Libp2pConfig> {
+    const config = await super.configure();
+    config.connectionGater = {
+      ...config.connectionGater,
+      denyDialPeer: (peerId) => {
+        // as a leader, we can dial anything
+        return false;
+      },
+    };
+    return config;
   }
 
   async initialize(): Promise<void> {

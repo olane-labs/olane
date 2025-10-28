@@ -273,45 +273,41 @@ export class IntelligenceTool extends oLaneTool {
 
   async initialize(): Promise<void> {
     await super.initialize();
-  }
 
-  async postInitialize(): Promise<void> {
     const config = this.config;
-    const anthropicTool = new AnthropicIntelligenceTool({
-      ...config,
-      parent: this.address as any,
-      leader: this.leader as any,
-    });
-    await anthropicTool.start();
-    this.addChildNode(anthropicTool);
-    const openaiTool = new OpenAIIntelligenceTool({
-      ...config,
-      parent: this.address as any,
-      leader: this.leader as any,
-    });
-    await openaiTool.start();
-    this.addChildNode(openaiTool);
-    const ollamaTool = new OllamaIntelligenceTool({
-      ...config,
-      parent: this.address as any,
-      leader: this.leader as any,
-    });
-    await ollamaTool.start();
-    this.addChildNode(ollamaTool);
-    const perplexityTool = new PerplexityIntelligenceTool({
-      ...config,
-      parent: this.address as any,
-      leader: this.leader as any,
-    });
-    await perplexityTool.start();
-    this.addChildNode(perplexityTool);
+    const tools = [
+      new AnthropicIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+      new OpenAIIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+      new OllamaIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+      new PerplexityIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+      new GrokIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+    ];
 
-    const grokTool = new GrokIntelligenceTool({
-      ...config,
-      parent: this.address as any,
-      leader: this.leader as any,
-    });
-    await grokTool.start();
-    this.addChildNode(grokTool);
+    for (const tool of tools) {
+      (tool as any).hookInitializeFinished = () => {
+        this.addChildNode(tool);
+      };
+      await tool.start();
+    }
   }
 }

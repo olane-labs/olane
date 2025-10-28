@@ -171,6 +171,7 @@ export class oNode extends oToolBase {
       if (this.parent?.toString() === oAddress.leader().toString()) {
         this.parent.setTransports(this.leader?.libp2pTransports || []);
       } else {
+        this.logger.debug('Waiting for parent and reconnecting...');
         await this.reconnectionManager?.waitForParentAndReconnect();
       }
     }
@@ -299,12 +300,39 @@ export class oNode extends oToolBase {
 
       //   // let's make sure we only allow communication through the parent transports
       params.connectionGater = {
+        denyDialPeer: (peerId) => {
+          // we can call the leader
+          if (
+            this.config.leader?.libp2pTransports.some(
+              (t) => t.toPeerId() === peerId.toString(),
+            )
+          ) {
+            return false;
+          }
+          // we can call our parent
+          if (this.parentPeerId === peerId.toString()) {
+            return false;
+          }
+
+          // we can call our children
+          if (
+            this.hierarchyManager.children.some((c) =>
+              c.libp2pTransports.some(
+                (t) => t.toPeerId() === peerId.toString(),
+              ),
+            )
+          ) {
+            return false;
+          }
+          return true;
+        },
         // who can call us?
         denyInboundEncryptedConnection: (peerId, maConn) => {
           // deny all inbound connections unless they are from a parent transport
           if (this.parentPeerId === peerId.toString()) {
             return false;
           }
+          // allow connections from children (for ping)
           if (
             this.hierarchyManager.children.some((c) =>
               c.libp2pTransports.some(
@@ -399,7 +427,9 @@ export class oNode extends oToolBase {
     }
   }
 
-  async postInitialize(): Promise<void> {
+  async hookInitializeFinished(): Promise<void> {}
+
+  async hookStartFinished(): Promise<void> {
     // Initialize connection heartbeat manager
     this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
       this as any,
@@ -437,7 +467,7 @@ export class oNode extends oToolBase {
     await super.initialize();
 
     this.logger.debug(
-      'Node initialized!',
+      'Node initializedddd!',
       this.transports.map((t) => t.toString()),
     );
     this.address.setTransports(this.transports);
@@ -482,6 +512,7 @@ export class oNode extends oToolBase {
 
     // initialize reconnection manager
     await this.initReconnectionManager();
+    await this.hookInitializeFinished();
   }
 
   /**
