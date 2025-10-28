@@ -63,7 +63,7 @@ export class McpBridgeTool extends oLaneTool {
       );
 
       const mcpClient = new Client({
-        name: 'o-node:mcp:' + this.peerId.toString(),
+        name: 'o-node:mcp:' + (this as any).peerId.toString(),
         version: '1.0.0',
         headers: headers,
       });
@@ -108,7 +108,7 @@ export class McpBridgeTool extends oLaneTool {
     });
 
     const mcpClient = new Client({
-      name: 'o-node:mcp:' + this.peerId.toString(),
+      name: 'o-node:mcp:' + (this as any).peerId.toString(),
       version: '1.0.0',
     });
     await mcpClient.connect(transport);
@@ -164,8 +164,8 @@ export class McpBridgeTool extends oLaneTool {
       address: new oAddress(`o://${name || `mcp-${Date.now()}`}`),
       mcpClient: mcpClient,
       dependencies: [],
-      leader: this.leader,
-      parent: this.address,
+      leader: this.leader as any,
+      parent: this.address as any,
     });
     await mcpTool.setupTools();
     await mcpTool.start();

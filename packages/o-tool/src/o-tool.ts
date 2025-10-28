@@ -6,6 +6,7 @@ import {
   oRequest,
   oRouterRequest,
   oTransport,
+  oNotificationEvent,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';
 import { oToolBase } from './o-tool.base.js';
@@ -103,7 +104,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
         request.params.address === this.address.toString() ||
         request.params.address === this.staticAddress.toString()
       ) {
-        this.logger.debug('Route to self, calling tool...');
+        this.logger.verbose('Route to self, calling tool...');
         const { payload }: any = request.params;
         return this.callMyTool(
           new oRequest({
@@ -131,6 +132,144 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
       return {
         message: 'Request cancelled',
       };
+    }
+
+    /**
+     * Emit a notification event to all subscribers
+     * Can be called remotely to trigger events on this node
+     */
+    async _tool_notify(request: oRequest): Promise<ToolResult> {
+      const { eventType, eventData } = request.params;
+
+      if (!eventType) {
+        throw new oError(
+          oErrorCodes.MISSING_PARAMETERS,
+          'eventType is required',
+        );
+      }
+
+      this.logger.debug(`Received remote notification: ${eventType}`);
+
+      // Create a generic notification event from the data
+      if (this.notificationManager) {
+        // Create a custom event class
+        class CustomNotificationEvent extends oNotificationEvent {
+          constructor(type: string, source: oAddress, data: any) {
+            super({
+              type,
+              source,
+              metadata: data || {},
+            });
+          }
+        }
+
+        // Emit as a custom event with the provided data
+        const sourceAddress = request.params.source
+          ? new oAddress(request.params.source as string)
+          : new oAddress('o://unknown');
+        const event = new CustomNotificationEvent(
+          eventType as string,
+          sourceAddress,
+          eventData,
+        );
+
+        this.notificationManager.emit(event);
+      }
+
+      return {
+        success: true,
+        message: `Notification ${eventType} emitted`,
+      };
+    }
+
+    /**
+     * Get connection health status (for nodes with heartbeat monitoring)
+     */
+    async _tool_get_connection_health(request: oRequest): Promise<ToolResult> {
+      // Check if this node has a connectionHeartbeatManager
+      const heartbeatManager = (this as any).connectionHeartbeatManager;
+
+      if (!heartbeatManager) {
+        return {
+          enabled: false,
+          message: 'Connection heartbeat not enabled on this node',
+        };
+      }
+
+      const healthStatus = heartbeatManager.getHealthStatus();
+
+      return {
+        enabled: true,
+        connections: healthStatus.map((h: any) => ({
+          address: h.address.toString(),
+          peerId: h.peerId,
+          status: h.status,
+          lastSuccessfulPing: new Date(h.lastSuccessfulPing).toISOString(),
+          consecutiveFailures: h.consecutiveFailures,
+          averageLatencyMs: Math.round(h.averageLatency),
+        })),
+      };
+    }
+
+    /**
+     * Get leader health status and retry configuration
+     */
+    async _tool_get_leader_health(request: oRequest): Promise<ToolResult> {
+      const heartbeatManager = (this as any).connectionHeartbeatManager;
+      const leaderRequestWrapper = (this as any).leaderRequestWrapper;
+
+      if (!heartbeatManager && !leaderRequestWrapper) {
+        return {
+          enabled: false,
+          message: 'Leader monitoring not available on this node',
+        };
+      }
+
+      const result: any = {
+        heartbeat: { enabled: false },
+        retry: { enabled: false },
+      };
+
+      // Get heartbeat health for leader
+      if (heartbeatManager) {
+        const config = heartbeatManager.getConfig();
+        result.heartbeat.enabled = config.checkLeader;
+
+        if (config.checkLeader) {
+          const healthStatus = heartbeatManager.getHealthStatus();
+          const leaderHealth = healthStatus.find((h: any) =>
+            h.address.toString().includes('leader'),
+          );
+
+          if (leaderHealth) {
+            result.heartbeat.status = leaderHealth.status;
+            result.heartbeat.lastSuccessfulPing = new Date(
+              leaderHealth.lastSuccessfulPing,
+            ).toISOString();
+            result.heartbeat.consecutiveFailures =
+              leaderHealth.consecutiveFailures;
+            result.heartbeat.averageLatencyMs = Math.round(
+              leaderHealth.averageLatency,
+            );
+          } else {
+            result.heartbeat.status = 'not_monitored';
+          }
+        }
+      }
+
+      // Get retry configuration
+      if (leaderRequestWrapper) {
+        const retryConfig = leaderRequestWrapper.getConfig();
+        result.retry = {
+          enabled: retryConfig.enabled,
+          maxAttempts: retryConfig.maxAttempts,
+          baseDelayMs: retryConfig.baseDelayMs,
+          maxDelayMs: retryConfig.maxDelayMs,
+          timeoutMs: retryConfig.timeoutMs,
+        };
+      }
+
+      return result;
     }
   };
 }

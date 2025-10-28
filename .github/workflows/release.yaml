@@ -4,6 +4,19 @@ on:
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - alpha
+          - beta
+          - rc
+          - patch
+          - minor
+          - major
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,7 +26,7 @@ jobs:
   # Build and test on pull requests
   build-and-test:
     runs-on: ubuntu-latest
-    if: github.event_name != 'release'
+    if: github.event_name == 'pull_request'
 
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +46,70 @@ jobs:
       - name: Run build and test
         run: npm run release:dry-run -- --skip-tests=false
 
+  # Detect release type from GitHub release or manual trigger
+  detect-release-type:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    outputs:
+      release_type: ${{ steps.detect.outputs.release_type }}
+      npm_tag: ${{ steps.detect.outputs.npm_tag }}
+      is_prerelease: ${{ steps.detect.outputs.is_prerelease }}
+
+    steps:
+      - name: Detect release type
+        id: detect
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TYPE="${{ github.event.inputs.release_type }}"
+            echo "Manually triggered release: $TYPE"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+            echo "Release tag: $TAG"
+            if [[ $TAG =~ -alpha ]]; then
+              TYPE="alpha"
+            elif [[ $TAG =~ -beta ]]; then
+              TYPE="beta"
+            elif [[ $TAG =~ -rc ]]; then
+              TYPE="rc"
+            else
+              TYPE="production"
+            fi
+          fi
+
+          echo "release_type=$TYPE" >> $GITHUB_OUTPUT
+
+          # Determine npm tag
+          case $TYPE in
+            alpha)
+              echo "npm_tag=alpha" >> $GITHUB_OUTPUT
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+              ;;
+            beta)
+              echo "npm_tag=beta" >> $GITHUB_OUTPUT
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+              ;;
+            rc)
+              echo "npm_tag=next" >> $GITHUB_OUTPUT
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+              ;;
+            minor|major)
+              echo "npm_tag=latest" >> $GITHUB_OUTPUT
+              echo "is_prerelease=false" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "npm_tag=latest" >> $GITHUB_OUTPUT
+              echo "is_prerelease=false" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+          echo "Release type: $TYPE"
+          echo "npm tag: $(cat $GITHUB_OUTPUT | grep npm_tag)"
+          echo "Is pre-release: $(cat $GITHUB_OUTPUT | grep is_prerelease)"
+
   # Release packages using the optimized script
   release:
+    needs: detect-release-type
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
     environment: release
 
     permissions:
@@ -67,8 +140,31 @@ jobs:
         working-directory: scripts/release
         run: npm install
 
-      - name: Run optimized release
-        run: npm run release
+      - name: Run release
+        run: |
+          TYPE="${{ needs.detect-release-type.outputs.release_type }}"
+          echo "Running release with type: $TYPE"
+
+          case $TYPE in
+            alpha)
+              npm run release:alpha
+              ;;
+            beta)
+              npm run release:beta
+              ;;
+            rc)
+              npm run release:rc
+              ;;
+            minor)
+              npm run release:minor
+              ;;
+            major)
+              npm run release:major
+              ;;
+            *)
+              npm run release
+              ;;
+          esac
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.CLASSIC_GITHUB_TOKEN }}
@@ -79,9 +175,22 @@ jobs:
           # Now create a PR to merge changes back to main
           CURRENT_BRANCH=$(git branch --show-current)
           if [[ $CURRENT_BRANCH != "main" ]]; then
+            RELEASE_TYPE="${{ needs.detect-release-type.outputs.release_type }}"
+            IS_PRERELEASE="${{ needs.detect-release-type.outputs.is_prerelease }}"
+
+            if [[ "$IS_PRERELEASE" == "true" ]]; then
+              PR_TITLE="Pre-Release Version Update ($RELEASE_TYPE) - $(date +%Y-%m-%d)"
+            else
+              PR_TITLE="Production Release Version Update - $(date +%Y-%m-%d)"
+            fi
+
             gh pr create \
-              --title "Automated Version Update - $(date +%Y-%m-%d)" \
-              --body "This PR contains automated version updates from the release workflow." \
+              --title "$PR_TITLE" \
+              --body "This PR contains automated version updates from the release workflow.
+
+Release Type: $RELEASE_TYPE
+npm Tag: ${{ needs.detect-release-type.outputs.npm_tag }}
+Pre-release: $IS_PRERELEASE" \
               --base main \
               --head $CURRENT_BRANCH \
               --draft

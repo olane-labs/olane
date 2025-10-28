@@ -64,8 +64,16 @@ export class oNodeConnection extends oConnection {
         );
       }
 
-      // Send the data
-      await stream.send(new TextEncoder().encode(request.toString()));
+      // Send the data with backpressure handling (libp2p v3 best practice)
+      const data = new TextEncoder().encode(request.toString());
+      const sent = stream.send(data);
+
+      // If send() returns false, wait for the stream to drain before continuing
+      if (!sent) {
+        this.logger.debug('Stream buffer full, waiting for drain...');
+        await stream.onDrain({ signal: AbortSignal.timeout(30_000) }); // 30 second timeout
+      }
+
       const res = await this.read(stream);
       await stream.close();
 

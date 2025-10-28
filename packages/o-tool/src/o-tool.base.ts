@@ -6,6 +6,7 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  oNotificationManager,
 } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
@@ -55,6 +56,13 @@ export class oToolBase extends oCore {
   }
   register(): Promise<void> {
     throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Register not implemented');
+  }
+
+  protected createNotificationManager(): oNotificationManager {
+    throw new oError(
+      oErrorCodes.NOT_IMPLEMENTED,
+      'createNotificationManager not implemented',
+    );
   }
 
   async execute(req: oRequest, stream?: Stream): Promise<RunResult> {
@@ -129,7 +137,7 @@ export class oToolBase extends oCore {
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
-    this.logger.debug('Calling tool: ' + method);
+    this.logger.verbose('Calling tool: ' + method);
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore
@@ -146,7 +154,7 @@ export class oToolBase extends oCore {
 
   async index() {
     if (this.indexed) {
-      this.logger.debug('Tool already indexed, skipping...');
+      this.logger.verbose('Tool already indexed, skipping...');
       return {
         summary: 'Tool already indexed',
       };

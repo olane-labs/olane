@@ -235,13 +235,6 @@ export class oSearchResolver extends oAddressResolver {
   ): oAddress {
     // Determine next hop using standard hierarchy logic
     const nextHopAddress = oAddress.next(node.address, resolvedTargetAddress);
-    this.logger.debug(
-      'determineNextHop with params',
-      'node.address: ' + node.address.toString(),
-      'resolvedTargetAddress: ' + resolvedTargetAddress.toString(),
-      'searchResult.address: ' + searchResult.address,
-      'next hop: ' + nextHopAddress.toString(),
-    );
 
     // Map transports from search result
     const targetTransports = this.mapTransports(searchResult);
@@ -266,13 +259,39 @@ export class oSearchResolver extends oAddressResolver {
       };
     }
 
-    // Perform registry search
+    // Perform registry search with error handling
     const searchParams = this.buildSearchParams(address);
     const registryAddress = this.getRegistryAddress();
-    const searchResponse = await node.use(registryAddress, {
-      method: this.getSearchMethod(),
-      params: searchParams,
-    });
+
+    let searchResponse;
+    try {
+      searchResponse = await node.use(registryAddress, {
+        method: this.getSearchMethod(),
+        params: searchParams,
+      });
+    } catch (error) {
+      // Log the error but don't throw - allow fallback resolvers to handle it
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      // Check if this is a circuit breaker error (fast-fail scenario)
+      if (errorMessage.includes('Circuit breaker is OPEN')) {
+        this.logger.warn(
+          `Registry search blocked by circuit breaker for ${address.toString()}: ${errorMessage}`,
+        );
+      } else {
+        this.logger.error(
+          `Registry search failed for ${address.toString()}: ${errorMessage}`,
+        );
+      }
+
+      // Return original address without transports, letting next resolver in chain handle it
+      return {
+        nextHopAddress: address,
+        targetAddress: targetAddress,
+        requestOverride: resolveRequest,
+      };
+    }
 
     // Filter and select result
     const filteredResults = this.filterSearchResults(
@@ -280,7 +299,6 @@ export class oSearchResolver extends oAddressResolver {
       node,
     );
     const selectedResult = this.selectResult(filteredResults);
-    this.logger.debug('Selecting result:', selectedResult.address);
 
     // Early return: if no result found, return original address
     if (!selectedResult) {
@@ -295,10 +313,16 @@ export class oSearchResolver extends oAddressResolver {
     const extraParams = address
       .toString() // o://embeddings-text replace o://embeddings-text = ''
       .replace(address.toRootAddress().toString(), '');
-    this.logger.debug('Extra params:', extraParams);
+
+    // Check if selectedResult.address already contains the complete path
+    // This happens when registry finds via staticAddress - the returned address
+    // is the canonical hierarchical location, so we shouldn't append extraParams
+    const resultAddress = selectedResult.address;
+    const shouldAppendParams =
+      extraParams && !resultAddress.endsWith(extraParams);
 
     const resolvedTargetAddress = new oAddress(
-      selectedResult.address + extraParams,
+      shouldAppendParams ? resultAddress + extraParams : resultAddress,
     );
 
     // Set transports on the target address

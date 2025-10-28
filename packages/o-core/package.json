@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.7.10",
+  "version": "0.7.12-alpha.12",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -21,16 +21,10 @@
     "test:browser": "aegir test -t browser",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
-    "update:peers": "npm install @olane/o-protocol@latest --save-peer",
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "lint": "aegir lint",
-    "release": "cd scripts/release && npm run release",
-    "release:dry-run": "cd scripts/release && npm run release:dry-run",
-    "release:parallel": "cd scripts/release && npm run release:parallel",
-    "release:minor": "cd scripts/release && npm run release:minor",
-    "release:major": "cd scripts/release && npm run release:major"
+    "lint": "aegir lint"
   },
   "repository": {
     "type": "git",
@@ -60,13 +54,12 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
-  "peerDependencies": {
-    "@olane/o-protocol": "^0.7.9"
-  },
   "dependencies": {
+    "@olane/o-protocol": "0.7.12-alpha.12",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "multiformats": "^13.3.7"
-  }
+  },
+  "gitHead": "b34d2ad4b02fca055f222f2e6e4bf9fc715090af"
 }

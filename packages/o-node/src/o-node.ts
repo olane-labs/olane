@@ -17,6 +17,7 @@ import {
   oAddress,
   oRequest,
   RestrictedAddresses,
+  oNotificationManager,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
@@ -26,6 +27,10 @@ import { NetworkUtils } from './utils/network.utils.js';
 import { oMethodResolver, oToolBase } from '@olane/o-tool';
 import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
 import { oLeaderResolverFallback } from './router/index.js';
+import { oNodeNotificationManager } from './o-node.notification-manager.js';
+import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
+import { oReconnectionManager } from './managers/o-reconnection.manager.js';
+import { LeaderRequestWrapper } from './utils/leader-request-wrapper.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -34,6 +39,9 @@ export class oNode extends oToolBase {
   public config: oNodeConfig;
   public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
+  public connectionHeartbeatManager?: oConnectionHeartbeatManager;
+  public reconnectionManager?: oReconnectionManager;
+  public leaderRequestWrapper!: LeaderRequestWrapper;
   protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
@@ -74,6 +82,14 @@ export class oNode extends oToolBase {
     this.router = new oNodeRouter();
   }
 
+  protected createNotificationManager(): oNotificationManager {
+    return new oNodeNotificationManager(
+      this.p2pNode,
+      this.hierarchyManager,
+      this.address,
+    );
+  }
+
   get staticAddress(): oNodeAddress {
     return this.config.address as oNodeAddress;
   }
@@ -94,10 +110,41 @@ export class oNode extends oToolBase {
       this.logger.debug('Skipping unregistration, node is leader');
       return;
     }
+
+    // Notify parent we're stopping (best-effort, 2s timeout)
+    if (this.config.parent) {
+      try {
+        await Promise.race([
+          this.use(this.config.parent, {
+            method: 'notify',
+            params: {
+              eventType: 'node:stopping',
+              eventData: {
+                address: this.address.toString(),
+                reason: 'graceful_shutdown',
+                expectedDowntime: null,
+              },
+              source: this.address.toString(),
+            },
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 2000),
+          ),
+        ]);
+        this.logger.debug('Notified parent of shutdown');
+      } catch (error) {
+        this.logger.warn(
+          'Failed to notify parent (will be detected by heartbeat):',
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
     if (!this.config.leader) {
       this.logger.debug('No leader found, skipping unregistration');
       return;
     }
+
     const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
 
     // attempt to unregister from the network
@@ -117,11 +164,22 @@ export class oNode extends oToolBase {
       return;
     }
 
+    if (!this.parent?.libp2pTransports?.length) {
+      this.logger.debug(
+        'Parent has no transports, waiting for reconnection & leader ack',
+      );
+      if (this.parent?.toString() === oAddress.leader().toString()) {
+        this.parent.setTransports(this.leader?.libp2pTransports || []);
+      } else {
+        await this.reconnectionManager?.waitForParentAndReconnect();
+      }
+    }
+
     // if no parent transports, register with the parent to get them
     // TODO: should we remove the transports check to make this more consistent?
-    if (this.config.parent && this.config.parent.transports.length === 0) {
+    if (this.config.parent) {
       this.logger.debug('Registering node with parent...', this.config.parent);
-      const parentRegistration = await this.use(this.config.parent, {
+      await this.use(this.config.parent, {
         method: 'child_register',
         params: {
           address: this.address.toString(),
@@ -130,11 +188,6 @@ export class oNode extends oToolBase {
           _token: this.config.joinToken,
         },
       });
-      const { parentTransports } = parentRegistration.result.data as any;
-      // update the parent transports
-      this.config.parent.setTransports(
-        parentTransports.map((t: string) => new oNodeTransport(t)),
-      );
     }
   }
 
@@ -184,6 +237,12 @@ export class oNode extends oToolBase {
 
   async start(): Promise<void> {
     await super.start();
+
+    // Start heartbeat after node is running
+    if (this.connectionHeartbeatManager) {
+      await this.connectionHeartbeatManager.start();
+    }
+
     // await NetworkUtils.advertiseToNetwork(
     //   this.address,
     //   this.staticAddress,
@@ -323,6 +382,28 @@ export class oNode extends oToolBase {
     return connection;
   }
 
+  async postInitialize(): Promise<void> {
+    // Initialize connection heartbeat manager
+    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
+      this as any,
+      {
+        enabled: this.config.connectionHeartbeat?.enabled ?? true,
+        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
+        timeoutMs: this.config.connectionHeartbeat?.timeoutMs ?? 15_000,
+        failureThreshold:
+          this.config.connectionHeartbeat?.failureThreshold ?? 3,
+        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
+        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
+        checkLeader: true,
+      },
+    );
+
+    this.logger.info(
+      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
+        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
+    );
+  }
+
   async initialize(): Promise<void> {
     this.logger.debug('Initializing node...');
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
@@ -333,8 +414,10 @@ export class oNode extends oToolBase {
     }
 
     await this.createNode();
-
     await this.initializeRouter();
+
+    // need to wait until our libpp2 node is initialized before calling super.initialize
+    await super.initialize();
 
     this.logger.debug(
       'Node initialized!',
@@ -348,6 +431,30 @@ export class oNode extends oToolBase {
       p2pNode: this.p2pNode,
     });
 
+    // Initialize leader request wrapper with circuit breaker
+    this.leaderRequestWrapper = new LeaderRequestWrapper({
+      enabled: this.config.leaderRetry?.enabled ?? true,
+      maxAttempts: this.config.leaderRetry?.maxAttempts ?? 20,
+      baseDelayMs: this.config.leaderRetry?.baseDelayMs ?? 2000,
+      maxDelayMs: this.config.leaderRetry?.maxDelayMs ?? 30000,
+      timeoutMs: this.config.leaderRetry?.timeoutMs ?? 120_000,
+      circuitBreaker: {
+        enabled: this.config.leaderRetry?.circuitBreaker?.enabled ?? true,
+        failureThreshold:
+          this.config.leaderRetry?.circuitBreaker?.failureThreshold ?? 3,
+        openTimeoutMs:
+          this.config.leaderRetry?.circuitBreaker?.openTimeoutMs ?? 30000,
+        halfOpenMaxAttempts:
+          this.config.leaderRetry?.circuitBreaker?.halfOpenMaxAttempts ?? 1,
+      },
+    });
+
+    this.logger.info(
+      `Leader retry config: enabled=${this.leaderRequestWrapper.getConfig().enabled}, ` +
+        `maxAttempts=${this.leaderRequestWrapper.getConfig().maxAttempts}, ` +
+        `circuitBreaker.enabled=${this.leaderRequestWrapper.getConfig().circuitBreaker?.enabled}`,
+    );
+
     // initialize address resolution
     this.router.addResolver(new oMethodResolver(this.address));
     this.router.addResolver(new oNodeResolver(this.address));
@@ -357,13 +464,74 @@ export class oNode extends oToolBase {
       this.logger.debug('Adding leader resolver fallback...');
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
+
+    // Read ENABLE_LEADER_HEARTBEAT environment variable
+    const enableLeaderHeartbeat =
+      this.parent?.toString() === oAddress.leader().toString();
+    this.logger.debug(`Enable leader heartbeat: ${enableLeaderHeartbeat}`);
+
+    // Initialize reconnection manager
+    if (this.config.reconnection?.enabled !== false) {
+      this.reconnectionManager = new oReconnectionManager(this, {
+        enabled: true,
+        maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
+        baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
+        maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
+        useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
+        parentDiscoveryIntervalMs:
+          this.config.reconnection?.parentDiscoveryIntervalMs ?? 10000,
+        parentDiscoveryMaxDelayMs:
+          this.config.reconnection?.parentDiscoveryMaxDelayMs ?? 60000,
+      });
+    }
+  }
+
+  /**
+   * Override use() to wrap leader/registry requests with retry logic
+   */
+  async use(
+    address: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+  ): Promise<any> {
+    // Wrap leader/registry requests with retry logic
+    return this.leaderRequestWrapper.execute(
+      () => super.use(address, data),
+      address,
+      data?.method,
+    );
   }
 
   async teardown(): Promise<void> {
+    // Stop heartbeat before parent teardown
+    if (this.connectionHeartbeatManager) {
+      await this.connectionHeartbeatManager.stop();
+    }
+
     await this.unregister();
     await super.teardown();
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }
+  }
+
+  // IHeartbeatableNode interface methods
+  getLeaders(): oNodeAddress[] {
+    return [this.leader as oNodeAddress];
+  }
+
+  getParents(): oNodeAddress[] {
+    return this.hierarchyManager.getParents() as oNodeAddress[];
+  }
+
+  getChildren(): oNodeAddress[] {
+    return this.hierarchyManager.getChildren() as oNodeAddress[];
+  }
+
+  removeChild(childAddress: oNodeAddress): void {
+    this.hierarchyManager.removeChild(childAddress);
   }
 }

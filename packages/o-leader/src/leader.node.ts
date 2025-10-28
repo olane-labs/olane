@@ -23,11 +23,12 @@ export class oLeaderNode extends oLaneTool {
     this.router.addResolver(new oGatewayResolver(this.address));
     const registryTool = new RegistryMemoryTool({
       name: 'registry',
-      parent: this.address,
-      leader: this.address,
+      parent: this.address as any,
+      leader: this.address as any,
       network: {
         listeners: [],
       },
+      joinToken: this.config.joinToken,
     });
     await registryTool.start();
     this.addChildNode(registryTool);

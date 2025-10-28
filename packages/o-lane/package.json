@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-lane",
-  "version": "0.7.10",
+  "version": "0.7.12-alpha.12",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -24,8 +24,6 @@
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
-    "update:lib": "npm install @olane/o-core@latest",
-    "update:peers": "npm install @olane/o-core@latest @olane/o-config@latest @olane/o-protocol@latest @olane/o-tool@latest --save-peer",
     "lint": "eslint src/**/*.ts"
   },
   "repository": {
@@ -55,14 +53,14 @@
     "tsx": "^4.20.3",
     "typescript": "5.4.5"
   },
-  "peerDependencies": {
-    "@olane/o-config": "^0.7.9",
-    "@olane/o-core": "^0.7.9",
-    "@olane/o-protocol": "^0.7.9",
-    "@olane/o-tool": "^0.7.9"
-  },
   "dependencies": {
+    "@olane/o-config": "0.7.12-alpha.12",
+    "@olane/o-core": "0.7.12-alpha.12",
+    "@olane/o-node": "0.7.12-alpha.12",
+    "@olane/o-protocol": "0.7.12-alpha.12",
+    "@olane/o-tool": "0.7.12-alpha.12",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
-  }
+  },
+  "gitHead": "b34d2ad4b02fca055f222f2e6e4bf9fc715090af"
 }

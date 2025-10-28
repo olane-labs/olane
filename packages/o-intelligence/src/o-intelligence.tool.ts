@@ -276,37 +276,37 @@ export class IntelligenceTool extends oLaneTool {
     const config = this.config;
     const anthropicTool = new AnthropicIntelligenceTool({
       ...config,
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await anthropicTool.start();
     this.addChildNode(anthropicTool);
     const openaiTool = new OpenAIIntelligenceTool({
       ...config,
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await openaiTool.start();
     this.addChildNode(openaiTool);
     const ollamaTool = new OllamaIntelligenceTool({
       ...config,
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await ollamaTool.start();
     this.addChildNode(ollamaTool);
     const perplexityTool = new PerplexityIntelligenceTool({
       ...config,
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await perplexityTool.start();
     this.addChildNode(perplexityTool);
 
     const grokTool = new GrokIntelligenceTool({
       ...config,
-      parent: this.address,
-      leader: this.leader,
+      parent: this.address as any,
+      leader: this.leader as any,
     });
     await grokTool.start();
     this.addChildNode(grokTool);

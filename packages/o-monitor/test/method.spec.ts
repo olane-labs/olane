@@ -32,8 +32,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -50,8 +50,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -79,8 +79,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -112,8 +112,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -231,8 +231,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
@@ -258,8 +258,8 @@ describe('o-monitor functionality', () => {
       await leader.start();
 
       monitor = new MonitorTool({
-        leader: leader.address,
-        parent: leader.address,
+        leader: leader.address as any,
+        parent: leader.address as any,
         address: new oAddress('o://monitor'),
         enableHTTP: false,
       });
