@@ -105,7 +105,6 @@ export class oConnectionHeartbeatManager extends oObject {
       // Use this.node.parent getter to get the current parent address with transports
       // rather than getParents() which may have a stale reference
       const parent = this.node.parent;
-      this.logger.debug('Parent address:', parent);
       if (parent) {
         targets.push({ address: parent as oNodeAddress, role: 'parent' });
       }
@@ -126,10 +125,9 @@ export class oConnectionHeartbeatManager extends oObject {
   }
 
   private doPing(address: oNodeAddress) {
-    return this.node.use(address, {
-      method: 'ping',
-      params: {},
-    });
+    return (this.node.p2pNode.services as any).ping.ping(
+      address.libp2pTransports[0].toMultiaddr(),
+    );
   }
 
   private async pingTarget(
@@ -310,19 +308,6 @@ export class oConnectionHeartbeatManager extends oObject {
         role: eventRole,
       }),
     );
-  }
-
-  private extractPeerIdFromAddress(address: oNodeAddress): string | null {
-    // Extract peerId from transport multiaddr
-    for (const transport of address.transports) {
-      const multiaddr = transport.toString();
-      // Multiaddr format: /ip4/127.0.0.1/tcp/4001/p2p/QmPeerId
-      const parts = multiaddr.split('/p2p/');
-      if (parts.length === 2) {
-        return parts[1];
-      }
-    }
-    return null;
   }
 
   /**

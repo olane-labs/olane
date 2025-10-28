@@ -23,7 +23,10 @@ export const defaultLibp2pConfig: Libp2pConfig = {
   connectionEncrypters: [noise()],
   streamMuxers: [yamux()],
   services: {
-    ping: ping(),
+    ping: ping({
+      maxInboundStreams: 1_000,
+      maxOutboundStreams: 1_000,
+    }),
     identify: identify(),
     dht: kadDHT({
       peerInfoMapper: removePublicAddressesMapper,
