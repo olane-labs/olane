@@ -172,7 +172,6 @@ export class oConnectionHeartbeatManager extends oObject {
       // Race between ping and timeout
       // The ping service accepts PeerId as string or object
       await Promise.race([this.doPing(address), timeoutPromise]);
-      this.logger.debug('Ping successful', address.toString());
 
       const latency = Date.now() - startTime;
 

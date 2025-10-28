@@ -242,12 +242,6 @@ export class oNode extends oToolBase {
     if (this.connectionHeartbeatManager) {
       await this.connectionHeartbeatManager.start();
     }
-
-    // await NetworkUtils.advertiseToNetwork(
-    //   this.address,
-    //   this.staticAddress,
-    //   this.p2pNode,
-    // );
   }
 
   async validateJoinRequest(request: oRequest): Promise<any> {

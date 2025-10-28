@@ -273,6 +273,9 @@ export class IntelligenceTool extends oLaneTool {
 
   async initialize(): Promise<void> {
     await super.initialize();
+  }
+
+  async postInitialize(): Promise<void> {
     const config = this.config;
     const anthropicTool = new AnthropicIntelligenceTool({
       ...config,
