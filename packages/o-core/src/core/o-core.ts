@@ -128,6 +128,8 @@ export abstract class oCore extends oObject {
       throw new Error('Invalid address');
     }
 
+    this.logger.debug('Using address: ', address.toString());
+
     // check for static match
     if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(data);
@@ -315,6 +317,8 @@ export abstract class oCore extends oObject {
     );
   }
 
+  async postInitialize(): Promise<void> {}
+
   /**
    * Starts the node by transitioning through initialization and registration phases.
    *
@@ -357,6 +361,7 @@ export abstract class oCore extends oObject {
       await this.register().catch((error) => {
         this.logger.error('Failed to register node', error);
       });
+      await this.postInitialize();
       this.state = NodeState.RUNNING;
 
       // Start optional heartbeat to monitor if enabled

@@ -164,11 +164,22 @@ export class oNode extends oToolBase {
       return;
     }
 
+    if (!this.parent?.libp2pTransports?.length) {
+      this.logger.debug(
+        'Parent has no transports, waiting for reconnection & leader ack',
+      );
+      if (this.parent?.toString() === oAddress.leader().toString()) {
+        this.parent.setTransports(this.leader?.libp2pTransports || []);
+      } else {
+        await this.reconnectionManager?.waitForParentAndReconnect();
+      }
+    }
+
     // if no parent transports, register with the parent to get them
     // TODO: should we remove the transports check to make this more consistent?
-    if (this.config.parent && this.config.parent.transports.length === 0) {
+    if (this.config.parent) {
       this.logger.debug('Registering node with parent...', this.config.parent);
-      const parentRegistration = await this.use(this.config.parent, {
+      await this.use(this.config.parent, {
         method: 'child_register',
         params: {
           address: this.address.toString(),
@@ -177,11 +188,6 @@ export class oNode extends oToolBase {
           _token: this.config.joinToken,
         },
       });
-      const { parentTransports } = parentRegistration.result.data as any;
-      // update the parent transports
-      this.config.parent.setTransports(
-        parentTransports.map((t: string) => new oNodeTransport(t)),
-      );
     }
   }
 
@@ -376,6 +382,28 @@ export class oNode extends oToolBase {
     return connection;
   }
 
+  async postInitialize(): Promise<void> {
+    // Initialize connection heartbeat manager
+    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
+      this as any,
+      {
+        enabled: this.config.connectionHeartbeat?.enabled ?? true,
+        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
+        timeoutMs: this.config.connectionHeartbeat?.timeoutMs ?? 15_000,
+        failureThreshold:
+          this.config.connectionHeartbeat?.failureThreshold ?? 3,
+        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
+        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
+        checkLeader: true,
+      },
+    );
+
+    this.logger.info(
+      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
+        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
+    );
+  }
+
   async initialize(): Promise<void> {
     this.logger.debug('Initializing node...');
     if (this.p2pNode && this.state !== NodeState.STOPPED) {
@@ -442,29 +470,6 @@ export class oNode extends oToolBase {
       this.parent?.toString() === oAddress.leader().toString();
     this.logger.debug(`Enable leader heartbeat: ${enableLeaderHeartbeat}`);
 
-    // Initialize connection heartbeat manager
-    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
-      this.p2pNode,
-      this.hierarchyManager,
-      this.notificationManager,
-      this.address,
-      {
-        enabled: this.config.connectionHeartbeat?.enabled ?? true,
-        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
-        timeoutMs: this.config.connectionHeartbeat?.timeoutMs ?? 5000,
-        failureThreshold:
-          this.config.connectionHeartbeat?.failureThreshold ?? 3,
-        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? true,
-        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
-        checkLeader: enableLeaderHeartbeat,
-      },
-    );
-
-    this.logger.info(
-      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
-        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
-    );
-
     // Initialize reconnection manager
     if (this.config.reconnection?.enabled !== false) {
       this.reconnectionManager = new oReconnectionManager(this, {
@@ -511,5 +516,22 @@ export class oNode extends oToolBase {
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }
+  }
+
+  // IHeartbeatableNode interface methods
+  getLeaders(): oNodeAddress[] {
+    return [this.leader as oNodeAddress];
+  }
+
+  getParents(): oNodeAddress[] {
+    return this.hierarchyManager.getParents() as oNodeAddress[];
+  }
+
+  getChildren(): oNodeAddress[] {
+    return this.hierarchyManager.getChildren() as oNodeAddress[];
+  }
+
+  removeChild(childAddress: oNodeAddress): void {
+    this.hierarchyManager.removeChild(childAddress);
   }
 }

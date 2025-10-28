@@ -110,9 +110,7 @@ export class oReconnectionManager extends oObject {
 
   async attemptReconnection() {
     if (!this.config.enabled) {
-      this.logger.warn(
-        'Reconnection disabled - node will remain disconnected',
-      );
+      this.logger.warn('Reconnection disabled - node will remain disconnected');
       return;
     }
 
@@ -186,7 +184,9 @@ export class oReconnectionManager extends oObject {
       );
       await this.waitForLeaderAndReconnect();
     } else {
-      this.logger.info('Starting infinite parent discovery via leader registry');
+      this.logger.info(
+        'Starting infinite parent discovery via leader registry',
+      );
       await this.waitForParentAndReconnect();
     }
   }
@@ -253,7 +253,10 @@ export class oReconnectionManager extends oObject {
       }
 
       // Calculate backoff delay
-      const delay = Math.min(currentDelay, this.config.parentDiscoveryMaxDelayMs);
+      const delay = Math.min(
+        currentDelay,
+        this.config.parentDiscoveryMaxDelayMs,
+      );
 
       // Log periodic status updates (every 5 minutes)
       if (attempt % 30 === 0) {
@@ -276,7 +279,7 @@ export class oReconnectionManager extends oObject {
   /**
    * Wait for non-leader parent to appear in registry and reconnect
    */
-  private async waitForParentAndReconnect() {
+  async waitForParentAndReconnect() {
     const startTime = Date.now();
     let attempt = 0;
     let currentDelay = this.config.parentDiscoveryIntervalMs;
@@ -350,7 +353,10 @@ export class oReconnectionManager extends oObject {
       }
 
       // Calculate backoff delay with exponential increase, capped at max
-      const delay = Math.min(currentDelay, this.config.parentDiscoveryMaxDelayMs);
+      const delay = Math.min(
+        currentDelay,
+        this.config.parentDiscoveryMaxDelayMs,
+      );
 
       // Log periodic status updates (every 5 minutes)
       if (attempt % 30 === 0) {

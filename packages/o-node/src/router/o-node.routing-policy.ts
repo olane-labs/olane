@@ -27,9 +27,9 @@ export class oNodeRoutingPolicy extends oRoutingPolicy {
       // transports are provided, let's see if they match our known leaders
       const isLeaderRef =
         nodeAddress.toString() === oAddress.leader().toString();
-      const isOurLeaderRef = node.hierarchyManager.leaders.some((l) =>
-        l.equals(nodeAddress),
-      );
+      const isOurLeaderRef =
+        node.address.equals(nodeAddress) ||
+        node.hierarchyManager.leaders.some((l) => l.equals(nodeAddress));
       return isLeaderRef || isOurLeaderRef;
     }
     return true;

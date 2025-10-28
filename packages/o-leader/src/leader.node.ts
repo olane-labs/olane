@@ -28,6 +28,7 @@ export class oLeaderNode extends oLaneTool {
       network: {
         listeners: [],
       },
+      joinToken: this.config.joinToken,
     });
     await registryTool.start();
     this.addChildNode(registryTool);

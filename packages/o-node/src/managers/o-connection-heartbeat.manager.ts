@@ -1,4 +1,3 @@
-import { Libp2p } from '@olane/o-config';
 import {
   oObject,
   ChildLeftEvent,
@@ -6,10 +5,10 @@ import {
   LeaderDisconnectedEvent,
   ConnectionDegradedEvent,
   ConnectionRecoveredEvent,
+  oAddress,
 } from '@olane/o-core';
 import { oNodeAddress } from '../router/o-node.address.js';
-import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
-import { oNotificationManager } from '@olane/o-core';
+import { IHeartbeatableNode } from '../interfaces/i-heartbeatable-node.js';
 
 export interface HeartbeatConfig {
   enabled: boolean;
@@ -49,10 +48,7 @@ export class oConnectionHeartbeatManager extends oObject {
   private healthMap = new Map<string, ConnectionHealth>();
 
   constructor(
-    private p2pNode: Libp2p,
-    private hierarchyManager: oNodeHierarchyManager,
-    private notificationManager: oNotificationManager,
-    private address: oNodeAddress,
+    private node: IHeartbeatableNode,
     private config: HeartbeatConfig,
   ) {
     super();
@@ -94,11 +90,11 @@ export class oConnectionHeartbeatManager extends oObject {
     }> = [];
 
     // Check if this is a leader node (no leader in hierarchy = we are leader)
-    const isLeaderNode = this.hierarchyManager.getLeaders().length === 0;
+    const isLeaderNode = this.node.getLeaders().length === 0;
 
     // Collect leader (if enabled and we're not the leader)
     if (!isLeaderNode) {
-      const leaders = this.hierarchyManager.getLeaders();
+      const leaders = this.node.getLeaders();
       for (const leader of leaders) {
         targets.push({ address: leader as oNodeAddress, role: 'leader' });
       }
@@ -106,15 +102,18 @@ export class oConnectionHeartbeatManager extends oObject {
 
     // Collect parent
     if (this.config.checkParent && !isLeaderNode) {
-      const parents = this.hierarchyManager.getParents();
-      for (const parent of parents) {
+      // Use this.node.parent getter to get the current parent address with transports
+      // rather than getParents() which may have a stale reference
+      const parent = this.node.parent;
+      this.logger.debug('Parent address:', parent);
+      if (parent) {
         targets.push({ address: parent as oNodeAddress, role: 'parent' });
       }
     }
 
     // Collect children
     if (this.config.checkChildren) {
-      const children = this.hierarchyManager.getChildren();
+      const children = this.node.getChildren();
       for (const child of children) {
         targets.push({ address: child as oNodeAddress, role: 'child' });
       }
@@ -126,16 +125,21 @@ export class oConnectionHeartbeatManager extends oObject {
     );
   }
 
+  private doPing(address: oNodeAddress) {
+    return this.node.use(address, {
+      method: 'ping',
+      params: {},
+    });
+  }
+
   private async pingTarget(
     address: oNodeAddress,
     role: 'parent' | 'child' | 'leader',
   ) {
     if (!address.libp2pTransports.length) {
-      this.logger.warn(`No transports found for ${address}`);
+      this.logger.debug(`${role} has no transports, skipping ping`, address);
       return;
     }
-
-    const transports = address.libp2pTransports;
 
     const key = address.toString();
     let health = this.healthMap.get(key);
@@ -166,10 +170,7 @@ export class oConnectionHeartbeatManager extends oObject {
 
       // Race between ping and timeout
       // The ping service accepts PeerId as string or object
-      await Promise.race([
-        (this.p2pNode.services.ping as any).ping(transports[0].toMultiaddr()),
-        timeoutPromise,
-      ]);
+      await Promise.race([this.doPing(address), timeoutPromise]);
 
       const latency = Date.now() - startTime;
 
@@ -198,6 +199,7 @@ export class oConnectionHeartbeatManager extends oObject {
 
       this.logger.warn(
         `Ping failed: ${address} (failures: ${health.consecutiveFailures}/${this.config.failureThreshold})`,
+        error,
       );
 
       // Update status based on failure count
@@ -234,14 +236,14 @@ export class oConnectionHeartbeatManager extends oObject {
     // Emit events based on role
     if (role === 'child') {
       // Remove dead child from hierarchy
-      this.hierarchyManager.removeChild(address);
+      this.node.removeChild(address);
 
       // Emit child left event
-      this.notificationManager.emit(
+      this.node.notificationManager.emit(
         new ChildLeftEvent({
-          source: this.address,
+          source: this.node.address,
           childAddress: address,
-          parentAddress: this.address,
+          parentAddress: this.node.address,
           reason: `heartbeat_failed_${health.consecutiveFailures}_times`,
         }),
       );
@@ -249,9 +251,9 @@ export class oConnectionHeartbeatManager extends oObject {
       this.logger.warn(`Removed dead child: ${address}`);
     } else if (role === 'parent') {
       // Emit parent disconnected event
-      this.notificationManager.emit(
+      this.node.notificationManager.emit(
         new ParentDisconnectedEvent({
-          source: this.address,
+          source: this.node.address,
           parentAddress: address,
           reason: `heartbeat_failed_${health.consecutiveFailures}_times`,
         }),
@@ -261,9 +263,9 @@ export class oConnectionHeartbeatManager extends oObject {
       // Reconnection manager will handle this event
     } else if (role === 'leader') {
       // Emit leader disconnected event
-      this.notificationManager.emit(
+      this.node.notificationManager.emit(
         new LeaderDisconnectedEvent({
-          source: this.address,
+          source: this.node.address,
           leaderAddress: address,
           reason: `heartbeat_failed_${health.consecutiveFailures}_times`,
         }),
@@ -283,9 +285,9 @@ export class oConnectionHeartbeatManager extends oObject {
     const eventRole: 'parent' | 'child' =
       role === 'leader' ? 'parent' : role === 'child' ? 'child' : 'parent';
 
-    this.notificationManager.emit(
+    this.node.notificationManager.emit(
       new ConnectionDegradedEvent({
-        source: this.address,
+        source: this.node.address,
         targetAddress: address,
         role: eventRole,
         consecutiveFailures: failures,
@@ -301,9 +303,9 @@ export class oConnectionHeartbeatManager extends oObject {
     const eventRole: 'parent' | 'child' =
       role === 'leader' ? 'parent' : role === 'child' ? 'child' : 'parent';
 
-    this.notificationManager.emit(
+    this.node.notificationManager.emit(
       new ConnectionRecoveredEvent({
-        source: this.address,
+        source: this.node.address,
         targetAddress: address,
         role: eventRole,
       }),
