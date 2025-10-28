@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-server",
-  "version": "0.7.12-alpha.15",
+  "version": "0.7.12-alpha.16",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -57,7 +57,7 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-core": "0.7.12-alpha.15",
+    "@olane/o-core": "0.7.12-alpha.16",
     "cors": "^2.8.5",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
