@@ -313,9 +313,10 @@ export class oReconnectionManager extends oObject {
           // Update parent reference with fresh transports
           this.node.config.parent = new oNodeAddress(
             parentAddress,
-            parentTransports.map((t: string) => new oNodeTransport(t)),
+            parentTransports.map(
+              (t: { value: string }) => new oNodeTransport(t.value),
+            ),
           );
-
           // Attempt to register with parent and re-register with registry
           try {
             await this.tryDirectParentReconnection();

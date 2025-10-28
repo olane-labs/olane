@@ -20,6 +20,11 @@ export class oNodeRoutingPolicy extends oRoutingPolicy {
   isInternalAddress(address: oAddress, node: oNode): boolean {
     const nodeAddress = address as oNodeAddress;
 
+    // if we are trying to connect to a parent, it's internal
+    if (node.hierarchyManager.parents.some((p) => p.equals(address))) {
+      return true;
+    }
+
     if (
       nodeAddress.paths.indexOf(oAddress.leader().paths) !== -1 && // if the address has a leader
       nodeAddress.libp2pTransports?.length > 0
@@ -53,10 +58,7 @@ export class oNodeRoutingPolicy extends oRoutingPolicy {
 
     if (!isInternal) {
       // external address, so we need to route
-      this.logger.debug(
-        'Address is external, routing...',
-        nodeAddress.toString(),
-      );
+      this.logger.debug('Address is external, routing...', nodeAddress);
 
       // route to leader of external OS
       return {
