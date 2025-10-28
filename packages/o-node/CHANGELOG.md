@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.19 (2025-10-28)</small>
+
+- fixes for OLANE-266 ([e249684](https://github.com/olane-labs/olane/commit/e249684))
+
 ## <small>0.7.12-alpha.18 (2025-10-28)</small>
 
 - minor bug fixes for reconnection + heartbeat managers ([20ae0c9](https://github.com/olane-labs/olane/commit/20ae0c9))
