@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.18 (2025-10-28)</small>
+
+- minor bug fixes for reconnection + heartbeat managers ([20ae0c9](https://github.com/olane-labs/olane/commit/20ae0c9))
+
 ## <small>0.7.12-alpha.17 (2025-10-28)</small>
 
 **Note:** Version bump only for package @olane/o-tools-common
