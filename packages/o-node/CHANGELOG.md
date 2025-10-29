@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.22 (2025-10-29)</small>
+
+- fix ([e87ca71](https://github.com/olane-labs/olane/commit/e87ca71))
+
 ## <small>0.7.12-alpha.21 (2025-10-29)</small>
 
 - minor fix + logging ([8cff35c](https://github.com/olane-labs/olane/commit/8cff35c))
