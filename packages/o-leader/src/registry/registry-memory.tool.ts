@@ -8,8 +8,10 @@ export class RegistryMemoryTool extends RegistryTool {
   async _tool_commit(request: oRequest): Promise<any> {
     const params = request.params as oRegistrationParams;
     this.logger.debug(
-      'Committing registration: ',
+      'Committing registration. Address: ',
       params?.address,
+      'Static Address: ',
+      params?.staticAddress,
       'With num protocols: ',
       params?.protocols?.length,
     );

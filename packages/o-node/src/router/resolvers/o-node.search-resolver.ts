@@ -90,7 +90,7 @@ export class oSearchResolver extends oAddressResolver {
    * @returns The registry address to query
    */
   protected getRegistryAddress(): oAddress {
-    return new oAddress(RestrictedAddresses.REGISTRY);
+    return new oAddress('o://leader/registry');
   }
 
   /**
@@ -265,7 +265,7 @@ export class oSearchResolver extends oAddressResolver {
 
     let searchResponse;
     try {
-      searchResponse = await node.useChild(registryAddress, {
+      searchResponse = await node.use(registryAddress, {
         method: this.getSearchMethod(),
         params: searchParams,
       });
