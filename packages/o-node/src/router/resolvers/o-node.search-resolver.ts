@@ -265,7 +265,7 @@ export class oSearchResolver extends oAddressResolver {
 
     let searchResponse;
     try {
-      searchResponse = await node.use(registryAddress, {
+      searchResponse = await node.useChild(registryAddress, {
         method: this.getSearchMethod(),
         params: searchParams,
       });
