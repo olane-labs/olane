@@ -150,6 +150,12 @@ export abstract class oCore extends oObject {
     }
 
     // if no routing is requested, use the address as is
+    if (options?.noRouting) {
+      this.logger.debug(
+        'No routing requested, using address as is',
+        address.toString(),
+      );
+    }
     const { nextHopAddress, targetAddress } = options?.noRouting
       ? { nextHopAddress: address, targetAddress: address }
       : await this.router.translate(address, this);

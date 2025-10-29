@@ -530,10 +530,14 @@ export class oNode extends oToolBase {
       params?: { [key: string]: any };
       id?: string;
     },
+    options?: {
+      noRouting?: boolean;
+    },
   ): Promise<any> {
     // Wrap leader/registry requests with retry logic
     return this.leaderRequestWrapper.execute(
-      () => super.use(address, data),
+      () =>
+        super.use(address, data, { noRouting: options?.noRouting ?? false }),
       address,
       data?.method,
     );
