@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.23 (2025-10-30)</small>
+
+- added streaming functionality ([7f310fc](https://github.com/olane-labs/olane/commit/7f310fc))
+- added timeouts for read + drain ([cad9348](https://github.com/olane-labs/olane/commit/cad9348))
+
 ## <small>0.7.12-alpha.22 (2025-10-29)</small>
 
 **Note:** Version bump only for package @olane/o-core
