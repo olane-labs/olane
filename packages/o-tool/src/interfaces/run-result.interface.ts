@@ -1,3 +1,3 @@
-export interface RunResult {
-  [key: string]: unknown;
-}
+import { ToolResult } from './tool-result.interface.js';
+
+export type RunResult = { [key: string]: unknown } | AsyncGenerator<ToolResult>;
