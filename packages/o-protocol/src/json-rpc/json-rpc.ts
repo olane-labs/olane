@@ -33,6 +33,22 @@ export interface Result {
 }
 
 /**
+ * Metadata for streaming responses.
+ */
+export interface StreamingMetadata {
+  _streaming: true;
+  _sequence: number;
+  _isLast: boolean;
+}
+
+/**
+ * A result that represents a chunk in a streaming response.
+ */
+export interface StreamingResult extends Result, StreamingMetadata {
+  _data: unknown;
+}
+
+/**
  * A uniquely identifying ID for a request in JSON-RPC.
  */
 export type RequestId = string | number;
@@ -59,6 +75,15 @@ export interface JSONRPCResponse {
   jsonrpc: typeof JSONRPC_VERSION;
   id: RequestId;
   result: Result;
+}
+
+/**
+ * A streaming response chunk.
+ */
+export interface JSONRPCStreamChunk {
+  jsonrpc: typeof JSONRPC_VERSION;
+  id: RequestId;
+  result: StreamingResult;
 }
 
 // Standard JSON-RPC error codes

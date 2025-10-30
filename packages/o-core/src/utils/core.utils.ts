@@ -2,9 +2,7 @@ import {
   generateKeyPairFromSeed,
   createEd25519PeerId,
   Stream,
-  Uint8ArrayList,
   pushable,
-  StreamMessageEvent,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
@@ -135,13 +133,6 @@ export class CoreUtils {
     }
   }
 
-  public static async processStream(
-    event: StreamMessageEvent,
-  ): Promise<oRequest> {
-    const bytes =
-      event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
-    return new oRequest(JSON.parse(new TextDecoder().decode(bytes)));
-  }
 
   public static async toCID(data: any): Promise<CID> {
     const bytes = json.encode(data);
