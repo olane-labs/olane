@@ -132,6 +132,8 @@ export abstract class oCore extends oObject {
     },
     options?: {
       noRouting?: boolean;
+      readTimeoutMs?: number;
+      drainTimeoutMs?: number;
     },
   ): Promise<oResponse> {
     if (!this.isRunning) {
@@ -166,7 +168,12 @@ export abstract class oCore extends oObject {
       return this.useSelf(data);
     }
 
-    const connection = await this.connect(nextHopAddress, targetAddress);
+    const connection = await this.connect(
+      nextHopAddress,
+      targetAddress,
+      options?.readTimeoutMs,
+      options?.drainTimeoutMs,
+    );
 
     // communicate the payload to the target node
     const response = await connection.send({
@@ -287,6 +294,8 @@ export abstract class oCore extends oObject {
   abstract connect(
     nextHopAddress: oAddress,
     targetAddress: oAddress,
+    readTimeoutMs?: number,
+    drainTimeoutMs?: number,
   ): Promise<oConnection>;
 
   // router

@@ -1,4 +1,5 @@
 import {
+  NodeState,
   oAddress,
   oAddressResolver,
   oCore,
@@ -252,6 +253,14 @@ export class oSearchResolver extends oAddressResolver {
 
     // Early return: if address already has transports, no search needed
     if (address.transports.length > 0) {
+      return {
+        nextHopAddress: address,
+        targetAddress: targetAddress,
+        requestOverride: resolveRequest,
+      };
+    }
+
+    if (node.state !== NodeState.RUNNING) {
       return {
         nextHopAddress: address,
         targetAddress: targetAddress,

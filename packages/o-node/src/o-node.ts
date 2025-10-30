@@ -383,6 +383,8 @@ export class oNode extends oToolBase {
   async connect(
     nextHopAddress: oNodeAddress,
     targetAddress: oNodeAddress,
+    readTimeoutMs?: number,
+    drainTimeoutMs?: number,
   ): Promise<oNodeConnection> {
     if (!this.connectionManager) {
       this.logger.error('Connection manager not initialized');
@@ -393,6 +395,8 @@ export class oNode extends oToolBase {
         address: targetAddress,
         nextHopAddress,
         callerAddress: this.address,
+        readTimeoutMs,
+        drainTimeoutMs,
       })
       .catch((error) => {
         // TODO: we need to handle this better and document
@@ -412,6 +416,8 @@ export class oNode extends oToolBase {
   async initConnectionManager(): Promise<void> {
     this.connectionManager = new oNodeConnectionManager({
       p2pNode: this.p2pNode,
+      defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
+      defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
     });
   }
 

@@ -50,4 +50,21 @@ export interface oNodeConfig extends oCoreConfig {
       halfOpenMaxAttempts?: number; // Default: 1
     };
   };
+
+  /**
+   * Connection timeout configuration
+   * Controls timeouts for stream read and drain operations in connections
+   */
+  connectionTimeouts?: {
+    /**
+     * Timeout in milliseconds for reading response data from a stream
+     * Default: 120000 (2 minutes)
+     */
+    readTimeoutMs?: number;
+    /**
+     * Timeout in milliseconds for waiting for stream buffer to drain when backpressure occurs
+     * Default: 30000 (30 seconds)
+     */
+    drainTimeoutMs?: number;
+  };
 }

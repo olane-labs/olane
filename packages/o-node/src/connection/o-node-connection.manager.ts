@@ -7,10 +7,14 @@ import { oNodeConnection } from './o-node-connection.js';
 
 export class oNodeConnectionManager extends oConnectionManager {
   private p2pNode: Libp2p;
+  private defaultReadTimeoutMs?: number;
+  private defaultDrainTimeoutMs?: number;
 
   constructor(config: oNodeConnectionManagerConfig) {
     super(config);
     this.p2pNode = config.p2pNode;
+    this.defaultReadTimeoutMs = config.defaultReadTimeoutMs;
+    this.defaultDrainTimeoutMs = config.defaultDrainTimeoutMs;
   }
 
   /**
@@ -19,7 +23,13 @@ export class oNodeConnectionManager extends oConnectionManager {
    * @returns The connection object
    */
   async connect(config: oConnectionConfig): Promise<oNodeConnection> {
-    const { address, nextHopAddress, callerAddress } = config;
+    const {
+      address,
+      nextHopAddress,
+      callerAddress,
+      readTimeoutMs,
+      drainTimeoutMs,
+    } = config;
 
     // check if we already have a connection to this address
     // TODO: how can we enable caching of connections & connection lifecycles
@@ -72,6 +82,8 @@ export class oNodeConnectionManager extends oConnectionManager {
           address: address,
           p2pConnection: p2pConnection,
           callerAddress: callerAddress,
+          readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
+          drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
         });
 
         if (attempt > 0) {

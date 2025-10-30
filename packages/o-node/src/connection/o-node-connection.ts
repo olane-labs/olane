@@ -26,7 +26,7 @@ export class oNodeConnection extends oConnection {
   async read(source: Stream) {
     const bytes = byteStream(source);
     const output = await bytes.read({
-      signal: AbortSignal.timeout(120_000), // 2 min timeout
+      signal: AbortSignal.timeout(this.config.readTimeoutMs ?? 120_000), // Default: 2 min timeout
     });
     const outputObj =
       output instanceof Uint8ArrayList ? output.subarray() : output;
@@ -71,7 +71,9 @@ export class oNodeConnection extends oConnection {
       // If send() returns false, wait for the stream to drain before continuing
       if (!sent) {
         this.logger.debug('Stream buffer full, waiting for drain...');
-        await stream.onDrain({ signal: AbortSignal.timeout(30_000) }); // 30 second timeout
+        await stream.onDrain({
+          signal: AbortSignal.timeout(this.config.drainTimeoutMs ?? 30_000),
+        }); // Default: 30 second timeout
       }
 
       const res = await this.read(stream);
