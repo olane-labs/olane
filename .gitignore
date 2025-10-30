@@ -6,3 +6,4 @@ dist
 .npmrc
 .claude
 .cursor
+.gemini
