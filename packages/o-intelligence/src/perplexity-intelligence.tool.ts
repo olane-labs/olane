@@ -2,11 +2,7 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import {
-  oNodeToolConfig,
-  oStreamRequest,
-  StreamUtils,
-} from '@olane/o-node';
+import { oNodeToolConfig, oStreamRequest, StreamUtils } from '@olane/o-node';
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
@@ -108,9 +104,7 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Perplexity
    */
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 
@@ -383,9 +377,7 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   /**
    * Generate text with Perplexity (alias for completion)
    */
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 

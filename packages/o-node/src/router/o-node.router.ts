@@ -127,14 +127,12 @@ export class oNodeRouter extends oToolRouter {
       });
 
       if (request.params._isStream) {
-        if (!request.params.stream) {
+        const routeRequest = request as oRouterRequest;
+        if (!routeRequest.stream) {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
         nodeConnection.onChunk((response) => {
-          CoreUtils.sendStreamResponse(
-            response,
-            request.params.stream as Stream,
-          );
+          CoreUtils.sendStreamResponse(response, routeRequest.stream as Stream);
         });
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
       }

@@ -132,9 +132,7 @@ export class OllamaIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Ollama
    */
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 
@@ -313,9 +311,7 @@ export class OllamaIntelligenceTool extends oLaneTool {
   /**
    * Generate text with Ollama
    */
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 

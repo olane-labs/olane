@@ -277,6 +277,10 @@ export abstract class oCore extends oObject {
       params?: { [key: string]: any };
       id?: string;
     },
+    options?: {
+      isStream?: boolean;
+      onChunk?: (chunk: oResponse) => void;
+    },
   ): Promise<oResponse> {
     if (!this.isRunning) {
       throw new Error('Node is not running');

@@ -124,9 +124,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Anthropic
    */
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { _isStream = false } = params;
 
@@ -325,9 +323,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
   /**
    * Generate text with Anthropic (using messages endpoint)
    */
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 

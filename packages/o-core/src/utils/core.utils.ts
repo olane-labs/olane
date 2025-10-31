@@ -3,6 +3,7 @@ import {
   createEd25519PeerId,
   Stream,
   pushable,
+  Uint8ArrayList,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
@@ -141,22 +142,18 @@ export class CoreUtils {
     await stream.send(new TextEncoder().encode(response.toString()));
   }
 
-  public static async processStream(event: StreamMessageEvent): Promise<any> {
+  public static async processStream(event: any): Promise<any> {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  public static async processStreamRequest(
-    event: StreamMessageEvent,
-  ): Promise<oRequest> {
+  public static async processStreamRequest(event: any): Promise<oRequest> {
     const req = await CoreUtils.processStream(event);
     return new oRequest(req);
   }
 
-  public static async processStreamResponse(
-    event: StreamMessageEvent,
-  ): Promise<oResponse> {
+  public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
     return new oResponse(res);
   }

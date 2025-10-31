@@ -2,11 +2,7 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import {
-  oNodeToolConfig,
-  oStreamRequest,
-  StreamUtils,
-} from '@olane/o-node';
+import { oNodeToolConfig, oStreamRequest, StreamUtils } from '@olane/o-node';
 
 interface GrokMessage {
   role: 'system' | 'user' | 'assistant';
@@ -66,9 +62,7 @@ export class GrokIntelligenceTool extends oLaneTool {
     });
   }
 
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 
@@ -256,9 +250,7 @@ export class GrokIntelligenceTool extends oLaneTool {
     }
   }
 
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
     const { stream = false } = params;
 
