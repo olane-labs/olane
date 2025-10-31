@@ -6,12 +6,14 @@ import { ConnectionSendParams } from './interfaces/connection-send-params.interf
 import { v4 as uuidv4 } from 'uuid';
 import { oObject } from '../core/o-object.js';
 import { oConnectionConfig } from './interfaces/connection.config.js';
+import { EventEmitter } from 'events';
 
 export abstract class oConnection extends oObject {
   public readonly id: string;
   public readonly address: oAddress;
   public readonly nextHopAddress: oAddress;
   public readonly callerAddress: oAddress | undefined;
+  protected readonly emitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oConnectionConfig) {
     super();
@@ -29,6 +31,10 @@ export abstract class oConnection extends oObject {
     );
   }
 
+  onChunk(listener: (response: oResponse) => void) {
+    this.emitter.addListener('chunk', listener);
+  }
+
   validate(): void {
     if (!this.address || !this.nextHopAddress || !this.callerAddress) {
       throw new Error('Connection configuration is invalid');
@@ -42,6 +48,7 @@ export abstract class oConnection extends oObject {
         _connectionId: this.id,
         _requestMethod: method,
         _callerAddress: this.callerAddress?.value,
+        _isStream: this.config.isStream || false,
         ...params,
       },
       id: params.id || uuidv4(),
@@ -53,8 +60,7 @@ export abstract class oConnection extends oObject {
   async send(data: ConnectionSendParams): Promise<oResponse> {
     // proxy through the router tool
     const request = this.createRequest(oProtocolMethods.ROUTE, data);
-    const result = await this.transmit(request);
-    return result;
+    return this.transmit(request);
   }
 
   async close() {

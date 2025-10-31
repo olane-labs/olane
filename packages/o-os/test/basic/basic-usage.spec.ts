@@ -31,7 +31,7 @@ describe('basic-usage @initialize', async () => {
   //   expect(data.message).to.equal('Network indexed!');
   // });
 
-  it('should be able to use olane remote services', async () => {
+  it('should be able to use stream from a provider service', async () => {
     const entryNode = network.entryNode();
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
@@ -46,18 +46,12 @@ describe('basic-usage @initialize', async () => {
     //   },
     // });
     // use the intelligence tool
-    const response2 = await entryNode.use(
-      new oNodeAddress('o://perplexity', [
-        new oNodeTransport(
-          multiaddr(
-            '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
-          ),
-        ),
-      ]),
+    await entryNode.useStream(
+      new oNodeAddress('o://anthropic'),
       {
         method: 'completion',
         params: {
-          model: 'sonar',
+          _isStream: true,
           messages: [
             {
               role: 'user',
@@ -66,8 +60,12 @@ describe('basic-usage @initialize', async () => {
           ],
         },
       },
+      {
+        onChunk: (chunk) => {
+          console.log('Received chunk: ', chunk.result.data);
+        },
+      },
     );
-    console.log(response2.result.data);
   });
 });
 

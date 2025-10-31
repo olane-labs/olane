@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { CircuitBreaker, CircuitState } from './circuit-breaker.js';
+import { CircuitBreaker, CircuitState } from '../src/utils/circuit-breaker.js';
 
 describe('CircuitBreaker', () => {
   let breaker: CircuitBreaker;

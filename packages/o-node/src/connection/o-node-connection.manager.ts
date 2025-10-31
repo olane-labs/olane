@@ -84,6 +84,7 @@ export class oNodeConnectionManager extends oConnectionManager {
           callerAddress: callerAddress,
           readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
           drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
+          isStream: config.isStream || false,
         });
 
         if (attempt > 0) {

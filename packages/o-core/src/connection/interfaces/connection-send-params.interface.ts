@@ -4,4 +4,5 @@ export interface ConnectionSendParams {
     [key: string]: unknown;
   };
   id?: string;
+  isStream?: boolean;
 }

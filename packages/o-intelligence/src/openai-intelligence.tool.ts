@@ -2,7 +2,8 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig } from '@olane/o-node';
+import { oNodeToolConfig, oStreamRequest, StreamUtils } from '@olane/o-node';
+import { Stream } from '@olane/o-config';
 
 interface OpenAIChatMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
@@ -160,9 +161,21 @@ export class OpenAIIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with OpenAI
    */
-  async _tool_completion(request: oRequest): Promise<ToolResult> {
+  async _tool_completion(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      return StreamUtils.processGenerator(
+        request,
+        this._streamCompletion(request),
+        request.stream,
+      );
+    }
+
     try {
-      const params = request.params as any;
       const {
         model = this.defaultModel,
         messages,
@@ -234,11 +247,149 @@ export class OpenAIIntelligenceTool extends oLaneTool {
   }
 
   /**
-   * Generate text with OpenAI
+   * Stream chat completion with OpenAI
    */
-  async _tool_generate(request: oRequest): Promise<ToolResult> {
+  private async *_streamCompletion(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        messages,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'OpenAI API key is required',
+        };
+        return;
+      }
+
+      if (!messages || !Array.isArray(messages)) {
+        yield {
+          success: false,
+          error: '"messages" array is required',
+        };
+        return;
+      }
+
+      const chatRequest: OpenAIChatRequest = {
+        model: model as string,
+        messages: messages as OpenAIChatMessage[],
+        stream: true,
+      };
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (this.organization) {
+        headers['OpenAI-Organization'] = this.organization;
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(chatRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `OpenAI API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            const choice = parsed.choices?.[0];
+
+            if (choice?.delta?.content) {
+              yield {
+                delta: choice.delta.content,
+                model: parsed.model,
+              };
+            }
+
+            if (choice?.finish_reason) {
+              yield {
+                finish_reason: choice.finish_reason,
+                model: parsed.model,
+              };
+            }
+
+            if (parsed.usage) {
+              yield {
+                usage: parsed.usage,
+                model: parsed.model,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream chat: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate text with OpenAI
+   */
+  async _tool_generate(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      return StreamUtils.processGenerator(
+        request,
+        this._streamGenerate(request),
+        request.stream,
+      );
+    }
+
+    try {
       const {
         model = this.defaultModel,
         prompt,
@@ -304,6 +455,129 @@ export class OpenAIIntelligenceTool extends oLaneTool {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Stream text generation with OpenAI
+   */
+  private async *_streamGenerate(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        prompt,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'OpenAI API key is required',
+        };
+        return;
+      }
+
+      if (!prompt) {
+        yield {
+          success: false,
+          error: 'Prompt is required',
+        };
+        return;
+      }
+
+      const completionRequest: OpenAICompletionRequest = {
+        model: model as string,
+        prompt: prompt as string,
+        stream: true,
+        ...options,
+      };
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      const response = await fetch(`${this.baseUrl}/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(completionRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `OpenAI API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            const choice = parsed.choices?.[0];
+
+            if (choice?.text) {
+              yield {
+                delta: choice.text,
+                model: parsed.model,
+              };
+            }
+
+            if (choice?.finish_reason) {
+              yield {
+                finish_reason: choice.finish_reason,
+                model: parsed.model,
+              };
+            }
+
+            if (parsed.usage) {
+              yield {
+                usage: parsed.usage,
+                model: parsed.model,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream generate: ${(error as Error).message}`,
       };
     }
   }

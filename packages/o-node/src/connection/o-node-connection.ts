@@ -7,6 +7,7 @@ import {
   byteStream,
 } from '@olane/o-config';
 import {
+  CoreUtils,
   oConnection,
   oError,
   oErrorCodes,
@@ -53,6 +54,8 @@ export class oNodeConnection extends oConnection {
         },
       );
 
+      const isStreamRequest = request.params._isStream;
+
       if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
         throw new oError(
           oErrorCodes.FAILED_TO_DIAL_TARGET,
@@ -70,12 +73,33 @@ export class oNodeConnection extends oConnection {
       const data = new TextEncoder().encode(request.toString());
       const sent = stream.send(data);
 
+      if (isStreamRequest) {
+        stream.addEventListener('message', async (event) => {
+          const response = await CoreUtils.processStreamResponse(event);
+          this.emitter.emit('chunk', response);
+          // marked as the last chunk let's close
+          if (response.result._last) {
+            await stream.close();
+          }
+        });
+      }
+
       // If send() returns false, wait for the stream to drain before continuing
       if (!sent) {
         this.logger.debug('Stream buffer full, waiting for drain...');
         await stream.onDrain({
           signal: AbortSignal.timeout(this.config.drainTimeoutMs ?? 30_000),
         }); // Default: 30 second timeout
+      }
+
+      if (isStreamRequest) {
+        return Promise.resolve(
+          CoreUtils.buildResponse(
+            request,
+            'request is streaming, this response is not used',
+            null,
+          ),
+        );
       }
 
       const res = await this.read(stream);

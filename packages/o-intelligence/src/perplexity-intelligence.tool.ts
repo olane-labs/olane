@@ -2,7 +2,11 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig } from '@olane/o-node';
+import {
+  oNodeToolConfig,
+  oStreamRequest,
+  StreamUtils,
+} from '@olane/o-node';
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
@@ -104,9 +108,22 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Perplexity
    */
-  async _tool_completion(request: oRequest): Promise<ToolResult> {
+  async _tool_completion(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      this.logger.debug('Streaming completion...');
+      return StreamUtils.processGenerator(
+        request,
+        this._streamCompletion(request),
+        request.stream,
+      );
+    }
+
     try {
-      const params = request.params as any;
       const {
         model = this.defaultModel,
         messages,
@@ -200,11 +217,188 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   }
 
   /**
-   * Generate text with Perplexity (alias for completion)
+   * Stream chat completion with Perplexity
    */
-  async _tool_generate(request: oRequest): Promise<ToolResult> {
+  private async *_streamCompletion(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        messages,
+        max_tokens,
+        temperature,
+        top_p,
+        top_k,
+        presence_penalty,
+        frequency_penalty,
+        apiKey = this.defaultApiKey,
+        search_domain,
+        return_citations,
+        return_images,
+        return_related_questions,
+      } = params;
+
+      if (!messages || !Array.isArray(messages)) {
+        yield {
+          success: false,
+          error: '"messages" array is required',
+        };
+        return;
+      }
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'Perplexity API key is required',
+        };
+        return;
+      }
+
+      const chatRequest: PerplexityChatRequest = {
+        model: model as string,
+        messages: messages as PerplexityMessage[],
+        stream: true,
+      };
+
+      // Add optional parameters if provided
+      if (max_tokens !== undefined) chatRequest.max_tokens = max_tokens;
+      if (temperature !== undefined) chatRequest.temperature = temperature;
+      if (top_p !== undefined) chatRequest.top_p = top_p;
+      if (top_k !== undefined) chatRequest.top_k = top_k;
+      if (presence_penalty !== undefined)
+        chatRequest.presence_penalty = presence_penalty;
+      if (frequency_penalty !== undefined)
+        chatRequest.frequency_penalty = frequency_penalty;
+      if (search_domain !== undefined)
+        chatRequest.search_domain = search_domain;
+      if (return_citations !== undefined)
+        chatRequest.return_citations = return_citations;
+      if (return_images !== undefined)
+        chatRequest.return_images = return_images;
+      if (return_related_questions !== undefined)
+        chatRequest.return_related_questions = return_related_questions;
+
+      const response = await fetch(
+        `https://api.perplexity.ai/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(chatRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Perplexity API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield { success: false, error: 'Response body is null' };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            const choice = parsed.choices?.[0];
+
+            if (choice?.delta?.content) {
+              yield {
+                delta: choice.delta.content,
+                model: parsed.model || (model as string),
+              };
+            }
+
+            if (choice?.finish_reason) {
+              yield {
+                finish_reason: choice.finish_reason,
+              };
+            }
+
+            if (parsed.usage) {
+              yield {
+                usage: parsed.usage,
+              };
+            }
+
+            // Handle Perplexity-specific fields
+            if (parsed.citations) {
+              yield {
+                citations: parsed.citations,
+              };
+            }
+
+            if (parsed.images) {
+              yield {
+                images: parsed.images,
+              };
+            }
+
+            if (parsed.related_questions) {
+              yield {
+                related_questions: parsed.related_questions,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream chat: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate text with Perplexity (alias for completion)
+   */
+  async _tool_generate(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      this.logger.debug('Streaming generate...');
+      return StreamUtils.processGenerator(
+        request,
+        this._streamGenerate(request),
+        request.stream,
+      );
+    }
+
+    try {
       const {
         model = this.defaultModel,
         prompt,
@@ -301,6 +495,178 @@ export class PerplexityIntelligenceTool extends oLaneTool {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Stream text generation with Perplexity
+   */
+  private async *_streamGenerate(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        prompt,
+        system,
+        max_tokens,
+        temperature,
+        top_p,
+        top_k,
+        presence_penalty,
+        frequency_penalty,
+        search_domain,
+        return_citations,
+        return_images,
+        return_related_questions,
+        apiKey = this.defaultApiKey,
+      } = params;
+
+      if (!prompt) {
+        yield {
+          success: false,
+          error: 'Prompt is required',
+        };
+        return;
+      }
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'Perplexity API key is required',
+        };
+        return;
+      }
+
+      // Convert prompt to messages format
+      const messages: PerplexityMessage[] = [];
+      if (system) {
+        messages.push({ role: 'system', content: system });
+      }
+      messages.push({ role: 'user', content: prompt });
+
+      const chatRequest: PerplexityChatRequest = {
+        model: model as string,
+        messages,
+        stream: true,
+      };
+
+      // Add optional parameters if provided
+      if (max_tokens !== undefined) chatRequest.max_tokens = max_tokens;
+      if (temperature !== undefined) chatRequest.temperature = temperature;
+      if (top_p !== undefined) chatRequest.top_p = top_p;
+      if (top_k !== undefined) chatRequest.top_k = top_k;
+      if (presence_penalty !== undefined)
+        chatRequest.presence_penalty = presence_penalty;
+      if (frequency_penalty !== undefined)
+        chatRequest.frequency_penalty = frequency_penalty;
+      if (search_domain !== undefined)
+        chatRequest.search_domain = search_domain;
+      if (return_citations !== undefined)
+        chatRequest.return_citations = return_citations;
+      if (return_images !== undefined)
+        chatRequest.return_images = return_images;
+      if (return_related_questions !== undefined)
+        chatRequest.return_related_questions = return_related_questions;
+
+      const response = await fetch(
+        `https://api.perplexity.ai/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(chatRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Perplexity API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield { success: false, error: 'Response body is null' };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+            const choice = parsed.choices?.[0];
+
+            if (choice?.delta?.content) {
+              yield {
+                delta: choice.delta.content,
+                model: parsed.model || (model as string),
+              };
+            }
+
+            if (choice?.finish_reason) {
+              yield {
+                finish_reason: choice.finish_reason,
+              };
+            }
+
+            if (parsed.usage) {
+              yield {
+                usage: parsed.usage,
+              };
+            }
+
+            // Handle Perplexity-specific fields
+            if (parsed.citations) {
+              yield {
+                citations: parsed.citations,
+              };
+            }
+
+            if (parsed.images) {
+              yield {
+                images: parsed.images,
+              };
+            }
+
+            if (parsed.related_questions) {
+              yield {
+                related_questions: parsed.related_questions,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream generate: ${(error as Error).message}`,
       };
     }
   }

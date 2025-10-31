@@ -50,7 +50,8 @@ export class oNodeTool extends oTool(oServerNode) {
         this.logger.warn('Malformed event data');
         return;
       }
-      const requestConfig: oRequest = await processStream(event);
+      const requestConfig: oRequest =
+        await CoreUtils.processStreamRequest(event);
       const request = new oRequest(requestConfig);
       let success = true;
       const result = await this.execute(request, stream).catch((error) => {

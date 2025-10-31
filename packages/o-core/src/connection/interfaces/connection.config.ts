@@ -14,4 +14,5 @@ export interface oConnectionConfig {
    * Default: 30000 (30 seconds)
    */
   drainTimeoutMs?: number;
+  isStream?: boolean;
 }

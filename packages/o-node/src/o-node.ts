@@ -18,6 +18,7 @@ import {
   oRequest,
   RestrictedAddresses,
   oNotificationManager,
+  oConnectionConfig,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
@@ -31,6 +32,7 @@ import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 import { LeaderRequestWrapper } from './utils/leader-request-wrapper.js';
+import { oNodeConnectionConfig } from './connection/index.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -380,24 +382,13 @@ export class oNode extends oToolBase {
     return this.p2pNode;
   }
 
-  async connect(
-    nextHopAddress: oNodeAddress,
-    targetAddress: oNodeAddress,
-    readTimeoutMs?: number,
-    drainTimeoutMs?: number,
-  ): Promise<oNodeConnection> {
+  async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
     if (!this.connectionManager) {
       this.logger.error('Connection manager not initialized');
       throw new Error('Node is not ready to connect to other nodes');
     }
     const connection = await this.connectionManager
-      .connect({
-        address: targetAddress,
-        nextHopAddress,
-        callerAddress: this.address,
-        readTimeoutMs,
-        drainTimeoutMs,
-      })
+      .connect(config)
       .catch((error) => {
         // TODO: we need to handle this better and document
         if (error.message === 'Can not dial self') {

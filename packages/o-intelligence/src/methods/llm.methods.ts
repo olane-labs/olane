@@ -26,6 +26,13 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
         description: 'The options to use for generation',
         required: false,
       },
+      {
+        name: 'stream',
+        type: 'boolean',
+        value: 'boolean',
+        description: 'Whether to stream the response',
+        required: false,
+      },
     ],
   },
   generate: {
@@ -38,6 +45,13 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
         type: 'string',
         value: 'string',
         description: 'The model to use for generation',
+      },
+      {
+        name: 'stream',
+        type: 'boolean',
+        value: 'boolean',
+        description: 'Whether to stream the response',
+        required: false,
       },
     ],
   },
