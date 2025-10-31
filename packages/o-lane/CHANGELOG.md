@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.25 (2025-10-31)</small>
+
+- finished streaming v1 support ([be9918a](https://github.com/olane-labs/olane/commit/be9918a))
+- more work around streaming ([7ed21ab](https://github.com/olane-labs/olane/commit/7ed21ab))
+- removed unecessary stream related functionality ([ac75e0a](https://github.com/olane-labs/olane/commit/ac75e0a))
+
 ## <small>0.7.12-alpha.24 (2025-10-31)</small>
 
 **Note:** Version bump only for package @olane/o-lane
