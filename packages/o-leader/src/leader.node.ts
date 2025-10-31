@@ -83,37 +83,4 @@ export class oLeaderNode extends oLaneTool {
       return;
     }
   }
-
-  // async _tool_index_network(request: oRequest): Promise<any> {
-  //   // paginate through all the registered nodes and index them
-  //   const nodes: oResponse = await this.use(
-  //     new oAddress(RestrictedAddresses.REGISTRY),
-  //     {
-  //       method: 'find_all',
-  //       params: {},
-  //     },
-  //   );
-
-  //   const hashMap: any = {};
-  //   const nodesArray = nodes.result.data as any[];
-  //   for (let i = 0; i < nodesArray.length; i++) {
-  //     // first let's get the node's tools
-  //     const node = nodesArray[i];
-  //     if (hashMap[node.address]) {
-  //       continue;
-  //     }
-  //     hashMap[node.address] = true;
-  //     await this.use(new oAddress(node.address), {
-  //       method: 'index_network',
-  //       params: {},
-  //     });
-  //   }
-  //   return {
-  //     message: 'Network indexed!',
-  //   };
-  // }
-
-  // _tool_elect_root(params: RunToolParams): Promise<void> {
-  //   return Promise.resolve();
-  // }
 }

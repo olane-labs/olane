@@ -1,4 +1,4 @@
-import { oAddress, oResponse } from '@olane/o-core';
+import { CoreUtils, oAddress, oResponse } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
@@ -10,7 +10,7 @@ import { IntelligenceStorageKeys } from './enums/intelligence-storage-keys.enum.
 import { LLMProviders } from './enums/llm-providers.enum.js';
 import { ConfigureRequest } from './interfaces/configure.request.js';
 import { HostModelProvider } from './enums/host-model-provider.enum.js';
-import { multiaddr } from '@olane/o-config';
+import { multiaddr, Stream } from '@olane/o-config';
 import { PromptRequest } from './interfaces/prompt.request.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
@@ -250,28 +250,43 @@ export class IntelligenceTool extends oLaneTool {
   }
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
-  async _tool_prompt(
-    request: PromptRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
-    const { prompt, stream = false } = request.params;
+  async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
+    const { prompt, _isStream = false } = request.params;
+    const stream = request.stream;
 
     const intelligence = await this.chooseIntelligence(request);
-    this.logger.debug('Using intelligence: ', intelligence.choice.toString());
+    this.logger.debug(
+      'Using intelligence: ',
+      intelligence.choice.toString(),
+      ' with stream: ',
+      _isStream,
+      ' and stream: ',
+      stream,
+    );
     const child = this.hierarchyManager.getChild(intelligence.choice);
-    const response = await this.useChild(child || intelligence.choice, {
-      method: 'completion',
-      params: {
-        apiKey: intelligence.apiKey,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        stream,
+    const response = await this.useChild(
+      child || intelligence.choice,
+      {
+        method: 'completion',
+        params: {
+          _isStream: _isStream as boolean,
+          apiKey: intelligence.apiKey,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        },
       },
-    });
-    return response.result.data as ToolResult | AsyncGenerator<ToolResult>;
+      {
+        isStream: _isStream as boolean,
+        onChunk: async (chunk: oResponse) => {
+          await CoreUtils.sendStreamResponse(chunk, stream);
+        },
+      },
+    );
+    return response as ToolResult;
   }
 
   async initialize(): Promise<void> {

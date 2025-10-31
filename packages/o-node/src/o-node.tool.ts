@@ -5,16 +5,14 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  ResponseBuilder,
   ChildJoinedEvent,
 } from '@olane/o-core';
-import { isAsyncGenerator, processStream } from '../../o-core/src/utils/streaming.utils.js';
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
 import { oNodeTransport } from './router/o-node.transport.js';
 import { oNodeAddress } from './router/o-node.address.js';
-import { Libp2pStreamTransport } from './streaming/libp2p-stream-transport.js';
-import { NodeStreamHandler } from './streaming/node-stream-handler.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -50,67 +48,30 @@ export class oNodeTool extends oTool(oServerNode) {
         this.logger.warn('Malformed event data');
         return;
       }
-      const requestConfig: oRequest =
-        await CoreUtils.processStreamRequest(event);
+      const requestConfig: oRequest = await CoreUtils.processStream(event);
       const request = new oRequest(requestConfig);
-      let success = true;
-      const result = await this.execute(request, stream).catch((error) => {
+
+      // Use ResponseBuilder with automatic error handling and metrics tracking
+      const responseBuilder = ResponseBuilder.create().withMetrics(
+        this.metrics,
+      );
+
+      let response: oResponse;
+      try {
+        const result = await this.execute(request, stream);
+        response = await responseBuilder.build(request, result, null);
+      } catch (error: any) {
         this.logger.error(
           'Error executing tool: ',
           request.toString(),
           error,
           typeof error,
         );
-        success = false;
-        const responseError: oError =
-          error instanceof oError
-            ? error
-            : new oError(oErrorCodes.UNKNOWN, error.message);
-        return {
-          error: responseError.toJSON(),
-        };
-      });
-
-      // Check if result is a streaming AsyncGenerator
-      if (isAsyncGenerator(result)) {
-        this.logger.debug('Handling streaming response for: ' + request.method);
-
-        // Create stream transport and handler
-        const transport = new Libp2pStreamTransport(stream);
-        const streamHandler = new NodeStreamHandler(transport, {
-          enableMetrics: true,
-          trackSuccessCount: true,
-          trackErrorCount: true,
-        });
-
-        try {
-          // Handle the streaming using the new abstraction
-          await streamHandler.handleStream(result, request);
-
-          // Update metrics from the stream handler
-          this.metrics.successCount += streamHandler.getSuccessCount();
-        } catch (error) {
-          this.logger.error('Error in streaming response: ', error);
-          this.metrics.errorCount++;
-        }
-      } else {
-        // Non-streaming response - original behavior
-        if (success) {
-          this.metrics.successCount++;
-        } else {
-          this.metrics.errorCount++;
-        }
-        // compose the response & add the expected connection + request fields
-
-        const response: oResponse = CoreUtils.buildResponse(
-          request,
-          result,
-          result?.error,
-        );
-
-        // add the request method to the response
-        await CoreUtils.sendResponse(response, stream);
+        response = await responseBuilder.buildError(request, error);
       }
+
+      // Send the response
+      await CoreUtils.sendResponse(response, stream);
     };
 
     // Attach listener synchronously before any async operations

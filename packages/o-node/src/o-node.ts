@@ -19,6 +19,7 @@ import {
   RestrictedAddresses,
   oNotificationManager,
   oConnectionConfig,
+  UseOptions,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
@@ -181,7 +182,10 @@ export class oNode extends oToolBase {
     // if no parent transports, register with the parent to get them
     // TODO: should we remove the transports check to make this more consistent?
     if (this.config.parent) {
-      this.logger.debug('Registering node with parent...', this.config.parent);
+      this.logger.debug(
+        'Registering node with parent...',
+        this.config.parent?.toString,
+      );
       await this.use(this.config.parent, {
         method: 'child_register',
         params: {
@@ -527,14 +531,11 @@ export class oNode extends oToolBase {
       params?: { [key: string]: any };
       id?: string;
     },
-    options?: {
-      noRouting?: boolean;
-    },
+    options?: UseOptions,
   ): Promise<any> {
     // Wrap leader/registry requests with retry logic
     return this.leaderRequestWrapper.execute(
-      () =>
-        super.use(address, data, { noRouting: options?.noRouting ?? false }),
+      () => super.use(address, data, options),
       address,
       data?.method,
     );

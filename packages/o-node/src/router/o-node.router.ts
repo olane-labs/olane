@@ -6,6 +6,8 @@ import {
   oErrorCodes,
   oRequest,
   oRouterRequest,
+  oResponse,
+  ResponseBuilder,
   RouteResponse,
 } from '@olane/o-core';
 import type { oNode } from '../o-node.js';
@@ -14,6 +16,7 @@ import { RequestParams } from '@olane/o-protocol';
 import { oNodeConnection } from '../connection/o-node-connection.js';
 import { oNodeRoutingPolicy } from './o-node.routing-policy.js';
 import { Stream } from '@olane/o-config';
+import { oStreamRequest } from '../connection/o-stream.request.js';
 
 export class oNodeRouter extends oToolRouter {
   private routingPolicy: oNodeRoutingPolicy;
@@ -41,11 +44,14 @@ export class oNodeRouter extends oToolRouter {
       throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
     }
 
-    let nextHopRequest: oRequest | oRouterRequest = new oRequest({
+    let nextHopRequest: oRequest | oStreamRequest = new oRequest({
       method: request.method,
       params: request.params,
       id: request.id,
     });
+    if (request.stream) {
+      (nextHopRequest as oStreamRequest).stream = request.stream;
+    }
 
     // Handle self-routing: execute locally instead of dialing
     if (this.routingPolicy.isSelfAddress(address, node)) {
@@ -64,6 +70,7 @@ export class oNodeRouter extends oToolRouter {
 
   /**
    * Executes a request locally when routing to self.
+   * Now uses ResponseBuilder for consistency with useSelf() behavior.
    */
   private async executeSelfRouting(
     request: oRouterRequest,
@@ -73,12 +80,58 @@ export class oNodeRouter extends oToolRouter {
     const params = payload.params as RequestParams;
     const localRequest = new oRequest({
       method: payload.method as string,
-      params: { ...params },
+      params: {
+        ...params,
+        _connectionId: request.params._connectionId as string,
+        _requestMethod: payload.method as string,
+      },
       id: request.id,
     });
 
-    const result = await node.execute(localRequest);
-    return result;
+    // Create ResponseBuilder with metrics tracking
+    const responseBuilder = ResponseBuilder.create().withMetrics(node.metrics);
+
+    // Handle streaming requests
+    const isStream = request.params._isStream as boolean;
+    if (isStream && request.stream) {
+      // For streaming, we need to handle the stream chunks
+      try {
+        const result = await node.execute(localRequest, request.stream);
+        const response = await responseBuilder.build(
+          localRequest,
+          result,
+          null,
+          {
+            isStream: true,
+          },
+        );
+        // Return unwrapped data for consistency with dialAndTransmit
+        return response.result.data;
+      } catch (error: any) {
+        const errorResponse = await responseBuilder.buildError(
+          localRequest,
+          error,
+          {
+            isStream: true,
+          },
+        );
+        // For errors, throw to match remote behavior
+        throw responseBuilder.normalizeError(error);
+      }
+    }
+
+    // Handle non-streaming requests with error handling
+    try {
+      const result = await node.execute(localRequest);
+      const response = await responseBuilder.build(localRequest, result, null);
+      // Return unwrapped data to match dialAndTransmit behavior
+      return response.result.data;
+    } catch (error: any) {
+      // Build error response for metrics tracking
+      await responseBuilder.buildError(localRequest, error);
+      // Then throw the normalized error
+      throw responseBuilder.normalizeError(error);
+    }
   }
 
   /**
@@ -99,10 +152,11 @@ export class oNodeRouter extends oToolRouter {
   private unwrapDestinationRequest(request: oRouterRequest): oRequest {
     const { payload } = request.params;
     const params = payload.params as RequestParams;
-    return new oRequest({
+    return new oStreamRequest({
       method: payload.method as string,
       params: { ...params },
       id: request.id,
+      stream: request.stream as Stream,
     });
   }
 
@@ -111,10 +165,13 @@ export class oNodeRouter extends oToolRouter {
    */
   private async dialAndTransmit(
     address: oNodeAddress,
-    request: oRequest | oRouterRequest,
+    request: oRequest | oStreamRequest,
     node: oNode,
   ): Promise<any> {
     try {
+      const isStream =
+        (request.params._isStream as boolean) ||
+        (request.params.payload as any)?.params?._isStream;
       const connection = await node.p2pNode.dial(
         address.libp2pTransports.map((t) => t.toMultiaddr()),
       );
@@ -124,17 +181,16 @@ export class oNodeRouter extends oToolRouter {
         nextHopAddress: address,
         address: node.address,
         callerAddress: node.address,
+        isStream: isStream,
       });
 
-      if (request.params._isStream) {
-        if (!request.params.stream) {
+      if (isStream) {
+        const routeRequest = request as oStreamRequest;
+        if (!routeRequest.stream) {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
         nodeConnection.onChunk((response) => {
-          CoreUtils.sendStreamResponse(
-            response,
-            request.params.stream as Stream,
-          );
+          CoreUtils.sendStreamResponse(response, routeRequest.stream as Stream);
         });
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
       }

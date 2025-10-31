@@ -1,4 +1,4 @@
-import { oAddress } from '@olane/o-core';
+import { oAddress, oResponse } from '@olane/o-core';
 import { oCapability } from '../capabilities/o-capability.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 import { oCapabilitySearchConfig } from './interfaces/o-capability.search-config.js';
@@ -29,20 +29,29 @@ export class oCapabilitySearch extends oCapability {
   }
 
   async doExternalSearch(query: string): Promise<string> {
-    const response = await this.node.use(new oAddress('o://perplexity'), {
-      method: 'completion',
-      params: {
-        model: 'sonar',
-        messages: [
-          {
-            role: 'user',
-            content: query,
-          },
-        ],
+    let message = '';
+    await this.node.useStream(
+      new oAddress('o://perplexity'),
+      {
+        method: 'completion',
+        params: {
+          model: 'sonar',
+          messages: [
+            {
+              role: 'user',
+              content: query,
+            },
+          ],
+        },
       },
-    });
-    const data = response.result.data as any;
-    return data.message;
+      {
+        onChunk: (chunk: oResponse) => {
+          message += (chunk.result.data as any).delta;
+          this.config.onChunk?.(chunk);
+        },
+      },
+    );
+    return message;
   }
 
   /**
@@ -84,6 +93,9 @@ export class oCapabilitySearch extends oCapability {
         limit: limit || 20,
       },
     });
+    if (this.config.onChunk) {
+      this.config.onChunk(response);
+    }
     let searchResultContext = ``;
     const data = response.result.data as { metadata: any; pageContent: any }[];
     let filteredSearchResults = data;

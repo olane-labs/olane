@@ -3,6 +3,7 @@ import {
   createEd25519PeerId,
   Stream,
   pushable,
+  Uint8ArrayList,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
@@ -11,8 +12,9 @@ import { oRequest } from '../connection/o-request.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
+import { oObject } from '../core/o-object.js';
 
-export class CoreUtils {
+export class CoreUtils extends oObject {
   static async generatePeerId(): Promise<any> {
     const peerId = await createEd25519PeerId();
     return peerId;
@@ -69,6 +71,21 @@ export class CoreUtils {
     throw new Error('Address is required');
   }
 
+  /**
+   * @deprecated Use ResponseBuilder.build() instead for consistent response generation with metrics tracking and error handling.
+   *
+   * Example migration:
+   * ```typescript
+   * // Old:
+   * const response = CoreUtils.buildResponse(request, result, error);
+   *
+   * // New:
+   * const responseBuilder = ResponseBuilder.create().withMetrics(node.metrics);
+   * const response = await responseBuilder.build(request, result, error);
+   * ```
+   *
+   * This method will be removed in a future major version.
+   */
   static buildResponse(request: oRequest, result: any, error: any): oResponse {
     let success = true;
     if (error) {
@@ -79,6 +96,7 @@ export class CoreUtils {
       data: result,
       error: result?.error,
       ...{ success },
+      _last: true,
       _requestMethod: request.method,
       _connectionId: request.params?._connectionId,
     });
@@ -134,31 +152,31 @@ export class CoreUtils {
   }
 
   public static async sendStreamResponse(response: oResponse, stream: Stream) {
-    if (stream.status !== 'open') {
-      throw new Error('Stream is not open');
+    const utils = new CoreUtils();
+    if (!stream || stream.status !== 'open') {
+      utils.logger.warn(
+        'Stream is not open. Status: ' + stream?.status || 'undefined',
+      );
+      return;
     }
 
     await stream.send(new TextEncoder().encode(response.toString()));
   }
 
-  public static async processStream(event: StreamMessageEvent): Promise<any> {
+  public static async processStream(event: any): Promise<any> {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  public static async processStreamRequest(
-    event: StreamMessageEvent,
-  ): Promise<oRequest> {
+  public static async processStreamRequest(event: any): Promise<oRequest> {
     const req = await CoreUtils.processStream(event);
     return new oRequest(req);
   }
 
-  public static async processStreamResponse(
-    event: StreamMessageEvent,
-  ): Promise<oResponse> {
+  public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
-    return new oResponse(res);
+    return res?.id ? oResponse.fromJSON(res) : new oResponse(res);
   }
 
   public static async toCID(data: any): Promise<CID> {

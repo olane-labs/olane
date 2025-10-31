@@ -13,10 +13,9 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  ResponseBuilder,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
-import { Libp2pStreamTransport } from '../streaming/libp2p-stream-transport.js';
-import { ProtocolBuilder } from '../../../o-core/src/streaming/protocol-builder.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
@@ -54,7 +53,7 @@ export class oNodeConnection extends oConnection {
         },
       );
 
-      const isStreamRequest = request.params._isStream;
+      const isStreamRequest = this.config.isStream;
 
       if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
         throw new oError(
@@ -74,13 +73,21 @@ export class oNodeConnection extends oConnection {
       const sent = stream.send(data);
 
       if (isStreamRequest) {
-        stream.addEventListener('message', async (event) => {
-          const response = await CoreUtils.processStreamResponse(event);
-          this.emitter.emit('chunk', response);
-          // marked as the last chunk let's close
-          if (response.result._last) {
-            await stream.close();
-          }
+        this.logger.debug(
+          'Detected stream request, attaching message listener',
+        );
+        await new Promise((resolve, reject) => {
+          // TODO: add timeout
+          stream.addEventListener('message', async (event) => {
+            const response = await CoreUtils.processStreamResponse(event);
+            this.emitter.emit('chunk', response);
+            // marked as the last chunk let's close
+            if (response.result._last) {
+              this.logger.debug('Last chunk received, closing stream');
+              await stream.close();
+              resolve(true);
+            }
+          });
         });
       }
 
@@ -93,13 +100,8 @@ export class oNodeConnection extends oConnection {
       }
 
       if (isStreamRequest) {
-        return Promise.resolve(
-          CoreUtils.buildResponse(
-            request,
-            'request is streaming, this response is not used',
-            null,
-          ),
-        );
+        const responseBuilder = ResponseBuilder.create();
+        return Promise.resolve(await responseBuilder.buildFinalChunk(request));
       }
 
       const res = await this.read(stream);
@@ -110,110 +112,6 @@ export class oNodeConnection extends oConnection {
         ...res.result,
       });
       return response;
-    } catch (error: any) {
-      if (error?.name === 'UnsupportedProtocolError') {
-        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Transmit a request and receive streaming chunks via callback
-   * @param request The request to send
-   * @param onChunk Callback function called for each chunk received
-   * @returns Promise that resolves when stream is complete
-   */
-  async transmitStreaming(
-    request: oRequest,
-    onChunk: (chunk: any, sequence: number, isLast: boolean) => void,
-  ): Promise<void> {
-    try {
-      const stream = await this.p2pConnection.newStream(
-        this.nextHopAddress.protocol,
-        {
-          maxOutboundStreams: Infinity,
-          runOnLimitedConnection: true,
-        },
-      );
-
-      if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
-        throw new oError(
-          oErrorCodes.FAILED_TO_DIAL_TARGET,
-          'Failed to dial target',
-        );
-      }
-      if (stream.status === 'reset') {
-        throw new oError(
-          oErrorCodes.CONNECTION_LIMIT_REACHED,
-          'Connection limit reached',
-        );
-      }
-
-      // Create transport abstraction
-      const transport = new Libp2pStreamTransport(stream, {
-        drainTimeoutMs: this.config.drainTimeoutMs ?? 30_000,
-        readTimeoutMs: this.config.readTimeoutMs ?? 120_000,
-      });
-
-      // Send the request using the transport
-      const data = new TextEncoder().encode(request.toString());
-      await transport.send(data);
-
-      // Set up to receive multiple chunks
-      return new Promise<void>((resolve, reject) => {
-        // Set up timeout for receiving first chunk
-        const timeout = setTimeout(async () => {
-          transport.removeMessageHandler();
-          await transport.close();
-          reject(
-            new oError(
-              oErrorCodes.TIMEOUT,
-              'Timeout waiting for streaming response',
-            ),
-          );
-        }, this.config.readTimeoutMs ?? 120_000);
-
-        let timeoutCleared = false;
-
-        const messageHandler = async (data: Uint8Array) => {
-          // Clear timeout on first message
-          if (!timeoutCleared) {
-            clearTimeout(timeout);
-            timeoutCleared = true;
-          }
-
-          try {
-            const response = ProtocolBuilder.decodeMessage(data);
-
-            // Try to parse as streaming chunk
-            const chunk = ProtocolBuilder.parseStreamChunk(response);
-
-            if (chunk) {
-              // Streaming response
-              onChunk(chunk.data, chunk.sequence, chunk.isLast);
-
-              if (chunk.isLast) {
-                transport.removeMessageHandler();
-                await transport.close();
-                resolve();
-              }
-            } else {
-              // Non-streaming response (fallback for compatibility)
-              onChunk(response.result, 1, true);
-              transport.removeMessageHandler();
-              await transport.close();
-              resolve();
-            }
-          } catch (error) {
-            transport.removeMessageHandler();
-            await transport.close();
-            reject(error);
-          }
-        };
-
-        transport.onMessage(messageHandler);
-      });
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');

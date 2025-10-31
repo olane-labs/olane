@@ -47,17 +47,12 @@ describe('basic-usage @initialize', async () => {
     // });
     // use the intelligence tool
     await entryNode.useStream(
-      new oNodeAddress('o://anthropic'),
+      new oNodeAddress('o://leader'),
       {
-        method: 'completion',
+        method: 'intent',
         params: {
           _isStream: true,
-          messages: [
-            {
-              role: 'user',
-              content: 'What is the weather in Tokyo?',
-            },
-          ],
+          intent: 'What is the official endpoint for github mcp server?',
         },
       },
       {
@@ -66,6 +61,23 @@ describe('basic-usage @initialize', async () => {
         },
       },
     );
+    // await entryNode.use(
+    //   new oNodeAddress('o://intelligence'),
+    //   {
+    //     method: 'prompt',
+    //     params: {
+    //       _isStream: true,
+    //       prompt: 'What is the capital of France?',
+    //     },
+    //   },
+    //   {
+    //     isStream: true,
+    //     onChunk: (chunk) => {
+    //       console.log('FINAL Received chunk: ', JSON.stringify(chunk, null, 2));
+    //     },
+    //   },
+    // );
+    // await new Promise((resolve) => setTimeout(resolve, 20_000));
   });
 });
 

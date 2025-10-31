@@ -161,13 +161,11 @@ export class OpenAIIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with OpenAI
    */
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       return StreamUtils.processGenerator(
         request,
         this._streamCompletion(request),
@@ -375,13 +373,11 @@ export class OpenAIIntelligenceTool extends oLaneTool {
   /**
    * Generate text with OpenAI
    */
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       return StreamUtils.processGenerator(
         request,
         this._streamGenerate(request),

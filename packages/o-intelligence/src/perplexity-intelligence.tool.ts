@@ -2,11 +2,7 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import {
-  oNodeToolConfig,
-  oStreamRequest,
-  StreamUtils,
-} from '@olane/o-node';
+import { oNodeToolConfig, oStreamRequest, StreamUtils } from '@olane/o-node';
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
@@ -108,13 +104,11 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Perplexity
    */
-  async _tool_completion(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       this.logger.debug('Streaming completion...');
       return StreamUtils.processGenerator(
         request,
@@ -383,13 +377,11 @@ export class PerplexityIntelligenceTool extends oLaneTool {
   /**
    * Generate text with Perplexity (alias for completion)
    */
-  async _tool_generate(
-    request: oStreamRequest,
-  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+  async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       this.logger.debug('Streaming generate...');
       return StreamUtils.processGenerator(
         request,
