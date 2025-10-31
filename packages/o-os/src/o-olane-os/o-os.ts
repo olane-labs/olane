@@ -129,7 +129,6 @@ export class OlaneOS extends oObject {
         }
 
         await leaderNode.start();
-        await initCommonTools(leaderNode);
         this.leaders.push(leaderNode);
       } else {
         this.logger.debug(
@@ -141,15 +140,19 @@ export class OlaneOS extends oObject {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
+        commonNode.hookInitializeFinished = async () => {
+          this.rootLeader?.addChildNode(commonNode);
+        };
         await commonNode.start();
-        this.rootLeader?.addChildNode(commonNode);
         const olaneStorage = new oLaneStorage({
           name: 'lane-storage',
           parent: commonNode.address,
           leader: this.rootLeader?.address || null,
         });
+        olaneStorage.hookInitializeFinished = async () => {
+          commonNode.addChildNode(olaneStorage);
+        };
         await olaneStorage.start();
-        commonNode.addChildNode(olaneStorage);
         await initCommonTools(commonNode);
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);
