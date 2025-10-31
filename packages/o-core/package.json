@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.7.12-alpha.22",
+  "version": "0.7.12-alpha.23",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -8,6 +8,14 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
+    },
+    "./streaming": {
+      "types": "./dist/src/streaming/index.d.ts",
+      "default": "./dist/src/streaming/index.js"
+    },
+    "./utils/streaming.utils": {
+      "types": "./dist/src/utils/streaming.utils.d.ts",
+      "default": "./dist/src/utils/streaming.utils.js"
     }
   },
   "files": [
@@ -55,7 +63,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@olane/o-protocol": "0.7.12-alpha.22",
+    "@olane/o-protocol": "0.7.12-alpha.23",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",

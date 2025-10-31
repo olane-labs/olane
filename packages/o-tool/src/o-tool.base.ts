@@ -133,7 +133,10 @@ export class oToolBase extends oCore {
     return (await this.myTools()).find((key) => key.startsWith(method));
   }
 
-  async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
+  async callMyTool(
+    request: oRequest,
+    stream?: Stream,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
     const method = request.method as string;
     this.logger.verbose('Calling tool: ' + method);
     // TODO: implement this
