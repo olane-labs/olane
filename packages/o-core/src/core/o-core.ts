@@ -59,6 +59,20 @@ export abstract class oCore extends oObject {
   // transports
   abstract configureTransports(): any[];
 
+  async useStream(
+    address: oAddress,
+    data: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+    options: {
+      onChunk?: (chunk: oResponse) => void;
+    },
+  ): Promise<oResponse> {
+    return this.use(address, data, { stream: true, onChunk: options.onChunk });
+  }
+
   async useDirect(
     address: oAddress,
     data?: {
@@ -134,6 +148,8 @@ export abstract class oCore extends oObject {
       noRouting?: boolean;
       readTimeoutMs?: number;
       drainTimeoutMs?: number;
+      stream?: boolean;
+      onChunk?: (chunk: oResponse) => void;
     },
   ): Promise<oResponse> {
     if (!this.isRunning) {
@@ -175,12 +191,23 @@ export abstract class oCore extends oObject {
       options?.drainTimeoutMs,
     );
 
+    if (options?.stream) {
+      connection.onStream((response) => {
+        options.onChunk?.(response);
+      });
+    }
+
     // communicate the payload to the target node
     const response = await connection.send({
       address: targetAddress?.toString() || '',
       payload: data || {},
       id: data?.id,
     });
+
+    // we handle streaming response differently
+    if (options?.stream) {
+      return response;
+    }
 
     // if there is an error, throw it to continue to bubble up
     if (response.result.error) {

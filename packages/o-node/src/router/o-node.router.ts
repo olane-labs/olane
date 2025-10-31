@@ -13,6 +13,7 @@ import { oToolRouter } from '@olane/o-tool';
 import { RequestParams } from '@olane/o-protocol';
 import { oNodeConnection } from '../connection/o-node-connection.js';
 import { oNodeRoutingPolicy } from './o-node.routing-policy.js';
+import { Stream } from '@olane/o-config';
 
 export class oNodeRouter extends oToolRouter {
   private routingPolicy: oNodeRoutingPolicy;
@@ -124,6 +125,19 @@ export class oNodeRouter extends oToolRouter {
         address: node.address,
         callerAddress: node.address,
       });
+
+      if (request.params._isStream) {
+        if (!request.params.stream) {
+          throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
+        }
+        nodeConnection.onStream((response) => {
+          CoreUtils.sendStreamResponse(
+            response,
+            request.params.stream as Stream,
+          );
+        });
+        // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
+      }
 
       const response = await nodeConnection.transmit(request);
       return response.result.data;

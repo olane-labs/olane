@@ -135,12 +135,32 @@ export class CoreUtils {
     }
   }
 
-  public static async processStream(
-    event: StreamMessageEvent,
-  ): Promise<oRequest> {
+  public static async sendStreamResponse(response: oResponse, stream: Stream) {
+    if (stream.status !== 'open') {
+      throw new Error('Stream is not open');
+    }
+
+    await stream.send(new TextEncoder().encode(response.toString()));
+  }
+
+  public static async processStream(event: StreamMessageEvent): Promise<any> {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
-    return new oRequest(JSON.parse(new TextDecoder().decode(bytes)));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  public static async processStreamRequest(
+    event: StreamMessageEvent,
+  ): Promise<oRequest> {
+    const req = await CoreUtils.processStream(event);
+    return new oRequest(req);
+  }
+
+  public static async processStreamResponse(
+    event: StreamMessageEvent,
+  ): Promise<oResponse> {
+    const res = await CoreUtils.processStream(event);
+    return new oResponse(res);
   }
 
   public static async toCID(data: any): Promise<CID> {
