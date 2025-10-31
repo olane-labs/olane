@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.24 (2025-10-31)</small>
+
+- streaming intelligence models ([a8787ba](https://github.com/olane-labs/olane/commit/a8787ba))
+
 ## <small>0.7.12-alpha.23 (2025-10-30)</small>
 
 **Note:** Version bump only for package @olane/os

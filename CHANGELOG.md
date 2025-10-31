@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.24 (2025-10-31)</small>
+
+- added streaming support for remaining intelligence providers ([beec344](https://github.com/olane-labs/olane/commit/beec344))
+- streaming intelligence models ([a8787ba](https://github.com/olane-labs/olane/commit/a8787ba))
+- wired up the streaming functionality ([0a4c0a7](https://github.com/olane-labs/olane/commit/0a4c0a7))
+
 ## <small>0.7.12-alpha.23 (2025-10-30)</small>
 
 - added streaming functionality ([7f310fc](https://github.com/olane-labs/olane/commit/7f310fc))
