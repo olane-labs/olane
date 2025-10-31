@@ -12,8 +12,9 @@ import { oRequest } from '../connection/o-request.js';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
+import { oObject } from '../core/o-object.js';
 
-export class CoreUtils {
+export class CoreUtils extends oObject {
   static async generatePeerId(): Promise<any> {
     const peerId = await createEd25519PeerId();
     return peerId;
@@ -70,6 +71,21 @@ export class CoreUtils {
     throw new Error('Address is required');
   }
 
+  /**
+   * @deprecated Use ResponseBuilder.build() instead for consistent response generation with metrics tracking and error handling.
+   *
+   * Example migration:
+   * ```typescript
+   * // Old:
+   * const response = CoreUtils.buildResponse(request, result, error);
+   *
+   * // New:
+   * const responseBuilder = ResponseBuilder.create().withMetrics(node.metrics);
+   * const response = await responseBuilder.build(request, result, error);
+   * ```
+   *
+   * This method will be removed in a future major version.
+   */
   static buildResponse(request: oRequest, result: any, error: any): oResponse {
     let success = true;
     if (error) {
@@ -136,10 +152,12 @@ export class CoreUtils {
   }
 
   public static async sendStreamResponse(response: oResponse, stream: Stream) {
+    const utils = new CoreUtils();
     if (!stream || stream.status !== 'open') {
-      throw new Error(
+      utils.logger.warn(
         'Stream is not open. Status: ' + stream?.status || 'undefined',
       );
+      return;
     }
 
     await stream.send(new TextEncoder().encode(response.toString()));

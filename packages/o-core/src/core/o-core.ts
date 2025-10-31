@@ -17,6 +17,7 @@ import { oRouter } from '../router/o-router.js';
 import { CoreUtils } from '../utils/core.utils.js';
 import { oErrorCodes } from '../error/index.js';
 import { oRequest } from '../connection/o-request.js';
+import { ResponseBuilder } from '../response/response-builder.js';
 import { oNotificationManager } from './lib/o-notification.manager.js';
 import {
   oNotificationEvent,
@@ -25,6 +26,8 @@ import {
   Subscription,
 } from './lib/events/index.js';
 import { oConnectionConfig } from '../connection/index.js';
+import { UseOptions } from './interfaces/use-options.interface.js';
+import { UseStreamOptions } from './interfaces/use-stream-options.interface.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -67,13 +70,11 @@ export abstract class oCore extends oObject {
       params?: { [key: string]: any };
       id?: string;
     },
-    options: {
-      onChunk?: (chunk: oResponse) => void;
-    },
+    options: UseStreamOptions,
   ): Promise<oResponse> {
     return this.use(address, data, {
+      ...options,
       isStream: true,
-      onChunk: options.onChunk,
     });
   }
 
@@ -148,18 +149,10 @@ export abstract class oCore extends oObject {
       params?: { [key: string]: any };
       id?: string;
     },
-    options?: {
-      noRouting?: boolean;
-      readTimeoutMs?: number;
-      drainTimeoutMs?: number;
-      isStream?: boolean;
-      onChunk?: (chunk: oResponse) => void;
-    },
+    options?: UseOptions,
   ): Promise<oResponse> {
-    if (!this.isRunning) {
-      this.logger.error('Node is not running', this.state);
-      throw new Error('Node is not running');
-    }
+    this.validateRunning();
+
     if (!address.validate()) {
       throw new Error('Invalid address');
     }
@@ -216,6 +209,19 @@ export abstract class oCore extends oObject {
     }
 
     // if there is an error, throw it to continue to bubble up
+    this.handleResponseError(response);
+
+    return response;
+  }
+
+  abstract execute(request: oRequest): Promise<any>;
+
+  /**
+   * Helper method to handle response errors
+   * @param response The response to check for errors
+   * @throws oError if the response contains an error
+   */
+  private handleResponseError(response: oResponse): void {
     if (response.result.error) {
       this.logger.error(
         'response.result.error',
@@ -223,20 +229,26 @@ export abstract class oCore extends oObject {
       );
       throw oError.fromJSON(response.result.error);
     }
-
-    return response;
   }
 
-  abstract execute(request: oRequest): Promise<any>;
+  /**
+   * Helper method to validate node is running
+   * @throws Error if node is not running
+   */
+  private validateRunning(): void {
+    if (!this.isRunning) {
+      this.logger.error('Node is not running', this.state);
+      throw new Error('Node is not running');
+    }
+  }
 
   async useSelf(data?: {
     method?: string;
     params?: { [key: string]: any };
     id?: string;
   }): Promise<oResponse> {
-    if (!this.isRunning) {
-      throw new Error('Node is not running');
-    }
+    this.validateRunning();
+
     // let's call our own tool
     this.logger.debug('Calling ourselves, skipping...', data);
 
@@ -249,25 +261,17 @@ export abstract class oCore extends oObject {
       },
       id: 0,
     });
-    let success = true;
-    const result = await this.execute(request).catch((error) => {
-      this.logger.error('Error executing tool [self]: ', error);
-      success = false;
-      const responseError: oError =
-        error instanceof oError
-          ? error
-          : new oError(oErrorCodes.UNKNOWN, error.message);
-      return {
-        error: responseError.toJSON(),
-      };
-    });
 
-    if (success) {
-      this.metrics.successCount++;
-    } else {
-      this.metrics.errorCount++;
+    // Use ResponseBuilder with automatic error handling and metrics tracking
+    const responseBuilder = ResponseBuilder.create().withMetrics(this.metrics);
+
+    try {
+      const result = await this.execute(request);
+      return await responseBuilder.build(request, result, null);
+    } catch (error: any) {
+      this.logger.error('Error executing tool [self]: ', error);
+      return await responseBuilder.buildError(request, error);
     }
-    return CoreUtils.buildResponse(request, result, result?.error);
   }
 
   async useChild(
@@ -282,9 +286,8 @@ export abstract class oCore extends oObject {
       onChunk?: (chunk: oResponse) => void;
     },
   ): Promise<oResponse> {
-    if (!this.isRunning) {
-      throw new Error('Node is not running');
-    }
+    this.validateRunning();
+
     if (!childAddress.transports) {
       const child = this.hierarchyManager.getChild(childAddress);
       if (!child) {
@@ -319,13 +322,7 @@ export abstract class oCore extends oObject {
     });
 
     // if there is an error, throw it to continue to bubble up
-    if (response.result.error) {
-      this.logger.error(
-        'response.result.error',
-        JSON.stringify(response.result.error, null, 2),
-      );
-      throw oError.fromJSON(response.result.error);
-    }
+    this.handleResponseError(response);
 
     return response;
   }

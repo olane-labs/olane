@@ -282,7 +282,6 @@ export class IntelligenceTool extends oLaneTool {
       {
         isStream: _isStream as boolean,
         onChunk: async (chunk: oResponse) => {
-          this.logger.debug('Chunk received: ', JSON.stringify(chunk, null, 2));
           await CoreUtils.sendStreamResponse(chunk, stream);
         },
       },

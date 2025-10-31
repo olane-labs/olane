@@ -46,28 +46,13 @@ describe('basic-usage @initialize', async () => {
     //   },
     // });
     // use the intelligence tool
-    // await entryNode.useStream(
-    //   new oNodeAddress('o://leader'),
-    //   {
-    //     method: 'intent',
-    //     params: {
-    //       _isStream: true,
-    //       intent: 'What is the capital of France?',
-    //     },
-    //   },
-    //   {
-    //     onChunk: (chunk) => {
-    //       console.log('Received chunk: ', chunk.result.data);
-    //     },
-    //   },
-    // );
     await entryNode.useStream(
-      new oNodeAddress('o://intelligence'),
+      new oNodeAddress('o://leader'),
       {
-        method: 'prompt',
+        method: 'intent',
         params: {
           _isStream: true,
-          prompt: 'What is the capital of France?',
+          intent: 'What is the official endpoint for github mcp server?',
         },
       },
       {
@@ -76,7 +61,23 @@ describe('basic-usage @initialize', async () => {
         },
       },
     );
-    await new Promise((resolve) => setTimeout(resolve, 20_000));
+    // await entryNode.use(
+    //   new oNodeAddress('o://intelligence'),
+    //   {
+    //     method: 'prompt',
+    //     params: {
+    //       _isStream: true,
+    //       prompt: 'What is the capital of France?',
+    //     },
+    //   },
+    //   {
+    //     isStream: true,
+    //     onChunk: (chunk) => {
+    //       console.log('FINAL Received chunk: ', JSON.stringify(chunk, null, 2));
+    //     },
+    //   },
+    // );
+    // await new Promise((resolve) => setTimeout(resolve, 20_000));
   });
 });
 

@@ -5,6 +5,7 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  ResponseBuilder,
   ChildJoinedEvent,
 } from '@olane/o-core';
 import { oTool } from '@olane/o-tool';
@@ -47,42 +48,29 @@ export class oNodeTool extends oTool(oServerNode) {
         this.logger.warn('Malformed event data');
         return;
       }
-      const requestConfig: oRequest =
-        await CoreUtils.processStreamRequest(event);
+      const requestConfig: oRequest = await CoreUtils.processStream(event);
       const request = new oRequest(requestConfig);
-      let success = true;
-      const result = await this.execute(request, stream).catch((error) => {
+
+      // Use ResponseBuilder with automatic error handling and metrics tracking
+      const responseBuilder = ResponseBuilder.create().withMetrics(
+        this.metrics,
+      );
+
+      let response: oResponse;
+      try {
+        const result = await this.execute(request, stream);
+        response = await responseBuilder.build(request, result, null);
+      } catch (error: any) {
         this.logger.error(
           'Error executing tool: ',
           request.toString(),
           error,
           typeof error,
         );
-        success = false;
-        const responseError: oError =
-          error instanceof oError
-            ? error
-            : new oError(oErrorCodes.UNKNOWN, error.message);
-        return {
-          error: responseError.toJSON(),
-        };
-      });
-
-      // Non-streaming response - original behavior
-      if (success) {
-        this.metrics.successCount++;
-      } else {
-        this.metrics.errorCount++;
+        response = await responseBuilder.buildError(request, error);
       }
-      // compose the response & add the expected connection + request fields
 
-      const response: oResponse = CoreUtils.buildResponse(
-        request,
-        result,
-        result?.error,
-      );
-
-      // add the request method to the response
+      // Send the response
       await CoreUtils.sendResponse(response, stream);
     };
 

@@ -13,6 +13,7 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  ResponseBuilder,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
@@ -52,9 +53,7 @@ export class oNodeConnection extends oConnection {
         },
       );
 
-      const isStreamRequest =
-        request.params._isStream ||
-        (request.params.payload as any)?.params?._isStream;
+      const isStreamRequest = this.config.isStream;
 
       if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
         throw new oError(
@@ -81,10 +80,6 @@ export class oNodeConnection extends oConnection {
           // TODO: add timeout
           stream.addEventListener('message', async (event) => {
             const response = await CoreUtils.processStreamResponse(event);
-            this.logger.debug(
-              'Transmit stream chunk received: ',
-              JSON.stringify(response, null, 2),
-            );
             this.emitter.emit('chunk', response);
             // marked as the last chunk let's close
             if (response.result._last) {
@@ -105,9 +100,8 @@ export class oNodeConnection extends oConnection {
       }
 
       if (isStreamRequest) {
-        return Promise.resolve(
-          CoreUtils.buildResponse(request, 'Stream completed', null),
-        );
+        const responseBuilder = ResponseBuilder.create();
+        return Promise.resolve(await responseBuilder.buildFinalChunk(request));
       }
 
       const res = await this.read(stream);
