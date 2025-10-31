@@ -105,6 +105,87 @@ await intelligence.use(new oAddress('o://intelligence'), {
 });
 ```
 
+#### `stream_prompt` - Streaming AI Responses
+
+Stream AI responses token-by-token as they're generated, providing real-time feedback for better user experience.
+
+**Parameters:**
+- `prompt` (string, required if messages not provided): The prompt to send
+- `messages` (array, optional): Conversation history instead of prompt
+- Additional parameters same as `prompt` method
+
+**Returns:** AsyncGenerator yielding StreamChunk objects
+
+**Example:**
+```typescript
+import { OlaneClientTool } from '@olane/o-client';
+
+const client = new OlaneClientTool({ privateKey: 'your-key' });
+await client.initialize();
+
+// Stream a response with real-time output
+for await (const chunk of client.useStreaming(
+  new oAddress('o://intelligence'),
+  {
+    method: 'stream_prompt',
+    params: { prompt: 'Write a story about AI' }
+  }
+)) {
+  if (chunk.text) {
+    process.stdout.write(chunk.text); // Print each token as it arrives
+  }
+
+  if (chunk.isComplete) {
+    console.log('\n\nGeneration complete!');
+    console.log('Total chunks:', chunk.metadata?.totalChunks);
+    console.log('Full text:', chunk.metadata?.fullText);
+  }
+}
+```
+
+**StreamChunk Interface:**
+```typescript
+interface StreamChunk {
+  text: string;           // Text content of this chunk
+  delta?: boolean;        // true for incremental chunks
+  position?: number;      // Position in the stream
+  isComplete?: boolean;   // true for final chunk
+  model?: string;         // Model used
+  metadata?: {            // Available in final chunk
+    finish_reason?: string;
+    usage?: { prompt_tokens, completion_tokens, total_tokens };
+    totalChunks?: number;
+    fullText?: string;
+  };
+}
+```
+
+**Benefits:**
+- ✅ Real-time user feedback (tokens appear as they're generated)
+- ✅ Lower perceived latency (users see progress immediately)
+- ✅ Reduced memory usage (process chunks incrementally)
+- ✅ Better UX for long-form content generation
+- ✅ Same streaming interface across all providers
+
+**Direct Provider Streaming:**
+```typescript
+// Stream directly from a specific provider
+for await (const chunk of client.useStreaming(
+  new oAddress('o://anthropic'),
+  {
+    method: 'stream_completion',
+    params: {
+      messages: [
+        { role: 'user', content: 'Explain quantum computing' }
+      ],
+      max_tokens: 500
+    }
+  }
+)) {
+  process.stdout.write(chunk.text);
+}
+```
+
 ### Provider Tools (Child Nodes)
 
 Each provider node (`o://anthropic`, `o://openai`, etc.) exposes these tools:
@@ -175,6 +256,66 @@ const result = await intelligence.use(new oAddress('o://openai'), {
   }
 });
 ```
+
+#### `stream_completion` - Streaming Multi-Turn Conversation
+
+Stream responses token-by-token for better UX. Available on all provider tools.
+
+**Parameters:** Same as `completion` method
+
+**Returns:** AsyncGenerator yielding StreamChunk objects
+
+**Example:**
+```typescript
+for await (const chunk of client.useStreaming(
+  new oAddress('o://anthropic'),
+  {
+    method: 'stream_completion',
+    params: {
+      messages: [
+        { role: 'user', content: 'Write a detailed explanation of neural networks' }
+      ],
+      max_tokens: 1000
+    }
+  }
+)) {
+  if (chunk.text) {
+    process.stdout.write(chunk.text);
+  }
+}
+```
+
+#### `stream_generate` - Streaming Text Generation
+
+Stream simple text generation responses.
+
+**Parameters:** Same as `generate` method
+
+**Example:**
+```typescript
+for await (const chunk of client.useStreaming(
+  new oAddress('o://ollama'),
+  {
+    method: 'stream_generate',
+    params: {
+      prompt: 'Tell me a long story about space exploration',
+      model: 'llama3.2:latest'
+    }
+  }
+)) {
+  if (chunk.text) {
+    process.stdout.write(chunk.text);
+  }
+}
+```
+
+**Supported Providers:**
+- ✅ Anthropic (`o://anthropic`) - SSE streaming
+- ✅ OpenAI (`o://openai`) - SSE streaming
+- ✅ Ollama (`o://ollama`) - Newline-delimited JSON streaming
+- ✅ Perplexity (`o://perplexity`) - SSE streaming
+- ✅ Grok (`o://grok`) - SSE streaming
+- ✅ Gemini (`o://gemini`) - SSE streaming with unique format
 
 #### `list_models` - List Available Models
 

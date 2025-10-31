@@ -1,4 +1,4 @@
-import { oAddress, oResponse } from '@olane/o-core';
+import { oAddress, oResponse, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
@@ -14,6 +14,7 @@ import { multiaddr } from '@olane/o-config';
 import { PromptRequest } from './interfaces/prompt.request.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
+import { StreamChunk } from './types/streaming.types.js';
 
 export class IntelligenceTool extends oLaneTool {
   private roundRobinIndex = 0;
@@ -269,6 +270,84 @@ export class IntelligenceTool extends oLaneTool {
       },
     });
     return response.result.data as ToolResult;
+  }
+
+  /**
+   * Streaming prompt method - routes to the chosen provider's streaming implementation
+   *
+   * Usage:
+   * ```typescript
+   * for await (const chunk of client.useStreaming(
+   *   new oAddress('o://intelligence'),
+   *   { method: 'stream_prompt', params: { prompt: 'Hello!' } }
+   * )) {
+   *   process.stdout.write(chunk.text);
+   * }
+   * ```
+   */
+  async *_tool_stream_prompt(
+    request: PromptRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const { prompt, messages } = request.params;
+
+    const intelligence = await this.chooseIntelligence(request);
+    this.logger.debug(
+      'Using intelligence for streaming: ',
+      intelligence.choice.toString(),
+    );
+
+    const child = this.hierarchyManager.getChild(intelligence.choice);
+    const targetAddress = child || intelligence.choice;
+
+    // Prepare parameters
+    const params: any = {
+      apiKey: intelligence.apiKey,
+    };
+
+    // Use messages if provided, otherwise convert prompt to messages
+    if (messages) {
+      params.messages = messages;
+    } else if (prompt) {
+      params.messages = [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ];
+    } else {
+      throw new Error('Either "prompt" or "messages" must be provided');
+    }
+
+    // Use proper routing through the framework instead of direct method calls
+    yield* this.useChildStreaming(targetAddress, {
+      method: 'stream_completion',
+      params,
+    });
+  }
+
+  /**
+   * Streaming completion method - delegates to provider's stream_completion
+   */
+  async *_tool_stream_completion(
+    request: PromptRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const intelligence = await this.chooseIntelligence(request);
+    this.logger.debug(
+      'Using intelligence for streaming: ',
+      intelligence.choice.toString(),
+    );
+
+    const child = this.hierarchyManager.getChild(intelligence.choice);
+    const targetAddress = child || intelligence.choice;
+
+    // Use proper routing through the framework instead of direct method calls
+    yield* this.useChildStreaming(targetAddress, {
+      method: 'stream_completion',
+      params: {
+        ...request.params,
+        apiKey: intelligence.apiKey,
+      },
+    });
   }
 
   async initialize(): Promise<void> {

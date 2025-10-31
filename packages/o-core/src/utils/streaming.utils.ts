@@ -1,4 +1,7 @@
+import { StreamMessageEvent } from '@libp2p/interface';
 import { oResponse } from '../connection/o-response.js';
+import { oRequest } from '../connection/o-request.js';
+import { Uint8ArrayList } from '@olane/o-config';
 
 /**
  * Type guard to check if a value is an AsyncGenerator
@@ -23,7 +26,7 @@ export function isAsyncGenerator(value: any): value is AsyncGenerator {
 export async function iterateAsyncGenerator<T>(
   generator: AsyncGenerator<T>,
   onChunk: (chunk: T) => Promise<void> | void,
-  onError?: (error: unknown) => void
+  onError?: (error: unknown) => void,
 ): Promise<void> {
   try {
     for await (const chunk of generator) {
@@ -48,7 +51,7 @@ export async function iterateAsyncGenerator<T>(
 export function createStreamingResponse(
   connectionId: string,
   requestMethod: string,
-  requestId: string | number
+  requestId: string | number,
 ): oResponse {
   const response = new oResponse({
     id: requestId,
@@ -66,7 +69,7 @@ export function createStreamingResponse(
  * @returns Promise resolving to array of all chunks
  */
 export async function collectStreamChunks<T>(
-  generator: AsyncGenerator<T>
+  generator: AsyncGenerator<T>,
 ): Promise<T[]> {
   const chunks: T[] = [];
   for await (const chunk of generator) {
@@ -80,7 +83,10 @@ export async function collectStreamChunks<T>(
  * @param data - The data to process
  * @returns Parsed message object
  */
-export function processStream(data: Uint8Array): any {
-  const text = new TextDecoder().decode(data);
-  return JSON.parse(text);
+export async function processStream(
+  event: StreamMessageEvent,
+): Promise<oRequest> {
+  const bytes =
+    event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
+  return new oRequest(JSON.parse(new TextDecoder().decode(bytes)));
 }

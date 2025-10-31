@@ -3,7 +3,7 @@ import {
   IStreamTransport,
   StreamStatus,
   StreamTransportConfig,
-} from '../../../o-core/src/streaming/index.js';
+} from '@olane/o-core';
 
 /**
  * Default configuration for libp2p stream transport
@@ -24,7 +24,7 @@ export class Libp2pStreamTransport implements IStreamTransport {
 
   constructor(
     private readonly stream: Stream,
-    config?: StreamTransportConfig
+    config?: StreamTransportConfig,
   ) {
     this.config = {
       ...DEFAULT_CONFIG,
@@ -46,7 +46,7 @@ export class Libp2pStreamTransport implements IStreamTransport {
     // Check stream status before sending
     if (this.stream.status !== 'open') {
       throw new Error(
-        `Cannot send on stream with status: ${this.stream.status}`
+        `Cannot send on stream with status: ${this.stream.status}`,
       );
     }
 

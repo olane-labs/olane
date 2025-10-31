@@ -144,15 +144,10 @@ export class oToolBase extends oCore {
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore
-    const result = await this[`_tool_${method}`]({
+    return this[`_tool_${method}`]({
       ...request.toJSON(),
       stream,
-    }).catch((error: any) => {
-      // delete this.requests[request.id];
-      throw error;
     });
-    // delete this.requests[request.id];
-    return result;
   }
 
   async index() {

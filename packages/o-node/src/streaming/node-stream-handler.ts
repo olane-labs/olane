@@ -2,7 +2,7 @@ import {
   StreamHandlerBase,
   StreamHandlerOptions,
   ProtocolBuilder,
-} from '../../../o-core/src/streaming/index.js';
+} from '@olane/o-core';
 import { oRequest } from '@olane/o-protocol';
 import { Libp2pStreamTransport } from './libp2p-stream-transport.js';
 
@@ -33,7 +33,7 @@ export class NodeStreamHandler extends StreamHandlerBase {
 
   constructor(
     transport: Libp2pStreamTransport,
-    options: NodeStreamHandlerOptions = {}
+    options: NodeStreamHandlerOptions = {},
   ) {
     super(options);
     this.transport = transport;
@@ -73,14 +73,14 @@ export class NodeStreamHandler extends StreamHandlerBase {
     chunk: unknown,
     sequence: number,
     isLast: boolean,
-    request: oRequest
+    request: oRequest,
   ): Promise<void> {
     // Build the JSON-RPC streaming chunk message
     const message = ProtocolBuilder.buildStreamChunkFromRequest(
       chunk,
       sequence,
       isLast,
-      request
+      request,
     );
 
     // Encode the message to bytes
@@ -113,11 +113,14 @@ export class NodeStreamHandler extends StreamHandlerBase {
   /**
    * Hook: Called when streaming completes successfully
    */
-  protected override onStreamComplete(request: oRequest, totalChunks: number): void {
+  protected override onStreamComplete(
+    request: oRequest,
+    totalChunks: number,
+  ): void {
     // Log completion if metrics enabled
     if (this.nodeOptions.enableMetrics) {
       console.log(
-        `Stream completed for ${request.method}: ${totalChunks} chunks sent`
+        `Stream completed for ${request.method}: ${totalChunks} chunks sent`,
       );
     }
   }
@@ -151,7 +154,7 @@ export class NodeStreamHandler extends StreamHandlerBase {
    */
   public static create(
     transport: Libp2pStreamTransport,
-    options?: NodeStreamHandlerOptions
+    options?: NodeStreamHandlerOptions,
   ): NodeStreamHandler {
     return new NodeStreamHandler(transport, options);
   }

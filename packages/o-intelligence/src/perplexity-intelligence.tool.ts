@@ -3,6 +3,9 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
+import { extractPerplexityContent } from './utils/sse-parser.js';
+import { handleOpenAICompatibleStream } from './utils/streaming-helpers.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
@@ -463,5 +466,88 @@ export class PerplexityIntelligenceTool extends oLaneTool {
         error: `Connection failed: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Streaming chat completion with Perplexity
+   */
+  async *_tool_stream_completion(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const {
+      model = this.defaultModel,
+      messages,
+      apiKey = this.defaultApiKey,
+      ...options
+    } = params;
+
+    if (!apiKey) {
+      throw new Error('Perplexity API key is required');
+    }
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    const chatRequest: PerplexityChatRequest = {
+      model: model as string,
+      messages: messages as PerplexityMessage[],
+      stream: true,
+      ...options,
+    };
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(chatRequest),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Perplexity API error: ${response.status} - ${errorText}`,
+      );
+    }
+
+    yield* handleOpenAICompatibleStream(
+      response,
+      model,
+      extractPerplexityContent,
+    );
+  }
+
+  /**
+   * Streaming text generation with Perplexity
+   */
+  async *_tool_stream_generate(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    const messages: PerplexityMessage[] = [
+      {
+        role: 'user',
+        content: prompt as string,
+      },
+    ];
+
+    yield* this._tool_stream_completion(
+      new oRequest({
+        ...request.toJSON(),
+        params: {
+          ...otherParams,
+          messages,
+        },
+      }),
+    );
   }
 }

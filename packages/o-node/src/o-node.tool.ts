@@ -7,7 +7,7 @@ import {
   oResponse,
   ChildJoinedEvent,
 } from '@olane/o-core';
-import { isAsyncGenerator, processStream } from '../../o-core/src/utils/streaming.utils.js';
+import { isAsyncGenerator, processStream } from '@olane/o-core';
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';

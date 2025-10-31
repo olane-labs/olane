@@ -12,17 +12,19 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
+  oRouterRequest,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
-import { Libp2pStreamTransport } from '../streaming/libp2p-stream-transport.js';
-import { ProtocolBuilder } from '../../../o-core/src/streaming/protocol-builder.js';
+import { oNodeStreamingClient } from '../streaming/o-node-streaming-client.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
+  private streamingClient: oNodeStreamingClient;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
+    this.streamingClient = new oNodeStreamingClient();
   }
 
   async read(source: Stream) {
@@ -126,75 +128,108 @@ export class oNodeConnection extends oConnection {
         );
       }
 
-      // Create transport abstraction
-      const transport = new Libp2pStreamTransport(stream, {
+      // Delegate to streaming client
+      return this.streamingClient.streamRequest(stream, request, onChunk, {
         drainTimeoutMs: this.config.drainTimeoutMs ?? 30_000,
         readTimeoutMs: this.config.readTimeoutMs ?? 120_000,
-      });
-
-      // Send the request using the transport
-      const data = new TextEncoder().encode(request.toString());
-      await transport.send(data);
-
-      // Set up to receive multiple chunks
-      return new Promise<void>((resolve, reject) => {
-        // Set up timeout for receiving first chunk
-        const timeout = setTimeout(async () => {
-          transport.removeMessageHandler();
-          await transport.close();
-          reject(
-            new oError(
-              oErrorCodes.TIMEOUT,
-              'Timeout waiting for streaming response',
-            ),
-          );
-        }, this.config.readTimeoutMs ?? 120_000);
-
-        let timeoutCleared = false;
-
-        const messageHandler = async (data: Uint8Array) => {
-          // Clear timeout on first message
-          if (!timeoutCleared) {
-            clearTimeout(timeout);
-            timeoutCleared = true;
-          }
-
-          try {
-            const response = ProtocolBuilder.decodeMessage(data);
-
-            // Try to parse as streaming chunk
-            const chunk = ProtocolBuilder.parseStreamChunk(response);
-
-            if (chunk) {
-              // Streaming response
-              onChunk(chunk.data, chunk.sequence, chunk.isLast);
-
-              if (chunk.isLast) {
-                transport.removeMessageHandler();
-                await transport.close();
-                resolve();
-              }
-            } else {
-              // Non-streaming response (fallback for compatibility)
-              onChunk(response.result, 1, true);
-              transport.removeMessageHandler();
-              await transport.close();
-              resolve();
-            }
-          } catch (error) {
-            transport.removeMessageHandler();
-            await transport.close();
-            reject(error);
-          }
-        };
-
-        transport.onMessage(messageHandler);
       });
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
       }
       throw error;
+    }
+  }
+
+  /**
+   * Transmit a request and receive streaming chunks as an AsyncGenerator.
+   * This enables true streaming by yielding chunks as they arrive.
+   * @param request The request to send
+   * @returns AsyncGenerator that yields chunks
+   */
+  async *transmitAsStream(
+    request: oRequest,
+  ): AsyncGenerator<any, void, unknown> {
+    try {
+      const stream = await this.p2pConnection.newStream(
+        this.nextHopAddress.protocol,
+        {
+          maxOutboundStreams: Infinity,
+          runOnLimitedConnection: true,
+        },
+      );
+
+      if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
+        throw new oError(
+          oErrorCodes.FAILED_TO_DIAL_TARGET,
+          'Failed to dial target',
+        );
+      }
+      if (stream.status === 'reset') {
+        throw new oError(
+          oErrorCodes.CONNECTION_LIMIT_REACHED,
+          'Connection limit reached',
+        );
+      }
+
+      // Delegate to streaming client's generator method
+      yield* this.streamingClient.streamAsGenerator(stream, request, {
+        drainTimeoutMs: this.config.drainTimeoutMs ?? 30_000,
+        readTimeoutMs: this.config.readTimeoutMs ?? 120_000,
+      });
+    } catch (error: any) {
+      if (error?.name === 'UnsupportedProtocolError') {
+        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Checks if a request is for a streaming method.
+   * Streaming methods typically start with 'stream_' or are known streaming methods.
+   */
+  private isStreamingMethod(request: oRequest | oRouterRequest): boolean {
+    let method: string;
+
+    if ('params' in request && 'payload' in request.params) {
+      // This is a routing request, extract the actual method from payload
+      const payload = request.params.payload as any;
+      method = payload?.method as string;
+    } else {
+      // This is a direct request
+      method = request.method as string;
+    }
+
+    // Check if method starts with 'stream_' or is a known streaming method
+    return method?.startsWith('stream_') || false;
+  }
+
+  /**
+   * Transmit a request with automatic streaming detection.
+   * Returns an oResponse with either data for non-streaming or AsyncGenerator for streaming.
+   * @param request The request to send
+   * @returns oResponse with result containing either data or AsyncGenerator
+   */
+  async transmitWithPotentialStreaming(
+    request: oRequest | oRouterRequest,
+  ): Promise<oResponse> {
+    const isStreamingRequest = this.isStreamingMethod(request);
+
+    if (isStreamingRequest) {
+      // Use transmitAsStream for streaming requests
+      // Wrap the AsyncGenerator in an oResponse for consistency
+      const generator = this.transmitAsStream(request as oRequest);
+      return new oResponse({
+        id: request.id,
+        result: generator,
+        _requestMethod: request.method as string,
+        _connectionId: this.id,
+      });
+    } else {
+      // Use regular transmit for non-streaming requests
+      // Already returns oResponse
+      return await this.transmit(request as oRequest);
     }
   }
 

@@ -5,6 +5,7 @@ import {
   oError,
   oErrorCodes,
   oRequest,
+  oResponse,
   oRouterRequest,
   RouteResponse,
 } from '@olane/o-core';
@@ -63,6 +64,7 @@ export class oNodeRouter extends oToolRouter {
 
   /**
    * Executes a request locally when routing to self.
+   * Passes the stream from the routing request to enable streaming responses.
    */
   private async executeSelfRouting(
     request: oRouterRequest,
@@ -76,7 +78,8 @@ export class oNodeRouter extends oToolRouter {
       id: request.id,
     });
 
-    const result = await node.execute(localRequest);
+    // Pass the stream from the routing request to support streaming
+    const result = await node.execute(localRequest, request.stream);
     return result;
   }
 
@@ -107,12 +110,13 @@ export class oNodeRouter extends oToolRouter {
 
   /**
    * Dials a remote node and transmits the request via libp2p.
+   * Returns an oResponse that may contain an AsyncGenerator for streaming responses.
    */
   private async dialAndTransmit(
     address: oNodeAddress,
     request: oRequest | oRouterRequest,
     node: oNode,
-  ): Promise<any> {
+  ): Promise<oResponse> {
     try {
       const connection = await node.p2pNode.dial(
         address.libp2pTransports.map((t) => t.toMultiaddr()),
@@ -125,8 +129,8 @@ export class oNodeRouter extends oToolRouter {
         callerAddress: node.address,
       });
 
-      const response = await nodeConnection.transmit(request);
-      return response.result.data;
+      // Delegate to connection layer which handles streaming detection and execution
+      return nodeConnection.transmitWithPotentialStreaming(request);
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');

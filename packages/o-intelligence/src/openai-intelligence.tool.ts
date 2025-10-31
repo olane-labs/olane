@@ -3,6 +3,8 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
+import { streamSSEChunks, extractOpenAIContent } from './utils/sse-parser.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface OpenAIChatMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
@@ -621,5 +623,174 @@ export class OpenAIIntelligenceTool extends oLaneTool {
         error: `Failed to generate embedding: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Streaming chat completion with OpenAI
+   * Returns an AsyncGenerator that yields chunks as they arrive
+   *
+   * Usage:
+   * ```typescript
+   * for await (const chunk of client.useStreaming(address, {
+   *   method: 'stream_completion',
+   *   params: { messages: [...], apiKey: '...' }
+   * })) {
+   *   process.stdout.write(chunk.text);
+   * }
+   * ```
+   */
+  async *_tool_stream_completion(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const {
+      model = this.defaultModel,
+      messages,
+      apiKey = this.apiKey,
+      temperature,
+      top_p,
+      max_tokens,
+      presence_penalty,
+      frequency_penalty,
+      stop,
+      ...options
+    } = params;
+
+    // Validation
+    if (!apiKey) {
+      throw new Error('OpenAI API key is required');
+    }
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    // Build streaming request
+    const chatRequest: OpenAIChatRequest = {
+      model: model as string,
+      messages: messages as OpenAIChatMessage[],
+      stream: true, // Enable streaming
+      temperature,
+      top_p,
+      max_tokens,
+      presence_penalty,
+      frequency_penalty,
+      stop,
+      ...options,
+    };
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    };
+
+    if (this.organization) {
+      headers['OpenAI-Organization'] = this.organization;
+    }
+
+    // Make streaming request
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(chatRequest),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    // Track streaming state
+    let fullText = '';
+    let chunkCount = 0;
+    let currentModel = model as string;
+    let finishReason: string | undefined;
+
+    try {
+      // Stream and parse SSE chunks
+      for await (const chunk of streamSSEChunks(response.body)) {
+        chunkCount++;
+
+        // Extract model info from first chunk
+        if (chunk.model) {
+          currentModel = chunk.model;
+        }
+
+        // Extract text content from OpenAI chunk
+        const text = extractOpenAIContent(chunk);
+
+        if (text) {
+          fullText += text;
+
+          // Yield chunk to client
+          yield {
+            text,
+            delta: true,
+            position: fullText.length - text.length,
+            isComplete: false,
+            model: currentModel,
+          };
+        }
+
+        // Capture finish reason
+        if (chunk.choices?.[0]?.finish_reason) {
+          finishReason = chunk.choices[0].finish_reason;
+        }
+      }
+
+      // Yield final chunk with metadata
+      yield {
+        text: '',
+        delta: false,
+        isComplete: true,
+        position: fullText.length,
+        model: currentModel,
+        metadata: {
+          finish_reason: finishReason,
+          totalChunks: chunkCount,
+          fullText,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Streaming failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Streaming text generation with OpenAI
+   * Convenience method that accepts a prompt string instead of messages array
+   */
+  async *_tool_stream_generate(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    // Convert prompt to messages format
+    const messages: OpenAIChatMessage[] = [
+      {
+        role: 'user',
+        content: prompt as string,
+      },
+    ];
+
+    // Delegate to stream_completion
+    yield* this._tool_stream_completion(
+      new oRequest({
+        ...request.toJSON(),
+        params: {
+          ...otherParams,
+          messages,
+        },
+      }),
+    );
   }
 }

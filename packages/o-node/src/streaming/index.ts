@@ -5,9 +5,6 @@
  * abstractions defined in o-core.
  */
 
-// Re-export o-core streaming abstractions for convenience
-export * from '../../../o-core/src/streaming/index.js';
-
 // libp2p-specific stream transport
 export { Libp2pStreamTransport } from './libp2p-stream-transport.js';
 
@@ -16,3 +13,6 @@ export {
   NodeStreamHandler,
   NodeStreamHandlerOptions,
 } from './node-stream-handler.js';
+
+// o-node streaming client for client-side streaming orchestration
+export { oNodeStreamingClient } from './o-node-streaming-client.js';

@@ -3,6 +3,8 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
+import { extractGeminiContent } from './utils/sse-parser.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface GeminiContent {
   role: 'user' | 'model';
@@ -427,5 +429,155 @@ export class GeminiIntelligenceTool extends oLaneTool {
         error: `Connection failed: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Streaming chat completion with Gemini
+   * Gemini uses a unique streaming format with JSON chunks
+   */
+  async *_tool_stream_completion(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { model = this.defaultModel, messages, ...options } = params;
+
+    if (!this.apiKey) {
+      throw new Error('Gemini API key is required');
+    }
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    // Convert messages to Gemini format
+    const contents: GeminiContent[] = messages.map((msg: any) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }));
+
+    const chatRequest: GeminiChatRequest = {
+      contents,
+      generationConfig: options.generationConfig,
+      safetySettings: options.safetySettings,
+    };
+
+    // Use streamGenerateContent endpoint for streaming
+    const response = await fetch(
+      `${this.baseUrl}/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(chatRequest),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    let fullText = '';
+    let chunkCount = 0;
+
+    try {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) {
+            continue;
+          }
+
+          const data = line.substring(6); // Remove 'data: ' prefix
+
+          try {
+            const chunk = JSON.parse(data);
+            chunkCount++;
+
+            // Extract text from Gemini format
+            const text = extractGeminiContent(chunk);
+
+            if (text) {
+              fullText += text;
+
+              yield {
+                text,
+                delta: true,
+                position: fullText.length - text.length,
+                isComplete: false,
+                model,
+              };
+            }
+          } catch (error) {
+            // Skip malformed JSON
+            continue;
+          }
+        }
+      }
+
+      // Yield final chunk
+      yield {
+        text: '',
+        delta: false,
+        isComplete: true,
+        position: fullText.length,
+        model,
+        metadata: {
+          totalChunks: chunkCount,
+          fullText,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Streaming failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Streaming text generation with Gemini
+   */
+  async *_tool_stream_generate(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    const messages = [
+      {
+        role: 'user',
+        content: prompt as string,
+      },
+    ];
+
+    yield* this._tool_stream_completion(
+      new oRequest({
+        ...request.toJSON(),
+        params: {
+          ...otherParams,
+          messages,
+        },
+      }),
+    );
   }
 }

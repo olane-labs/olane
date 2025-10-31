@@ -3,6 +3,8 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
+import { extractOllamaContent } from './utils/sse-parser.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -481,6 +483,283 @@ export class OllamaIntelligenceTool extends oLaneTool {
         status: 'offline',
         error: `Connection failed: ${(error as Error).message}`,
       };
+    }
+  }
+
+  /**
+   * Streaming chat completion with Ollama
+   * Returns an AsyncGenerator that yields chunks as they arrive
+   *
+   * Ollama uses newline-delimited JSON instead of SSE format
+   *
+   * Usage:
+   * ```typescript
+   * for await (const chunk of client.useStreaming(address, {
+   *   method: 'stream_completion',
+   *   params: { messages: [...] }
+   * })) {
+   *   process.stdout.write(chunk.text);
+   * }
+   * ```
+   */
+  async *_tool_stream_completion(
+    request: oRequest
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const {
+      model = OllamaIntelligenceTool.defaultModel,
+      messages,
+      options = {},
+    } = params;
+
+    // Validation
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    // Build streaming request
+    const chatRequest: OllamaChatRequest = {
+      model: model as string,
+      messages: messages as OllamaChatMessage[],
+      stream: true, // Enable streaming
+      options: options as any,
+    };
+
+    // Make streaming request
+    const response = await fetch(
+      `${OllamaIntelligenceTool.defaultUrl}/api/chat`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(chatRequest),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    // Track streaming state
+    let fullText = '';
+    let chunkCount = 0;
+    let currentModel = model as string;
+    let evalCount: number | undefined;
+    let evalDuration: number | undefined;
+
+    try {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        // Decode and add to buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines (Ollama uses newline-delimited JSON)
+        const lines = buffer.split('\n');
+
+        // Keep last incomplete line in buffer
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+
+          try {
+            const chunk = JSON.parse(line);
+            chunkCount++;
+
+            // Extract model info
+            if (chunk.model) {
+              currentModel = chunk.model;
+            }
+
+            // Extract text content
+            const text = extractOllamaContent(chunk);
+
+            if (text) {
+              fullText += text;
+
+              // Yield chunk to client
+              yield {
+                text,
+                delta: true,
+                position: fullText.length - text.length,
+                isComplete: false,
+                model: currentModel,
+              };
+            }
+
+            // Capture metadata from final chunk
+            if (chunk.done) {
+              evalCount = chunk.eval_count;
+              evalDuration = chunk.eval_duration;
+              break;
+            }
+          } catch (error) {
+            // Skip malformed JSON lines
+            continue;
+          }
+        }
+      }
+
+      // Yield final chunk with metadata
+      yield {
+        text: '',
+        delta: false,
+        isComplete: true,
+        position: fullText.length,
+        model: currentModel,
+        metadata: {
+          totalChunks: chunkCount,
+          fullText,
+          eval_count: evalCount,
+          eval_duration: evalDuration,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Streaming failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Streaming text generation with Ollama
+   * Convenience method that accepts a prompt string instead of messages array
+   */
+  async *_tool_stream_generate(
+    request: oRequest
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, system, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    // For Ollama generate endpoint, we use a different API
+    const {
+      model = OllamaIntelligenceTool.defaultModel,
+      options = {},
+    } = otherParams;
+
+    const generateRequest: OllamaGenerateRequest = {
+      model: model as string,
+      prompt: prompt as string,
+      system: system as string,
+      stream: true,
+      options: options as any,
+    };
+
+    // Make streaming request to generate endpoint
+    const response = await fetch(
+      `${OllamaIntelligenceTool.defaultUrl}/api/generate`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(generateRequest),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Ollama API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    // Track streaming state
+    let fullText = '';
+    let chunkCount = 0;
+    let currentModel = model as string;
+
+    try {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        // Decode and add to buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) {
+            continue;
+          }
+
+          try {
+            const chunk = JSON.parse(line);
+            chunkCount++;
+
+            if (chunk.model) {
+              currentModel = chunk.model;
+            }
+
+            // For generate endpoint, text is in 'response' field
+            const text = chunk.response || '';
+
+            if (text) {
+              fullText += text;
+
+              yield {
+                text,
+                delta: true,
+                position: fullText.length - text.length,
+                isComplete: false,
+                model: currentModel,
+              };
+            }
+
+            if (chunk.done) {
+              break;
+            }
+          } catch (error) {
+            continue;
+          }
+        }
+      }
+
+      // Yield final chunk
+      yield {
+        text: '',
+        delta: false,
+        isComplete: true,
+        position: fullText.length,
+        model: currentModel,
+        metadata: {
+          totalChunks: chunkCount,
+          fullText,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Streaming failed: ${(error as Error).message}`);
     }
   }
 }

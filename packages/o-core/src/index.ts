@@ -4,3 +4,4 @@ export * from './error/index.js';
 export * from './router/index.js';
 export * from './transports/index.js';
 export * from './utils/index.js';
+export * from './streaming/index.js';

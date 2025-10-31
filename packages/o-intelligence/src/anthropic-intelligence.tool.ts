@@ -3,6 +3,11 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
+import {
+  streamSSEChunks,
+  extractAnthropicContent,
+} from './utils/sse-parser.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -412,5 +417,180 @@ export class AnthropicIntelligenceTool extends oLaneTool {
         error: `Failed to check status: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Streaming chat completion with Anthropic
+   * Returns an AsyncGenerator that yields chunks as they arrive
+   *
+   * Usage:
+   * ```typescript
+   * for await (const chunk of client.useStreaming(address, {
+   *   method: 'stream_completion',
+   *   params: { messages: [...], apiKey: '...' }
+   * })) {
+   *   process.stdout.write(chunk.text);
+   * }
+   * ```
+   */
+  async *_tool_stream_completion(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const {
+      model = this.defaultModel,
+      messages,
+      system,
+      max_tokens = 1000,
+      apiKey = this.apiKey,
+      temperature,
+      top_p,
+      top_k,
+      stop_sequences,
+    } = params;
+
+    // Validation
+    if (!apiKey) {
+      throw new Error('Anthropic API key is required');
+    }
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    // Build streaming request
+    const chatRequest: AnthropicChatRequest = {
+      model: model as string,
+      max_tokens: max_tokens as number,
+      messages: messages as AnthropicMessage[],
+      system: system as string,
+      stream: true, // Enable streaming
+      temperature,
+      top_p,
+      top_k,
+      stop_sequences,
+    };
+
+    // Make streaming request
+    const response = await fetch(`https://api.anthropic.com/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(chatRequest),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    // Track streaming state
+    let fullText = '';
+    let chunkCount = 0;
+    let currentModel = model as string;
+    let finishReason: string | undefined;
+    let usage: any;
+
+    try {
+      // Stream and parse SSE chunks
+      for await (const chunk of streamSSEChunks(response.body)) {
+        chunkCount++;
+
+        // Extract text content from Anthropic chunk
+        const text = extractAnthropicContent(chunk);
+
+        if (text) {
+          fullText += text;
+
+          // Yield chunk to client
+          yield {
+            text,
+            delta: true,
+            position: fullText.length - text.length,
+            isComplete: false,
+            model: currentModel,
+          };
+        }
+
+        // Capture metadata from message_start event
+        if (chunk.type === 'message_start' && chunk.message) {
+          currentModel = chunk.message.model || currentModel;
+          usage = chunk.message.usage;
+        }
+
+        // Capture stop reason from content_block_stop or message_delta
+        if (chunk.type === 'message_delta' && chunk.delta?.stop_reason) {
+          finishReason = chunk.delta.stop_reason;
+        }
+
+        // Capture final usage from message_delta
+        if (chunk.type === 'message_delta' && chunk.usage) {
+          usage = chunk.usage;
+        }
+
+        // Check for stream completion
+        if (chunk.type === 'message_stop') {
+          break;
+        }
+      }
+
+      // Yield final chunk with metadata
+      yield {
+        text: '',
+        delta: false,
+        isComplete: true,
+        position: fullText.length,
+        model: currentModel,
+        metadata: {
+          finish_reason: finishReason,
+          usage,
+          totalChunks: chunkCount,
+          fullText,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Streaming failed: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Streaming text generation with Anthropic
+   * Convenience method that accepts a prompt string instead of messages array
+   */
+  async *_tool_stream_generate(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    // Convert prompt to messages format
+    const messages: AnthropicMessage[] = [
+      {
+        role: 'user',
+        content: prompt as string,
+      },
+    ];
+
+    // Delegate to stream_completion
+    yield* this._tool_stream_completion(
+      new oRequest({
+        ...request.toJSON(),
+        params: {
+          ...otherParams,
+          messages,
+        },
+      }),
+    );
   }
 }

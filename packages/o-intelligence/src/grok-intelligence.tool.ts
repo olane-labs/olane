@@ -3,6 +3,9 @@ import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
 import { oNodeToolConfig } from '@olane/o-node';
+import { extractGrokContent } from './utils/sse-parser.js';
+import { handleOpenAICompatibleStream } from './utils/streaming-helpers.js';
+import { StreamChunk } from './types/streaming.types.js';
 
 interface GrokMessage {
   role: 'system' | 'user' | 'assistant';
@@ -291,5 +294,82 @@ export class GrokIntelligenceTool extends oLaneTool {
         error: `Connection failed: ${(error as Error).message}`,
       };
     }
+  }
+
+  /**
+   * Streaming chat completion with Grok
+   */
+  async *_tool_stream_completion(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const {
+      model = this.defaultModel,
+      messages,
+      apiKey = this.apiKey,
+      ...options
+    } = params;
+
+    const key = apiKey || process.env.GROK_API_KEY;
+    if (!key) {
+      throw new Error('Grok API key is required');
+    }
+
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error('"messages" array is required');
+    }
+
+    const chatRequest: GrokChatRequest = {
+      model: model as string,
+      messages: messages as GrokMessage[],
+      stream: true,
+      ...options,
+    };
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify(chatRequest),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+    }
+
+    yield* handleOpenAICompatibleStream(response, model, extractGrokContent);
+  }
+
+  /**
+   * Streaming text generation with Grok
+   */
+  async *_tool_stream_generate(
+    request: oRequest,
+  ): AsyncGenerator<StreamChunk, void, unknown> {
+    const params = request.params as any;
+    const { prompt, system, ...otherParams } = params;
+
+    if (!prompt) {
+      throw new Error('Prompt is required');
+    }
+
+    const messages: GrokMessage[] = [];
+    if (system) {
+      messages.push({ role: 'system', content: system as string });
+    }
+    messages.push({ role: 'user', content: prompt as string });
+
+    yield* this._tool_stream_completion(
+      new oRequest({
+        ...request.toJSON(),
+        params: {
+          ...otherParams,
+          messages,
+        },
+      }),
+    );
   }
 }

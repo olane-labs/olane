@@ -24,6 +24,7 @@ import {
   NotificationHandler,
   Subscription,
 } from './lib/events/index.js';
+import { isAsyncGenerator } from '../utils/streaming.utils.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -279,6 +280,254 @@ export abstract class oCore extends oObject {
     }
 
     return response;
+  }
+
+  /**
+   * Streams data from a remote node using AsyncGenerator pattern.
+   *
+   * This method properly routes streaming requests through the Olane framework,
+   * similar to how use() handles regular requests. It yields chunks of data
+   * as they arrive from the target node.
+   *
+   * @param address - The target node address to stream from
+   * @param data - Optional request data containing method, parameters, and request ID
+   * @param options - Optional routing and timeout configuration
+   * @returns AsyncGenerator that yields chunks from the streaming response
+   * @throws {Error} When the node is not running or address is invalid
+   * @throws {oError} When the target node returns an error
+   *
+   * @example
+   * ```typescript
+   * // Stream completion from an AI provider
+   * const stream = this.useStreaming(
+   *   new oAddress('o://openai'),
+   *   {
+   *     method: 'stream_completion',
+   *     params: { messages: [...] }
+   *   }
+   * );
+   *
+   * for await (const chunk of stream) {
+   *   console.log(chunk);
+   * }
+   * ```
+   */
+  async *useStreaming(
+    address: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+    options?: {
+      noRouting?: boolean;
+      readTimeoutMs?: number;
+      drainTimeoutMs?: number;
+    },
+  ): AsyncGenerator<any, void, unknown> {
+    if (!this.isRunning) {
+      this.logger.error('Node is not running', this.state);
+      throw new Error('Node is not running');
+    }
+    if (!address.validate()) {
+      throw new Error('Invalid address');
+    }
+
+    this.logger.debug('Using streaming address: ', address.toString());
+
+    // check for static match - if calling ourselves, use useSelfStreaming
+    if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
+      yield* this.useSelfStreaming(data);
+      return;
+    }
+
+    // if no routing is requested, use the address as is
+    if (options?.noRouting) {
+      this.logger.debug(
+        'No routing requested, using address as is',
+        address.toString(),
+      );
+    }
+    const { nextHopAddress, targetAddress } = options?.noRouting
+      ? { nextHopAddress: address, targetAddress: address }
+      : await this.router.translate(address, this);
+
+    if (
+      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
+    ) {
+      yield* this.useSelfStreaming(data);
+      return;
+    }
+
+    const connection = await this.connect(
+      nextHopAddress,
+      targetAddress,
+      options?.readTimeoutMs,
+      options?.drainTimeoutMs,
+    );
+
+    // communicate the payload to the target node and get streaming response
+    const response = await connection.send({
+      address: targetAddress?.toString() || '',
+      payload: data || {},
+      id: data?.id,
+    });
+
+    // if there is an error, throw it to continue to bubble up
+    if (response.result.error) {
+      this.logger.error(
+        'response.result.error',
+        JSON.stringify(response.result.error, null, 2),
+      );
+      throw oError.fromJSON(response.result.error);
+    }
+
+    // The response.result should be an AsyncGenerator for streaming responses
+    if (isAsyncGenerator(response.result)) {
+      yield* response.result;
+    } else {
+      // Non-streaming response, yield once
+      yield response.result;
+    }
+  }
+
+  /**
+   * Streams data from a child node using AsyncGenerator pattern.
+   *
+   * This method is specifically designed for streaming from child nodes in the
+   * hierarchy. It handles transport setup and properly routes the streaming
+   * request through the child relationship.
+   *
+   * @param childAddress - The child node address to stream from
+   * @param data - Optional request data containing method, parameters, and request ID
+   * @returns AsyncGenerator that yields chunks from the streaming response
+   * @throws {Error} When the node is not running
+   * @throws {oError} When the child node returns an error
+   *
+   * @example
+   * ```typescript
+   * // Stream from a child AI provider
+   * const stream = this.useChildStreaming(
+   *   new oAddress('o://anthropic'),
+   *   {
+   *     method: 'stream_completion',
+   *     params: { messages: [...], apiKey: '...' }
+   *   }
+   * );
+   *
+   * for await (const chunk of stream) {
+   *   console.log(chunk);
+   * }
+   * ```
+   */
+  async *useChildStreaming(
+    childAddress: oAddress,
+    data?: {
+      method?: string;
+      params?: { [key: string]: any };
+      id?: string;
+    },
+  ): AsyncGenerator<any, void, unknown> {
+    if (!this.isRunning) {
+      throw new Error('Node is not running');
+    }
+
+    if (!childAddress.transports) {
+      const child = this.hierarchyManager.getChild(childAddress);
+      if (!child) {
+        this.logger.warn('Child address has no transports, this might break!');
+      } else {
+        this.logger.debug(
+          'Setting transports for child: ',
+          child.transports.map((t) => t.toString()),
+        );
+        childAddress.setTransports(child?.transports || []);
+      }
+    }
+
+    const connection = await this.connect(childAddress, childAddress);
+
+    // communicate the payload to the target node and get streaming response
+    const response = await connection.send({
+      address: childAddress?.toString() || '',
+      payload: data || {},
+      id: data?.id,
+    });
+
+    // if there is an error, throw it to continue to bubble up
+    if (response.result.error) {
+      this.logger.error(
+        'response.result.error',
+        JSON.stringify(response.result.error, null, 2),
+      );
+      throw oError.fromJSON(response.result.error);
+    }
+
+    // The response.result should be an AsyncGenerator for streaming responses
+    if (isAsyncGenerator(response.result)) {
+      yield* response.result;
+    } else {
+      // Non-streaming response, yield once
+      this.logger.debug(
+        'Non-streaming response, yielding once',
+        response.result,
+      );
+      yield response.result;
+    }
+  }
+
+  /**
+   * Internal method to handle streaming calls to self.
+   *
+   * This is called when useStreaming() or useChildStreaming() detect that
+   * the target address is this node itself.
+   *
+   * @param data - Optional request data
+   * @returns AsyncGenerator yielding response chunks
+   * @internal
+   */
+  private async *useSelfStreaming(data?: {
+    method?: string;
+    params?: { [key: string]: any };
+    id?: string;
+  }): AsyncGenerator<any, void, unknown> {
+    if (!this.isRunning) {
+      throw new Error('Node is not running');
+    }
+
+    this.logger.debug('Calling ourselves for streaming, skipping...', data);
+
+    const request = new oRequest({
+      method: data?.method as string,
+      params: {
+        _connectionId: 0,
+        _requestMethod: data?.method,
+        ...(data?.params as any),
+      },
+      id: 0,
+    });
+
+    try {
+      const result = await this.execute(request);
+
+      // If result is an AsyncGenerator, yield from it
+      if (isAsyncGenerator(result)) {
+        yield* result;
+        this.metrics.successCount++;
+      } else {
+        // Non-streaming result, yield once
+        yield result;
+        this.metrics.successCount++;
+      }
+    } catch (error) {
+      this.logger.error('Error executing streaming tool [self]: ', error);
+      this.metrics.errorCount++;
+      const responseError: oError =
+        error instanceof oError
+          ? error
+          : new oError(oErrorCodes.UNKNOWN, (error as Error).message);
+      throw responseError;
+    }
   }
 
   // hierarchy
