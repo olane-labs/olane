@@ -302,7 +302,14 @@ export abstract class oCore extends oObject {
       nextHopAddress: childAddress,
       address: childAddress,
       callerAddress: this.address,
+      isStream: options?.isStream,
     });
+
+    if (options?.isStream) {
+      connection.onChunk((response) => {
+        options.onChunk?.(response);
+      });
+    }
 
     // communicate the payload to the target node
     const response = await connection.send({

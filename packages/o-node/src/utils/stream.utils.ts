@@ -9,7 +9,6 @@ export class StreamUtils extends oObject {
   ): Promise<any> {
     const utils = new StreamUtils();
     for await (const result of generator) {
-      utils.logger.debug('Sending stream response: ', result);
       await CoreUtils.sendStreamResponse(
         new oResponse({
           id: request.id,
@@ -24,7 +23,6 @@ export class StreamUtils extends oObject {
     await CoreUtils.sendStreamResponse(
       new oResponse({
         id: request.id,
-        data: 'Stream completed',
         _last: true,
         _requestMethod: request.method,
         _connectionId: request.params?._connectionId,

@@ -1,5 +1,10 @@
-import { oAddress, oRequest } from '@olane/o-core';
-import { oNodeConfig, oNodeTool } from '@olane/o-node';
+import { CoreUtils, oAddress, oRequest, oResponse } from '@olane/o-core';
+import {
+  oNodeConfig,
+  oNodeTool,
+  oStreamRequest,
+  StreamUtils,
+} from '@olane/o-node';
 import { oHandshakeResult } from './interfaces/index.js';
 import { oCapabilityType } from './capabilities/index.js';
 import { oIntent } from './intent/index.js';
@@ -45,14 +50,30 @@ export class oLaneTool extends oNodeTool {
    * @param request
    * @returns
    */
-  async _tool_intent(request: oRequest): Promise<any> {
+  async _tool_intent(request: oStreamRequest): Promise<any> {
     this.logger.debug('Intent resolution called: ', request.params);
-    const { intent, context, streamTo } = request.params;
+    const { intent, context, streamTo, _isStream = false } = request.params;
+
     const pc = await this.manager.createLane({
       intent: new oIntent({ intent: intent as string }),
       currentNode: this,
       caller: this.address,
       streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
+      onChunk: _isStream
+        ? async (chunk: any) => {
+            this.logger.debug('Sending stream response: ', chunk);
+            await CoreUtils.sendStreamResponse(
+              new oResponse({
+                id: request.id,
+                data: chunk,
+                _last: false,
+                _requestMethod: request.method,
+                _connectionId: request.params?._connectionId,
+              }),
+              request.stream,
+            );
+          }
+        : undefined,
       context: context
         ? new oLaneContext([
             `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
@@ -60,8 +81,9 @@ export class oLaneTool extends oNodeTool {
         : undefined,
     });
 
-    const response = await pc.execute();
-    this.logger.debug('Intent resolution response: ', response);
+    let response: oCapabilityResult | undefined;
+    response = await pc.execute();
+
     return {
       result: response?.result,
       error: response?.error,

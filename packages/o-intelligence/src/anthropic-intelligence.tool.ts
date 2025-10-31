@@ -325,9 +325,9 @@ export class AnthropicIntelligenceTool extends oLaneTool {
    */
   async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       return StreamUtils.processGenerator(
         request,
         this._streamGenerate(request),

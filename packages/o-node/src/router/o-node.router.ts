@@ -124,6 +124,7 @@ export class oNodeRouter extends oToolRouter {
         nextHopAddress: address,
         address: node.address,
         callerAddress: node.address,
+        isStream: request.params._isStream as boolean,
       });
 
       if (request.params._isStream) {

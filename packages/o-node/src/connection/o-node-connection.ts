@@ -52,7 +52,9 @@ export class oNodeConnection extends oConnection {
         },
       );
 
-      const isStreamRequest = request.params._isStream;
+      const isStreamRequest =
+        request.params._isStream ||
+        (request.params.payload as any)?.params?._isStream;
 
       if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
         throw new oError(
@@ -72,13 +74,25 @@ export class oNodeConnection extends oConnection {
       const sent = stream.send(data);
 
       if (isStreamRequest) {
-        stream.addEventListener('message', async (event) => {
-          const response = await CoreUtils.processStreamResponse(event);
-          this.emitter.emit('chunk', response);
-          // marked as the last chunk let's close
-          if (response.result._last) {
-            await stream.close();
-          }
+        this.logger.debug(
+          'Detected stream request, attaching message listener',
+        );
+        await new Promise((resolve, reject) => {
+          // TODO: add timeout
+          stream.addEventListener('message', async (event) => {
+            const response = await CoreUtils.processStreamResponse(event);
+            this.logger.debug(
+              'Transmit stream chunk received: ',
+              JSON.stringify(response, null, 2),
+            );
+            this.emitter.emit('chunk', response);
+            // marked as the last chunk let's close
+            if (response.result._last) {
+              this.logger.debug('Last chunk received, closing stream');
+              await stream.close();
+              resolve(true);
+            }
+          });
         });
       }
 
@@ -92,11 +106,7 @@ export class oNodeConnection extends oConnection {
 
       if (isStreamRequest) {
         return Promise.resolve(
-          CoreUtils.buildResponse(
-            request,
-            'request is streaming, this response is not used',
-            null,
-          ),
+          CoreUtils.buildResponse(request, 'Stream completed', null),
         );
       }
 

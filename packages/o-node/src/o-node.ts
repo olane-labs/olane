@@ -181,7 +181,10 @@ export class oNode extends oToolBase {
     // if no parent transports, register with the parent to get them
     // TODO: should we remove the transports check to make this more consistent?
     if (this.config.parent) {
-      this.logger.debug('Registering node with parent...', this.config.parent);
+      this.logger.debug(
+        'Registering node with parent...',
+        this.config.parent?.toString,
+      );
       await this.use(this.config.parent, {
         method: 'child_register',
         params: {

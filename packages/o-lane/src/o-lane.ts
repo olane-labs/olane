@@ -30,13 +30,14 @@ export class oLane extends oObject {
   public MAX_CYCLES: number = 20;
   public status: oLaneStatus = oLaneStatus.PENDING;
   public result: oCapabilityResult | undefined;
+  public onChunk?: (chunk: any) => void;
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent.value}]`);
     this.sequence = Object.assign([], this.config.sequence || []);
     this.parentLaneId = this.config.parentLaneId;
     this.intentEncoder = new oIntentEncoder();
-
+    this.onChunk = this.config.onChunk;
     // set a max cycles if one is not provided
     if (!!process.env.MAX_CYCLES) {
       this.MAX_CYCLES = parseInt(process.env.MAX_CYCLES);
@@ -189,8 +190,10 @@ export class oLane extends oObject {
       if (capability.type === capabilityType && currentStep.config) {
         const capabilityConfig: oCapabilityConfig =
           this.resultToConfig(currentStep);
+        this.logger.debug('Executing capability: ', capabilityType);
         const result = await capability.execute({
           ...capabilityConfig,
+          onChunk: this.onChunk,
         } as oCapabilityConfig);
         return result;
       }

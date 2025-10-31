@@ -139,9 +139,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
    */
   async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       this.logger.debug('Streaming completion...');
       return StreamUtils.processGenerator(
         request,
@@ -364,9 +364,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
    */
   async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { stream = false } = params;
+    const { _isStream = false } = params;
 
-    if (stream) {
+    if (_isStream) {
       this.logger.debug('Streaming generate...');
       return StreamUtils.processGenerator(
         request,

@@ -46,18 +46,28 @@ describe('basic-usage @initialize', async () => {
     //   },
     // });
     // use the intelligence tool
+    // await entryNode.useStream(
+    //   new oNodeAddress('o://leader'),
+    //   {
+    //     method: 'intent',
+    //     params: {
+    //       _isStream: true,
+    //       intent: 'What is the capital of France?',
+    //     },
+    //   },
+    //   {
+    //     onChunk: (chunk) => {
+    //       console.log('Received chunk: ', chunk.result.data);
+    //     },
+    //   },
+    // );
     await entryNode.useStream(
-      new oNodeAddress('o://anthropic'),
+      new oNodeAddress('o://intelligence'),
       {
-        method: 'completion',
+        method: 'prompt',
         params: {
           _isStream: true,
-          messages: [
-            {
-              role: 'user',
-              content: 'What is the weather in Tokyo?',
-            },
-          ],
+          prompt: 'What is the capital of France?',
         },
       },
       {
@@ -66,6 +76,7 @@ describe('basic-usage @initialize', async () => {
         },
       },
     );
+    await new Promise((resolve) => setTimeout(resolve, 20_000));
   });
 });
 

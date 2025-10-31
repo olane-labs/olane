@@ -9,4 +9,5 @@ export interface oCapabilityConfig {
   history: string;
   params?: any;
   isReplay?: boolean;
+  onChunk?: (chunk: any) => void;
 }

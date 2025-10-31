@@ -80,6 +80,7 @@ export class CoreUtils {
       data: result,
       error: result?.error,
       ...{ success },
+      _last: true,
       _requestMethod: request.method,
       _connectionId: request.params?._connectionId,
     });
@@ -135,8 +136,10 @@ export class CoreUtils {
   }
 
   public static async sendStreamResponse(response: oResponse, stream: Stream) {
-    if (stream.status !== 'open') {
-      throw new Error('Stream is not open');
+    if (!stream || stream.status !== 'open') {
+      throw new Error(
+        'Stream is not open. Status: ' + stream?.status || 'undefined',
+      );
     }
 
     await stream.send(new TextEncoder().encode(response.toString()));
@@ -155,7 +158,7 @@ export class CoreUtils {
 
   public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
-    return new oResponse(res);
+    return res?.id ? oResponse.fromJSON(res) : new oResponse(res);
   }
 
   public static async toCID(data: any): Promise<CID> {

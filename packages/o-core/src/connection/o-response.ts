@@ -27,4 +27,12 @@ export class oResponse implements Response {
   toString(): string {
     return JSON.stringify(this);
   }
+
+  static fromJSON(json: any): oResponse {
+    return new oResponse({
+      ...json.result,
+      _connectionId: json._connectionId,
+      _requestMethod: json._requestMethod,
+    });
+  }
 }
