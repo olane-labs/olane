@@ -2,7 +2,8 @@ import { oAddress, oRequest } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig } from '@olane/o-node';
+import { oNodeToolConfig, oStreamRequest, StreamUtils } from '@olane/o-node';
+import { Stream } from '@olane/o-config';
 
 interface OllamaChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -131,9 +132,21 @@ export class OllamaIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Ollama
    */
-  async _tool_completion(request: oRequest): Promise<ToolResult> {
+  async _tool_completion(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      return StreamUtils.processGenerator(
+        request,
+        this._streamCompletion(request),
+        request.stream,
+      );
+    }
+
     try {
-      const params = request.params as any;
       const {
         model = OllamaIntelligenceTool.defaultModel,
         messages,
@@ -192,11 +205,129 @@ export class OllamaIntelligenceTool extends oLaneTool {
   }
 
   /**
-   * Generate text with Ollama
+   * Stream chat completion with Ollama
    */
-  async _tool_generate(request: oRequest): Promise<ToolResult> {
+  private async *_streamCompletion(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
+      const {
+        model = OllamaIntelligenceTool.defaultModel,
+        messages,
+        options = {},
+      } = params;
+
+      if (!messages || !Array.isArray(messages)) {
+        yield {
+          success: false,
+          error: '"messages" array is required',
+        };
+        return;
+      }
+
+      const chatRequest: OllamaChatRequest = {
+        model: model as string,
+        messages: messages as OllamaChatMessage[],
+        stream: true,
+        options: options as any,
+      };
+
+      const response = await fetch(
+        `${OllamaIntelligenceTool.defaultUrl}/api/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chatRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Ollama API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          try {
+            const parsed = JSON.parse(trimmedLine);
+
+            if (parsed.message?.content) {
+              yield {
+                delta: parsed.message.content,
+                model: parsed.model,
+              };
+            }
+
+            if (parsed.done) {
+              yield {
+                done: true,
+                model: parsed.model,
+                total_duration: parsed.total_duration,
+                eval_count: parsed.eval_count,
+                eval_duration: parsed.eval_duration,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream chat: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate text with Ollama
+   */
+  async _tool_generate(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      return StreamUtils.processGenerator(
+        request,
+        this._streamGenerate(request),
+        request.stream,
+      );
+    }
+
+    try {
       const {
         model = OllamaIntelligenceTool.defaultModel,
         prompt,
@@ -254,6 +385,114 @@ export class OllamaIntelligenceTool extends oLaneTool {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Stream text generation with Ollama
+   */
+  private async *_streamGenerate(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = OllamaIntelligenceTool.defaultModel,
+        prompt,
+        system,
+        options = {},
+      } = params;
+
+      if (!prompt) {
+        yield {
+          success: false,
+          error: 'Prompt is required',
+        };
+        return;
+      }
+
+      const generateRequest: OllamaGenerateRequest = {
+        model: model as string,
+        prompt: prompt as string,
+        system: system as string | undefined,
+        stream: true,
+        options: options as any,
+      };
+
+      const response = await fetch(
+        `${OllamaIntelligenceTool.defaultUrl}/api/generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(generateRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Ollama API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          try {
+            const parsed = JSON.parse(trimmedLine);
+
+            if (parsed.response) {
+              yield {
+                delta: parsed.response,
+                model: parsed.model,
+              };
+            }
+
+            if (parsed.done) {
+              yield {
+                done: true,
+                model: parsed.model,
+                total_duration: parsed.total_duration,
+                eval_count: parsed.eval_count,
+                eval_duration: parsed.eval_duration,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream generate: ${(error as Error).message}`,
       };
     }
   }

@@ -1,5 +1,5 @@
 export * from './o-node.js';
-export * from './utils/network.utils.js';
+export * from './utils/index.js';
 export * from './o-node.hierarchy-manager.js';
 export * from './interfaces/o-node.config.js';
 export * from './connection/index.js';
@@ -7,3 +7,4 @@ export * from './o-node.tool.js';
 export * from './nodes/index.js';
 export * from './interfaces/o-node.tool-config.js';
 export * from './router/index.js';
+export * from './connection/o-stream.request.js';

@@ -31,8 +31,8 @@ export abstract class oConnection extends oObject {
     );
   }
 
-  onStream(listener: (response: oResponse) => void) {
-    this.emitter.addListener('stream', listener);
+  onChunk(listener: (response: oResponse) => void) {
+    this.emitter.addListener('chunk', listener);
   }
 
   validate(): void {
@@ -48,7 +48,7 @@ export abstract class oConnection extends oObject {
         _connectionId: this.id,
         _requestMethod: method,
         _callerAddress: this.callerAddress?.value,
-        _isStream: params.stream,
+        _isStream: this.config.isStream || false,
         ...params,
       },
       id: params.id || uuidv4(),

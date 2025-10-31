@@ -1,8 +1,14 @@
-import { oAddress, oRequest } from '@olane/o-core';
+import { CoreUtils, oAddress, oRequest, oResponse } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { LLM_PARAMS } from './methods/llm.methods.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
+import {
+  oNodeConfig,
+  oNodeToolConfig,
+  oStreamRequest,
+  StreamUtils,
+} from '@olane/o-node';
+import { Stream } from '@olane/o-config';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -118,9 +124,19 @@ export class AnthropicIntelligenceTool extends oLaneTool {
   /**
    * Chat completion with Anthropic
    */
-  async _tool_completion(request: oRequest): Promise<ToolResult> {
+  async _tool_completion(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { _isStream = false } = params;
+
+    if (_isStream) {
+      this.logger.debug('Streaming completion...');
+      const gen = this._streamCompletion(request);
+      return StreamUtils.processGenerator(request, gen, request.stream);
+    }
+
     try {
-      const params = request.params as any;
       const {
         model = this.defaultModel,
         messages,
@@ -188,11 +204,142 @@ export class AnthropicIntelligenceTool extends oLaneTool {
   }
 
   /**
-   * Generate text with Anthropic (using messages endpoint)
+   * Stream chat completion with Anthropic
    */
-  async _tool_generate(request: oRequest): Promise<ToolResult> {
+  private async *_streamCompletion(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        messages,
+        system,
+        max_tokens = 1000,
+        apiKey = this.apiKey,
+      } = params;
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'Anthropic API key is required',
+        };
+        return;
+      }
+
+      if (!messages || !Array.isArray(messages)) {
+        yield {
+          success: false,
+          error: '"messages" array is required',
+        };
+        return;
+      }
+
+      const chatRequest: AnthropicChatRequest = {
+        model: model as string,
+        max_tokens: max_tokens as number,
+        messages: messages as AnthropicMessage[],
+        system: system as string,
+        stream: true,
+      };
+
+      const response = await fetch(`https://api.anthropic.com/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(chatRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Anthropic API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              yield {
+                delta: parsed.delta.text,
+                model: model as string,
+              };
+            } else if (parsed.type === 'message_start' && parsed.message) {
+              yield {
+                model: parsed.message.model,
+                usage: parsed.message.usage,
+              };
+            } else if (parsed.type === 'message_delta' && parsed.delta) {
+              yield {
+                stop_reason: parsed.delta.stop_reason,
+                usage: parsed.usage,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream chat: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate text with Anthropic (using messages endpoint)
+   */
+  async _tool_generate(
+    request: oStreamRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const params = request.params as any;
+    const { stream = false } = params;
+
+    if (stream) {
+      return StreamUtils.processGenerator(
+        request,
+        this._streamGenerate(request),
+        request.stream,
+      );
+    }
+
+    try {
       const {
         model = this.defaultModel,
         prompt,
@@ -265,6 +412,134 @@ export class AnthropicIntelligenceTool extends oLaneTool {
       return {
         success: false,
         error: `Failed to generate text: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Stream text generation with Anthropic
+   */
+  private async *_streamGenerate(
+    request: oRequest,
+  ): AsyncGenerator<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = this.defaultModel,
+        prompt,
+        system,
+        max_tokens = 1000,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        yield {
+          success: false,
+          error: 'Anthropic API key is required',
+        };
+        return;
+      }
+
+      if (!prompt) {
+        yield {
+          success: false,
+          error: 'Prompt is required',
+        };
+        return;
+      }
+
+      const messages: AnthropicMessage[] = [
+        {
+          role: 'user',
+          content: prompt as string,
+        },
+      ];
+
+      const generateRequest: AnthropicMessageRequest = {
+        model: model as string,
+        max_tokens: max_tokens as number,
+        messages,
+        system: system as string,
+        stream: true,
+        ...options,
+      };
+
+      const response = await fetch(`https://api.anthropic.com/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(generateRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        yield {
+          success: false,
+          error: `Anthropic API error: ${response.status} - ${errorText}`,
+        };
+        return;
+      }
+
+      if (!response.body) {
+        yield {
+          success: false,
+          error: 'Response body is null',
+        };
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+          const data = trimmedLine.slice(6);
+          if (data === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+              yield {
+                delta: parsed.delta.text,
+                model: model as string,
+              };
+            } else if (parsed.type === 'message_start' && parsed.message) {
+              yield {
+                model: parsed.message.model,
+                usage: parsed.message.usage,
+              };
+            } else if (parsed.type === 'message_delta' && parsed.delta) {
+              yield {
+                stop_reason: parsed.delta.stop_reason,
+                usage: parsed.usage,
+              };
+            }
+          } catch (parseError) {
+            // Skip invalid JSON
+            continue;
+          }
+        }
+      }
+    } catch (error: any) {
+      yield {
+        success: false,
+        error: `Failed to stream generate: ${(error as Error).message}`,
       };
     }
   }

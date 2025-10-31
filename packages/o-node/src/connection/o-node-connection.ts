@@ -74,7 +74,7 @@ export class oNodeConnection extends oConnection {
       if (isStreamRequest) {
         stream.addEventListener('message', async (event) => {
           const response = await CoreUtils.processStreamResponse(event);
-          this.emitter.emit('stream', response);
+          this.emitter.emit('chunk', response);
           // marked as the last chunk let's close
           if (response.result._last) {
             await stream.close();

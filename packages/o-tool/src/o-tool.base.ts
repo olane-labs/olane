@@ -7,6 +7,7 @@ import {
   oRequest,
   oResponse,
   oNotificationManager,
+  oConnectionConfig,
 } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
@@ -39,10 +40,7 @@ export class oToolBase extends oCore {
     return [];
   }
 
-  connect(
-    nextHopAddress: oAddress,
-    targetAddress: oAddress,
-  ): Promise<oConnection> {
+  connect(config: oConnectionConfig): Promise<oConnection> {
     throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Connect not implemented');
   }
   initializeRouter(): Promise<void> {

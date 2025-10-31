@@ -250,8 +250,10 @@ export class IntelligenceTool extends oLaneTool {
   }
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
-  async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
-    const { prompt } = request.params;
+  async _tool_prompt(
+    request: PromptRequest,
+  ): Promise<ToolResult | AsyncGenerator<ToolResult>> {
+    const { prompt, stream = false } = request.params;
 
     const intelligence = await this.chooseIntelligence(request);
     this.logger.debug('Using intelligence: ', intelligence.choice.toString());
@@ -266,9 +268,10 @@ export class IntelligenceTool extends oLaneTool {
             content: prompt,
           },
         ],
+        stream,
       },
     });
-    return response.result.data as ToolResult;
+    return response.result.data as ToolResult | AsyncGenerator<ToolResult>;
   }
 
   async initialize(): Promise<void> {

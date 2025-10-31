@@ -130,7 +130,7 @@ export class oNodeRouter extends oToolRouter {
         if (!request.params.stream) {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
-        nodeConnection.onStream((response) => {
+        nodeConnection.onChunk((response) => {
           CoreUtils.sendStreamResponse(
             response,
             request.params.stream as Stream,

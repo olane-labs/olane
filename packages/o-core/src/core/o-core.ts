@@ -24,6 +24,7 @@ import {
   NotificationHandler,
   Subscription,
 } from './lib/events/index.js';
+import { oConnectionConfig } from '../connection/index.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -70,7 +71,10 @@ export abstract class oCore extends oObject {
       onChunk?: (chunk: oResponse) => void;
     },
   ): Promise<oResponse> {
-    return this.use(address, data, { stream: true, onChunk: options.onChunk });
+    return this.use(address, data, {
+      isStream: true,
+      onChunk: options.onChunk,
+    });
   }
 
   async useDirect(
@@ -148,7 +152,7 @@ export abstract class oCore extends oObject {
       noRouting?: boolean;
       readTimeoutMs?: number;
       drainTimeoutMs?: number;
-      stream?: boolean;
+      isStream?: boolean;
       onChunk?: (chunk: oResponse) => void;
     },
   ): Promise<oResponse> {
@@ -184,15 +188,17 @@ export abstract class oCore extends oObject {
       return this.useSelf(data);
     }
 
-    const connection = await this.connect(
-      nextHopAddress,
-      targetAddress,
-      options?.readTimeoutMs,
-      options?.drainTimeoutMs,
-    );
+    const connection = await this.connect({
+      nextHopAddress: nextHopAddress,
+      address: targetAddress,
+      callerAddress: this.address,
+      readTimeoutMs: options?.readTimeoutMs,
+      drainTimeoutMs: options?.drainTimeoutMs,
+      isStream: options?.isStream,
+    });
 
-    if (options?.stream) {
-      connection.onStream((response) => {
+    if (options?.isStream) {
+      connection.onChunk((response) => {
         options.onChunk?.(response);
       });
     }
@@ -205,7 +211,7 @@ export abstract class oCore extends oObject {
     });
 
     // we handle streaming response differently
-    if (options?.stream) {
+    if (options?.isStream) {
       return response;
     }
 
@@ -287,7 +293,12 @@ export abstract class oCore extends oObject {
         childAddress.setTransports(child?.transports || []);
       }
     }
-    const connection = await this.connect(childAddress, childAddress);
+
+    const connection = await this.connect({
+      nextHopAddress: childAddress,
+      address: childAddress,
+      callerAddress: this.address,
+    });
 
     // communicate the payload to the target node
     const response = await connection.send({
@@ -318,12 +329,7 @@ export abstract class oCore extends oObject {
   }
 
   // connection
-  abstract connect(
-    nextHopAddress: oAddress,
-    targetAddress: oAddress,
-    readTimeoutMs?: number,
-    drainTimeoutMs?: number,
-  ): Promise<oConnection>;
+  abstract connect(config: oConnectionConfig): Promise<oConnection>;
 
   // router
   abstract initializeRouter(): void;
