@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.26 (2025-11-04)</small>
+
+- monitoring improvements ([b7079b9](https://github.com/olane-labs/olane/commit/b7079b9))
+
 ## <small>0.7.12-alpha.25 (2025-10-31)</small>
 
 - removed unecessary stream related functionality ([ac75e0a](https://github.com/olane-labs/olane/commit/ac75e0a))
