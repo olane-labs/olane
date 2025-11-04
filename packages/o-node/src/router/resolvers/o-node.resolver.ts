@@ -3,6 +3,8 @@ import {
   oAddress,
   TransportType,
   CoreUtils,
+  oError,
+  oErrorCodes,
 } from '@olane/o-core';
 import { oNodeAddress } from '../o-node.address.js';
 import type { oRequest, oRouterRequest } from '@olane/o-core';
@@ -48,6 +50,14 @@ export class oNodeResolver extends oAddressResolver {
         targetAddress: targetAddress as oNodeAddress,
         requestOverride: request as oRouterRequest,
       };
+    }
+
+    // no child address, and we have already been to the leader, fail
+    if (address.toString().indexOf(oAddress.leader().toString()) > -1) {
+      throw new oError(
+        oErrorCodes.NOT_FOUND,
+        targetAddress.toString() + ' node not found.',
+      );
     }
 
     return {
