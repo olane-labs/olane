@@ -25,14 +25,11 @@ import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
 import { oNodeConnectionManager } from './connection/o-node-connection.manager.js';
 import { oNodeResolver } from './router/resolvers/o-node.resolver.js';
-import { NetworkUtils } from './utils/network.utils.js';
 import { oMethodResolver, oToolBase } from '@olane/o-tool';
-import { oSearchResolver } from './router/resolvers/o-node.search-resolver.js';
 import { oLeaderResolverFallback } from './router/index.js';
 import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
-import { LeaderRequestWrapper } from './utils/leader-request-wrapper.js';
 import { oNodeConnectionConfig } from './connection/index.js';
 
 export class oNode extends oToolBase {
@@ -44,7 +41,6 @@ export class oNode extends oToolBase {
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   public reconnectionManager?: oReconnectionManager;
-  public leaderRequestWrapper!: LeaderRequestWrapper;
   protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
@@ -483,30 +479,6 @@ export class oNode extends oToolBase {
     // initialize connection manager
     await this.initConnectionManager();
 
-    // Initialize leader request wrapper with circuit breaker
-    this.leaderRequestWrapper = new LeaderRequestWrapper({
-      enabled: this.config.leaderRetry?.enabled ?? true,
-      maxAttempts: this.config.leaderRetry?.maxAttempts ?? 20,
-      baseDelayMs: this.config.leaderRetry?.baseDelayMs ?? 2000,
-      maxDelayMs: this.config.leaderRetry?.maxDelayMs ?? 30000,
-      timeoutMs: this.config.leaderRetry?.timeoutMs ?? 120_000,
-      circuitBreaker: {
-        enabled: this.config.leaderRetry?.circuitBreaker?.enabled ?? true,
-        failureThreshold:
-          this.config.leaderRetry?.circuitBreaker?.failureThreshold ?? 3,
-        openTimeoutMs:
-          this.config.leaderRetry?.circuitBreaker?.openTimeoutMs ?? 30000,
-        halfOpenMaxAttempts:
-          this.config.leaderRetry?.circuitBreaker?.halfOpenMaxAttempts ?? 1,
-      },
-    });
-
-    this.logger.info(
-      `Leader retry config: enabled=${this.leaderRequestWrapper.getConfig().enabled}, ` +
-        `maxAttempts=${this.leaderRequestWrapper.getConfig().maxAttempts}, ` +
-        `circuitBreaker.enabled=${this.leaderRequestWrapper.getConfig().circuitBreaker?.enabled}`,
-    );
-
     // initialize address resolution
     this.router.addResolver(new oMethodResolver(this.address));
     this.router.addResolver(new oNodeResolver(this.address));
@@ -525,22 +497,21 @@ export class oNode extends oToolBase {
   /**
    * Override use() to wrap leader/registry requests with retry logic
    */
-  async use(
-    address: oAddress,
-    data?: {
-      method?: string;
-      params?: { [key: string]: any };
-      id?: string;
-    },
-    options?: UseOptions,
-  ): Promise<any> {
-    // Wrap leader/registry requests with retry logic
-    return this.leaderRequestWrapper.execute(
-      () => super.use(address, data, options),
-      address,
-      data?.method,
-    );
-  }
+  // async use(
+  //   address: oAddress,
+  //   data?: {
+  //     method?: string;
+  //     params?: { [key: string]: any };
+  //     id?: string;
+  //   },
+  //   options?: UseOptions,
+  // ): Promise<any> {
+  //   // Wrap leader/registry requests with retry logic
+  //   return super.use(address, data, options),
+  //     address,
+  //     data?.method,
+
+  // }
 
   async teardown(): Promise<void> {
     // Stop heartbeat before parent teardown

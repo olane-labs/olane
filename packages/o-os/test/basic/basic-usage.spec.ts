@@ -45,25 +45,30 @@ describe('basic-usage @initialize', async () => {
     //     address: 'o://leader/intelligence',
     //   },
     // });
-    // use the intelligence tool
-    await entryNode.useStream(
-      new oNodeAddress('o://leader'),
-      {
-        method: 'intent',
-        params: {
-          _isStream: true,
-          intent: 'What is the official endpoint for github mcp server?',
-        },
-      },
-      {
-        onChunk: (chunk) => {
-          console.log(
-            'Received chunk: ',
-            JSON.stringify(chunk.result.data, null, 2),
-          );
-        },
-      },
+    console.log('Pinging relay');
+    await (entryNode.p2pNode.services as any).ping.ping(
+      multiaddr('/dns4/relay.olane.com/tcp/4000/tls/ws'),
     );
+    console.log('Pinged relay');
+    // use the intelligence tool
+    // await entryNode.useStream(
+    //   new oNodeAddress('o://leader'),
+    //   {
+    //     method: 'intent',
+    //     params: {
+    //       _isStream: true,
+    //       intent: 'What is the official endpoint for github mcp server?',
+    //     },
+    //   },
+    //   {
+    //     onChunk: (chunk) => {
+    //       console.log(
+    //         'Received chunk: ',
+    //         JSON.stringify(chunk.result.data, null, 2),
+    //       );
+    //     },
+    //   },
+    // );
     // await entryNode.use(
     //   new oNodeAddress('o://intelligence'),
     //   {
