@@ -41,3 +41,4 @@ export { memory } from '@libp2p/memory';
 export { ping } from '@libp2p/ping';
 export { identify } from '@libp2p/identify';
 export { duplexPair } from 'it-pair/duplex';
+export { prometheusMetrics } from '@libp2p/prometheus-metrics';

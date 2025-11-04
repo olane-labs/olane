@@ -9,6 +9,7 @@ const logger = debug('olane-os:monitor:http');
 export interface MonitorHTTPServerConfig {
   port: number;
   metricsStore: MetricsStore;
+  registry?: promClient.Registry;
   onNodeQuery?: (address: string) => Promise<any>;
   onNetworkQuery?: () => Promise<any>;
 }
@@ -29,6 +30,13 @@ export class MonitorHTTPServer {
   private olaneServiceLastHeartbeat: promClient.Gauge;
   private olaneNetworkNodeCount: promClient.Gauge;
 
+  // LibP2P metrics
+  private libp2pPeerCount: promClient.Gauge;
+  private libp2pConnectionCount: promClient.Gauge;
+  private libp2pInboundConnections: promClient.Gauge;
+  private libp2pOutboundConnections: promClient.Gauge;
+  private libp2pDhtRoutingTableSize: promClient.Gauge;
+
   constructor(config: MonitorHTTPServerConfig) {
     this.app = express();
     this.metricsStore = config.metricsStore;
@@ -36,8 +44,11 @@ export class MonitorHTTPServer {
     this.onNodeQuery = config.onNodeQuery;
     this.onNetworkQuery = config.onNetworkQuery;
 
-    // Initialize Prometheus registry
-    this.registry = new promClient.Registry();
+    // Use provided registry or create new one
+    this.registry = config.registry || new promClient.Registry();
+
+    // Determine if we should register custom metrics
+    const shouldRegisterCustomMetrics = !config.registry;
 
     // Register custom Olane metrics
     this.olaneNodeSuccessCount = new promClient.Gauge({
@@ -74,8 +85,41 @@ export class MonitorHTTPServer {
       registers: [this.registry],
     });
 
-    // Merge with default Prometheus metrics (if libp2p metrics are enabled)
-    promClient.collectDefaultMetrics({ register: this.registry });
+    // Register libp2p metrics
+    this.libp2pPeerCount = new promClient.Gauge({
+      name: 'libp2p_peer_count',
+      help: 'Number of known peers in libp2p peer store',
+      registers: [this.registry],
+    });
+
+    this.libp2pConnectionCount = new promClient.Gauge({
+      name: 'libp2p_connection_count',
+      help: 'Total number of active libp2p connections',
+      registers: [this.registry],
+    });
+
+    this.libp2pInboundConnections = new promClient.Gauge({
+      name: 'libp2p_inbound_connections',
+      help: 'Number of inbound libp2p connections',
+      registers: [this.registry],
+    });
+
+    this.libp2pOutboundConnections = new promClient.Gauge({
+      name: 'libp2p_outbound_connections',
+      help: 'Number of outbound libp2p connections',
+      registers: [this.registry],
+    });
+
+    this.libp2pDhtRoutingTableSize = new promClient.Gauge({
+      name: 'libp2p_dht_routing_table_size',
+      help: 'Size of the DHT routing table',
+      registers: [this.registry],
+    });
+
+    // Only collect default metrics if we created the registry
+    if (shouldRegisterCustomMetrics) {
+      promClient.collectDefaultMetrics({ register: this.registry });
+    }
 
     this.setupRoutes();
   }
@@ -261,6 +305,28 @@ export class MonitorHTTPServer {
     // Update network-wide metrics
     const summary = this.metricsStore.getSummary();
     this.olaneNetworkNodeCount.set(summary.totalNodes);
+
+    // Update libp2p metrics from stored data
+    const libp2pMetrics =
+      this.metricsStore.getLatestMetrics('o://libp2p-network');
+    if (libp2pMetrics?.libp2pMetrics) {
+      const lm = libp2pMetrics.libp2pMetrics;
+      if (lm.peerCount !== undefined) {
+        this.libp2pPeerCount.set(lm.peerCount);
+      }
+      if (lm.connectionCount !== undefined) {
+        this.libp2pConnectionCount.set(lm.connectionCount);
+      }
+      if (lm.inboundConnections !== undefined) {
+        this.libp2pInboundConnections.set(lm.inboundConnections);
+      }
+      if (lm.outboundConnections !== undefined) {
+        this.libp2pOutboundConnections.set(lm.outboundConnections);
+      }
+      if (lm.dhtRoutingTableSize !== undefined) {
+        this.libp2pDhtRoutingTableSize.set(lm.dhtRoutingTableSize);
+      }
+    }
   }
 
   /**

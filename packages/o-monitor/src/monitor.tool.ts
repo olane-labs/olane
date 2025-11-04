@@ -6,11 +6,13 @@ import { MonitorHTTPServer } from './http/server.js';
 import { HeartbeatProvider } from './providers/heartbeat.provider.js';
 import { NodeHealthProvider } from './providers/node-health.provider.js';
 import { LibP2PMetricsProvider } from './providers/libp2p-metrics.provider.js';
+import * as promClient from 'prom-client';
 
 export interface MonitorToolConfig extends Partial<oNodeToolConfig> {
   httpPort?: number;
   enableHTTP?: boolean;
   address?: oAddress;
+  prometheusRegistry?: promClient.Registry;
 }
 
 /**
@@ -31,6 +33,7 @@ export class MonitorTool extends oLaneTool {
   private httpPort: number;
   private enableHTTP: boolean;
   private cleanupInterval?: NodeJS.Timeout;
+  private prometheusRegistry?: promClient.Registry;
 
   // Child providers
   private heartbeatProvider?: HeartbeatProvider;
@@ -46,6 +49,7 @@ export class MonitorTool extends oLaneTool {
         'Monitoring and observability tool for Olane OS network',
       leader: config.leader || null,
       parent: config.parent || null,
+      network: config.network,
     });
 
     this.metricsStore = new MetricsStore();
@@ -53,6 +57,7 @@ export class MonitorTool extends oLaneTool {
       config.httpPort || parseInt(process.env.MONITOR_HTTP_PORT || '9090', 10);
     this.enableHTTP =
       config.enableHTTP ?? process.env.MONITOR_HTTP_ENABLED !== 'false';
+    this.prometheusRegistry = config.prometheusRegistry;
   }
 
   async initialize(): Promise<void> {
@@ -136,6 +141,13 @@ export class MonitorTool extends oLaneTool {
     this.libp2pMetricsProvider = new LibP2PMetricsProvider({
       parent: this.address as any,
       leader: this.leader as any,
+      metricsStore: this.metricsStore,
+      prometheusRegistry: this.prometheusRegistry,
+      enablePolling: process.env.LIBP2P_METRICS_AUTO_POLL !== 'false',
+      pollingInterval: parseInt(
+        process.env.LIBP2P_METRICS_POLLING_INTERVAL || '60000',
+        10,
+      ),
     });
     this.libp2pMetricsProvider.initConnectionManager = async () => {
       this.libp2pMetricsProvider!.connectionManager = this.connectionManager;
@@ -156,6 +168,7 @@ export class MonitorTool extends oLaneTool {
     this.httpServer = new MonitorHTTPServer({
       port: this.httpPort,
       metricsStore: this.metricsStore,
+      registry: this.prometheusRegistry,
       onNodeQuery: async (address: string) => {
         // Query live node data
         try {

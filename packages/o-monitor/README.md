@@ -81,6 +81,10 @@ MONITOR_POLLING_INTERVAL=60000      # Polling interval in ms (default: 60000)
 # Cleanup
 MONITOR_CLEANUP_INTERVAL=3600000    # Metrics cleanup interval (default: 1 hour)
 
+# LibP2P Metrics Polling
+LIBP2P_METRICS_AUTO_POLL=true       # Enable automatic libp2p metrics polling (default: false)
+LIBP2P_METRICS_POLLING_INTERVAL=60000 # Polling interval in ms (default: 60000)
+
 # Optional Heartbeat (for all nodes)
 MONITOR_ENABLED=true                # Enable heartbeat from all nodes
 MONITOR_ADDRESS=o://monitor         # Monitor address for heartbeats
@@ -300,6 +304,56 @@ Get all libp2p metrics in one call.
 }
 ```
 
+#### `collect_libp2p_metrics`
+
+Manually trigger collection of libp2p metrics into MetricsStore.
+
+**Returns:**
+```typescript
+{
+  message: 'libp2p metrics collected',
+  timestamp: 1234567890,
+  metrics: {
+    peerCount: 10,
+    connectionCount: 5,
+    inboundConnections: 2,
+    outboundConnections: 3,
+    dhtEnabled: true,
+    dhtMode: 'server',
+    dhtRoutingTableSize: 20,
+    protocols: ['/olane/1.0.0', '/ipfs/id/1.0.0'],
+    selfPeerId: '12D3KooW...',
+    multiaddrs: ['/ip4/127.0.0.1/tcp/4001']
+  }
+}
+```
+
+#### `get_stored_libp2p_metrics`
+
+Get historical libp2p metrics from MetricsStore.
+
+**Returns:**
+```typescript
+{
+  timestamp: 1234567890,
+  latest: {
+    peerCount: 10,
+    connectionCount: 5,
+    inboundConnections: 2,
+    outboundConnections: 3,
+    dhtEnabled: true,
+    dhtMode: 'server',
+    dhtRoutingTableSize: 20
+  },
+  history: [
+    {
+      timestamp: 1234567000,
+      metrics: { ... }
+    }
+  ]
+}
+```
+
 ## HTTP API Endpoints
 
 ### Prometheus Metrics
@@ -317,11 +371,21 @@ Returns Prometheus-formatted metrics including:
 - `olane_service_last_heartbeat_timestamp{node_address="o://storage"}` - Last heartbeat timestamp
 - `olane_network_node_count` - Total nodes in network
 
-**libp2p metrics** (if enabled):
+**libp2p metrics** (when polling is enabled):
+- `libp2p_peer_count` - Number of known peers
+- `libp2p_connection_count` - Total active connections
+- `libp2p_inbound_connections` - Inbound connections
+- `libp2p_outbound_connections` - Outbound connections
+- `libp2p_dht_routing_table_size` - DHT routing table size
+
+**Native libp2p metrics** (from @libp2p/prometheus-metrics when registry is shared):
 - `libp2p_data_transfer_bytes_total` - Network I/O
 - `libp2p_kad_dht_wan_query_time_seconds` - DHT query latency
+
+**Default Node.js metrics:**
 - `process_cpu_user_seconds_total` - CPU usage
 - `nodejs_memory_usage_bytes` - Memory usage
+- And many more...
 
 ### REST API
 

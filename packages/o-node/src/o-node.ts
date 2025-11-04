@@ -273,6 +273,7 @@ export class oNode extends oToolBase {
         defaultLibp2pConfig.listeners ||
         []
       ).concat(`/memory/${uuidv4()}`), // ensure we allow for local in-memory communication
+      prometheusRegistry: this.config.network?.prometheusRegistry,
     };
 
     // if the seed is provided, use it to generate the private key

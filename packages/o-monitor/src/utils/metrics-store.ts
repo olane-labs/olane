@@ -3,6 +3,22 @@
  * Stores metrics with timestamps for each node
  */
 
+export interface LibP2PMetrics {
+  peerCount?: number;
+  connectionCount?: number;
+  inboundConnections?: number;
+  outboundConnections?: number;
+  dhtEnabled?: boolean;
+  dhtMode?: string;
+  dhtRoutingTableSize?: number;
+  protocols?: string[];
+  selfPeerId?: string;
+  multiaddrs?: string[];
+  bytesReceived?: number;
+  bytesSent?: number;
+  [key: string]: any;
+}
+
 export interface MetricEntry {
   timestamp: number;
   successCount: number;
@@ -12,6 +28,7 @@ export interface MetricEntry {
   uptime?: number;
   memoryUsage?: NodeJS.MemoryUsage;
   children?: string[];
+  libp2pMetrics?: LibP2PMetrics;
   [key: string]: any;
 }
 
