@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.28 (2025-11-04)</small>
+
+- remove circuit breakre ([a08ad66](https://github.com/olane-labs/olane/commit/a08ad66))
+
 ## <small>0.7.12-alpha.27 (2025-11-04)</small>
 
 **Note:** Version bump only for package @olane/o-node
