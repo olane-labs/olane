@@ -3,9 +3,11 @@ import chalk from 'chalk';
 
 export class Logger {
   private log: Debugger;
+  private suffix: string = '';
 
   constructor(private readonly name: string) {
-    this.log = debug('olane-os:' + name);
+    this.suffix = process.env.LOG_ID ? process.env.LOG_ID + ':' : '';
+    this.log = debug('olane-os:' + this.suffix + name);
   }
 
   setNamespace(name: string) {

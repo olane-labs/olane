@@ -57,7 +57,10 @@ describe('basic-usage @initialize', async () => {
       },
       {
         onChunk: (chunk) => {
-          console.log('Received chunk: ', chunk.result.data);
+          console.log(
+            'Received chunk: ',
+            JSON.stringify(chunk.result.data, null, 2),
+          );
         },
       },
     );

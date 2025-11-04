@@ -108,8 +108,14 @@ export class MonitorTool extends oLaneTool {
       leader: this.leader as any,
       metricsStore: this.metricsStore,
     });
+    this.heartbeatProvider.initConnectionManager = async () => {
+      this.heartbeatProvider!.connectionManager = this.connectionManager;
+    };
+    this.heartbeatProvider.hookInitializeFinished = async () => {
+      if (!this.heartbeatProvider) return;
+      this.addChildNode(this.heartbeatProvider);
+    };
     await this.heartbeatProvider.start();
-    this.addChildNode(this.heartbeatProvider);
 
     // Node Health Provider
     this.nodeHealthProvider = new NodeHealthProvider({
@@ -117,16 +123,28 @@ export class MonitorTool extends oLaneTool {
       leader: this.leader as any,
       metricsStore: this.metricsStore,
     });
+    this.nodeHealthProvider.initConnectionManager = async () => {
+      this.nodeHealthProvider!.connectionManager = this.connectionManager;
+    };
+    this.nodeHealthProvider.hookInitializeFinished = async () => {
+      if (!this.nodeHealthProvider) return;
+      this.addChildNode(this.nodeHealthProvider);
+    };
     await this.nodeHealthProvider.start();
-    this.addChildNode(this.nodeHealthProvider);
 
     // LibP2P Metrics Provider
     this.libp2pMetricsProvider = new LibP2PMetricsProvider({
       parent: this.address as any,
       leader: this.leader as any,
     });
+    this.libp2pMetricsProvider.initConnectionManager = async () => {
+      this.libp2pMetricsProvider!.connectionManager = this.connectionManager;
+    };
+    this.libp2pMetricsProvider.hookInitializeFinished = async () => {
+      if (!this.libp2pMetricsProvider) return;
+      this.addChildNode(this.libp2pMetricsProvider);
+    };
     await this.libp2pMetricsProvider.start();
-    this.addChildNode(this.libp2pMetricsProvider);
 
     this.logger.debug('All provider nodes initialized');
   }
@@ -153,7 +171,7 @@ export class MonitorTool extends oLaneTool {
       onNetworkQuery: async () => {
         // Query network-wide data
         try {
-          const registry = await this.use(new oAddress('o://leader'), {
+          const registry = await this.use(new oAddress('o://registry'), {
             method: 'find_all',
             params: {},
           });
@@ -235,7 +253,7 @@ export class MonitorTool extends oLaneTool {
    */
   async _tool_collect_metrics(request: oRequest): Promise<any> {
     // Get all registered nodes from leader
-    const registry = await this.use(new oAddress('o://leader'), {
+    const registry = await this.use(new oAddress('o://registry'), {
       method: 'find_all',
       params: {},
     });
@@ -268,7 +286,7 @@ export class MonitorTool extends oLaneTool {
     // Get registry data
     let registryData = null;
     try {
-      const registry = await this.use(new oAddress('o://leader'), {
+      const registry = await this.use(new oAddress('o://registry'), {
         method: 'find_all',
         params: {},
       });

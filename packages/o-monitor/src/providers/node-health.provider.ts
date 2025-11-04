@@ -65,16 +65,18 @@ export class NodeHealthProvider extends oNodeTool {
           params: {},
         });
 
+        const data = metrics.result.data as any;
+
         // Store in metrics store
         if (metrics.result) {
           this.metricsStore.storeMetrics(address as string, {
-            successCount: metrics.result.successCount || 0,
-            errorCount: metrics.result.errorCount || 0,
-            activeRequests: metrics.result.activeRequests || 0,
-            state: metrics.result.state,
-            uptime: metrics.result.uptime,
-            memoryUsage: metrics.result.memoryUsage,
-            children: metrics.result.children,
+            successCount: data.successCount || 0,
+            errorCount: data.errorCount || 0,
+            activeRequests: data.activeRequests || 0,
+            state: data.state,
+            uptime: data.uptime,
+            memoryUsage: data.memoryUsage,
+            children: data.children,
           });
         }
 
@@ -167,13 +169,13 @@ export class NodeHealthProvider extends oNodeTool {
           params: {},
         });
 
-        if (metrics.result && metrics.result.children) {
+        const data = metrics.result.data as any;
+
+        if (data && data.children) {
           hierarchyData.push({
             address,
-            children: metrics.result.children,
-            childCount: Array.isArray(metrics.result.children)
-              ? metrics.result.children.length
-              : 0,
+            children: data.children,
+            childCount: Array.isArray(data.children) ? data.children.length : 0,
           });
         }
       } catch (error: any) {
@@ -260,7 +262,7 @@ export class NodeHealthProvider extends oNodeTool {
     this.pollingInterval = setInterval(async () => {
       try {
         // Get all registered nodes from leader
-        const registry = await this.use(new oAddress('o://leader'), {
+        const registry = await this.use(oAddress.registry(), {
           method: 'find_all',
           params: {},
         });
@@ -271,17 +273,10 @@ export class NodeHealthProvider extends oNodeTool {
             : [];
 
           // Collect metrics from all nodes
-          await this._tool_collect_node_metrics(
-            new oRequest({
-              method: 'collect_node_metrics',
-              params: {
-                addresses,
-                _connectionId: 'auto-poll',
-                _requestMethod: 'collect_node_metrics',
-              },
-              id: 'auto-poll',
-            }),
-          );
+          await this.use(this.address, {
+            method: 'collect_node_metrics',
+            params: { addresses },
+          });
         }
       } catch (error: any) {
         this.logger.error('Error during automatic polling:', error);
@@ -305,7 +300,7 @@ export class NodeHealthProvider extends oNodeTool {
    */
   async _tool_poll_now(request: oRequest): Promise<any> {
     try {
-      const registry = await this.use(new oAddress('o://leader'), {
+      const registry = await this.use(oAddress.registry(), {
         method: 'find_all',
         params: {},
       });
@@ -321,17 +316,10 @@ export class NodeHealthProvider extends oNodeTool {
         ? (registry.result.data as any[]).map((node: any) => node.address)
         : [];
 
-      const result = await this._tool_collect_node_metrics(
-        new oRequest({
-          method: 'collect_node_metrics',
-          params: {
-            addresses,
-            _connectionId: 'manual-poll',
-            _requestMethod: 'collect_node_metrics',
-          },
-          id: 'manual-poll',
-        }),
-      );
+      const result = await this.use(this.address, {
+        method: 'collect_node_metrics',
+        params: { addresses },
+      });
 
       return {
         message: 'Polling completed',

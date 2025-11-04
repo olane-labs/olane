@@ -184,7 +184,7 @@ export class oNode extends oToolBase {
     if (this.config.parent) {
       this.logger.debug(
         'Registering node with parent...',
-        this.config.parent?.toString,
+        this.config.parent?.toString(),
       );
       await this.use(this.config.parent, {
         method: 'child_register',
@@ -473,7 +473,7 @@ export class oNode extends oToolBase {
     await super.initialize();
 
     this.logger.debug(
-      'Node initializedddd!',
+      'Node initialized!',
       this.transports.map((t) => t.toString()),
     );
     this.address.setTransports(this.transports);

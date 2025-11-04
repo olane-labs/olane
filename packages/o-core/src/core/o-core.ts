@@ -72,10 +72,20 @@ export abstract class oCore extends oObject {
     },
     options: UseStreamOptions,
   ): Promise<oResponse> {
-    return this.use(address, data, {
-      ...options,
-      isStream: true,
-    });
+    return this.use(
+      address,
+      {
+        ...data,
+        params: {
+          ...data.params,
+          _isStream: true,
+        },
+      },
+      {
+        ...options,
+        isStream: true,
+      },
+    );
   }
 
   async useDirect(

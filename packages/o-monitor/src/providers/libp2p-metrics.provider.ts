@@ -102,8 +102,7 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
     try {
       const connections = p2pNode.getConnections();
-      const dialQueue = (p2pNode.services as any).connectionManager
-        ?.dialQueue;
+      const dialQueue = (p2pNode.services as any).connectionManager?.dialQueue;
 
       const connectionStats = connections.map((conn: any) => ({
         remotePeer: conn.remotePeer.toString(),
@@ -192,10 +191,22 @@ export class LibP2PMetricsProvider extends oNodeTool {
     try {
       const [peerInfo, dhtStatus, transportStats, connectionManagerStatus] =
         await Promise.all([
-          this._tool_get_peer_info(request),
-          this._tool_get_dht_status(request),
-          this._tool_get_transport_stats(request),
-          this._tool_get_connection_manager_status(request),
+          this.use(this.address, {
+            method: 'get_peer_info',
+            params: {},
+          }),
+          this.use(this.address, {
+            method: 'get_dht_status',
+            params: {},
+          }),
+          this.use(this.address, {
+            method: 'get_transport_stats',
+            params: {},
+          }),
+          this.use(this.address, {
+            method: 'get_connection_manager_status',
+            params: {},
+          }),
         ]);
 
       return {
