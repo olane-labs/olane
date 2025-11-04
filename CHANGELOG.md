@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.27 (2025-11-04)</small>
+
+- fix ([7c8dc56](https://github.com/olane-labs/olane/commit/7c8dc56))
+
 ## <small>0.7.12-alpha.26 (2025-11-04)</small>
 
 - bug fix for circular route loop ([fd80e0d](https://github.com/olane-labs/olane/commit/fd80e0d))

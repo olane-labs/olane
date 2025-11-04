@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.27 (2025-11-04)</small>
+
+**Note:** Version bump only for package @olane/o-storage
+
 ## <small>0.7.12-alpha.26 (2025-11-04)</small>
 
 **Note:** Version bump only for package @olane/o-storage
