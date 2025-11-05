@@ -47,7 +47,7 @@
     "@olane/o-storage": "0.7.12-alpha.30",
     "@olane/o-tool": "0.7.12-alpha.30",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "open": "^10.0.0",
     "prom-client": "^15.1.3"

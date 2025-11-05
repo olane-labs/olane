@@ -66,7 +66,7 @@
     "@olane/o-protocol": "0.7.12-alpha.30",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.3",
     "multiformats": "^13.3.7"
   },
   "gitHead": "382a01cd58c34c235bb1c14579b72869be4a6647"
