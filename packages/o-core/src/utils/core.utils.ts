@@ -160,7 +160,11 @@ export class CoreUtils extends oObject {
       return;
     }
 
-    await stream.send(new TextEncoder().encode(response.toString()));
+    try {
+      await stream.send(new TextEncoder().encode(response.toString()));
+    } catch (error) {
+      utils.logger.error('Error sending stream response: ', error);
+    }
   }
 
   public static async processStream(event: any): Promise<any> {
@@ -176,7 +180,9 @@ export class CoreUtils extends oObject {
 
   public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
-    return res?.id ? oResponse.fromJSON(res) : new oResponse(res);
+    return new oResponse({
+      ...res.result,
+    });
   }
 
   public static async toCID(data: any): Promise<CID> {

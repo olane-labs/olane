@@ -62,16 +62,7 @@ export class oLaneTool extends oNodeTool {
       onChunk: _isStream
         ? async (chunk: any) => {
             this.logger.debug('Sending stream response: ', chunk);
-            await CoreUtils.sendStreamResponse(
-              new oResponse({
-                id: request.id,
-                data: chunk,
-                _last: false,
-                _requestMethod: request.method,
-                _connectionId: request.params?._connectionId,
-              }),
-              request.stream,
-            );
+            await CoreUtils.sendStreamResponse(chunk, request.stream);
           }
         : undefined,
       context: context

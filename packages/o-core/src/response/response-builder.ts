@@ -161,7 +161,9 @@ export class ResponseBuilder {
       error: result?.error,
       success,
       _last: responseContext.isLast,
-      _requestMethod: String(responseContext.requestMethod || request.method || ''),
+      _requestMethod: String(
+        responseContext.requestMethod || request.method || '',
+      ),
       _connectionId: String(responseContext.connectionId || ''),
     });
 
@@ -175,7 +177,10 @@ export class ResponseBuilder {
       if (success) {
         this.metricsTracker.trackSuccess(responseContext);
       } else {
-        this.metricsTracker.trackError(responseContext, this.normalizeError(error));
+        this.metricsTracker.trackError(
+          responseContext,
+          this.normalizeError(error),
+        );
       }
     }
 

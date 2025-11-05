@@ -20,7 +20,7 @@ export const defaultOSInstance = new OlaneOS({
     },
   ],
   lanes: [],
-  noIndexNetwork: true,
+  // noIndexNetwork: true,
 });
 
 setupGracefulShutdown(

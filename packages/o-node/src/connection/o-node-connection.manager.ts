@@ -98,7 +98,8 @@ export class oNodeConnectionManager extends oConnectionManager {
       } catch (error) {
         lastError = error;
         this.logger.warn(
-          `[${callerAddress?.toString() || 'unknown'}] Connection attempt ${attempt + 1}/${MAX_RETRIES + 1} failed for ${nextHopAddress.toString()}: ${error instanceof Error ? error.message : String(error)}`,
+          `[${callerAddress?.toString() || 'unknown'}] Connection attempt ${attempt + 1}/${MAX_RETRIES + 1} failed for ${nextHopAddress.toString()}:`,
+          error,
         );
 
         // Don't retry on the last attempt

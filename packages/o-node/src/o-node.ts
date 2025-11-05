@@ -332,6 +332,11 @@ export class oNode extends oToolBase {
           ) {
             return false;
           }
+
+          // check for standalone node
+          if (!this.config.parent && !this.config.leader) {
+            return false;
+          }
           return true;
         },
         // who can call us?
