@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.29 (2025-11-05)</small>
+
+- bug fixes for routing for streaming ([c6ddfc6](https://github.com/olane-labs/olane/commit/c6ddfc6))
+
 ## <small>0.7.12-alpha.28 (2025-11-04)</small>
 
 - remove circuit breakre ([a08ad66](https://github.com/olane-labs/olane/commit/a08ad66))
