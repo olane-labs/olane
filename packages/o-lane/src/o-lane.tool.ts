@@ -52,17 +52,19 @@ export class oLaneTool extends oNodeTool {
    */
   async _tool_intent(request: oStreamRequest): Promise<any> {
     this.logger.debug('Intent resolution called: ', request.params);
-    const { intent, context, streamTo, _isStream = false } = request.params;
+    const { intent, context, streamTo, _isStreaming = false } = request.params;
 
     const pc = await this.manager.createLane({
       intent: new oIntent({ intent: intent as string }),
       currentNode: this,
       caller: this.address,
       streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
-      onChunk: _isStream
+      onChunk: _isStreaming
         ? async (chunk: any) => {
-            this.logger.debug('Sending stream response: ', chunk);
-            await CoreUtils.sendStreamResponse(chunk, request.stream);
+            await CoreUtils.sendStreamResponse(
+              oResponse.fromJSON(chunk),
+              request.stream,
+            );
           }
         : undefined,
       context: context

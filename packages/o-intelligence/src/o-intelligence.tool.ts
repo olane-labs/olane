@@ -251,25 +251,17 @@ export class IntelligenceTool extends oLaneTool {
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
-    const { prompt, _isStream = false } = request.params;
+    const { prompt, _isStreaming = false } = request.params;
     const stream = request.stream;
 
     const intelligence = await this.chooseIntelligence(request);
-    this.logger.debug(
-      'Using intelligence: ',
-      intelligence.choice.toString(),
-      ' with stream: ',
-      _isStream,
-      ' and stream: ',
-      stream,
-    );
     const child = this.hierarchyManager.getChild(intelligence.choice);
     const response = await this.useChild(
       child || intelligence.choice,
       {
         method: 'completion',
         params: {
-          _isStream: _isStream as boolean,
+          _isStreaming: _isStreaming as boolean,
           apiKey: intelligence.apiKey,
           messages: [
             {
@@ -280,13 +272,13 @@ export class IntelligenceTool extends oLaneTool {
         },
       },
       {
-        isStream: _isStream as boolean,
-        onChunk: async (chunk: oResponse) => {
-          await CoreUtils.sendStreamResponse(chunk, stream);
+        isStream: _isStreaming || false,
+        onChunk: async (chunk) => {
+          await CoreUtils.sendStreamResponse(oResponse.fromJSON(chunk), stream);
         },
       },
     );
-    return response as ToolResult;
+    return response.result.data as ToolResult;
   }
 
   async initialize(): Promise<void> {

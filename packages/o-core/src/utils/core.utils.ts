@@ -71,37 +71,6 @@ export class CoreUtils extends oObject {
     throw new Error('Address is required');
   }
 
-  /**
-   * @deprecated Use ResponseBuilder.build() instead for consistent response generation with metrics tracking and error handling.
-   *
-   * Example migration:
-   * ```typescript
-   * // Old:
-   * const response = CoreUtils.buildResponse(request, result, error);
-   *
-   * // New:
-   * const responseBuilder = ResponseBuilder.create().withMetrics(node.metrics);
-   * const response = await responseBuilder.build(request, result, error);
-   * ```
-   *
-   * This method will be removed in a future major version.
-   */
-  static buildResponse(request: oRequest, result: any, error: any): oResponse {
-    let success = true;
-    if (error) {
-      success = false;
-    }
-    return new oResponse({
-      id: request.id,
-      data: result,
-      error: result?.error,
-      ...{ success },
-      _last: true,
-      _requestMethod: request.method,
-      _connectionId: request.params?._connectionId,
-    });
-  }
-
   static async generatePrivateKey(seed: string): Promise<any> {
     // Convert any user phrase to exactly 32 bytes using SHA-256
     const seedBytes = CoreUtils.phraseToSeedBytes(seed);
@@ -145,7 +114,7 @@ export class CoreUtils extends oObject {
 
     try {
       await stream.send(new TextEncoder().encode(response.toString()));
-      await stream.close();
+      // await stream.close();
     } catch (error) {
       console.error('Error sending response: ', error);
     }

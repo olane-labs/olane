@@ -1,11 +1,4 @@
-import {
-  Connection,
-  Uint8ArrayList,
-  pushable,
-  all,
-  Stream,
-  byteStream,
-} from '@olane/o-config';
+import { Connection } from '@olane/o-config';
 import {
   CoreUtils,
   oConnection,
@@ -13,7 +6,6 @@ import {
   oErrorCodes,
   oRequest,
   oResponse,
-  ResponseBuilder,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
@@ -23,17 +15,6 @@ export class oNodeConnection extends oConnection {
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
-  }
-
-  async read(source: Stream) {
-    const bytes = byteStream(source);
-    const output = await bytes.read({
-      signal: AbortSignal.timeout(this.config.readTimeoutMs ?? 120_000), // Default: 2 min timeout
-    });
-    const outputObj =
-      output instanceof Uint8ArrayList ? output.subarray() : output;
-    const jsonStr = new TextDecoder().decode(outputObj);
-    return JSON.parse(jsonStr);
   }
 
   validate() {
@@ -53,8 +34,6 @@ export class oNodeConnection extends oConnection {
         },
       );
 
-      const isStreamRequest = this.config.isStream;
-
       if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
         throw new oError(
           oErrorCodes.FAILED_TO_DIAL_TARGET,
@@ -72,24 +51,21 @@ export class oNodeConnection extends oConnection {
       const data = new TextEncoder().encode(request.toString());
       const sent = stream.send(data);
 
-      if (isStreamRequest) {
-        this.logger.debug(
-          'Detected stream request, attaching message listener',
-        );
-        await new Promise((resolve, reject) => {
-          // TODO: add timeout
-          stream.addEventListener('message', async (event) => {
-            const response = await CoreUtils.processStreamResponse(event);
-            this.emitter.emit('chunk', response);
-            // marked as the last chunk let's close
-            if (response.result._last) {
-              this.logger.debug('Last chunk received, closing stream');
-              await stream.close();
-              resolve(true);
-            }
-          });
+      let lastResponse: any;
+
+      await new Promise((resolve, reject) => {
+        // TODO: add timeout
+        stream.addEventListener('message', async (event) => {
+          const response = await CoreUtils.processStreamResponse(event);
+          this.emitter.emit('chunk', response);
+          // marked as the last chunk let's close
+          if (response.result._last || !response.result._isStreaming) {
+            lastResponse = response;
+            await stream.close();
+            resolve(true);
+          }
         });
-      }
+      });
 
       // If send() returns false, wait for the stream to drain before continuing
       if (!sent) {
@@ -99,18 +75,7 @@ export class oNodeConnection extends oConnection {
         }); // Default: 30 second timeout
       }
 
-      if (isStreamRequest) {
-        const responseBuilder = ResponseBuilder.create();
-        return Promise.resolve(await responseBuilder.buildFinalChunk(request));
-      }
-
-      const res = await this.read(stream);
-      await stream.close();
-
-      // process the response
-      const response = new oResponse({
-        ...res.result,
-      });
+      const response = oResponse.fromJSON(lastResponse);
       return response;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {

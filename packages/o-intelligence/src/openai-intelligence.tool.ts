@@ -163,9 +163,9 @@ export class OpenAIIntelligenceTool extends oLaneTool {
    */
   async _tool_completion(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { _isStream = false } = params;
+    const { _isStreaming = false } = params;
 
-    if (_isStream) {
+    if (_isStreaming) {
       return StreamUtils.processGenerator(
         request,
         this._streamCompletion(request),
@@ -375,9 +375,9 @@ export class OpenAIIntelligenceTool extends oLaneTool {
    */
   async _tool_generate(request: oStreamRequest): Promise<ToolResult> {
     const params = request.params as any;
-    const { _isStream = false } = params;
+    const { _isStreaming = false } = params;
 
-    if (_isStream) {
+    if (_isStreaming) {
       return StreamUtils.processGenerator(
         request,
         this._streamGenerate(request),

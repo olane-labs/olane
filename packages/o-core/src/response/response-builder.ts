@@ -160,7 +160,8 @@ export class ResponseBuilder {
       data: result,
       error: result?.error,
       success,
-      _last: responseContext.isLast,
+      _last: responseContext.isLast ?? true,
+      _isStreaming: responseContext.isStream ?? false,
       _requestMethod: String(
         responseContext.requestMethod || request.method || '',
       ),

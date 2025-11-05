@@ -19,16 +19,17 @@ describe('playground running', async () => {
 
     console.log('Using intelligence tool');
     const response = await entryNode.useStream(
-      new oNodeAddress('o://leader/auth/services/intelligence', [
+      new oNodeAddress('o://leader', [
         new oNodeTransport(
           '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
         ),
       ]),
       {
-        method: 'prompt',
+        method: 'intent',
         params: {
-          _isStream: true,
-          prompt: 'What is the capital of France?',
+          _isStreaming: true,
+          intent:
+            'Print the first paragraph of the Constitution of the United States',
           _token: 'test',
         },
       },

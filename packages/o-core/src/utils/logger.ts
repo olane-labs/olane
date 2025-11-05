@@ -11,7 +11,7 @@ export class Logger {
   }
 
   setNamespace(name: string) {
-    this.log = debug('olane-os:' + name);
+    this.log = debug('olane-os:' + this.suffix + name);
   }
 
   verbose(...args: any[]) {

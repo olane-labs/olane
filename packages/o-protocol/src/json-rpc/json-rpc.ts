@@ -10,7 +10,8 @@ export type Cursor = string;
 export interface RequestParams {
   _connectionId: ConnectionId;
   _requestMethod: string;
-  [key: string]: unknown;
+  _isStreaming?: boolean;
+  [key: string]: any;
 }
 
 export interface Request {
@@ -21,15 +22,17 @@ export interface Request {
 export interface Notification {
   method: string;
   params?: {
-    _meta?: { [key: string]: unknown };
-    [key: string]: unknown;
+    _meta?: { [key: string]: any };
+    [key: string]: any;
   };
 }
 
 export interface Result {
   _connectionId: ConnectionId;
   _requestMethod: string;
-  [key: string]: unknown;
+  _last: boolean;
+  _isStreaming: boolean;
+  [key: string]: any;
 }
 
 /**

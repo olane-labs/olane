@@ -47,7 +47,7 @@ export class oCapabilitySearch extends oCapability {
       {
         onChunk: (chunk: oResponse) => {
           message += (chunk.result.data as any).delta;
-          this.config.onChunk?.(chunk);
+          this.config.onChunk?.(oResponse.fromJSON(chunk));
         },
       },
     );

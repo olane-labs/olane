@@ -17,48 +17,34 @@ export abstract class oCapabilityIntelligence extends oCapability {
           'Node is not running, cannot use intelligence capability',
         );
       }
-      let message = '';
-      const parser = new ResultStreamParser();
+      const _isStreaming = this.config.useStream || false;
 
-      await this.node.useStream(
+      const response = await this.node.useStream(
         new oAddress(RestrictedAddresses.INTELLIGENCE),
         {
           method: 'prompt',
           params: {
             prompt: prompt,
-            _isStream: this.config.onChunk ? true : false,
+            _isStreaming: _isStreaming,
           },
         },
         {
           onChunk: (chunk: oResponse) => {
-            const delta = (chunk.result.data as any).delta;
-            message += delta;
-
-            // Extract only new content from "result" field
-            const resultDelta = parser.processChunk(delta);
-
-            if (resultDelta && this.config.onChunk) {
+            if (this.config.onChunk) {
               // Emit only the result field content
-              const chunkData = chunk.result.data as any;
-              this.config.onChunk({
-                ...chunkData,
-                delta: resultDelta,
-              });
+              this.config.onChunk(oResponse.fromJSON(chunk));
             }
           },
         },
       );
 
+      const message = response.result.data.message;
       if (!message) {
         throw new Error('No message returned from intelligence');
       }
 
       // Use the parsed result value if available, otherwise fall back to full message
-      const resultValue = parser.getResultValue();
-      const processedResult = RegexUtils.extractResultFromAI(
-        resultValue || message,
-      );
-      this.logger.debug('Processed result: ', processedResult);
+      const processedResult = RegexUtils.extractResultFromAI(message);
       return new oCapabilityIntelligenceResult({
         result: processedResult,
         type: processedResult.type,

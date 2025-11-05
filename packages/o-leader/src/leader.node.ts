@@ -12,6 +12,9 @@ export class oLeaderNode extends oLaneTool {
       ...config,
       address: oAddress.leader(),
       type: NodeType.LEADER,
+      description:
+        config.description ||
+        'Leader node of the graph network which serves as the router for requests',
       methods: {
         start: START_METHOD,
       },

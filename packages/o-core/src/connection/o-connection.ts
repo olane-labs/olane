@@ -48,7 +48,7 @@ export abstract class oConnection extends oObject {
         _connectionId: this.id,
         _requestMethod: method,
         _callerAddress: this.callerAddress?.value,
-        _isStream: this.config.isStream || false,
+        _isStreaming: this.config.isStream ?? false,
         ...params,
       },
       id: params.id || uuidv4(),

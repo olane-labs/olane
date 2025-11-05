@@ -179,6 +179,7 @@ export class oLane extends oObject {
         ...this.config,
         sequence: this.sequence, // pass the full sequence to the next capability
       },
+      useStream: this.config.useStream || false,
     };
   }
 

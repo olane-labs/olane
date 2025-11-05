@@ -78,7 +78,7 @@ export abstract class oCore extends oObject {
         ...data,
         params: {
           ...data.params,
-          _isStream: true,
+          _isStreaming: true,
         },
       },
       {

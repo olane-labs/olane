@@ -92,7 +92,7 @@ export class oNodeRouter extends oToolRouter {
     const responseBuilder = ResponseBuilder.create().withMetrics(node.metrics);
 
     // Handle streaming requests
-    const isStream = request.params._isStream as boolean;
+    const isStream = request.params._isStreaming as boolean;
     if (isStream && request.stream) {
       // For streaming, we need to handle the stream chunks
       try {
@@ -170,8 +170,9 @@ export class oNodeRouter extends oToolRouter {
   ): Promise<any> {
     try {
       const isStream =
-        (request.params._isStream as boolean) ||
-        (request.params.payload as any)?.params?._isStream;
+        (request.params._isStreaming as boolean) ||
+        (request.params.payload as any)?.params?._isStreaming;
+
       const connection = await node.p2pNode.dial(
         address.libp2pTransports.map((t) => t.toMultiaddr()),
       );
@@ -189,7 +190,7 @@ export class oNodeRouter extends oToolRouter {
         if (!routeRequest.stream) {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
-        nodeConnection.onChunk((response) => {
+        nodeConnection.onChunk(async (response) => {
           CoreUtils.sendStreamResponse(response, routeRequest.stream as Stream);
         });
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener

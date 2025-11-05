@@ -31,8 +31,8 @@ export class oResponse implements Response {
   static fromJSON(json: any): oResponse {
     return new oResponse({
       ...json.result,
-      _connectionId: json._connectionId,
-      _requestMethod: json._requestMethod,
+      _connectionId: json.result?._connectionId,
+      _requestMethod: json.result?._requestMethod,
     });
   }
 }

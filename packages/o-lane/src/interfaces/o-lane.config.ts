@@ -25,4 +25,5 @@ export interface oLaneConfig {
   // Mark this lane as one that should be persisted to config for replay on startup
   persistToConfig?: boolean;
   onChunk?: (chunk: any) => void;
+  useStream?: boolean;
 }
