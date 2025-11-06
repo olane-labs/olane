@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.33 (2025-11-06)</small>
+
+**Note:** Version bump only for package @olane/o-mcp
+
 ## <small>0.7.12-alpha.32 (2025-11-06)</small>
 
 **Note:** Version bump only for package @olane/o-mcp

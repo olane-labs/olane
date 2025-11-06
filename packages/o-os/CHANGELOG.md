@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.33 (2025-11-06)</small>
+
+- added update_message to better capture feedback loop mechanism for ui ([87f134b](https://github.com/olane-labs/olane/commit/87f134b))
+
 ## <small>0.7.12-alpha.32 (2025-11-06)</small>
 
 **Note:** Version bump only for package @olane/os
