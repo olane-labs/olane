@@ -91,7 +91,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
         errorCount: this.metrics.errorCount,
         activeRequests: this.requestManager.activeRequests.length,
         state: this.state,
-        uptime: process.uptime(),
+        uptime: 0,
         memoryUsage: process.memoryUsage(),
         children: this.hierarchyManager.getChildren().map((c) => c.toString()),
       };

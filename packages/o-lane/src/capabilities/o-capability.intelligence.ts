@@ -7,7 +7,6 @@ import {
 import { oCapabilityIntelligenceResult } from './interfaces/o-capability.intelligence-result.js';
 import { oCapability } from './o-capability.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
-import { ResultStreamParser } from './utils/result-stream-parser.js';
 
 export abstract class oCapabilityIntelligence extends oCapability {
   async intelligence(prompt: string): Promise<oCapabilityIntelligenceResult> {

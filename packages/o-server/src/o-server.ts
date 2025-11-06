@@ -44,7 +44,6 @@ export function oServer(config: ServerConfig): ServerInstance {
       data: {
         status: 'healthy',
         timestamp: Date.now(),
-        uptime: process.uptime(),
       },
     });
   });
