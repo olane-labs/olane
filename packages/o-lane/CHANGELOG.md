@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.31 (2025-11-06)</small>
+
+- small fix for removing unecessary metrics ([6075323](https://github.com/olane-labs/olane/commit/6075323))
+
 ## <small>0.7.12-alpha.30 (2025-11-05)</small>
 
 - streaming bug fixes + improvements ([ae29515](https://github.com/olane-labs/olane/commit/ae29515))
