@@ -29,7 +29,7 @@ describe('playground running', async () => {
         params: {
           _isStreaming: true,
           intent:
-            'Print the first paragraph of the Constitution of the United States',
+            'Use the perplexity tool to search for the latest news on the stock market',
           _token: 'test',
         },
       },

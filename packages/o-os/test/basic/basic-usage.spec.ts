@@ -52,7 +52,11 @@
 //     console.log('Pinged relay');
 //     // use the intelligence tool
 //     await entryNode.useStream(
-//       new oNodeAddress('o://leader', [new oNodeTransport('/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8')]),
+//       new oNodeAddress('o://leader', [
+//         new oNodeTransport(
+//           '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
+//         ),
+//       ]),
 //       {
 //         method: 'intent',
 //         params: {

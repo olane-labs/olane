@@ -9,5 +9,6 @@ export interface oCapabilityTaskConfig extends oCapabilityConfig {
         params: { [key: string]: any };
       };
     };
+    update_message: string;
   };
 }

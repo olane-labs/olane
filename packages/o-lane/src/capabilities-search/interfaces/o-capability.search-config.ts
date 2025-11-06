@@ -8,5 +8,6 @@ export interface oCapabilitySearchConfig extends oCapabilityConfig {
     }[];
     isExternal: boolean;
     explanation: string;
+    update_message: string;
   };
 }
