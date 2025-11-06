@@ -37,6 +37,7 @@
     "@modelcontextprotocol/sdk": "^1.18.1"
   },
   "dependencies": {
+    "@libp2p/prometheus-metrics": "^5.0.7",
     "@olane/o-config": "0.7.12-alpha.31",
     "@olane/o-core": "0.7.12-alpha.31",
     "@olane/o-intelligence": "0.7.12-alpha.31",

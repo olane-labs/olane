@@ -57,7 +57,9 @@ export class MonitorTool extends oLaneTool {
       config.httpPort || parseInt(process.env.MONITOR_HTTP_PORT || '9090', 10);
     this.enableHTTP =
       config.enableHTTP ?? process.env.MONITOR_HTTP_ENABLED !== 'false';
-    this.prometheusRegistry = config.prometheusRegistry;
+
+    // Create a Prometheus registry if not provided
+    this.prometheusRegistry = config.prometheusRegistry || new promClient.Registry();
   }
 
   async initialize(): Promise<void> {

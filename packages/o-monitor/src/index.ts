@@ -14,3 +14,6 @@ export type { MetricEntry, HeartbeatEntry } from './utils/metrics-store.js';
 // HTTP server exports
 export { MonitorHTTPServer } from './http/server.js';
 export type { MonitorHTTPServerConfig } from './http/server.js';
+
+// Prometheus exports
+export { prometheusMetrics } from '@libp2p/prometheus-metrics';

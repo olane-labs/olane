@@ -8,7 +8,6 @@ import { webSockets } from '@libp2p/websockets';
 import { tcp } from '@libp2p/tcp';
 import { kadDHT, removePublicAddressesMapper } from '@libp2p/kad-dht';
 import { memory } from '@libp2p/memory';
-import type { Registry } from 'prom-client';
 
 export interface Libp2pConfig extends Libp2pInit {
   listeners?: string[];
@@ -16,7 +15,6 @@ export interface Libp2pConfig extends Libp2pInit {
   connectionEncrypters?: any[];
   streamMuxers?: any[];
   services?: Record<string, any>;
-  prometheusRegistry?: Registry;
 }
 
 export const defaultLibp2pConfig: Libp2pConfig = {
