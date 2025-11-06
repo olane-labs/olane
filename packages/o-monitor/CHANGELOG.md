@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.32 (2025-11-06)</small>
+
+- fix ([b5dd06e](https://github.com/olane-labs/olane/commit/b5dd06e))
+
 ## <small>0.7.12-alpha.31 (2025-11-06)</small>
 
 **Note:** Version bump only for package @olane/o-monitor
