@@ -9,5 +9,5 @@ export interface oCapabilityMultipleStepConfig extends oCapabilityConfig {
     intents: oIntent[];
     explanation: string;
   };
-  update_message: string;
+  summary: string;
 }

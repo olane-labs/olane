@@ -70,7 +70,7 @@ All Return Step Instructions:
 3. Output the respective results using the matching output type.
 4. Generate a reasoning key value pair for why this result was returned.
 5. The reasoning should be no longer than 1 sentence.
-6. The update_message should be a short message used to inform the user of the result of the cycle. These updates should be insightful and concise and within 1-2 sentences.
+6. The summary should be a short message used to inform the user of the result of the cycle. These updates should be insightful and concise and within 1-2 sentences.
 6. Do not include \`\`\`json or \`\`\` in your output.
 
 Complex Intent Results:
@@ -80,7 +80,7 @@ Complex Intent Results:
     "simple intent 2",
     "simple intent 3",
   ],
-  "update_message": string,
+  "summary": string,
   "reasoning": string,
   "type": "multiple_step",
 }
@@ -90,7 +90,7 @@ Configure Response:
   "intent": string,
   "toolAddress": string,
   "reasoning": string,
-  "update_message": string,
+  "summary": string,
   "type": "configure",
 }
 
@@ -104,7 +104,7 @@ Search Response:
   ],
   "isExternal": boolean,
   "reasoning": string,
-  "update_message": string,
+  "summary": string,
   "type": "search",
 }
 
@@ -113,14 +113,14 @@ Stop Response:
   "result": string,
   "reasoning": string,
   "addresses_to_index": [string], // COMMENT: If the results of a tool use include "address_to_index", list them in the "addresses_to_index" array.
-  "update_message": string,
+  "summary": string,
   "type": "stop",
 }
 
 Error Response:
 {
   "result": "string explaining the error",
-  "update_message": string,
+  "summary": string,
   "reasoning": string,
   "type": "evaluate",
 }
@@ -131,7 +131,7 @@ Use Tool Response:
     "address": string,
     "payload": { "method": string, "params": any }
   },
-  "update_message": string,
+  "summary": string,
   "type": "task",
 }
 [RETURN INSTRUCTIONS END]

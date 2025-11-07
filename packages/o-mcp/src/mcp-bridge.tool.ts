@@ -78,10 +78,7 @@ export class McpBridgeTool extends oLaneTool {
       return {
         _save: true,
         address_to_index: mcpTool.address,
-        message:
-          'Successfully added MCP server with ' +
-          this.hierarchyManager.getChildren().length +
-          ' tools',
+        message: 'Successfully added MCP server: ' + mcpTool.address.toString(),
       };
     } catch (e: any) {
       throw new Error(
@@ -122,7 +119,8 @@ export class McpBridgeTool extends oLaneTool {
     return {
       _save: true,
       address_to_index: mcpTool.address,
-      message: 'Successfully added local MCP server',
+      message:
+        'Successfully added local MCP server: ' + mcpTool.address.toString(),
     };
   }
 
