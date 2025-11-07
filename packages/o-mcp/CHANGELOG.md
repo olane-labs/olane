@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.34 (2025-11-07)</small>
+
+- changed agent prompt for summary attribute ([e9a9bda](https://github.com/olane-labs/olane/commit/e9a9bda))
+
 ## <small>0.7.12-alpha.33 (2025-11-06)</small>
 
 **Note:** Version bump only for package @olane/o-mcp
