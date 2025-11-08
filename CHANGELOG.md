@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.35 (2025-11-08)</small>
+
+- improvements to the streaming agent process ([b0f181f](https://github.com/olane-labs/olane/commit/b0f181f))
+
 ## <small>0.7.12-alpha.34 (2025-11-07)</small>
 
 - changed agent prompt for summary attribute ([e9a9bda](https://github.com/olane-labs/olane/commit/e9a9bda))
