@@ -4,6 +4,7 @@ import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js
 import { oCapabilitySearchConfig } from './interfaces/o-capability.search-config.js';
 import { oCapabilitySearchResult } from './o-capability.search-result.js';
 import { oCapabilityResult } from '../capabilities/o-capability.result.js';
+import { ResultStreamParser } from '../capabilities/utils/result-stream-parser.js';
 
 export class oCapabilitySearch extends oCapability {
   public config!: oCapabilitySearchConfig;
@@ -29,8 +30,8 @@ export class oCapabilitySearch extends oCapability {
   }
 
   async doExternalSearch(query: string): Promise<string> {
-    let message = '';
-    await this.node.useStream(
+    const parser = new ResultStreamParser('message');
+    const response = await this.node.useStream(
       new oAddress('o://perplexity'),
       {
         method: 'completion',
@@ -46,12 +47,17 @@ export class oCapabilitySearch extends oCapability {
       },
       {
         onChunk: (chunk: oResponse) => {
-          message += (chunk.result.data as any).delta;
-          this.config.onChunk?.(oResponse.fromJSON(chunk));
+          // message += (chunk.result.data as any).delta;
+          // if (chunk.result.data.delta) {
+          //   const parseResult = parser.processChunk(chunk.result.data.delta);
+          //   if (parseResult) {
+          //     this.config.onChunk?.(oResponse.fromJSON(parseResult));
+          //   }
+          // }
         },
       },
     );
-    return message;
+    return response.result.data.message;
   }
 
   /**
@@ -63,7 +69,7 @@ export class oCapabilitySearch extends oCapability {
       const searchResult = await this.doExternalSearch(query.query);
       searchResults.push(searchResult);
     }
-    let searchResultContext = `[Search Results Begin]`;
+    let searchResultContext = `[Search Results Begin]\n`;
     if (searchResults.length === 0) {
       searchResultContext += `No more search results found!\n\n`;
     }
@@ -77,6 +83,7 @@ export class oCapabilitySearch extends oCapability {
 
     return new oCapabilitySearchResult({
       result: searchResultContext,
+      humanResult: searchResults,
       type: oCapabilityType.EVALUATE,
       config: this.config,
     });
@@ -85,7 +92,10 @@ export class oCapabilitySearch extends oCapability {
   private async doInternalSearch(
     query: string,
     limit?: number,
-  ): Promise<string> {
+  ): Promise<{
+    rawResult: { metadata: any; pageContent: any }[];
+    formattedResult: string;
+  }> {
     const response = await this.node.use(new oAddress('o://search'), {
       method: 'vector',
       params: {
@@ -93,9 +103,6 @@ export class oCapabilitySearch extends oCapability {
         limit: limit || 20,
       },
     });
-    if (this.config.onChunk) {
-      this.config.onChunk(response);
-    }
     let searchResultContext = ``;
     const data = response.result.data as { metadata: any; pageContent: any }[];
     let filteredSearchResults = data;
@@ -111,7 +118,10 @@ export class oCapabilitySearch extends oCapability {
         searchResultContext += `Tool Address: ${searchResult?.metadata?.address || 'unknown'}\nTool Data: ${searchResult?.pageContent || 'unknown'}\n\n`;
       }
     }
-    return searchResultContext;
+    return {
+      rawResult: filteredSearchResults,
+      formattedResult: searchResultContext,
+    };
   }
 
   /**
@@ -121,17 +131,20 @@ export class oCapabilitySearch extends oCapability {
     // find all tools that are search tools
     let searchResultContext = `[Search Results Begin]`;
 
+    const searchResults = [];
     for (const query of this.queries) {
       const searchResult = await this.doInternalSearch(
         query.query,
         query.limit,
       );
-      searchResultContext += searchResult;
+      searchResults.push(searchResult.rawResult);
+      searchResultContext += searchResult.formattedResult;
     }
 
     searchResultContext += `[Search Results End]`;
     return new oCapabilitySearchResult({
       result: searchResultContext,
+      humanResult: searchResults?.flat() || [],
       type: oCapabilityType.EVALUATE,
       config: this.config,
     });

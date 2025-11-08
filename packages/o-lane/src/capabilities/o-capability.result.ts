@@ -13,6 +13,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
     | oCapabilityMultipleStepConfig
     | oCapabilityTaskConfig
     | any;
+  humanResult?: any;
   type: oCapabilityType;
   error?: string;
   config?: oCapabilityConfig;
@@ -21,6 +22,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
   constructor(config: oCapabilityResultInterface) {
     this.id = uuidv4();
     this.result = config.result;
+    this.humanResult = config.humanResult;
     this.type = config.type || oCapabilityType.UNKNOWN;
     this.error = config.error || '';
     this.config = config.config;

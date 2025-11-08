@@ -132,6 +132,7 @@ export class oCapabilityTask extends oCapability {
 
       return new oCapabilityTaskResult({
         result: `Tool Address Use output: ${JSON.stringify(response.result, null, 2)}`,
+        humanResult: response.result.data,
         type: oCapabilityType.EVALUATE,
         config: this.config,
         shouldPersist,

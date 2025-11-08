@@ -5,6 +5,7 @@ import {
   NodeState,
   oObject,
   RestrictedAddresses,
+  oResponse,
 } from '@olane/o-core';
 import { oLaneConfig } from './interfaces/o-lane.config.js';
 import { CID } from 'multiformats';
@@ -160,6 +161,7 @@ export class oLane extends oObject {
       this.logger.error('Error in execute: ', error);
       this.status = oLaneStatus.FAILED;
     }
+    this.logger.debug('Completed loop...');
     await this.postflight(this.result);
     this.status = oLaneStatus.COMPLETED;
     return this.result;
@@ -227,6 +229,7 @@ export class oLane extends oObject {
       if (currentStep.config) {
         currentStep.config.history = this.agentHistory;
       }
+
       // perform the latest capability
       const result = await this.doCapability(currentStep);
       this.addSequence(result);
@@ -237,6 +240,22 @@ export class oLane extends oObject {
           'Capability result flagged for persistence - automatically setting persistToConfig',
         );
         this.config.persistToConfig = true;
+      }
+
+      if (this.config.useStream && this.onChunk) {
+        this.onChunk(
+          new oResponse({
+            data: {
+              ...result,
+              config: undefined,
+            },
+            _last: false,
+            _isStreaming: true,
+            _connectionId: this.node.address.toString(),
+            _requestMethod: 'unknown',
+            id: uuidv4(),
+          }),
+        );
       }
 
       if (result.type === oCapabilityType.STOP) {

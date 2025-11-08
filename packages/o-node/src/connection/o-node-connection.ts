@@ -60,6 +60,7 @@ export class oNodeConnection extends oConnection {
           this.emitter.emit('chunk', response);
           // marked as the last chunk let's close
           if (response.result._last || !response.result._isStreaming) {
+            // this.logger.debug('Last chunk received...');
             lastResponse = response;
             await stream.close();
             resolve(true);

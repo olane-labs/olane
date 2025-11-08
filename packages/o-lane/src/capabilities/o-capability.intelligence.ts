@@ -7,6 +7,7 @@ import {
 import { oCapabilityIntelligenceResult } from './interfaces/o-capability.intelligence-result.js';
 import { oCapability } from './o-capability.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
+import { ResultStreamParser } from './utils/result-stream-parser.js';
 
 export abstract class oCapabilityIntelligence extends oCapability {
   async intelligence(prompt: string): Promise<oCapabilityIntelligenceResult> {
@@ -17,6 +18,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
         );
       }
       const _isStreaming = this.config.useStream || false;
+      const parser = new ResultStreamParser('result');
 
       const response = await this.node.useStream(
         new oAddress(RestrictedAddresses.INTELLIGENCE),
@@ -29,10 +31,12 @@ export abstract class oCapabilityIntelligence extends oCapability {
         },
         {
           onChunk: (chunk: oResponse) => {
-            if (this.config.onChunk) {
-              // Emit only the result field content
-              this.config.onChunk(oResponse.fromJSON(chunk));
-            }
+            // if (chunk.result.data.delta) {
+            //   const parseResult = parser.processChunk(chunk.result.data.delta);
+            //   if (parseResult) {
+            //     this.config.onChunk?.(oResponse.fromJSON(parseResult));
+            //   }
+            // }
           },
         },
       );

@@ -28,7 +28,7 @@ export {
   Libp2pEvents,
   PeerId,
 } from '@libp2p/interface';
-export { Multiaddr, multiaddr, protocols } from '@multiformats/multiaddr';
+export { Multiaddr, multiaddr } from '@multiformats/multiaddr';
 import all from 'it-all';
 export { all };
 export { pipe } from 'it-pipe';

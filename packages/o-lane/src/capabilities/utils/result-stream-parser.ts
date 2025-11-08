@@ -1,5 +1,5 @@
 /**
- * Stateful parser for extracting "result" field values from streaming JSON
+ * Stateful parser for extracting field values from streaming JSON
  * Emits only new content (deltas) as it arrives
  */
 export class ResultStreamParser {
@@ -8,28 +8,42 @@ export class ResultStreamParser {
   private resultStartIndex = -1;
   private lastEmittedLength = 0;
   private resultValue = '';
+  private attributeName: string;
 
   /**
-   * Process a new chunk and return only the new content from "result" field
+   * @param attributeName - The JSON attribute name to extract (defaults to "result")
+   */
+  constructor(attributeName: string = 'result') {
+    this.attributeName = attributeName;
+  }
+
+  /**
+   * Process a new chunk and return only the new content from the specified field
    * @param delta - The new chunk of JSON string data
-   * @returns Only the new content within the "result" value, or null if not yet in result field
+   * @returns Only the new content within the field value, or null if not yet in field
    */
   processChunk(delta: string): string | null {
     this.buffer += delta;
 
-    // If we haven't found the result field yet, look for it
+    // If we haven't found the field yet, look for it
     if (!this.isInResultValue) {
-      const match = this.buffer.match(/"result"\s*:\s*"/);
+      const escapedAttributeName = this.attributeName.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        '\\$&',
+      );
+      const match = this.buffer.match(
+        new RegExp(`"${escapedAttributeName}"\\s*:\\s*"`),
+      );
       if (match) {
         this.isInResultValue = true;
         this.resultStartIndex = (match.index ?? 0) + match[0].length;
         this.lastEmittedLength = 0;
       } else {
-        return null; // Haven't reached result field yet
+        return null; // Haven't reached the target field yet
       }
     }
 
-    // Extract content after "result": "
+    // Extract content after the attribute: "
     if (this.isInResultValue && this.resultStartIndex >= 0) {
       const contentAfterResult = this.buffer.substring(this.resultStartIndex);
 
@@ -66,16 +80,16 @@ export class ResultStreamParser {
   }
 
   /**
-   * Get the complete result value accumulated so far
-   * @returns The full "result" field value
+   * Get the complete field value accumulated so far
+   * @returns The full field value
    */
   getResultValue(): string {
     return this.resultValue;
   }
 
   /**
-   * Check if the parser has found and is processing the result field
-   * @returns true if currently inside the result field value
+   * Check if the parser has found and is processing the target field
+   * @returns true if currently inside the field value
    */
   isInResult(): boolean {
     return this.isInResultValue;

@@ -95,7 +95,7 @@ export class PerplexityIntelligenceTool extends oLaneTool {
       ...config,
       address: new oAddress('o://perplexity'),
       description:
-        'Perplexity sonar model is useful for searching the web or providing information about a wide range of topics',
+        'Perplexity intelligence tool is useful for searching the web or providing information about any unknown entity or topic',
       methods: LLM_PARAMS,
       dependencies: [],
     });

@@ -59,6 +59,7 @@ export class oLaneTool extends oNodeTool {
       currentNode: this,
       caller: this.address,
       streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
+      useStream: _isStreaming,
       onChunk: _isStreaming
         ? async (chunk: any) => {
             await CoreUtils.sendStreamResponse(
@@ -77,7 +78,7 @@ export class oLaneTool extends oNodeTool {
     let response: oCapabilityResult | undefined;
     response = await pc.execute();
 
-    return {
+    const completeResponse = {
       result: response?.result,
       error: response?.error,
       cycles: pc.sequence.length,
@@ -86,6 +87,8 @@ export class oLaneTool extends oNodeTool {
         return s.result;
       }),
     };
+    console.log('completeResponse', completeResponse);
+    return completeResponse;
   }
 
   /**
