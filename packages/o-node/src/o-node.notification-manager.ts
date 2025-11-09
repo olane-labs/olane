@@ -36,10 +36,10 @@ export class oNodeNotificationManager extends oNotificationManager {
       'peer:connect',
       this.handlePeerConnect.bind(this),
     );
-    this.p2pNode.addEventListener(
-      'peer:disconnect',
-      this.handlePeerDisconnect.bind(this),
-    );
+    // this.p2pNode.addEventListener(
+    //   'peer:disconnect',
+    //   this.handlePeerDisconnect.bind(this),
+    // );
 
     // Peer discovery events
     this.p2pNode.addEventListener(

@@ -128,9 +128,14 @@ export class oConnectionHeartbeatManager extends oObject {
     if (address.toString() === this.node.address.toString()) {
       return Promise.resolve();
     }
-    return (this.node.p2pNode.services as any).ping.ping(
-      address.libp2pTransports[0].toMultiaddr(),
-    );
+    const transport = address.libp2pTransports[0].toMultiaddr();
+    if (transport.toString().indexOf('p2p-circuit') > -1) {
+      return this.node.use(address, {
+        method: 'ping',
+        params: {},
+      });
+    }
+    return (this.node.p2pNode.services as any).ping.ping(transport);
   }
 
   private async pingTarget(
