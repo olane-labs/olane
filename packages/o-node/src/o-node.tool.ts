@@ -23,8 +23,10 @@ export class oNodeTool extends oTool(oServerNode) {
   async handleProtocol(address: oAddress) {
     this.logger.debug('Handling protocol: ' + address.protocol);
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
-      maxInboundStreams: Infinity,
-      maxOutboundStreams: Infinity,
+      maxInboundStreams: 10_000,
+      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+        : 1000,
     });
   }
 

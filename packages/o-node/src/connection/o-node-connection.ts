@@ -29,7 +29,9 @@ export class oNodeConnection extends oConnection {
       const stream = await this.p2pConnection.newStream(
         this.nextHopAddress.protocol,
         {
-          maxOutboundStreams: Infinity,
+          maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+            ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+            : 1000,
           runOnLimitedConnection: true, // TODO: should this be configurable?
         },
       );
