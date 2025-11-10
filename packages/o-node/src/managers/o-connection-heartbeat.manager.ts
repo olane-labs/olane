@@ -46,6 +46,7 @@ export interface ConnectionHealth {
 export class oConnectionHeartbeatManager extends oObject {
   private heartbeatInterval?: NodeJS.Timeout;
   private healthMap = new Map<string, ConnectionHealth>();
+  private isRunning = false;
 
   constructor(
     private node: IHeartbeatableNode,
@@ -84,6 +85,10 @@ export class oConnectionHeartbeatManager extends oObject {
   }
 
   private async performHeartbeatCycle() {
+    if (!this.isRunning) {
+      return;
+    }
+    this.isRunning = true;
     const targets: Array<{
       address: oNodeAddress;
       role: 'parent' | 'child' | 'leader';
@@ -105,7 +110,9 @@ export class oConnectionHeartbeatManager extends oObject {
       // Use this.node.parent getter to get the current parent address with transports
       // rather than getParents() which may have a stale reference
       const parent = this.node.parent;
-      if (parent) {
+
+      // make sure that we don't double ping the leader
+      if (parent && parent?.toString() !== oAddress.leader().toString()) {
         targets.push({ address: parent as oNodeAddress, role: 'parent' });
       }
     }
@@ -122,6 +129,7 @@ export class oConnectionHeartbeatManager extends oObject {
     await Promise.allSettled(
       targets.map((target) => this.pingTarget(target.address, target.role)),
     );
+    this.isRunning = false;
   }
 
   private doPing(address: oNodeAddress) {

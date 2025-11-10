@@ -39,7 +39,7 @@ export const defaultLibp2pConfig: Libp2pConfig = {
     // These limits help prevent CONNECTION_FAILED errors when many tools start simultaneously
     // or when operating through circuit relays with their own connection limits
     maxConnections: 200, // Allow up to 200 concurrent connections (was Infinity)
-    maxParallelDials: 10, // Limit concurrent dial attempts to prevent flooding (was Infinity)
+    maxParallelDials: 100, // Limit concurrent dial attempts to prevent flooding (was Infinity)
     maxDialQueueLength: 100, // Queue up to 100 pending dials (was Infinity)
     maxPeerAddrsToDial: 25, // Try up to 25 different addresses per peer (was Infinity)
     inboundConnectionThreshold: Infinity, // Keep unlimited inbound (typically less of an issue)
