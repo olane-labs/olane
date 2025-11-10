@@ -67,6 +67,8 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
           await this.useChild(child, {
             method: 'index_network',
             params: {},
+          }).catch((error: any) => {
+            this.logger.error('Error indexing child: ', error);
           });
         }
         this.logger.debug('Node + children indexed!');

@@ -299,10 +299,15 @@ export class oLane extends oObject {
           const data = response?.result;
           if (data.addresses_to_index) {
             for (const address of data.addresses_to_index) {
-              await this.node.use(new oAddress(address), {
-                method: 'index_network',
-                params: {},
-              });
+              this.logger.debug('Indexing address: ', address.toString());
+              await this.node
+                .use(new oAddress(address), {
+                  method: 'index_network',
+                  params: {},
+                })
+                .catch((error: any) => {
+                  this.logger.error('Error indexing address: ', error);
+                });
             }
           }
           this.logger.debug(
