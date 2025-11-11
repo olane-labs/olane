@@ -326,6 +326,10 @@ export class oLane extends oObject {
   cancel() {
     this.logger.debug('Cancelling lane...');
     this.status = oLaneStatus.CANCELLED;
+    // tell all capabilities to cancel
+    for (const capability of this.capabilities) {
+      capability.cancel();
+    }
   }
 
   /**

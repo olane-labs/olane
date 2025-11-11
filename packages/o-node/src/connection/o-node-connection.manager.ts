@@ -66,6 +66,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
       drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
       isStream: config.isStream ?? false,
+      abortSignal: config.abortSignal,
     });
 
     // this.cache.set(nextHopAddress.toString(), connection);

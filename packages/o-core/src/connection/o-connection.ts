@@ -31,6 +31,10 @@ export abstract class oConnection extends oObject {
     );
   }
 
+  get abortSignal(): AbortSignal | undefined {
+    return this.config.abortSignal;
+  }
+
   onChunk(listener: (response: oResponse) => void) {
     this.emitter.addListener('chunk', listener);
   }

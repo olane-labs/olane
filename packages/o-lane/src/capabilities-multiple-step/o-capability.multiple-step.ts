@@ -7,6 +7,7 @@ import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
 export class oCapabilityMultipleStep extends oCapabilityIntelligence {
   public config!: oCapabilityMultipleStepConfig;
+  private subLanes: Map<string, oLane> = new Map();
 
   get type(): oCapabilityType {
     return oCapabilityType.MULTIPLE_STEP;
@@ -34,7 +35,9 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
         sequence: this.config.laneConfig.sequence,
         parentLaneId: this.config.parentLaneId,
       });
+      this.subLanes.set(subLane.id, subLane);
       await subLane.execute();
+      this.subLanes.delete(subLane.id);
       results.concat(subLane.sequence);
     }
     return new oCapabilityResult({
@@ -42,5 +45,11 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
       humanResult: results,
       type: oCapabilityType.EVALUATE,
     });
+  }
+
+  cancel() {
+    for (const subLane of this.subLanes.values()) {
+      subLane.cancel();
+    }
   }
 }

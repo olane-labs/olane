@@ -29,6 +29,7 @@ export class oNodeConnection extends oConnection {
       const stream = await this.p2pConnection.newStream(
         this.nextHopAddress.protocol,
         {
+          signal: this.abortSignal,
           maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
             ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
             : 1000,
@@ -56,7 +57,20 @@ export class oNodeConnection extends oConnection {
       let lastResponse: any;
 
       await new Promise((resolve, reject) => {
-        // TODO: add timeout
+        const abortHandler = async () => {
+          try {
+            await stream.abort(new Error('Request aborted'));
+          } catch (e) {
+            // Stream may already be closed
+          }
+          reject(new Error('Request aborted'));
+        };
+
+        // Listen for abort signal
+        if (this.abortSignal) {
+          this.abortSignal.addEventListener('abort', abortHandler);
+        }
+
         stream.addEventListener('message', async (event) => {
           const response = await CoreUtils.processStreamResponse(event);
           this.emitter.emit('chunk', response);
@@ -64,6 +78,10 @@ export class oNodeConnection extends oConnection {
           if (response.result._last || !response.result._isStreaming) {
             // this.logger.debug('Last chunk received...');
             lastResponse = response;
+            // Clean up abort listener before closing
+            if (this.abortSignal) {
+              this.abortSignal.removeEventListener('abort', abortHandler);
+            }
             await stream.close();
             resolve(true);
           }
@@ -90,6 +108,12 @@ export class oNodeConnection extends oConnection {
       }
       throw error;
     }
+  }
+
+  async abort(error: Error) {
+    this.logger.debug('Aborting connection');
+    await this.p2pConnection.abort(error);
+    this.logger.debug('Connection aborted');
   }
 
   async close() {

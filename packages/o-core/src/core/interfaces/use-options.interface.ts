@@ -6,4 +6,5 @@ export interface UseOptions {
   isStream?: boolean;
   onChunk?: (chunk: oResponse) => void;
   noRouting?: boolean;
+  abortSignal?: AbortSignal;
 }

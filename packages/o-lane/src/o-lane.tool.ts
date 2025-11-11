@@ -11,6 +11,7 @@ import { oIntent } from './intent/index.js';
 import { oLaneContext } from './o-lane.context.js';
 import { oLaneManager } from './manager/o-lane.manager.js';
 import { oCapabilityResult } from './capabilities/o-capability.result.js';
+import { Stream } from '@olane/o-config';
 
 export class oLaneTool extends oNodeTool {
   private manager: oLaneManager;
@@ -73,6 +74,13 @@ export class oLaneTool extends oNodeTool {
             `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
           ])
         : undefined,
+    });
+
+    const stream = request.stream as Stream;
+
+    stream.addEventListener('close', () => {
+      this.logger.debug('Stream closed, cancelling lane for intent:', intent);
+      pc.cancel();
     });
 
     let response: oCapabilityResult | undefined;

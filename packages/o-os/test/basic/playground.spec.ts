@@ -34,6 +34,7 @@ describe('playground running', async () => {
         },
       },
       {
+        abortSignal: AbortSignal.timeout(5_000),
         onChunk: (chunk) => {
           console.log(
             'Received chunk:',

@@ -198,6 +198,7 @@ export abstract class oCore extends oObject {
       readTimeoutMs: options?.readTimeoutMs,
       drainTimeoutMs: options?.drainTimeoutMs,
       isStream: options?.isStream,
+      abortSignal: options?.abortSignal,
     });
 
     if (options?.isStream) {

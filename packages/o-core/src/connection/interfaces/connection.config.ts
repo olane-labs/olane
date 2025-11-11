@@ -15,4 +15,5 @@ export interface oConnectionConfig {
    */
   drainTimeoutMs?: number;
   isStream?: boolean;
+  abortSignal?: AbortSignal;
 }

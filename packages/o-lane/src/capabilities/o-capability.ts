@@ -29,4 +29,8 @@ export abstract class oCapability extends oObject {
   static get type() {
     return oCapabilityType.UNKNOWN;
   }
+
+  cancel() {
+    // do nothing
+  }
 }
