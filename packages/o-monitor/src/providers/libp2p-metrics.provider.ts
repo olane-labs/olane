@@ -51,76 +51,77 @@ export class LibP2PMetricsProvider extends oNodeTool {
   }
 
   /**
-   * Collect libp2p metrics and store in MetricsStore
+   * Collect libp2p metrics from all nodes and store in MetricsStore
    */
   private async collectAndStoreMetrics(): Promise<void> {
     if (!this.metricsStore) return;
 
-    const p2pNode = (this as any).p2pNode;
-    if (!p2pNode) {
-      this.logger.warn('libp2p node not available for metrics collection');
-      return;
-    }
-
     try {
-      // Get basic connection stats
-      const connections = p2pNode.getConnections();
-      const peers = await p2pNode.peerStore.all();
+      // Get all registered nodes from the registry
+      const registry = await this.use(oAddress.registry(), {
+        method: 'find_all',
+        params: {},
+      });
 
-      const inbound = connections.filter(
-        (c: any) => c.direction === 'inbound',
-      ).length;
-      const outbound = connections.filter(
-        (c: any) => c.direction === 'outbound',
-      ).length;
+      if (!registry.result || !registry.result.data) {
+        this.logger.warn(
+          'No nodes found in registry for libp2p metrics collection',
+        );
+        return;
+      }
 
-      // Get DHT info if available
-      const services = p2pNode.services as any;
-      const dht = services?.dht;
-      const routingTable = dht?.routingTable;
-      const kBuckets = routingTable?.kb || null;
-      let routingTableSize = 0;
+      const addresses = Array.isArray(registry.result.data)
+        ? (registry.result.data as any[]).map((node: any) => node.address)
+        : [];
 
-      if (kBuckets) {
-        // Handle both array and object-like structures
-        if (Array.isArray(kBuckets)) {
-          for (const bucket of kBuckets) {
-            routingTableSize += bucket.peers?.length || 0;
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Collect libp2p metrics from each node
+      for (const address of addresses) {
+        try {
+          const result = await this.use(new oAddress(address as string), {
+            method: 'get_libp2p_metrics',
+            params: {},
+          });
+
+          const libp2pMetrics = result.result.data;
+
+          if (libp2pMetrics && libp2pMetrics.available) {
+            // Store per-node metrics in MetricsStore
+            this.metricsStore.storeMetrics(
+              this.address.toStaticAddress().toString(),
+              {
+                successCount: 0,
+                errorCount: 0,
+                activeRequests: libp2pMetrics.connectionCount || 0,
+                libp2pMetrics,
+              },
+            );
+            successCount++;
+
+            this.logger.debug(
+              `Collected libp2p metrics from ${address}: ${libp2pMetrics.peerCount} peers, ${libp2pMetrics.connectionCount} connections`,
+            );
+          } else {
+            this.logger.debug(
+              `libp2p not available on node ${address}: ${libp2pMetrics?.error || 'unknown reason'}`,
+            );
           }
-        } else if (typeof kBuckets === 'object') {
-          // If it's an object, iterate over its values
-          for (const bucket of Object.values(kBuckets)) {
-            routingTableSize += (bucket as any)?.peers?.length || 0;
-          }
+        } catch (error: any) {
+          this.logger.error(
+            `Failed to collect libp2p metrics from ${address}:`,
+            error.message,
+          );
+          failureCount++;
         }
       }
 
-      const libp2pMetrics = {
-        peerCount: peers.length,
-        connectionCount: connections.length,
-        inboundConnections: inbound,
-        outboundConnections: outbound,
-        dhtEnabled: !!dht,
-        dhtMode: dht?.clientMode ? 'client' : 'server',
-        dhtRoutingTableSize: routingTableSize,
-        protocols: Array.from(p2pNode.getProtocols()),
-        selfPeerId: p2pNode.peerId.toString(),
-        multiaddrs: p2pNode.getMultiaddrs().map((ma: any) => ma.toString()),
-      };
-
-      // Store in MetricsStore with a well-known address
-      this.metricsStore.storeMetrics('o://libp2p-network', {
-        successCount: 0,
-        errorCount: 0,
-        activeRequests: connections.length,
-        libp2pMetrics,
-      });
-
       this.logger.debug(
-        `Collected libp2p metrics: ${peers.length} peers, ${connections.length} connections`,
+        `Libp2p metrics collection complete: ${successCount} successful, ${failureCount} failed`,
       );
     } catch (error: any) {
-      this.logger.error('Error collecting libp2p metrics:', error);
+      this.logger.error('Error during libp2p metrics collection:', error);
     }
   }
 
@@ -159,51 +160,125 @@ export class LibP2PMetricsProvider extends oNodeTool {
   }
 
   /**
-   * Manually trigger libp2p metrics collection
+   * Manually trigger libp2p metrics collection from all nodes
    */
   async _tool_collect_libp2p_metrics(request: oRequest): Promise<any> {
     await this.collectAndStoreMetrics();
 
-    const metrics = this.metricsStore?.getLatestMetrics('o://libp2p-network');
+    if (!this.metricsStore) {
+      return {
+        message: 'MetricsStore not configured',
+        timestamp: Date.now(),
+        collected: 0,
+      };
+    }
+
+    // Get all tracked nodes with libp2p metrics
+    const allNodes = this.metricsStore.getAllTrackedNodes();
+    const nodesWithMetrics = allNodes.filter((address) => {
+      const metrics = this.metricsStore?.getLatestMetrics(address);
+      return metrics?.libp2pMetrics?.available;
+    });
 
     return {
-      message: 'libp2p metrics collected',
+      message: 'libp2p metrics collected from all nodes',
       timestamp: Date.now(),
-      metrics: metrics?.libp2pMetrics || null,
+      nodesCollected: nodesWithMetrics.length,
+      totalNodes: allNodes.length,
+      nodes: nodesWithMetrics,
     };
   }
 
   /**
    * Get stored libp2p metrics from MetricsStore
+   * @param request.params.nodeAddress - Optional: specific node address to query (defaults to all nodes)
    */
   async _tool_get_stored_libp2p_metrics(request: oRequest): Promise<any> {
     if (!this.metricsStore) {
       throw new Error('MetricsStore not configured');
     }
 
-    const latestMetrics =
-      this.metricsStore.getLatestMetrics('o://libp2p-network');
-    const allMetrics = this.metricsStore.getAllMetrics('o://libp2p-network');
+    const { nodeAddress } = request.params as any;
+
+    // If a specific node is requested, return only that node's metrics
+    if (nodeAddress) {
+      const latestMetrics = this.metricsStore.getLatestMetrics(nodeAddress);
+      const allMetrics = this.metricsStore.getAllMetrics(nodeAddress);
+
+      return {
+        timestamp: Date.now(),
+        nodeAddress,
+        latest: latestMetrics?.libp2pMetrics || null,
+        history: allMetrics
+          .filter((m) => m.libp2pMetrics)
+          .map((m) => ({
+            timestamp: m.timestamp,
+            metrics: m.libp2pMetrics,
+          })),
+      };
+    }
+
+    // Otherwise, return metrics from all nodes
+    const allNodes = this.metricsStore.getAllTrackedNodes();
+    const nodeMetrics: any = {};
+
+    for (const address of allNodes) {
+      const latestMetrics = this.metricsStore.getLatestMetrics(address);
+      if (latestMetrics?.libp2pMetrics) {
+        nodeMetrics[address] = {
+          latest: latestMetrics.libp2pMetrics,
+          lastUpdated: latestMetrics.timestamp,
+        };
+      }
+    }
 
     return {
       timestamp: Date.now(),
-      latest: latestMetrics?.libp2pMetrics || null,
-      history: allMetrics
-        .filter((m) => m.libp2pMetrics)
-        .map((m) => ({
-          timestamp: m.timestamp,
-          metrics: m.libp2pMetrics,
-        })),
+      nodeCount: Object.keys(nodeMetrics).length,
+      nodes: nodeMetrics,
     };
   }
 
   /**
    * Get peer information from libp2p peer store
+   * @param request.params.nodeAddress - Optional: specific node to query (defaults to this monitor's node)
    */
   async _tool_get_peer_info(request: oRequest): Promise<any> {
+    const { nodeAddress } = request.params as any;
+
+    // If querying a remote node, forward the request
+    if (nodeAddress) {
+      try {
+        const result = await this.use(new oAddress(nodeAddress), {
+          method: 'get_libp2p_metrics',
+          params: {},
+        });
+
+        const metrics = result.result.data;
+        if (!metrics || !metrics.available) {
+          throw new Error(`libp2p not available on node ${nodeAddress}`);
+        }
+
+        // Return peer information from the metrics
+        return {
+          timestamp: Date.now(),
+          nodeAddress,
+          peerCount: metrics.peerCount,
+          selfPeerId: metrics.selfPeerId,
+          selfMultiaddrs: metrics.multiaddrs,
+          protocols: metrics.protocols,
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Failed to get peer info from ${nodeAddress}: ${error.message}`,
+        );
+      }
+    }
+
+    // Otherwise, query this node's libp2p instance
     const p2pNode = (this as any).p2pNode;
     if (!p2pNode) {
-      throw new Error('libp2p node not available');
+      throw new Error('libp2p node not available on monitor');
     }
 
     try {
@@ -234,11 +309,42 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
   /**
    * Get DHT (Distributed Hash Table) status
+   * @param request.params.nodeAddress - Optional: specific node to query (defaults to this monitor's node)
    */
   async _tool_get_dht_status(request: oRequest): Promise<any> {
+    const { nodeAddress } = request.params as any;
+
+    // If querying a remote node, forward the request
+    if (nodeAddress) {
+      try {
+        const result = await this.use(new oAddress(nodeAddress), {
+          method: 'get_libp2p_metrics',
+          params: {},
+        });
+
+        const metrics = result.result.data;
+        if (!metrics || !metrics.available) {
+          throw new Error(`libp2p not available on node ${nodeAddress}`);
+        }
+
+        return {
+          timestamp: Date.now(),
+          nodeAddress,
+          enabled: metrics.dhtEnabled,
+          mode: metrics.dhtMode,
+          routingTableSize: metrics.dhtRoutingTableSize,
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Failed to get DHT status from ${nodeAddress}: ${error.message}`,
+        );
+      }
+    }
+
+    // Otherwise, query this node's libp2p instance
     const p2pNode = (this as any).p2pNode;
     if (!p2pNode) {
-      throw new Error('libp2p node not available');
+      throw new Error('libp2p node not available on monitor');
     }
 
     try {
@@ -280,11 +386,45 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
   /**
    * Get transport and connection statistics
+   * @param request.params.nodeAddress - Optional: specific node to query (defaults to this monitor's node)
    */
   async _tool_get_transport_stats(request: oRequest): Promise<any> {
+    const { nodeAddress } = request.params as any;
+
+    // If querying a remote node, forward the request
+    if (nodeAddress) {
+      try {
+        const result = await this.use(new oAddress(nodeAddress), {
+          method: 'get_libp2p_metrics',
+          params: {},
+        });
+
+        const metrics = result.result.data;
+        if (!metrics || !metrics.available) {
+          throw new Error(`libp2p not available on node ${nodeAddress}`);
+        }
+
+        return {
+          timestamp: Date.now(),
+          nodeAddress,
+          connectionCount: metrics.connectionCount,
+          protocols: metrics.protocols,
+          multiaddrs: metrics.multiaddrs,
+          inboundConnections: metrics.inboundConnections,
+          outboundConnections: metrics.outboundConnections,
+          streamCount: metrics.streamCount,
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Failed to get transport stats from ${nodeAddress}: ${error.message}`,
+        );
+      }
+    }
+
+    // Otherwise, query this node's libp2p instance
     const p2pNode = (this as any).p2pNode;
     if (!p2pNode) {
-      throw new Error('libp2p node not available');
+      throw new Error('libp2p node not available on monitor');
     }
 
     try {
@@ -326,11 +466,43 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
   /**
    * Get connection manager status
+   * @param request.params.nodeAddress - Optional: specific node to query (defaults to this monitor's node)
    */
   async _tool_get_connection_manager_status(request: oRequest): Promise<any> {
+    const { nodeAddress } = request.params as any;
+
+    // If querying a remote node, forward the request
+    if (nodeAddress) {
+      try {
+        const result = await this.use(new oAddress(nodeAddress), {
+          method: 'get_libp2p_metrics',
+          params: {},
+        });
+
+        const metrics = result.result.data;
+        if (!metrics || !metrics.available) {
+          throw new Error(`libp2p not available on node ${nodeAddress}`);
+        }
+
+        return {
+          timestamp: Date.now(),
+          nodeAddress,
+          totalConnections: metrics.connectionCount,
+          uniquePeers: metrics.peerCount,
+          inboundConnections: metrics.inboundConnections,
+          outboundConnections: metrics.outboundConnections,
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Failed to get connection manager status from ${nodeAddress}: ${error.message}`,
+        );
+      }
+    }
+
+    // Otherwise, query this node's libp2p instance
     const p2pNode = (this as any).p2pNode;
     if (!p2pNode) {
-      throw new Error('libp2p node not available');
+      throw new Error('libp2p node not available on monitor');
     }
 
     try {
@@ -368,40 +540,74 @@ export class LibP2PMetricsProvider extends oNodeTool {
 
   /**
    * Get all libp2p metrics in one call
+   * @param request.params.nodeAddress - Optional: specific node to query (defaults to all nodes)
    */
   async _tool_get_all_libp2p_metrics(request: oRequest): Promise<any> {
-    const p2pNode = (this as any).p2pNode;
-    if (!p2pNode) {
-      throw new Error('libp2p node not available');
-    }
+    const { nodeAddress } = request.params as any;
 
-    try {
-      const [peerInfo, dhtStatus, transportStats, connectionManagerStatus] =
-        await Promise.all([
+    // If querying a specific node, get all its metrics
+    if (nodeAddress) {
+      try {
+        const [
+          peerInfoResult,
+          dhtStatusResult,
+          transportStatsResult,
+          connectionManagerStatusResult,
+        ] = await Promise.all([
           this.use(this.address, {
             method: 'get_peer_info',
-            params: {},
+            params: { nodeAddress },
           }),
           this.use(this.address, {
             method: 'get_dht_status',
-            params: {},
+            params: { nodeAddress },
           }),
           this.use(this.address, {
             method: 'get_transport_stats',
-            params: {},
+            params: { nodeAddress },
           }),
           this.use(this.address, {
             method: 'get_connection_manager_status',
-            params: {},
+            params: { nodeAddress },
           }),
         ]);
 
+        return {
+          timestamp: Date.now(),
+          nodeAddress,
+          peerInfo: peerInfoResult.result.data,
+          dhtStatus: dhtStatusResult.result.data,
+          transportStats: transportStatsResult.result.data,
+          connectionManagerStatus: connectionManagerStatusResult.result.data,
+        };
+      } catch (error: any) {
+        throw new Error(
+          `Failed to get all libp2p metrics from ${nodeAddress}: ${error.message}`,
+        );
+      }
+    }
+
+    // Otherwise, get metrics from all nodes
+    if (!this.metricsStore) {
+      throw new Error('MetricsStore not configured');
+    }
+
+    try {
+      const allNodes = this.metricsStore.getAllTrackedNodes();
+      const nodeMetrics: any = {};
+
+      for (const address of allNodes) {
+        const latestMetrics = this.metricsStore.getLatestMetrics(address);
+        if (latestMetrics?.libp2pMetrics?.available) {
+          nodeMetrics[address] = latestMetrics.libp2pMetrics;
+        }
+      }
+
       return {
         timestamp: Date.now(),
-        peerInfo,
-        dhtStatus,
-        transportStats,
-        connectionManagerStatus,
+        nodeCount: Object.keys(nodeMetrics).length,
+        totalNodes: allNodes.length,
+        nodes: nodeMetrics,
       };
     } catch (error: any) {
       throw new Error(`Failed to get all libp2p metrics: ${error.message}`);

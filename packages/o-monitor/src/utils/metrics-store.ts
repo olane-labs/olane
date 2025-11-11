@@ -8,6 +8,7 @@ export interface LibP2PMetrics {
   connectionCount?: number;
   inboundConnections?: number;
   outboundConnections?: number;
+  streamCount?: number;
   dhtEnabled?: boolean;
   dhtMode?: string;
   dhtRoutingTableSize?: number;

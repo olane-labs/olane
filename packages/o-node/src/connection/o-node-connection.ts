@@ -78,6 +78,10 @@ export class oNodeConnection extends oConnection {
         }); // Default: 30 second timeout
       }
 
+      if (stream.status === 'open') {
+        await stream.abort(new Error('Connection closed'));
+      }
+
       const response = oResponse.fromJSON(lastResponse);
       return response;
     } catch (error: any) {

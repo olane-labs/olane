@@ -1,4 +1,5 @@
 import {
+  Connection,
   createNode,
   defaultLibp2pConfig,
   Libp2p,
@@ -154,7 +155,9 @@ export class oNode extends oToolBase {
       },
     };
 
-    await this.use(address, params);
+    this.use(address, params).catch((error) => {
+      this.logger.error('Failed to unregister from network:', error);
+    });
   }
 
   async registerParent(): Promise<void> {
@@ -545,5 +548,96 @@ export class oNode extends oToolBase {
 
   removeChild(childAddress: oNodeAddress): void {
     this.hierarchyManager.removeChild(childAddress);
+  }
+
+  /**
+   * Get the total number of active streams across all connections
+   * @returns Total count of active streams
+   */
+  getStreamCount(): number {
+    if (!this.p2pNode) {
+      return 0;
+    }
+    const connections = this.p2pNode.getConnections();
+    return connections.reduce((count, conn) => {
+      return count + ((conn as any).streams?.length || 0);
+    }, 0);
+  }
+
+  /**
+   * Get libp2p metrics for this node
+   * Tool method that can be called remotely by monitoring systems
+   */
+  async _tool_get_libp2p_metrics(request: oRequest): Promise<any> {
+    if (!this.p2pNode) {
+      return {
+        error: 'libp2p node not available',
+        available: false,
+      };
+    }
+
+    try {
+      // Get basic connection stats
+      const connections = this.p2pNode.getConnections();
+      const peers = await this.p2pNode.peerStore.all();
+
+      const inbound = connections.filter(
+        (c: any) => c.direction === 'inbound',
+      ).length;
+      const outbound = connections.filter(
+        (c: any) => c.direction === 'outbound',
+      ).length;
+
+      // Get DHT info if available
+      const services = this.p2pNode.services as any;
+      const dht = services?.dht;
+      const routingTable = dht?.routingTable;
+      const kBuckets = routingTable?.kb || null;
+      let routingTableSize = 0;
+
+      if (kBuckets) {
+        // Handle both array and object-like structures
+        if (Array.isArray(kBuckets)) {
+          for (const bucket of kBuckets) {
+            routingTableSize += bucket.peers?.length || 0;
+          }
+        } else if (typeof kBuckets === 'object') {
+          // If it's an object, iterate over its values
+          for (const bucket of Object.values(kBuckets)) {
+            routingTableSize += (bucket as any)?.peers?.length || 0;
+          }
+        }
+      }
+
+      // Calculate total stream count across all connections
+      const streamCount = connections.reduce((count: number, conn: any) => {
+        return count + (conn.streams?.length || 0);
+      }, 0);
+
+      return {
+        available: true,
+        timestamp: Date.now(),
+        nodeAddress: this.address.toString(),
+        peerCount: peers.length,
+        connectionCount: connections.length,
+        inboundConnections: inbound,
+        outboundConnections: outbound,
+        streamCount,
+        dhtEnabled: !!dht,
+        dhtMode: dht?.clientMode ? 'client' : 'server',
+        dhtRoutingTableSize: routingTableSize,
+        protocols: Array.from(this.p2pNode.getProtocols()),
+        selfPeerId: this.p2pNode.peerId.toString(),
+        multiaddrs: this.p2pNode
+          .getMultiaddrs()
+          .map((ma: any) => ma.toString()),
+      };
+    } catch (error: any) {
+      return {
+        error: `Failed to collect libp2p metrics: ${error.message}`,
+        available: false,
+        nodeAddress: this.address.toString(),
+      };
+    }
   }
 }

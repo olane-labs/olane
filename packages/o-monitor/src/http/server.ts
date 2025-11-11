@@ -35,6 +35,7 @@ export class MonitorHTTPServer {
   private libp2pConnectionCount: promClient.Gauge;
   private libp2pInboundConnections: promClient.Gauge;
   private libp2pOutboundConnections: promClient.Gauge;
+  private libp2pStreamCount: promClient.Gauge;
   private libp2pDhtRoutingTableSize: promClient.Gauge;
 
   constructor(config: MonitorHTTPServerConfig) {
@@ -107,6 +108,12 @@ export class MonitorHTTPServer {
     this.libp2pOutboundConnections = new promClient.Gauge({
       name: 'libp2p_outbound_connections',
       help: 'Number of outbound libp2p connections',
+      registers: [this.registry],
+    });
+
+    this.libp2pStreamCount = new promClient.Gauge({
+      name: 'libp2p_stream_count',
+      help: 'Total number of active libp2p streams',
       registers: [this.registry],
     });
 
@@ -288,9 +295,18 @@ export class MonitorHTTPServer {
     for (const address of nodes) {
       const metrics = this.metricsStore.getLatestMetrics(address);
       if (metrics) {
-        this.olaneNodeSuccessCount.set({ node_address: address }, metrics.successCount);
-        this.olaneNodeErrorCount.set({ node_address: address }, metrics.errorCount);
-        this.olaneNodeActiveRequests.set({ node_address: address }, metrics.activeRequests);
+        this.olaneNodeSuccessCount.set(
+          { node_address: address },
+          metrics.successCount,
+        );
+        this.olaneNodeErrorCount.set(
+          { node_address: address },
+          metrics.errorCount,
+        );
+        this.olaneNodeActiveRequests.set(
+          { node_address: address },
+          metrics.activeRequests,
+        );
       }
 
       const heartbeat = this.metricsStore.getLastHeartbeat(address);
@@ -307,8 +323,7 @@ export class MonitorHTTPServer {
     this.olaneNetworkNodeCount.set(summary.totalNodes);
 
     // Update libp2p metrics from stored data
-    const libp2pMetrics =
-      this.metricsStore.getLatestMetrics('o://libp2p-network');
+    const libp2pMetrics = this.metricsStore.getLatestMetrics('o://libp2p');
     if (libp2pMetrics?.libp2pMetrics) {
       const lm = libp2pMetrics.libp2pMetrics;
       if (lm.peerCount !== undefined) {
@@ -322,6 +337,9 @@ export class MonitorHTTPServer {
       }
       if (lm.outboundConnections !== undefined) {
         this.libp2pOutboundConnections.set(lm.outboundConnections);
+      }
+      if (lm.streamCount !== undefined) {
+        this.libp2pStreamCount.set(lm.streamCount);
       }
       if (lm.dhtRoutingTableSize !== undefined) {
         this.libp2pDhtRoutingTableSize.set(lm.dhtRoutingTableSize);

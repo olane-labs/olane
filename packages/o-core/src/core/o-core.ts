@@ -563,17 +563,24 @@ export abstract class oCore extends oObject {
 
     this.heartbeatInterval = setInterval(async () => {
       try {
+        const metrics: any = {
+          successCount: this.metrics.successCount,
+          errorCount: this.metrics.errorCount,
+          activeRequests: this.requestManager.activeRequests.length,
+          state: this.state,
+        };
+
+        // Add stream count if available (oNode instances have this method)
+        if (typeof (this as any).getStreamCount === 'function') {
+          metrics.streamCount = (this as any).getStreamCount();
+        }
+
         await this.use(monitorAddress, {
           method: 'record_heartbeat',
           params: {
             address: this.address.toString(),
             timestamp: Date.now(),
-            metrics: {
-              successCount: this.metrics.successCount,
-              errorCount: this.metrics.errorCount,
-              activeRequests: this.requestManager.activeRequests.length,
-              state: this.state,
-            },
+            metrics,
           },
         });
       } catch (error) {

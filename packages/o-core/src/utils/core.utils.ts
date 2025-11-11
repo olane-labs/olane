@@ -114,7 +114,7 @@ export class CoreUtils extends oObject {
 
     try {
       await stream.send(new TextEncoder().encode(response.toString()));
-      // await stream.close();
+      await stream.close();
     } catch (error) {
       console.error('Error sending response: ', error);
     }
