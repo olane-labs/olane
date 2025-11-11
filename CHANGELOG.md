@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.39 (2025-11-11)</small>
+
+- added approval test case ([d3b2b43](https://github.com/olane-labs/olane/commit/d3b2b43))
+- correctly clean up streams when done ([7b582dd](https://github.com/olane-labs/olane/commit/7b582dd))
+- minor changes to network config ([8a3c431](https://github.com/olane-labs/olane/commit/8a3c431))
+- node connection interruption support ([21f3902](https://github.com/olane-labs/olane/commit/21f3902))
+
 ## <small>0.7.12-alpha.38 (2025-11-10)</small>
 
 - removed infinity values ([e5ba622](https://github.com/olane-labs/olane/commit/e5ba622))
