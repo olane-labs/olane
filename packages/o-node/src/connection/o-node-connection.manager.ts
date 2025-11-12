@@ -123,8 +123,7 @@ export class oNodeConnectionManager extends oConnectionManager {
         return null;
       }
 
-      const peerId = peerIdFromString(peerIdString);
-      const connections = this.p2pNode.getConnections(peerId);
+      const connections = this.p2pNode.getConnections(peerIdString as any); // ignore since converting to a proper peer id breaks the browser implementation
 
       // Return the first open connection, or null if none exist
       const openConnection = connections.find((conn) => conn.status === 'open');
