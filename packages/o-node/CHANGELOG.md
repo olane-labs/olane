@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.40 (2025-11-12)</small>
+
+- added connection re-use ([16afc77](https://github.com/olane-labs/olane/commit/16afc77))
+
 ## <small>0.7.12-alpha.39 (2025-11-11)</small>
 
 - correctly clean up streams when done ([7b582dd](https://github.com/olane-labs/olane/commit/7b582dd))

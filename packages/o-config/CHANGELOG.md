@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.40 (2025-11-12)</small>
+
+**Note:** Version bump only for package @olane/o-config
+
 ## <small>0.7.12-alpha.39 (2025-11-11)</small>
 
 - minor changes to network config ([8a3c431](https://github.com/olane-labs/olane/commit/8a3c431))
