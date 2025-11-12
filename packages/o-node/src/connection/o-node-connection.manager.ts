@@ -1,5 +1,5 @@
 import { oAddress, oConnectionConfig, oConnectionManager } from '@olane/o-core';
-import { Libp2p, Connection } from '@olane/o-config';
+import { Libp2p, Connection, PeerId } from '@olane/o-config';
 import { peerIdFromString } from '@libp2p/peer-id';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
@@ -90,8 +90,8 @@ export class oNodeConnectionManager extends oConnectionManager {
         return false;
       }
 
-      const peerId = peerIdFromString(peerIdString);
-      const connections = this.p2pNode.getConnections(peerId);
+      // the following works since the peer id param is not really required: https://github.com/libp2p/js-libp2p/blob/0bbf5021b53938b2bffcffca6c13c479a95c2a60/packages/libp2p/src/connection-manager/index.ts#L508
+      const connections = this.p2pNode.getConnections(peerIdString as any); // ignore since converting to a proper peer id breaks the browser implementation
 
       // Check if we have at least one open connection
       return connections.some((conn) => conn.status === 'open');
