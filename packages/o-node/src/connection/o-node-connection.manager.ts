@@ -89,6 +89,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       if (!peerIdString) {
         return false;
       }
+      this.logger.debug('Peer ID string:', peerIdString);
 
       // the following works since the peer id param is not really required: https://github.com/libp2p/js-libp2p/blob/0bbf5021b53938b2bffcffca6c13c479a95c2a60/packages/libp2p/src/connection-manager/index.ts#L508
       const connections = this.p2pNode.getConnections(peerIdString as any); // ignore since converting to a proper peer id breaks the browser implementation
