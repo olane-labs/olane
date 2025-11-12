@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.42 (2025-11-12)</small>
+
+- udpate ([d6dafd6](https://github.com/olane-labs/olane/commit/d6dafd6))
+
 ## <small>0.7.12-alpha.41 (2025-11-12)</small>
 
 - update deps ([af2da46](https://github.com/olane-labs/olane/commit/af2da46))
