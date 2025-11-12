@@ -1,6 +1,6 @@
 import { oAddress, oConnectionConfig, oConnectionManager } from '@olane/o-core';
-import { oConnection } from '@olane/o-core';
-import { Libp2p } from '@olane/o-config';
+import { Libp2p, Connection } from '@olane/o-config';
+import { peerIdFromString } from '@libp2p/peer-id';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
@@ -18,8 +18,8 @@ export class oNodeConnectionManager extends oConnectionManager {
   }
 
   /**
-   * Connect to a given address with exponential backoff retry
-   * @param address - The address to connect to
+   * Connect to a given address, reusing libp2p connections when possible
+   * @param config - Connection configuration
    * @returns The connection object
    */
   async connect(config: oConnectionConfig): Promise<oNodeConnection> {
@@ -31,33 +31,30 @@ export class oNodeConnectionManager extends oConnectionManager {
       drainTimeoutMs,
     } = config;
 
-    // check if we already have a connection to this address
-    // TODO: how can we enable caching of connections & connection lifecycles
-    if (this.isCached(nextHopAddress)) {
-      const cachedConnection = this.getCachedConnection(
-        nextHopAddress,
-      ) as oNodeConnection;
-      if (
-        cachedConnection &&
-        cachedConnection.p2pConnection.status === 'open'
-      ) {
-        this.logger.debug(
-          'Using cached connection for address: ' + address.toString(),
-        );
-        return cachedConnection as oNodeConnection;
-      } else {
-        // cached item is not valid, remove it
-        this.cache.delete(nextHopAddress.toString());
-      }
+    // Check if libp2p already has an active connection to this peer
+    const existingConnection = this.getCachedLibp2pConnection(
+      nextHopAddress,
+    ) as Connection | null;
+
+    let p2pConnection: Connection;
+
+    if (existingConnection && existingConnection.status === 'open') {
+      this.logger.debug(
+        'Reusing existing libp2p connection for address: ' + address.toString(),
+      );
+      p2pConnection = existingConnection;
+    } else {
+      // No existing connection or connection is closed, dial a new one
+      this.logger.debug(
+        'Dialing new connection for address: ' + address.toString(),
+      );
+      p2pConnection = await this.p2pNode.dial(
+        (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
+          ma.toMultiaddr(),
+        ),
+      );
     }
 
-    // Retry configuration for handling transient connection failures
-
-    const p2pConnection = await this.p2pNode.dial(
-      (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
-        ma.toMultiaddr(),
-      ),
-    );
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,
       address: address,
@@ -69,27 +66,71 @@ export class oNodeConnectionManager extends oConnectionManager {
       abortSignal: config.abortSignal,
     });
 
-    // this.cache.set(nextHopAddress.toString(), connection);
     return connection;
   }
 
+  /**
+   * Check if libp2p has an active connection to the target peer
+   * @param address - The address to check
+   * @returns true if an active connection exists
+   */
   isCached(address: oAddress): boolean {
-    return this.cache.has(address.toString());
+    try {
+      const nodeAddress = address as oNodeAddress;
+      if (
+        !nodeAddress.libp2pTransports ||
+        nodeAddress.libp2pTransports.length === 0
+      ) {
+        return false;
+      }
+
+      // Extract peer ID from the first transport
+      const peerIdString = nodeAddress.libp2pTransports[0].toPeerId();
+      if (!peerIdString) {
+        return false;
+      }
+
+      const peerId = peerIdFromString(peerIdString);
+      const connections = this.p2pNode.getConnections(peerId);
+
+      // Check if we have at least one open connection
+      return connections.some((conn) => conn.status === 'open');
+    } catch (error) {
+      this.logger.debug('Error checking cached connection:', error);
+      return false;
+    }
   }
 
-  getCachedConnection(address: oAddress): oConnection | null {
-    const key = address.toString();
+  /**
+   * Get an existing libp2p connection to the target peer
+   * @param address - The address to get a connection for
+   * @returns The libp2p Connection object or null if not found
+   */
+  getCachedLibp2pConnection(address: oAddress): Connection | null {
     try {
-      const connection = this.cache.get(key);
-      if (!connection) {
-        throw new Error('Connection not found in cache');
+      const nodeAddress = address as oNodeAddress;
+      if (
+        !nodeAddress.libp2pTransports ||
+        nodeAddress.libp2pTransports.length === 0
+      ) {
+        return null;
       }
-      connection.validate();
-      return connection;
+
+      // Extract peer ID from the first transport
+      const peerIdString = nodeAddress.libp2pTransports[0].toPeerId();
+      if (!peerIdString) {
+        return null;
+      }
+
+      const peerId = peerIdFromString(peerIdString);
+      const connections = this.p2pNode.getConnections(peerId);
+
+      // Return the first open connection, or null if none exist
+      const openConnection = connections.find((conn) => conn.status === 'open');
+      return openConnection || null;
     } catch (error) {
-      this.cache.delete(key);
-      this.logger.error('Error getting cached connection:', error);
+      this.logger.debug('Error getting cached connection:', error);
+      return null;
     }
-    return null;
   }
 }

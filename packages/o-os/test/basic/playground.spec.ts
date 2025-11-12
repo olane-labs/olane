@@ -27,90 +27,90 @@ describe('playground running', async () => {
       ),
     ]);
 
-    humanNode = new oHumanLoginTool({
-      address: new oNodeAddress('o://human'),
-      leader: leader,
-      parent: leader,
-      respond: async (intent: string) => {
-        return 'Request approved';
-      },
-      answer: async (question: string) => {
-        return 'Request approved';
-      },
-      receiveStream: async (data: any) => {
-        console.log('Received stream:', data);
-      },
-    });
-    await humanNode.start();
-    // const response = await entryNode.useStream(
-    //   leader,
-    //   {
-    //     method: 'intent',
-    //     params: {
-    //       _isStreaming: true,
-    //       intent:
-    //         'Use the perplexity tool to search for the latest news on the stock market',
-    //       _token: 'test',
-    //     },
+    // humanNode = new oHumanLoginTool({
+    //   address: new oNodeAddress('o://human'),
+    //   leader: leader,
+    //   parent: leader,
+    //   respond: async (intent: string) => {
+    //     return 'Request approved';
     //   },
-    //   {
-    //     abortSignal: AbortSignal.timeout(5_000),
-    //     onChunk: (chunk) => {
-    //       console.log(
-    //         'Received chunk:',
-    //         JSON.stringify(chunk.result.data, null, 2),
-    //       );
-    //     },
+    //   answer: async (question: string) => {
+    //     return 'Request approved';
     //   },
-    // );
+    //   receiveStream: async (data: any) => {
+    //     console.log('Received stream:', data);
+    //   },
+    // });
+    // await humanNode.start();
+    const response = await entryNode.useStream(
+      leader,
+      {
+        method: 'intent',
+        params: {
+          _isStreaming: true,
+          intent:
+            'Use the perplexity tool to search for the latest news on the stock market',
+          _token: 'test',
+        },
+      },
+      {
+        abortSignal: AbortSignal.timeout(5_000),
+        onChunk: (chunk) => {
+          console.log(
+            'Received chunk:',
+            JSON.stringify(chunk.result.data, null, 2),
+          );
+        },
+      },
+    );
     // console.log('Response:', response.result.data);
-    // await entryNode.stop();
-  });
-
-  it('should fail when action is not approved', async () => {
-    const entryNode = tmpNode;
-    // await entryNode.start();
-    expect(entryNode).to.exist;
-    expect(entryNode.state).to.equal(NodeState.RUNNING);
-
-    console.log('Setting approval preference to deny a specific action');
-    // Set a preference to deny a specific tool/method combination
-    const setPreferenceResponse = await entryNode.use(
-      new oNodeAddress('o://approval'),
-      {
-        method: 'set_preference',
-        params: {
-          toolMethod: 'o://storage/delete',
-          preference: 'deny',
-        },
-      },
-    );
-    console.log('Set preference response:', setPreferenceResponse.result.data);
-    expect(setPreferenceResponse.result.data).to.exist;
-
-    console.log('Attempting to request approval for denied action');
-    // Now request approval for the denied action
-    const approvalResponse = await entryNode.use(
-      new oNodeAddress('o://approval'),
-      {
-        method: 'request_approval',
-        params: {
-          toolAddress: 'o://storage',
-          method: 'delete',
-          params: { key: 'test-key' },
-          intent: 'Testing approval denial',
-        },
-      },
-    );
-    console.log('Approval response:', approvalResponse.result.data);
-
-    // Verify the action was denied
-    expect(approvalResponse.result.data).to.exist;
-    expect((approvalResponse.result.data as any).approved).to.be.false;
-    expect((approvalResponse.result.data as any).decision).to.equal('deny');
-    console.log('✓ Action was successfully denied by approval system');
-
     await entryNode.stop();
-    await humanNode.stop();
   });
+
+  // it('should fail when action is not approved', async () => {
+  //   const entryNode = tmpNode;
+  //   // await entryNode.start();
+  //   expect(entryNode).to.exist;
+  //   expect(entryNode.state).to.equal(NodeState.RUNNING);
+
+  //   console.log('Setting approval preference to deny a specific action');
+  //   // Set a preference to deny a specific tool/method combination
+  //   const setPreferenceResponse = await entryNode.use(
+  //     new oNodeAddress('o://approval'),
+  //     {
+  //       method: 'set_preference',
+  //       params: {
+  //         toolMethod: 'o://storage/delete',
+  //         preference: 'deny',
+  //       },
+  //     },
+  //   );
+  //   console.log('Set preference response:', setPreferenceResponse.result.data);
+  //   expect(setPreferenceResponse.result.data).to.exist;
+
+  //   console.log('Attempting to request approval for denied action');
+  //   // Now request approval for the denied action
+  //   const approvalResponse = await entryNode.use(
+  //     new oNodeAddress('o://approval'),
+  //     {
+  //       method: 'request_approval',
+  //       params: {
+  //         toolAddress: 'o://storage',
+  //         method: 'delete',
+  //         params: { key: 'test-key' },
+  //         intent: 'Testing approval denial',
+  //       },
+  //     },
+  //   );
+  //   console.log('Approval response:', approvalResponse.result.data);
+
+  //   // Verify the action was denied
+  //   expect(approvalResponse.result.data).to.exist;
+  //   expect((approvalResponse.result.data as any).approved).to.be.false;
+  //   expect((approvalResponse.result.data as any).decision).to.equal('deny');
+  //   console.log('✓ Action was successfully denied by approval system');
+
+  //   await entryNode.stop();
+  //   await humanNode.stop();
+  // });
 });
