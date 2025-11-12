@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.44 (2025-11-12)</small>
+
+- fix ([bfbcea0](https://github.com/olane-labs/olane/commit/bfbcea0))
+
 ## <small>0.7.12-alpha.43 (2025-11-12)</small>
 
 **Note:** Version bump only for package @olane/o-node
