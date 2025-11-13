@@ -1,6 +1,5 @@
 import { oAddress, oConnectionConfig, oConnectionManager } from '@olane/o-core';
 import { Libp2p, Connection, PeerId } from '@olane/o-config';
-import { peerIdFromString } from '@libp2p/peer-id';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
