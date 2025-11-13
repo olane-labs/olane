@@ -68,6 +68,7 @@
     "@olane/o-tool": "0.7.12-alpha.51",
     "@olane/o-tool-registry": "0.7.12-alpha.51",
     "@olane/o-tools-common": "0.7.12-alpha.51",
+    "@olane/o-client-limited": "0.7.12-alpha.51",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",

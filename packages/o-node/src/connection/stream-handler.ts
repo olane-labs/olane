@@ -1,0 +1,374 @@
+import type { Connection, Stream } from '@libp2p/interface';
+import { EventEmitter } from 'events';
+import {
+  oRequest,
+  oResponse,
+  CoreUtils,
+  oError,
+  oErrorCodes,
+  Logger,
+  ResponseBuilder,
+} from '@olane/o-core';
+import type { oRouterRequest } from '@olane/o-core';
+import type { oConnection } from '@olane/o-core';
+import type { RunResult } from '@olane/o-tool';
+import type { StreamHandlerConfig } from './stream-handler.config.js';
+
+/**
+ * StreamHandler centralizes all stream-related functionality including:
+ * - Message type detection (request vs response)
+ * - Stream lifecycle management (create, reuse, close)
+ * - Backpressure handling
+ * - Request/response handling
+ * - Stream routing for middleware nodes
+ */
+export class StreamHandler {
+  private logger: Logger;
+
+  constructor(logger?: Logger) {
+    this.logger = logger ?? new Logger('StreamHandler');
+  }
+
+  /**
+   * Detects if a decoded message is a request
+   * Requests have a 'method' field and no 'result' field
+   */
+  isRequest(message: any): boolean {
+    return typeof message?.method === 'string' && message.result === undefined;
+  }
+
+  /**
+   * Detects if a decoded message is a response
+   * Responses have a 'result' field and no 'method' field
+   */
+  isResponse(message: any): boolean {
+    return message?.result !== undefined && message.method === undefined;
+  }
+
+  /**
+   * Decodes a stream message event into a JSON object
+   */
+  async decodeMessage(event: any): Promise<any> {
+    return CoreUtils.processStream(event);
+  }
+
+  /**
+   * Gets an existing open stream or creates a new one based on reuse policy
+   *
+   * @param connection - The libp2p connection
+   * @param protocol - The protocol to use for the stream
+   * @param config - Stream handler configuration
+   */
+  async getOrCreateStream(
+    connection: Connection,
+    protocol: string,
+    config: StreamHandlerConfig = {},
+  ): Promise<Stream> {
+    if (connection.status !== 'open') {
+      throw new oError(oErrorCodes.INVALID_STATE, 'Connection not open');
+    }
+
+    const reusePolicy = config.reusePolicy ?? 'none';
+
+    // Check for existing stream if reuse is enabled
+    if (reusePolicy === 'reuse') {
+      connection.streams.forEach((stream) => {
+        this.logger.debug(
+          'Stream re-use option:',
+          stream.protocol,
+          stream.status,
+          stream.direction,
+        );
+      });
+      const existingStream = connection.streams.find(
+        (stream) => stream.status === 'open' && stream.protocol?.length > 0, // protocol with 0 length seems to be a special state where connection has not made successful stream yet
+      );
+      if (existingStream) {
+        this.logger.debug('Reusing existing stream');
+        return existingStream;
+      }
+    }
+
+    // Create new stream
+    this.logger.debug('Creating new stream');
+    return connection.newStream(protocol, {
+      signal: config.signal,
+      maxOutboundStreams: config.maxOutboundStreams ?? 1000,
+      runOnLimitedConnection: config.runOnLimitedConnection ?? false,
+    });
+  }
+
+  /**
+   * Sends data through a stream with backpressure handling
+   *
+   * @param stream - The stream to send data through
+   * @param data - The data to send
+   * @param config - Configuration for timeout and other options
+   */
+  async send(
+    stream: Stream,
+    data: Uint8Array,
+    config: StreamHandlerConfig = {},
+  ): Promise<void> {
+    // Send the data with backpressure handling (libp2p v3 best practice)
+    const sent = stream.send(data);
+
+    // If send() returns false, buffer is full - wait for drain
+    if (!sent) {
+      this.logger.debug('Stream buffer full, waiting for drain...');
+      const drainTimeout = config.drainTimeoutMs ?? 30_000;
+
+      await stream.onDrain({
+        signal: AbortSignal.timeout(drainTimeout),
+      });
+
+      this.logger.debug('Stream drained successfully');
+    }
+  }
+
+  /**
+   * Closes a stream safely with error handling
+   *
+   * @param stream - The stream to close
+   * @param config - Configuration including reuse policy
+   */
+  async close(stream: Stream, config: StreamHandlerConfig = {}): Promise<void> {
+    // Don't close if reuse policy is enabled
+    if (config.reusePolicy === 'reuse') {
+      this.logger.debug('Stream reuse enabled, not closing stream');
+      return;
+    }
+
+    if (stream.status === 'open') {
+      try {
+        await stream.close();
+        this.logger.debug('Stream closed successfully');
+      } catch (error: any) {
+        this.logger.debug('Error closing stream:', error.message);
+      }
+    }
+  }
+
+  /**
+   * Handles an incoming stream on the server side
+   * Attaches message listener immediately (libp2p v3 best practice)
+   * Routes requests or executes tools based on the message
+   *
+   * @param stream - The incoming stream
+   * @param connection - The connection the stream belongs to
+   * @param toolExecutor - Function to execute tools for requests
+   */
+  async handleIncomingStream(
+    stream: Stream,
+    connection: Connection,
+    toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
+  ): Promise<void> {
+    // CRITICAL: Attach message listener immediately to prevent buffer overflow (libp2p v3)
+    const messageHandler = async (event: any) => {
+      try {
+        // avoid processing non-olane messages
+        if (!event.data) {
+          return;
+        }
+        const message = await this.decodeMessage(event);
+        if (typeof message === 'string') {
+          // this.logger.warn(
+          //   'Received string message on server-side stream, ignoring',
+          //   message,
+          // );
+          return;
+        }
+
+        if (this.isRequest(message)) {
+          await this.handleRequestMessage(message, stream, toolExecutor);
+        } else if (this.isResponse(message)) {
+          this.logger.warn(
+            'Received response message on server-side stream, ignoring',
+          );
+        } else {
+          this.logger.warn('Received unknown message type', message);
+        }
+      } catch (error: any) {
+        this.logger.error('Error handling stream message:', error);
+        // Error already logged, stream will be closed by remote peer or timeout
+      }
+    };
+
+    const closeHandler = () => {
+      this.logger.debug('Stream closed by remote peer');
+      stream.removeEventListener('message', messageHandler);
+      // stream.removeEventListener('close', closeHandler);
+    };
+
+    stream.addEventListener('message', messageHandler);
+    // stream.addEventListener('close', closeHandler);
+  }
+
+  /**
+   * Handles a request message by executing the tool and sending response
+   *
+   * @param message - The decoded request message
+   * @param stream - The stream to send the response on
+   * @param toolExecutor - Function to execute the tool
+   */
+  private async handleRequestMessage(
+    message: any,
+    stream: Stream,
+    toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
+  ): Promise<void> {
+    const request = new oRequest(message);
+    const responseBuilder = ResponseBuilder.create();
+
+    try {
+      const result = await toolExecutor(request, stream);
+      const response = await responseBuilder.build(request, result, null);
+      await CoreUtils.sendResponse(response, stream);
+    } catch (error: any) {
+      const errorResponse = await responseBuilder.buildError(request, error);
+      await CoreUtils.sendResponse(errorResponse, stream);
+    }
+  }
+
+  /**
+   * Handles an outgoing stream on the client side
+   * Listens for response messages and emits them via the event emitter
+   *
+   * @param stream - The outgoing stream
+   * @param emitter - Event emitter for chunk events
+   * @param config - Configuration including abort signal
+   * @returns Promise that resolves with the final response
+   */
+  async handleOutgoingStream(
+    stream: Stream,
+    emitter: EventEmitter,
+    config: StreamHandlerConfig = {},
+  ): Promise<oResponse> {
+    return new Promise((resolve, reject) => {
+      let lastResponse: any;
+
+      const messageHandler = async (event: any) => {
+        // avoid processing non-olane messages
+        if (!event.data) {
+          return;
+        }
+        try {
+          const message = await this.decodeMessage(event);
+
+          if (typeof message === 'string') {
+            // this.logger.warn(
+            //   'Received string message on server-side stream, ignoring',
+            //   message,
+            // );
+            return;
+          }
+
+          if (this.isResponse(message)) {
+            const response = await CoreUtils.processStreamResponse(event);
+
+            // Emit chunk for streaming responses
+            emitter.emit('chunk', response);
+
+            // Check if this is the last chunk
+            if (response.result._last || !response.result._isStreaming) {
+              lastResponse = response;
+              cleanup();
+              resolve(response);
+            }
+          } else if (this.isRequest(message)) {
+            this.logger.warn(
+              'Received request message on client-side stream, ignoring',
+            );
+          } else {
+            this.logger.warn('Received unknown message type', message);
+          }
+        } catch (error: any) {
+          this.logger.error('Error handling response message:', error);
+          cleanup();
+          reject(error);
+        }
+      };
+
+      const closeHandler = () => {
+        this.logger.debug('Stream closed by remote peer');
+        cleanup();
+
+        if (lastResponse) {
+          resolve(lastResponse);
+        } else {
+          reject(
+            new oError(
+              oErrorCodes.TIMEOUT,
+              'Stream closed before response received',
+            ),
+          );
+        }
+      };
+
+      const abortHandler = () => {
+        this.logger.debug('Request aborted');
+        cleanup();
+
+        try {
+          stream.abort(new Error('Request aborted'));
+        } catch (error: any) {
+          this.logger.debug('Error aborting stream:', error.message);
+        }
+
+        reject(new oError(oErrorCodes.TIMEOUT, 'Request aborted'));
+      };
+
+      const cleanup = () => {
+        stream.removeEventListener('message', messageHandler);
+        // stream.removeEventListener('close', closeHandler);
+        if (config.signal) {
+          config.signal.removeEventListener('abort', abortHandler);
+        }
+      };
+
+      stream.addEventListener('message', messageHandler);
+      // stream.addEventListener('close', closeHandler);
+
+      if (config.signal) {
+        config.signal.addEventListener('abort', abortHandler);
+      }
+    });
+  }
+
+  /**
+   * Forwards a request to the next hop and relays response chunks back
+   * This implements the middleware/proxy pattern for intermediate nodes
+   *
+   * @param request - The router request to forward
+   * @param incomingStream - The stream to send responses back on
+   * @param dialFn - Function to dial the next hop connection
+   */
+  async forwardRequest(
+    request: oRouterRequest,
+    incomingStream: Stream,
+    dialFn: (address: string) => Promise<oConnection>,
+  ): Promise<void> {
+    try {
+      // Connect to next hop
+      const nextHopConnection = await dialFn(request.params.address);
+
+      // Set up chunk relay - forward responses from next hop back to incoming stream
+      nextHopConnection.onChunk(async (response: oResponse) => {
+        try {
+          await CoreUtils.sendStreamResponse(response, incomingStream);
+        } catch (error: any) {
+          this.logger.error('Error forwarding chunk:', error);
+        }
+      });
+
+      // Transmit the request to next hop
+      await nextHopConnection.transmit(request);
+    } catch (error: any) {
+      this.logger.error('Error forwarding request:', error);
+
+      // Send error response back on incoming stream using ResponseBuilder
+      const responseBuilder = ResponseBuilder.create();
+      const errorResponse = await responseBuilder.buildError(request, error);
+      await CoreUtils.sendResponse(errorResponse, incomingStream);
+    }
+  }
+}

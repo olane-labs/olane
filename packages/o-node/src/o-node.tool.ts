@@ -1,11 +1,6 @@
 import {
-  CoreUtils,
   oAddress,
-  oError,
-  oErrorCodes,
   oRequest,
-  oResponse,
-  ResponseBuilder,
   ChildJoinedEvent,
 } from '@olane/o-core';
 import { oTool } from '@olane/o-tool';
@@ -13,6 +8,7 @@ import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
 import { oNodeTransport } from './router/o-node.transport.js';
 import { oNodeAddress } from './router/o-node.address.js';
+import { StreamHandler } from './connection/stream-handler.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -20,6 +16,8 @@ import { oNodeAddress } from './router/o-node.address.js';
  * @returns A new class that extends the base class and implements the oTool interface
  */
 export class oNodeTool extends oTool(oServerNode) {
+  private streamHandler!: StreamHandler;
+
   async handleProtocol(address: oAddress) {
     this.logger.debug('Handling protocol: ' + address.protocol);
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
@@ -32,6 +30,7 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async initialize(): Promise<void> {
     await super.initialize();
+    this.streamHandler = new StreamHandler(this.logger);
     await this.handleProtocol(this.address);
     if (
       this.staticAddress &&
@@ -43,49 +42,28 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
     this.logger.debug('Handling connection: ', connection.id);
-    // CRITICAL: Attach message listener immediately to prevent buffer overflow (libp2p v3)
-    // Per libp2p migration guide: "If no message event handler is added, streams will
-    // buffer incoming data until a pre-configured limit is reached, after which the stream will be reset."
-    const messageHandler = async (event: any) => {
-      if (!event.data) {
-        this.logger.warn('Malformed event data');
-        return;
-      }
-      const requestConfig: oRequest = await CoreUtils.processStream(event);
-      const request = new oRequest(requestConfig);
 
-      // Use ResponseBuilder with automatic error handling and metrics tracking
-      const responseBuilder = ResponseBuilder.create().withMetrics(
-        this.metrics,
-      );
-
-      let response: oResponse;
-      try {
-        const result = await this.execute(request, stream);
-        response = await responseBuilder.build(request, result, null);
-      } catch (error: any) {
-        this.logger.error(
-          'Error executing tool: ',
-          request.toString(),
-          error,
-          typeof error,
-        );
-        response = await responseBuilder.buildError(request, error);
-      }
-
-      // Send the response
-      await CoreUtils.sendResponse(response, stream);
-    };
-
-    // Attach listener synchronously before any async operations
-    stream.addEventListener('message', messageHandler);
-
-    stream.addEventListener('close', () => {
-      this.logger.debug('Stream closed by remote peer');
-      stream.close().catch((error) => {
-        this.logger.error('Error closing stream: ', error);
-      });
-    });
+    // Use StreamHandler for consistent stream handling
+    // This follows libp2p v3 best practices for immediate message listener attachment
+    await this.streamHandler.handleIncomingStream(
+      stream,
+      connection,
+      async (request: oRequest, stream: Stream) => {
+        try {
+          const result = await this.execute(request, stream);
+          // Return the raw result - StreamHandler will build and send the response
+          return result;
+        } catch (error: any) {
+          this.logger.error(
+            'Error executing tool: ',
+            request.toString(),
+            error,
+            typeof error,
+          );
+          throw error; // StreamHandler will handle error response building
+        }
+      },
+    );
   }
 
   async _tool_identify(): Promise<any> {

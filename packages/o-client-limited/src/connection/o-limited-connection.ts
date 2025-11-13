@@ -1,36 +1,37 @@
 import { Stream } from '@olane/o-config';
-import {
-  CoreUtils,
-  oError,
-  oErrorCodes,
-  oRequest,
-  oResponse,
-} from '@olane/o-core';
 import { oNodeConnection } from '@olane/o-node';
+import type { StreamHandlerConfig } from '@olane/o-node/src/connection/stream-handler.config.js';
 
+/**
+ * oLimitedConnection extends oNodeConnection with stream reuse enabled
+ * This is optimized for limited connections where creating new streams is expensive
+ */
 export class oLimitedConnection extends oNodeConnection {
   async getOrCreateStream(): Promise<Stream> {
-    if (this.p2pConnection.status !== 'open') {
-      throw new oError(oErrorCodes.INVALID_STATE, 'Connection not open');
-    }
-    // check if we have an open stream
-    const stream = this.p2pConnection.streams.find(
-      (stream) => stream.status === 'open',
+    // Override to use 'reuse' policy
+    const streamConfig: StreamHandlerConfig = {
+      signal: this.abortSignal,
+      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+        : 1000,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      reusePolicy: 'reuse', // Enable stream reuse
+      drainTimeoutMs: this.config.drainTimeoutMs,
+    };
+
+    return this.streamHandler.getOrCreateStream(
+      this.p2pConnection,
+      this.nextHopAddress.protocol,
+      streamConfig,
     );
-    if (stream) {
-      this.logger.debug(
-        'Reusing existing stream for address: ' +
-          this.nextHopAddress.toString(),
-      );
-      return stream;
-    }
-    this.logger.debug(
-      'Creating new stream for address: ' + this.nextHopAddress.toString(),
-    );
-    return super.getOrCreateStream();
   }
 
   async postTransmit(stream: Stream) {
-    // do nothing as we don't want to close the stream
+    // Use StreamHandler with reuse policy - stream won't be closed
+    const streamConfig: StreamHandlerConfig = {
+      reusePolicy: 'reuse',
+    };
+
+    await this.streamHandler.close(stream, streamConfig);
   }
 }

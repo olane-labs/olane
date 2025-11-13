@@ -1,13 +1,12 @@
+import 'dotenv/config';
 import { oAddress, NodeState } from '@olane/o-core';
 import { expect } from 'chai';
-import dotenv from 'dotenv';
 import { defaultOSInstance } from '../utils/os.default.js';
 import { OlaneOSSystemStatus } from '../../src/o-olane-os/enum/o-os.status-enum.js';
 import { oNodeAddress, oNodeTransport } from '@olane/o-node';
 import { tmpNode } from '../utils/tmp.node.js';
 import { oHumanLoginTool } from '@olane/o-login';
-
-dotenv.config();
+import { oLimitedTool } from '@olane/o-client-limited';
 
 const network = defaultOSInstance;
 
@@ -20,12 +19,21 @@ describe('playground running', async () => {
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
 
-    console.log('Using intelligence tool');
     const leader = new oNodeAddress('o://leader', [
       new oNodeTransport(
+        // '/dns4/leader.olane.com/tcp/4000/tls/ws',
         '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
       ),
     ]);
+
+    const joinedNode = new oLimitedTool({
+      address: new oNodeAddress('o://joined'),
+      leader: leader,
+      parent: leader,
+      joinToken: 'test',
+    });
+
+    await joinedNode.start(); // should join the network
 
     // humanNode = new oHumanLoginTool({
     //   address: new oNodeAddress('o://human'),
@@ -42,28 +50,36 @@ describe('playground running', async () => {
     //   },
     // });
     // await humanNode.start();
-    const response = await entryNode.useStream(
-      leader,
+    // const response = await entryNode.useStream(
+    //   leader,
+    //   {
+    //     method: 'intent',
+    //     params: {
+    //       _isStreaming: true,
+    //       intent:
+    //         'Use the perplexity tool to search for the latest news on the stock market',
+    //       _token: 'test',
+    //     },
+    //   },
+    //   {
+    //     abortSignal: AbortSignal.timeout(5_000),
+    //     onChunk: (chunk) => {
+    //       console.log(
+    //         'Received chunk:',
+    //         JSON.stringify(chunk.result.data, null, 2),
+    //       );
+    //     },
+    //   },
+    // );
+
+    const response = await entryNode.use(
+      new oNodeAddress('o://leader/joined', leader.transports),
       {
-        method: 'intent',
-        params: {
-          _isStreaming: true,
-          intent:
-            'Use the perplexity tool to search for the latest news on the stock market',
-          _token: 'test',
-        },
-      },
-      {
-        abortSignal: AbortSignal.timeout(5_000),
-        onChunk: (chunk) => {
-          console.log(
-            'Received chunk:',
-            JSON.stringify(chunk.result.data, null, 2),
-          );
-        },
+        method: 'ping',
+        params: {},
       },
     );
-    // console.log('Response:', response.result.data);
+    console.log('Response:', response.result.data);
     await entryNode.stop();
   });
 

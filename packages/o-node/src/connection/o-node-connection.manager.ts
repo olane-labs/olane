@@ -29,7 +29,8 @@ export class oNodeConnectionManager extends oConnectionManager {
 
     if (existingConnection && existingConnection.status === 'open') {
       this.logger.debug(
-        'Reusing existing libp2p connection for address: ' + address.toString(),
+        'Reusing existing libp2p connection for address: ' +
+          nextHopAddress.toString(),
       );
       p2pConnection = existingConnection;
     } else {

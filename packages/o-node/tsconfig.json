@@ -11,5 +11,5 @@
     "moduleResolution": "node"
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["node_modules", "dist", "src/tests", "webpack.config.js"]
+  "exclude": ["node_modules", "dist", "src/tests", "webpack.config.js", "**/*.spec.ts"]
 }
