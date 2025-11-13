@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.48 (2025-11-13)</small>
+
+- node connection logging ([40bd5fb](https://github.com/olane-labs/olane/commit/40bd5fb))
+
 ## <small>0.7.12-alpha.47 (2025-11-13)</small>
 
 - use node connection manager for consistency ([a54ce9d](https://github.com/olane-labs/olane/commit/a54ce9d))
