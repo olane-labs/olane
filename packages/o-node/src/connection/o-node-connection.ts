@@ -1,4 +1,4 @@
-import { Connection } from '@olane/o-config';
+import { Connection, Stream } from '@olane/o-config';
 import {
   CoreUtils,
   oConnection,
@@ -30,11 +30,37 @@ export class oNodeConnection extends oConnection {
     });
   }
 
-  validate() {
+  validate(stream?: Stream) {
     if (this.config.p2pConnection.status !== 'open') {
       throw new Error('Connection is not valid');
     }
     // do nothing
+    if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
+      throw new oError(
+        oErrorCodes.FAILED_TO_DIAL_TARGET,
+        'Failed to dial target',
+      );
+    }
+    if (stream.status === 'reset') {
+      throw new oError(
+        oErrorCodes.CONNECTION_LIMIT_REACHED,
+        'Connection limit reached',
+      );
+    }
+  }
+
+  async getOrCreateStream(): Promise<Stream> {
+    if (this.p2pConnection.status !== 'open') {
+      throw new oError(oErrorCodes.INVALID_STATE, 'Connection not open');
+    }
+
+    return this.p2pConnection.newStream(this.nextHopAddress.protocol, {
+      signal: this.abortSignal,
+      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+        : 1000,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+    });
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
@@ -42,29 +68,9 @@ export class oNodeConnection extends oConnection {
       if (this.config.runOnLimitedConnection) {
         this.logger.debug('Running on limited connection...');
       }
-      const stream = await this.p2pConnection.newStream(
-        this.nextHopAddress.protocol,
-        {
-          signal: this.abortSignal,
-          maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-            ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-            : 1000,
-          runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-        },
-      );
+      const stream = await this.getOrCreateStream();
 
-      if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
-        throw new oError(
-          oErrorCodes.FAILED_TO_DIAL_TARGET,
-          'Failed to dial target',
-        );
-      }
-      if (stream.status === 'reset') {
-        throw new oError(
-          oErrorCodes.CONNECTION_LIMIT_REACHED,
-          'Connection limit reached',
-        );
-      }
+      this.validate(stream);
 
       // Send the data with backpressure handling (libp2p v3 best practice)
       const data = new TextEncoder().encode(request.toString());
@@ -92,15 +98,22 @@ export class oNodeConnection extends oConnection {
           this.emitter.emit('chunk', response);
           // marked as the last chunk let's close
           if (response.result._last || !response.result._isStreaming) {
-            // this.logger.debug('Last chunk received...');
             lastResponse = response;
             // Clean up abort listener before closing
             if (this.abortSignal) {
               this.abortSignal.removeEventListener('abort', abortHandler);
             }
-            await stream.close();
             resolve(true);
           }
+        });
+      });
+
+      stream.addEventListener('close', async () => {
+        this.logger.debug(
+          'Stream closed by remote peer, closing connection...',
+        );
+        stream.close().catch((error) => {
+          this.logger.error('Error closing stream: ', error);
         });
       });
 
@@ -112,9 +125,8 @@ export class oNodeConnection extends oConnection {
         }); // Default: 30 second timeout
       }
 
-      if (stream.status === 'open') {
-        await stream.abort(new Error('Connection closed'));
-      }
+      // handle cleanup of the stream
+      await this.postTransmit(stream);
 
       const response = oResponse.fromJSON(lastResponse);
       return response;
@@ -123,6 +135,16 @@ export class oNodeConnection extends oConnection {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
       }
       throw error;
+    }
+  }
+
+  async postTransmit(stream: Stream) {
+    if (stream.status === 'open') {
+      stream.close().catch((error) => {
+        this.logger.error('Error closing stream after transmission: ', error);
+      });
+    } else {
+      this.logger.debug('Stream is not open, skipping cleanup');
     }
   }
 

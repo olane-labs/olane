@@ -79,6 +79,13 @@ export class oNodeTool extends oTool(oServerNode) {
 
     // Attach listener synchronously before any async operations
     stream.addEventListener('message', messageHandler);
+
+    stream.addEventListener('close', () => {
+      this.logger.debug('Stream closed by remote peer');
+      stream.close().catch((error) => {
+        this.logger.error('Error closing stream: ', error);
+      });
+    });
   }
 
   async _tool_identify(): Promise<any> {

@@ -16,20 +16,10 @@ export class oNodeConnectionManager extends oConnectionManager {
     this.defaultDrainTimeoutMs = config.defaultDrainTimeoutMs;
   }
 
-  /**
-   * Connect to a given address, reusing libp2p connections when possible
-   * @param config - Connection configuration
-   * @returns The connection object
-   */
-  async connect(config: oConnectionConfig): Promise<oNodeConnection> {
-    const {
-      address,
-      nextHopAddress,
-      callerAddress,
-      readTimeoutMs,
-      drainTimeoutMs,
-    } = config;
-
+  async getOrCreateConnection(
+    nextHopAddress: oAddress,
+    address: oAddress,
+  ): Promise<Connection> {
     // Check if libp2p already has an active connection to this peer
     const existingConnection = this.getCachedLibp2pConnection(
       nextHopAddress,
@@ -53,6 +43,27 @@ export class oNodeConnectionManager extends oConnectionManager {
         ),
       );
     }
+    return p2pConnection;
+  }
+
+  /**
+   * Connect to a given address, reusing libp2p connections when possible
+   * @param config - Connection configuration
+   * @returns The connection object
+   */
+  async connect(config: oConnectionConfig): Promise<oNodeConnection> {
+    const {
+      address,
+      nextHopAddress,
+      callerAddress,
+      readTimeoutMs,
+      drainTimeoutMs,
+    } = config;
+
+    const p2pConnection = await this.getOrCreateConnection(
+      nextHopAddress,
+      address,
+    );
 
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,

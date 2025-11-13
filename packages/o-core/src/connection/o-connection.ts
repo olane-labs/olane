@@ -39,7 +39,7 @@ export abstract class oConnection extends oObject {
     this.emitter.addListener('chunk', listener);
   }
 
-  validate(): void {
+  validate(dto?: any): void {
     if (!this.address || !this.nextHopAddress || !this.callerAddress) {
       throw new Error('Connection configuration is invalid');
     }
