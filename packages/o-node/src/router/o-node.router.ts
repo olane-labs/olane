@@ -183,6 +183,7 @@ export class oNodeRouter extends oToolRouter {
         address: node.address,
         callerAddress: node.address,
         isStream: isStream,
+        runOnLimitedConnection: node.config.runOnLimitedConnection ?? false,
       });
 
       if (isStream) {

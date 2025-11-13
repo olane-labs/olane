@@ -10,7 +10,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
 
-  constructor(config: oNodeConnectionManagerConfig) {
+  constructor(readonly config: oNodeConnectionManagerConfig) {
     super(config);
     this.p2pNode = config.p2pNode;
     this.defaultReadTimeoutMs = config.defaultReadTimeoutMs;
@@ -64,6 +64,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
     });
 
     return connection;

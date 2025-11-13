@@ -33,6 +33,7 @@ export class oNodeConnection extends oConnection {
           maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
             ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
             : 1000,
+          runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
         },
       );
 

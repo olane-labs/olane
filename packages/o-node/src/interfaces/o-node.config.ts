@@ -49,4 +49,6 @@ export interface oNodeConfig extends oCoreConfig {
      */
     drainTimeoutMs?: number;
   };
+
+  runOnLimitedConnection?: boolean;
 }
