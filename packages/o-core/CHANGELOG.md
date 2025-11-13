@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.49 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
 ## <small>0.7.12-alpha.48 (2025-11-13)</small>
 
 **Note:** Version bump only for package @olane/o-core
