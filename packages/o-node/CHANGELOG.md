@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.50 (2025-11-13)</small>
+
+- more logging ([23d68d8](https://github.com/olane-labs/olane/commit/23d68d8))
+
 ## <small>0.7.12-alpha.49 (2025-11-13)</small>
 
 - minor log ([c4625a5](https://github.com/olane-labs/olane/commit/c4625a5))
