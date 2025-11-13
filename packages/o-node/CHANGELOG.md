@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.47 (2025-11-13)</small>
+
+- use node connection manager for consistency ([a54ce9d](https://github.com/olane-labs/olane/commit/a54ce9d))
+
 ## <small>0.7.12-alpha.46 (2025-11-13)</small>
 
 - added runOnLimitedConnection config ([9bc37db](https://github.com/olane-labs/olane/commit/9bc37db))
