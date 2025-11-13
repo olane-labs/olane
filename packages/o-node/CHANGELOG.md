@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.46 (2025-11-13)</small>
+
+- added runOnLimitedConnection config ([9bc37db](https://github.com/olane-labs/olane/commit/9bc37db))
+
 ## <small>0.7.12-alpha.45 (2025-11-13)</small>
 
 - remove limited connect ([316f220](https://github.com/olane-labs/olane/commit/316f220))

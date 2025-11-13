@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.46 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-tools-common
+
 ## <small>0.7.12-alpha.45 (2025-11-13)</small>
 
 **Note:** Version bump only for package @olane/o-tools-common
