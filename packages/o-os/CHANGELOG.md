@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.52 (2025-11-13)</small>
+
+- stream handler isolation ([b97f419](https://github.com/olane-labs/olane/commit/b97f419))
+- update version ([9aff117](https://github.com/olane-labs/olane/commit/9aff117))
+
 ## <small>0.7.12-alpha.51 (2025-11-13)</small>
 
 **Note:** Version bump only for package @olane/os
