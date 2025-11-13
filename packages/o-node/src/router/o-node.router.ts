@@ -13,7 +13,6 @@ import {
 import type { oNode } from '../o-node.js';
 import { oToolRouter } from '@olane/o-tool';
 import { RequestParams } from '@olane/o-protocol';
-import { oNodeConnection } from '../connection/o-node-connection.js';
 import { oNodeRoutingPolicy } from './o-node.routing-policy.js';
 import { Stream } from '@olane/o-config';
 import { oStreamRequest } from '../connection/o-stream.request.js';
@@ -173,17 +172,11 @@ export class oNodeRouter extends oToolRouter {
         (request.params._isStreaming as boolean) ||
         (request.params.payload as any)?.params?._isStreaming;
 
-      const connection = await node.p2pNode.dial(
-        address.libp2pTransports.map((t) => t.toMultiaddr()),
-      );
-
-      const nodeConnection = new oNodeConnection({
-        p2pConnection: connection,
+      const nodeConnection = await node.connectionManager.connect({
         nextHopAddress: address,
         address: node.address,
         callerAddress: node.address,
         isStream: isStream,
-        runOnLimitedConnection: node.config.runOnLimitedConnection ?? false,
       });
 
       if (isStream) {
