@@ -15,6 +15,19 @@ export class oNodeConnection extends oConnection {
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
+    this.setupConnectionListeners();
+  }
+
+  setupConnectionListeners() {
+    this.logger.debug(
+      'Setting up connection listeners for address: ' +
+        this.nextHopAddress.toString(),
+    );
+    this.p2pConnection?.addEventListener('close', () => {
+      this.logger.debug(
+        'Connection closed for address: ' + this.nextHopAddress.toString(),
+      );
+    });
   }
 
   validate() {
