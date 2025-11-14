@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.53 (2025-11-14)</small>
+
+- adopted pnpm ([f899026](https://github.com/olane-labs/olane/commit/f899026))
+
 ## <small>0.7.12-alpha.52 (2025-11-13)</small>
 
 - stream handler isolation ([b97f419](https://github.com/olane-labs/olane/commit/b97f419))
