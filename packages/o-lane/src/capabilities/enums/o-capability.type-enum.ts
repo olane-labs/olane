@@ -6,5 +6,6 @@ export enum oCapabilityType {
   HANDSHAKE = 'handshake',
   EVALUATE = 'evaluate',
   STOP = 'stop',
+  ERROR = 'error',
   UNKNOWN = 'unknown',
 }

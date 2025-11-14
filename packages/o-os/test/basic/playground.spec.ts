@@ -26,14 +26,14 @@ describe('playground running', async () => {
       ),
     ]);
 
-    const joinedNode = new oLimitedTool({
-      address: new oNodeAddress('o://joined'),
-      leader: leader,
-      parent: leader,
-      joinToken: 'test',
-    });
+    // const joinedNode = new oLimitedTool({
+    //   address: new oNodeAddress('o://joined'),
+    //   leader: leader,
+    //   parent: leader,
+    //   joinToken: 'test',
+    // });
 
-    await joinedNode.start(); // should join the network
+    // await joinedNode.start(); // should join the network
 
     // humanNode = new oHumanLoginTool({
     //   address: new oNodeAddress('o://human'),
@@ -50,36 +50,37 @@ describe('playground running', async () => {
     //   },
     // });
     // await humanNode.start();
-    // const response = await entryNode.useStream(
-    //   leader,
-    //   {
-    //     method: 'intent',
-    //     params: {
-    //       _isStreaming: true,
-    //       intent:
-    //         'Use the perplexity tool to search for the latest news on the stock market',
-    //       _token: 'test',
-    //     },
-    //   },
-    //   {
-    //     abortSignal: AbortSignal.timeout(5_000),
-    //     onChunk: (chunk) => {
-    //       console.log(
-    //         'Received chunk:',
-    //         JSON.stringify(chunk.result.data, null, 2),
-    //       );
-    //     },
-    //   },
-    // );
-
-    const response = await entryNode.use(
-      new oNodeAddress('o://leader/joined', leader.transports),
+    const response = await entryNode.useStream(
+      leader,
       {
-        method: 'ping',
-        params: {},
+        method: 'intent',
+        params: {
+          _isStreaming: true,
+          intent:
+            'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
+          _token: 'test',
+        },
+      },
+      {
+        abortSignal: AbortSignal.timeout(5_000),
+        onChunk: (chunk) => {
+          console.log(
+            'Received chunk:',
+            JSON.stringify(chunk.result.data, null, 2),
+          );
+        },
       },
     );
-    console.log('Response:', response.result.data);
+
+    console.log('Response:', JSON.stringify(response, null, 2));
+    // const response = await entryNode.use(
+    //   new oNodeAddress('o://leader/joined', leader.transports),
+    //   {
+    //     method: 'ping',
+    //     params: {},
+    //   },
+    // );
+    // console.log('Response:', response.result.data);
     await entryNode.stop();
   });
 

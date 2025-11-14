@@ -142,9 +142,10 @@ export class oCapabilitySearch extends oCapability {
     }
 
     searchResultContext += `[Search Results End]`;
+
     return new oCapabilitySearchResult({
       result: searchResultContext,
-      humanResult: searchResults?.flat() || [],
+      humanResult: searchResults,
       type: oCapabilityType.EVALUATE,
       config: this.config,
     });

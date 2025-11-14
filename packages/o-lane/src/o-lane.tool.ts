@@ -89,6 +89,8 @@ export class oLaneTool extends oNodeTool {
 
     const completeResponse = {
       result: response?.result,
+      humanResult: response?.humanResult, // Full human-readable formatted result (AI-generated markdown)
+      summary: response?.config?.params?.summary, // Short 1-2 sentence summary
       error: response?.error,
       cycles: pc.sequence.length,
       cid: pc.cid?.toString(),

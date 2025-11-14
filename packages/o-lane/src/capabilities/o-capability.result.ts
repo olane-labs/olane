@@ -33,6 +33,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
     return {
       id: this.id,
       result: this.result,
+      humanResult: this.humanResult, // Include human-readable result in serialization
       type: this.type,
       error: this.error,
       shouldPersist: this.shouldPersist,

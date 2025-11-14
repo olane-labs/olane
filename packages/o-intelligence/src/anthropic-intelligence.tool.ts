@@ -139,7 +139,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
         model = this.defaultModel,
         messages,
         system,
-        max_tokens = 1000,
+        max_tokens = 10000,
         apiKey = this.apiKey,
       } = params;
 
@@ -213,7 +213,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
         model = this.defaultModel,
         messages,
         system,
-        max_tokens = 1000,
+        max_tokens = 10000,
         apiKey = this.apiKey,
       } = params;
 
@@ -340,7 +340,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
         model = this.defaultModel,
         prompt,
         system,
-        max_tokens = 1000,
+        max_tokens = 10000,
         apiKey = this.apiKey,
         ...options
       } = params;
@@ -424,7 +424,7 @@ export class AnthropicIntelligenceTool extends oLaneTool {
         model = this.defaultModel,
         prompt,
         system,
-        max_tokens = 1000,
+        max_tokens = 10000,
         apiKey = this.apiKey,
         ...options
       } = params;

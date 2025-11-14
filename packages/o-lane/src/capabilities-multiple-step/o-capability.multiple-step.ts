@@ -40,6 +40,7 @@ export class oCapabilityMultipleStep extends oCapabilityIntelligence {
       this.subLanes.delete(subLane.id);
       results.concat(subLane.sequence);
     }
+
     return new oCapabilityResult({
       result: results,
       humanResult: results,
