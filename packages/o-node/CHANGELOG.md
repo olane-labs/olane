@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.57 (2025-11-14)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
 ## <small>0.7.12-alpha.56 (2025-11-14)</small>
 
 - added messy implementation of stream handling via reuse ([77872fb](https://github.com/olane-labs/olane/commit/77872fb))
