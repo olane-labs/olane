@@ -91,10 +91,12 @@ export class oNodeConnection extends oConnection {
       await this.streamHandler.send(stream, data, streamConfig);
 
       // Handle response using StreamHandler
+      // Pass request handler if configured to enable bidirectional stream processing
       const response = await this.streamHandler.handleOutgoingStream(
         stream,
         this.emitter,
         streamConfig,
+        this.config.requestHandler,
       );
 
       // Handle cleanup of the stream

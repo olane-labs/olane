@@ -3,6 +3,7 @@ import { Libp2p, Connection, PeerId } from '@olane/o-config';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
+import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 export class oNodeConnectionManager extends oConnectionManager {
   private p2pNode: Libp2p;
@@ -76,6 +77,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      requestHandler: config.requestHandler ?? undefined,
     });
 
     return connection;

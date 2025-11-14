@@ -8,7 +8,15 @@ import { oLimitedConnectionManager } from './connection/o-limited-connection-man
 export class oLimitedTool extends oNodeTool {
   async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
     this.handleProtocol(config.nextHopAddress);
-    return super.connect(config);
+
+    // Inject requestHandler to enable bidirectional stream processing
+    // This allows incoming router requests to be processed through the tool's execute method
+    const configWithHandler: oNodeConnectionConfig = {
+      ...config,
+      requestHandler: this.execute.bind(this),
+    };
+
+    return super.connect(configWithHandler);
   }
 
   async initConnectionManager(): Promise<void> {

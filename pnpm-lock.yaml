@@ -85,20 +85,20 @@ importers:
   packages/o-approval:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -164,20 +164,20 @@ importers:
   packages/o-client-limited:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -373,8 +373,8 @@ importers:
   packages/o-core:
     dependencies:
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       chalk:
         specifier: ^5.4.1
         version: 5.6.2
@@ -449,17 +449,17 @@ importers:
   packages/o-gateway-interface:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -522,20 +522,20 @@ importers:
   packages/o-gateway-olane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -598,20 +598,20 @@ importers:
   packages/o-intelligence:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -677,20 +677,20 @@ importers:
   packages/o-lane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -756,26 +756,26 @@ importers:
   packages/o-leader:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-gateway-olane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -838,20 +838,20 @@ importers:
   packages/o-login:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -920,32 +920,32 @@ importers:
         specifier: ^1.18.1
         version: 1.22.0(@cfworker/json-schema@4.1.1)
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-intelligence':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-leader':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-storage':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1026,32 +1026,32 @@ importers:
         specifier: ^1.18.1
         version: 1.22.0(@cfworker/json-schema@4.1.1)
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-intelligence':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-leader':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-storage':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1129,17 +1129,17 @@ importers:
   packages/o-node:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1205,41 +1205,41 @@ importers:
   packages/o-os:
     dependencies:
       '@olane/o-client-limited':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-intelligence':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-leader':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-login':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-storage':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool-registry':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52(@browserbasehq/sdk@2.6.0(encoding@0.1.13))(@browserbasehq/stagehand@1.14.0(@playwright/test@1.56.1)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.7.3)(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))(axios@1.13.2(debug@4.4.3))(cborg@4.3.0)(encoding@0.1.13)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.4.4)(ignore@5.3.2)(interface-datastore@8.3.2)(it-all@3.0.9)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(playwright@1.56.1)(puppeteer@22.15.0(typescript@5.4.5))(weaviate-client@3.9.0(encoding@0.1.13))(ws@8.18.3)
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55(@browserbasehq/sdk@2.6.0(encoding@0.1.13))(@browserbasehq/stagehand@1.14.0(@playwright/test@1.56.1)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.7.3)(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))(axios@1.13.2(debug@4.4.3))(cborg@4.3.0)(encoding@0.1.13)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.4.4)(ignore@5.3.2)(interface-datastore@8.3.2)(it-all@3.0.9)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(playwright@1.56.1)(puppeteer@22.15.0(typescript@5.4.5))(weaviate-client@3.9.0(encoding@0.1.13))(ws@8.18.3)
       '@olane/o-tools-common':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       chalk:
         specifier: ^5.4.1
         version: 5.6.2
@@ -1347,8 +1347,8 @@ importers:
   packages/o-server:
     dependencies:
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -1429,23 +1429,23 @@ importers:
   packages/o-storage:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-node':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1511,14 +1511,14 @@ importers:
   packages/o-tool:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1596,29 +1596,29 @@ importers:
         specifier: 0.3.61
         version: 0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-intelligence':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-mcp':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tools-common':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -1687,29 +1687,29 @@ importers:
   packages/o-tools-common:
     dependencies:
       '@olane/o-approval':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-config':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-core':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-lane':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-leader':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-protocol':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-storage':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       '@olane/o-tool':
-        specifier: 0.7.12-alpha.52
-        version: 0.7.12-alpha.52
+        specifier: 0.7.12-alpha.55
+        version: 0.7.12-alpha.55
       debug:
         specifier: ^4.4.1
         version: 4.4.3(supports-color@8.1.1)
@@ -4324,56 +4324,56 @@ packages:
   '@octokit/types@16.0.0':
     resolution: {integrity: sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg==}
 
-  '@olane/o-approval@0.7.12-alpha.52':
-    resolution: {integrity: sha512-/eGrDp1dL4dHuheZXV3hYBUF8EBdXVr+q15kHolGne/t4GCXa4GAAh7iJVeL7pGOBCPe+/nSuqzvqM9UAoE7yQ==}
+  '@olane/o-approval@0.7.12-alpha.55':
+    resolution: {integrity: sha512-Col0dlN1BGMDf93gwKkG5gbJAr83JkURLpJ5BdirWyrWPqQSHwtirKVzmPXIwSfB0dLTAS2yGVnj2GXSD2JoJw==}
 
-  '@olane/o-client-limited@0.7.12-alpha.52':
-    resolution: {integrity: sha512-/ZT+X2KeXAE/4YsbDxXYSVe2syBiYF0lmToumzls3GUmpzNC3BcJZEA5addakfogaQ5UG2odrBMV53lBFxcKbQ==}
+  '@olane/o-client-limited@0.7.12-alpha.55':
+    resolution: {integrity: sha512-x3k6nr4fpwyLvjkNLFAOsj93/O7jZxZ5J5bdkIDwO0xTFHDSnHovxtmCdifAUqtfB4uo071BoTRzWWERL2l3tQ==}
 
-  '@olane/o-config@0.7.12-alpha.52':
-    resolution: {integrity: sha512-/+3WmNazG+m9A76OSuhqeYyupUPMHMrNizVBJbaBjIEzrvvM+FmvZEWVRgDB6uMoebg7jKyfV/Fjj5AxCWDcZA==}
+  '@olane/o-config@0.7.12-alpha.55':
+    resolution: {integrity: sha512-20EfJkKwIOBG6rKWguKr4SbtkhiQp/EfqMiqeCiXJftW8Gnd0Rq1g4fmjNnGptiXE6aNTosbKQlUsImNumqKOg==}
 
-  '@olane/o-core@0.7.12-alpha.52':
-    resolution: {integrity: sha512-yimi7HeDnJquYmXTkdAQUCxPRrAIOh19sCnv0G4GMdNOhtFLXwJNhkD0PyHPwRWiyCNUE9k5Y3ns4nyqFwbMEw==}
+  '@olane/o-core@0.7.12-alpha.55':
+    resolution: {integrity: sha512-pYjqWStdfBogogMD25KB9CXBZhbNPVK9yyeIS2OOfofDNxg9vygRp/SEM0ye2Jr57RcuMZo0qfNf2jCO3qx+ng==}
 
-  '@olane/o-gateway-olane@0.7.12-alpha.52':
-    resolution: {integrity: sha512-zITHvoqeISE2raqyAHECfuRkNWsjzQCXSfEmieDGqEW8CG4dziGwlbXFEToqI2pq+WpFhcdQPuOhQz5ITcChZw==}
+  '@olane/o-gateway-olane@0.7.12-alpha.55':
+    resolution: {integrity: sha512-EQCCZpDIS7K8f1DA1v7RHIky4kRk8uu8pNqkdiD0mqGdo8acia76UW+MC5W7ySbdivUz5VhYXOQZpxy5U9QYzA==}
 
-  '@olane/o-intelligence@0.7.12-alpha.52':
-    resolution: {integrity: sha512-ebcNOIMkbghiWFLa2UDBBgWAsBk2Tb2ywMXCv/9NBkxKvrzAK7TYZ08tQIhQv3j7RlHsQnapBJekcGoFPf2r6g==}
+  '@olane/o-intelligence@0.7.12-alpha.55':
+    resolution: {integrity: sha512-klW62//0305yrAMSLAM7vdRggcuu/AHVrRXbuaOvJidqE8mMdCMnDEtqII5oHNVyMqfeXA6K1VLhxSPTT3eH8Q==}
 
-  '@olane/o-lane@0.7.12-alpha.52':
-    resolution: {integrity: sha512-yLs8zSbt5kroyqnkWH90z6UT89sQLRE0D8pJj3Th7g+B765Mu1TomgyCS2z4Tw57/ulXaUym7W/iIFdQ9ZJ6sA==}
+  '@olane/o-lane@0.7.12-alpha.55':
+    resolution: {integrity: sha512-FDZFuf3wdNwSYKlVTcrgDE0IEaDLMxAujlNKGH9I+KHeYmg4Or8fv0SxafLh6v6g8dHl1LfYYogNa3z/y3i4Vg==}
 
-  '@olane/o-leader@0.7.12-alpha.52':
-    resolution: {integrity: sha512-xoofJ5GVb8vS0Ac2M3aLgMpfEaOCYiuOGdqk/AQTm4VE20tHPTIg3zRK7wpBIeRRTj7lZ0tBWXPCFe0W+OumjQ==}
+  '@olane/o-leader@0.7.12-alpha.55':
+    resolution: {integrity: sha512-7kWk7o1UDg5Uauojspf5MsNz7eXNBp5ThV9j59XKJh8XB3Cgxhj0uJDLoIECf7Nih1dW3JMhBxmuFBkK4jn8GA==}
 
-  '@olane/o-login@0.7.12-alpha.52':
-    resolution: {integrity: sha512-CGKcUiOeTCLUw7mkvFnpsCw0Fq06tiT5m+cy6iGN1SFAVUoFbQo0qNDYK2Ru2u94SmlAp26rYU2IJHBrJ6GaFQ==}
+  '@olane/o-login@0.7.12-alpha.55':
+    resolution: {integrity: sha512-Ejg3lE41GiuQpdn1SvcUdZBmTQ7GaoOQ0GwNocOweH+b6c1xQ+9VS7+jfjhNRTyrq4iwj5JyUpqs2VeHIIL5mQ==}
 
-  '@olane/o-mcp@0.7.12-alpha.52':
-    resolution: {integrity: sha512-ZIsiq+WepcJyM3sPdy6gp5hD0PiE4CdC7lmtAt3O8/cmf/a2JtbW+zcLS4NEwKw7+ZHtxXOZhTf9aHhjSpstyw==}
+  '@olane/o-mcp@0.7.12-alpha.55':
+    resolution: {integrity: sha512-XzbF2YPdCGhoCmSA/LDNdh90lqh1nt/OQen6ns6JjYgoGffs+E9LtxImNDMZE4BxrOWXcBNcZooRTZRbhQ8ylA==}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.18.1
 
-  '@olane/o-node@0.7.12-alpha.52':
-    resolution: {integrity: sha512-dpcA45sIml4/WrVQO2hsUvbbBS/xp2Js8jbTnZM9wz72sv1R7VaHvTH64w7ZyEAqsDBIGrzrlMhX8KRnP4BXIA==}
+  '@olane/o-node@0.7.12-alpha.55':
+    resolution: {integrity: sha512-/xrx+Qdn85/Lllt7xq05XBgFwxHYVkpDi3phKVkSB3UfeEfFwiZ00qX0owLMo58UeRpqIcEHjGqPiGAt8tWLbw==}
 
-  '@olane/o-protocol@0.7.12-alpha.52':
-    resolution: {integrity: sha512-LnjDWrYj2+qwyWq9npKyOnEmn/Dh3WaXDez+sqBmBHPBghjiJpeVY6XnRNLSfEUC0mpMNLBsdRL1G0xvE+IMDA==}
+  '@olane/o-protocol@0.7.12-alpha.55':
+    resolution: {integrity: sha512-djDK/rA38UoV+rO8fNdcAeiqP3k6cW9B4MtH1LnfUQ8UaGLxpfW65LjUcWsyPF5G5wdHG4o9wFgB2DNxQV1FpQ==}
     engines: {node: '>=20.0.0'}
 
-  '@olane/o-storage@0.7.12-alpha.52':
-    resolution: {integrity: sha512-kO3RrK9wYt6IaO6MCoTrAn1Yon+6TuSas9Cka4NOta37RR7mMlzD7rZduIUGRsbviaAIIUseP30E2eAKLgwIaw==}
+  '@olane/o-storage@0.7.12-alpha.55':
+    resolution: {integrity: sha512-Cvd7COaFbLnNksf/HLGZ+0gXWu63RgzXjeLHcE8WS0nYYhaNIPp7xEs5tCbFdyBWjRv9h1J2nDevVjbeU9Nqpg==}
 
-  '@olane/o-tool-registry@0.7.12-alpha.52':
-    resolution: {integrity: sha512-KOBuRRCdAb8STT9AyPpmGTcbzwCcZ4JDCaxr8peYa53Mb62q9+eSZhrUIXXIVWjIe3ss2YnG9k/SbUF5GkEQXA==}
+  '@olane/o-tool-registry@0.7.12-alpha.55':
+    resolution: {integrity: sha512-J8dsoe6gLI1w+X8q35i5czRDBu5T76UwNhWFWJ156M6najYsqXYErA6uJz9v/Hrw6t+HUrjlOZ7sgoG+qxxmPQ==}
 
-  '@olane/o-tool@0.7.12-alpha.52':
-    resolution: {integrity: sha512-kO9pKPyjFSgN7jeoeTQxFkWVzNstYV9+4zphB2r6alH2IduTmfb8Vy3bVcVYYDZdPtcOWR3wqXVgN5AOLINvMw==}
+  '@olane/o-tool@0.7.12-alpha.55':
+    resolution: {integrity: sha512-OHNm9YbJbNv7EG0zIM3Yg+Av/J1kBU/OU3j09qkuNctFJ+rYVGI/UjpfIRNjgQbxuAZ6OpYCc9WEA+WTvVFspQ==}
 
-  '@olane/o-tools-common@0.7.12-alpha.52':
-    resolution: {integrity: sha512-a9amBev24fBhhcSTqWNOMQRpxRe77vwtGbd1Suo43kYnPgi+/9NKzxZp2cMYFZUaHBewcG+SdJDhSk3KB+gxhQ==}
+  '@olane/o-tools-common@0.7.12-alpha.55':
+    resolution: {integrity: sha512-NxHmvohPSR8y1gPHLNGyJUPiOkS4Kl86X+YTAqkIfgVrstzTFZy/Al4jEUR7NrESwqmdrqkbz5Dd+gQ79/O5tQ==}
 
   '@openapi-contrib/openapi-schema-to-json-schema@3.2.0':
     resolution: {integrity: sha512-Gj6C0JwCr8arj0sYuslWXUBSP/KnUlEGnPW4qxlXvAl543oaNQgMgIgkQUA6vs5BCCvwTEiL8m/wdWzfl4UvSw==}
@@ -16008,13 +16008,13 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 27.0.0
 
-  '@olane/o-approval@0.7.12-alpha.52':
+  '@olane/o-approval@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16022,13 +16022,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-client-limited@0.7.12-alpha.52':
+  '@olane/o-client-limited@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16036,7 +16036,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-config@0.7.12-alpha.52':
+  '@olane/o-config@0.7.12-alpha.55':
     dependencies:
       '@chainsafe/libp2p-noise': 17.0.0
       '@chainsafe/libp2p-yamux': 8.0.1
@@ -16063,9 +16063,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@olane/o-core@0.7.12-alpha.52':
+  '@olane/o-core@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-protocol': 0.7.12-alpha.52
+      '@olane/o-protocol': 0.7.12-alpha.55
       chalk: 5.6.2
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
@@ -16073,13 +16073,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@olane/o-gateway-olane@0.7.12-alpha.52':
+  '@olane/o-gateway-olane@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-node': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-node': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16087,13 +16087,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-intelligence@0.7.12-alpha.52':
+  '@olane/o-intelligence@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16101,13 +16101,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-lane@0.7.12-alpha.52':
+  '@olane/o-lane@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-node': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-node': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16115,15 +16115,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-leader@0.7.12-alpha.52':
+  '@olane/o-leader@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-gateway-olane': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-node': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-gateway-olane': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-node': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16131,13 +16131,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-login@0.7.12-alpha.52':
+  '@olane/o-login@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16145,18 +16145,18 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-mcp@0.7.12-alpha.52(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))':
+  '@olane/o-mcp@0.7.12-alpha.55(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))':
     dependencies:
       '@modelcontextprotocol/sdk': 1.22.0(@cfworker/json-schema@4.1.1)
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-intelligence': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-leader': 0.7.12-alpha.52
-      '@olane/o-node': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-storage': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-intelligence': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-leader': 0.7.12-alpha.55
+      '@olane/o-node': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-storage': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
       express: 4.21.2
@@ -16166,12 +16166,12 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-node@0.7.12-alpha.52':
+  '@olane/o-node@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16179,16 +16179,16 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-protocol@0.7.12-alpha.52': {}
+  '@olane/o-protocol@0.7.12-alpha.55': {}
 
-  '@olane/o-storage@0.7.12-alpha.52':
+  '@olane/o-storage@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-node': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-node': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16196,19 +16196,19 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-tool-registry@0.7.12-alpha.52(@browserbasehq/sdk@2.6.0(encoding@0.1.13))(@browserbasehq/stagehand@1.14.0(@playwright/test@1.56.1)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.7.3)(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))(axios@1.13.2(debug@4.4.3))(cborg@4.3.0)(encoding@0.1.13)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.4.4)(ignore@5.3.2)(interface-datastore@8.3.2)(it-all@3.0.9)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(playwright@1.56.1)(puppeteer@22.15.0(typescript@5.4.5))(weaviate-client@3.9.0(encoding@0.1.13))(ws@8.18.3)':
+  '@olane/o-tool-registry@0.7.12-alpha.55(@browserbasehq/sdk@2.6.0(encoding@0.1.13))(@browserbasehq/stagehand@1.14.0(@playwright/test@1.56.1)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@ibm-cloud/watsonx-ai@1.7.3)(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))(axios@1.13.2(debug@4.4.3))(cborg@4.3.0)(encoding@0.1.13)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.4.4)(ignore@5.3.2)(interface-datastore@8.3.2)(it-all@3.0.9)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(playwright@1.56.1)(puppeteer@22.15.0(typescript@5.4.5))(weaviate-client@3.9.0(encoding@0.1.13))(ws@8.18.3)':
     dependencies:
       '@huggingface/transformers': 3.7.6
       '@langchain/community': 0.3.47(@browserbasehq/sdk@2.6.0(encoding@0.1.13))(@browserbasehq/stagehand@1.14.0(@playwright/test@1.56.1)(deepmerge@4.3.1)(dotenv@16.6.1)(encoding@0.1.13)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(zod@3.25.76))(@huggingface/transformers@3.7.6)(@ibm-cloud/watsonx-ai@1.7.3)(@langchain/core@0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.18.3)(zod@3.25.76)))(@opentelemetry/api@1.9.0)(axios@1.13.2(debug@4.4.3))(cborg@4.3.0)(encoding@0.1.13)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.4.4)(ignore@5.3.2)(interface-datastore@8.3.2)(it-all@3.0.9)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(playwright@1.56.1)(puppeteer@22.15.0(typescript@5.4.5))(weaviate-client@3.9.0(encoding@0.1.13))(ws@8.18.3)
       '@langchain/core': 0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-intelligence': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-mcp': 0.7.12-alpha.52(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
-      '@olane/o-tools-common': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-intelligence': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-mcp': 0.7.12-alpha.55(@modelcontextprotocol/sdk@1.22.0(@cfworker/json-schema@4.1.1))
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
+      '@olane/o-tools-common': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
       langchain: 0.3.29(@langchain/core@0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.18.3)(zod@3.25.76)))(@opentelemetry/api@1.9.0)(axios@1.13.2(debug@4.4.3))(handlebars@4.7.8)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)
@@ -16364,11 +16364,11 @@ snapshots:
       - ws
       - youtubei.js
 
-  '@olane/o-tool@0.7.12-alpha.52':
+  '@olane/o-tool@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16376,16 +16376,16 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@olane/o-tools-common@0.7.12-alpha.52':
+  '@olane/o-tools-common@0.7.12-alpha.55':
     dependencies:
-      '@olane/o-approval': 0.7.12-alpha.52
-      '@olane/o-config': 0.7.12-alpha.52
-      '@olane/o-core': 0.7.12-alpha.52
-      '@olane/o-lane': 0.7.12-alpha.52
-      '@olane/o-leader': 0.7.12-alpha.52
-      '@olane/o-protocol': 0.7.12-alpha.52
-      '@olane/o-storage': 0.7.12-alpha.52
-      '@olane/o-tool': 0.7.12-alpha.52
+      '@olane/o-approval': 0.7.12-alpha.55
+      '@olane/o-config': 0.7.12-alpha.55
+      '@olane/o-core': 0.7.12-alpha.55
+      '@olane/o-lane': 0.7.12-alpha.55
+      '@olane/o-leader': 0.7.12-alpha.55
+      '@olane/o-protocol': 0.7.12-alpha.55
+      '@olane/o-storage': 0.7.12-alpha.55
+      '@olane/o-tool': 0.7.12-alpha.55
       debug: 4.4.3(supports-color@8.1.1)
       dotenv: 16.6.1
     transitivePeerDependencies:
@@ -16656,7 +16656,7 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-  '@semantic-release/changelog@6.0.3(semantic-release@24.2.9(typescript@5.8.3))':
+  '@semantic-release/changelog@6.0.3(semantic-release@24.2.9(typescript@5.4.5))':
     dependencies:
       '@semantic-release/error': 3.0.0
       aggregate-error: 3.1.0
@@ -16682,7 +16682,7 @@ snapshots:
 
   '@semantic-release/error@4.0.0': {}
 
-  '@semantic-release/git@10.0.1(semantic-release@24.2.9(typescript@5.8.3))':
+  '@semantic-release/git@10.0.1(semantic-release@24.2.9(typescript@5.4.5))':
     dependencies:
       '@semantic-release/error': 3.0.0
       aggregate-error: 3.1.0
@@ -17809,9 +17809,9 @@ snapshots:
     dependencies:
       '@electron/get': 4.0.2
       '@polka/send-type': 0.5.2
-      '@semantic-release/changelog': 6.0.3(semantic-release@24.2.9(typescript@5.8.3))
+      '@semantic-release/changelog': 6.0.3(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/commit-analyzer': 13.0.1(semantic-release@24.2.9(typescript@5.4.5))
-      '@semantic-release/git': 10.0.1(semantic-release@24.2.9(typescript@5.8.3))
+      '@semantic-release/git': 10.0.1(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/github': 11.0.6(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/npm': 12.0.2(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/release-notes-generator': 14.1.0(semantic-release@24.2.9(typescript@5.4.5))
@@ -17884,7 +17884,7 @@ snapshots:
       read-pkg-up: 11.0.0
       rimraf: 6.1.0
       semantic-release: 24.2.9(typescript@5.8.3)
-      semantic-release-monorepo: 8.0.2(semantic-release@24.2.9(typescript@5.8.3))
+      semantic-release-monorepo: 8.0.2(semantic-release@24.2.9(typescript@5.4.5))
       semver: 7.7.3
       source-map-support: 0.5.21
       strip-bom: 5.0.0
@@ -17916,9 +17916,9 @@ snapshots:
     dependencies:
       '@electron/get': 4.0.2
       '@polka/send-type': 0.5.2
-      '@semantic-release/changelog': 6.0.3(semantic-release@24.2.9(typescript@5.8.3))
+      '@semantic-release/changelog': 6.0.3(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/commit-analyzer': 13.0.1(semantic-release@24.2.9(typescript@5.4.5))
-      '@semantic-release/git': 10.0.1(semantic-release@24.2.9(typescript@5.8.3))
+      '@semantic-release/git': 10.0.1(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/github': 11.0.6(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/npm': 12.0.2(semantic-release@24.2.9(typescript@5.4.5))
       '@semantic-release/release-notes-generator': 14.1.0(semantic-release@24.2.9(typescript@5.4.5))
@@ -17991,7 +17991,7 @@ snapshots:
       read-pkg-up: 11.0.0
       rimraf: 6.1.0
       semantic-release: 24.2.9(typescript@5.8.3)
-      semantic-release-monorepo: 8.0.2(semantic-release@24.2.9(typescript@5.8.3))
+      semantic-release-monorepo: 8.0.2(semantic-release@24.2.9(typescript@5.4.5))
       semver: 7.7.3
       source-map-support: 0.5.21
       strip-bom: 5.0.0
@@ -24269,7 +24269,7 @@ snapshots:
   ora@5.3.0:
     dependencies:
       bl: 4.1.0
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       is-interactive: 1.0.0
@@ -25641,7 +25641,7 @@ snapshots:
       extend-shallow: 2.0.1
       kind-of: 6.0.3
 
-  semantic-release-monorepo@8.0.2(semantic-release@24.2.9(typescript@5.8.3)):
+  semantic-release-monorepo@8.0.2(semantic-release@24.2.9(typescript@5.4.5)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       execa: 5.1.1
@@ -25655,12 +25655,12 @@ snapshots:
       ramda: 0.27.2
       read-pkg: 5.2.0
       semantic-release: 24.2.9(typescript@5.8.3)
-      semantic-release-plugin-decorators: 4.0.0(semantic-release@24.2.9(typescript@5.8.3))
+      semantic-release-plugin-decorators: 4.0.0(semantic-release@24.2.9(typescript@5.4.5))
       tempy: 1.0.1
     transitivePeerDependencies:
       - supports-color
 
-  semantic-release-plugin-decorators@4.0.0(semantic-release@24.2.9(typescript@5.8.3)):
+  semantic-release-plugin-decorators@4.0.0(semantic-release@24.2.9(typescript@5.4.5)):
     dependencies:
       semantic-release: 24.2.9(typescript@5.8.3)
 

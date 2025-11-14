@@ -244,10 +244,20 @@ export class StreamHandler {
     const responseBuilder = ResponseBuilder.create();
 
     try {
+      this.logger.debug(
+        `Processing request on stream: method=${request.method}, id=${request.id}`,
+      );
       const result = await toolExecutor(request, stream);
       const response = await responseBuilder.build(request, result, null);
       await CoreUtils.sendResponse(response, stream);
+      this.logger.debug(
+        `Successfully processed request: method=${request.method}, id=${request.id}`,
+      );
     } catch (error: any) {
+      this.logger.error(
+        `Error processing request: method=${request.method}, id=${request.id}`,
+        error,
+      );
       const errorResponse = await responseBuilder.buildError(request, error);
       await CoreUtils.sendResponse(errorResponse, stream);
     }
@@ -256,16 +266,19 @@ export class StreamHandler {
   /**
    * Handles an outgoing stream on the client side
    * Listens for response messages and emits them via the event emitter
+   * If requestHandler is provided, also processes incoming router requests
    *
    * @param stream - The outgoing stream
    * @param emitter - Event emitter for chunk events
    * @param config - Configuration including abort signal
+   * @param requestHandler - Optional handler for processing router requests received on this stream
    * @returns Promise that resolves with the final response
    */
   async handleOutgoingStream(
     stream: Stream,
     emitter: EventEmitter,
     config: StreamHandlerConfig = {},
+    requestHandler?: (request: oRequest, stream: Stream) => Promise<RunResult>,
   ): Promise<oResponse> {
     return new Promise((resolve, reject) => {
       let lastResponse: any;
@@ -299,10 +312,19 @@ export class StreamHandler {
               resolve(response);
             }
           } else if (this.isRequest(message)) {
-            this.logger.warn(
-              'Received request message on client-side stream, ignoring',
-              message,
-            );
+            // Process incoming router requests if handler is provided
+            if (requestHandler) {
+              this.logger.debug(
+                'Received router request on client-side stream, processing...',
+                message,
+              );
+              await this.handleRequestMessage(message, stream, requestHandler);
+            } else {
+              this.logger.warn(
+                'Received request message on client-side stream, ignoring (no handler)',
+                message,
+              );
+            }
           } else {
             this.logger.warn('Received unknown message type', message);
           }
