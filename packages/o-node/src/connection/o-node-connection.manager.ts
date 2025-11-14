@@ -6,7 +6,7 @@ import { oNodeConnection } from './o-node-connection.js';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 export class oNodeConnectionManager extends oConnectionManager {
-  private p2pNode: Libp2p;
+  protected p2pNode: Libp2p;
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
 
