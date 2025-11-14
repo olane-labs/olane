@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.59 (2025-11-14)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
 ## <small>0.7.12-alpha.58 (2025-11-14)</small>
 
 - annoyingly added more logging ([d36e819](https://github.com/olane-labs/olane/commit/d36e819))

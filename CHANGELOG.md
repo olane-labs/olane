@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.59 (2025-11-14)</small>
+
+- added more functionality around lane capabilities ([d441454](https://github.com/olane-labs/olane/commit/d441454))
+
 ## <small>0.7.12-alpha.58 (2025-11-14)</small>
 
 - annoyingly added more logging ([d36e819](https://github.com/olane-labs/olane/commit/d36e819))
