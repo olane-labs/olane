@@ -152,7 +152,11 @@ export class CoreUtils extends oObject {
         return decoded;
       }
     } catch (error) {
-      utils.logger.error('[ERROR] Error processing stream event: ', error);
+      utils.logger.error(
+        '[ERROR] Error processing stream event: ',
+        error,
+        decoded,
+      );
       return decoded;
     }
   }
