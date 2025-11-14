@@ -144,9 +144,15 @@ export class CoreUtils extends oObject {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
     const decoded = new TextDecoder().decode(bytes);
-    if (decoded.startsWith('{')) {
-      return JSON.parse(decoded);
-    } else {
+    const utils = new CoreUtils();
+    try {
+      if (decoded.startsWith('{')) {
+        return JSON.parse(decoded);
+      } else {
+        return decoded;
+      }
+    } catch (error) {
+      utils.logger.error('[ERROR] Error processing stream event: ', error);
       return decoded;
     }
   }
@@ -158,8 +164,19 @@ export class CoreUtils extends oObject {
 
   public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
+    const payload =
+      typeof res === 'string' ? { data: { text: res } } : res.result;
+    if (typeof res === 'string') {
+      const utils = new CoreUtils();
+      utils.logger.debug(
+        'Found a non-JSON response: ',
+        res,
+        'with payload: ',
+        payload,
+      );
+    }
     return new oResponse({
-      ...res.result,
+      ...payload,
     });
   }
 

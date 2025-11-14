@@ -78,10 +78,11 @@ export class oLaneTool extends oNodeTool {
 
     const stream = request.stream as Stream;
 
-    stream.addEventListener('close', () => {
-      this.logger.debug('Stream closed, cancelling lane for intent:', intent);
-      pc.cancel();
-    });
+    // TODO: brendon experiment review
+    // stream.addEventListener('close', () => {
+    //   this.logger.debug('Stream closed, cancelling lane for intent:', intent);
+    //   pc.cancel();
+    // });
 
     let response: oCapabilityResult | undefined;
     response = await pc.execute();
