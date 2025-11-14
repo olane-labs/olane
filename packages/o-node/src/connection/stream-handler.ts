@@ -13,6 +13,7 @@ import type { oRouterRequest } from '@olane/o-core';
 import type { oConnection } from '@olane/o-core';
 import type { RunResult } from '@olane/o-tool';
 import type { StreamHandlerConfig } from './stream-handler.config.js';
+import { Multiaddr } from '@olane/o-config';
 
 /**
  * StreamHandler centralizes all stream-related functionality including:
@@ -86,13 +87,27 @@ export class StreamHandler {
           stream.protocol,
           stream.status,
           stream.direction,
+          stream.remoteWriteStatus,
+          stream.writeStatus,
+          stream.remoteReadStatus,
+          stream.readStatus,
         );
       });
+
       const existingStream = connection.streams.find(
-        (stream) => stream.status === 'open' && stream.protocol?.length > 0, // protocol with 0 length seems to be a special state where connection has not made successful stream yet
+        (stream) =>
+          stream.status === 'open' &&
+          stream.protocol?.length > 0 &&
+          stream.writeStatus === 'writable' &&
+          stream.remoteReadStatus === 'readable', // protocol with 0 length seems to be a special state where connection has not made successful stream yet
       );
+
       if (existingStream) {
-        this.logger.debug('Reusing existing stream');
+        this.logger.debug(
+          'Reusing existing stream',
+          existingStream.id,
+          existingStream.direction,
+        );
         return existingStream;
       }
     }
