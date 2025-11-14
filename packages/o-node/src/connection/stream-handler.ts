@@ -192,6 +192,7 @@ export class StreamHandler {
         } else if (this.isResponse(message)) {
           this.logger.warn(
             'Received response message on server-side stream, ignoring',
+            message,
           );
         } else {
           this.logger.warn('Received unknown message type', message);
@@ -205,11 +206,11 @@ export class StreamHandler {
     const closeHandler = () => {
       this.logger.debug('Stream closed by remote peer');
       stream.removeEventListener('message', messageHandler);
-      // stream.removeEventListener('close', closeHandler);
+      stream.removeEventListener('close', closeHandler);
     };
 
     stream.addEventListener('message', messageHandler);
-    // stream.addEventListener('close', closeHandler);
+    stream.addEventListener('close', closeHandler);
   }
 
   /**
@@ -285,6 +286,7 @@ export class StreamHandler {
           } else if (this.isRequest(message)) {
             this.logger.warn(
               'Received request message on client-side stream, ignoring',
+              message,
             );
           } else {
             this.logger.warn('Received unknown message type', message);
@@ -327,14 +329,14 @@ export class StreamHandler {
 
       const cleanup = () => {
         stream.removeEventListener('message', messageHandler);
-        // stream.removeEventListener('close', closeHandler);
+        stream.removeEventListener('close', closeHandler);
         if (config.signal) {
           config.signal.removeEventListener('abort', abortHandler);
         }
       };
 
       stream.addEventListener('message', messageHandler);
-      // stream.addEventListener('close', closeHandler);
+      stream.addEventListener('close', closeHandler);
 
       if (config.signal) {
         config.signal.addEventListener('abort', abortHandler);
