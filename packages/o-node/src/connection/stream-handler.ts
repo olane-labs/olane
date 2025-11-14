@@ -97,7 +97,7 @@ export class StreamHandler {
       const existingStream = connection.streams.find(
         (stream) =>
           stream.status === 'open' &&
-          stream.protocol?.length > 0 &&
+          stream.protocol === protocol &&
           stream.writeStatus === 'writable' &&
           stream.remoteReadStatus === 'readable', // protocol with 0 length seems to be a special state where connection has not made successful stream yet
       );
