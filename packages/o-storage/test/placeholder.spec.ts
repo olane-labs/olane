@@ -4,7 +4,7 @@ import { oLeaderNode, RegistryMemoryTool } from '@olane/o-leader';
 import { IntelligenceTool } from '@olane/o-intelligence';
 import { StorageTool } from '../src/index.js';
 import { bigfile } from './data/bigfile.js';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { oLaneTool } from '@olane/o-lane';
 
 dotenv.config();

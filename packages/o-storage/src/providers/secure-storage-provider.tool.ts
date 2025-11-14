@@ -1,6 +1,6 @@
 import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import fs from 'fs/promises';
+import * as fs from 'fs/promises';
 import { STORAGE_PARAMS } from '../methods/storage.methods.js';
 import { GetDataResponse } from '../interfaces/get-data.response.js';
 import { DiskStorageProvider } from './disk-storage-provider.tool.js';

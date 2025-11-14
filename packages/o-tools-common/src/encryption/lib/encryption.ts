@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 // Interface for encrypted data structure
 interface EncryptedData {

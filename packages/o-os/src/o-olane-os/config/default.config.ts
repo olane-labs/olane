@@ -1,6 +1,6 @@
 import { DEFAULT_INSTANCE_PATH, NodeType, oAddress } from '@olane/o-core';
 import { OlaneOSConfig } from '../interfaces/o-os.config.js';
-import path from 'path';
+import * as path from 'path';
 
 export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
   return {

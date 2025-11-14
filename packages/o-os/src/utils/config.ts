@@ -1,5 +1,5 @@
-import fs from 'fs-extra';
-import path from 'path';
+import * as fs from 'fs-extra';
+import * as path from 'path';
 import {
   DEFAULT_CONFIG_PATH,
   DEFAULT_INSTANCE_PATH,
@@ -141,5 +141,4 @@ export class ConfigManager {
       await fs.remove(osInstancePath);
     }
   }
-
 }

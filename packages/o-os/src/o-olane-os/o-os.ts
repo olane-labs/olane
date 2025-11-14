@@ -1,6 +1,6 @@
 import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
 import { OlaneOSConfig } from './interfaces/o-os.config.js';
-import touch from 'touch';
+import * as touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
 import { Logger, oAddress, oObject, oTransport } from '@olane/o-core';

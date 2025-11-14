@@ -69,9 +69,17 @@ export class StreamHandler {
     }
 
     const reusePolicy = config.reusePolicy ?? 'none';
+    this.logger.debug('Reuse policy:', reusePolicy);
 
     // Check for existing stream if reuse is enabled
     if (reusePolicy === 'reuse') {
+      this.logger.debug(
+        'Reusing existing stream if we can find one. Stream insights:',
+        JSON.stringify({
+          streamCount: connection.streams.length,
+          protocol: protocol,
+        }),
+      );
       connection.streams.forEach((stream) => {
         this.logger.debug(
           'Stream re-use option:',

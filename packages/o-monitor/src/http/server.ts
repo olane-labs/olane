@@ -1,4 +1,5 @@
-import express, { Request, Response } from 'express';
+import * as express from 'express';
+import { Request, Response, Application, json } from 'express';
 import { Server } from 'http';
 import * as promClient from 'prom-client';
 import { MetricsStore } from '../utils/metrics-store.js';
@@ -15,7 +16,7 @@ export interface MonitorHTTPServerConfig {
 }
 
 export class MonitorHTTPServer {
-  private app: express.Application;
+  private app: Application;
   private server?: Server;
   private metricsStore: MetricsStore;
   private port: number;
@@ -132,7 +133,7 @@ export class MonitorHTTPServer {
   }
 
   private setupRoutes(): void {
-    this.app.use(express.json());
+    this.app.use(json());
 
     // Health check endpoint
     this.app.get('/health', (req: Request, res: Response) => {

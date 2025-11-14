@@ -1,5 +1,6 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
-import cors from 'cors';
+import { Express, Request, Response, NextFunction } from 'express';
+import * as express from 'express';
+import * as cors from 'cors';
 import {
   ServerConfig,
   ServerInstance,
