@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.56 (2025-11-14)</small>
+
+- added messy implementation of stream handling via reuse ([77872fb](https://github.com/olane-labs/olane/commit/77872fb))
+- minor changes ([6022f84](https://github.com/olane-labs/olane/commit/6022f84))
+
 ## <small>0.7.12-alpha.55 (2025-11-14)</small>
 
 - more logging + experiment ([ea2c24f](https://github.com/olane-labs/olane/commit/ea2c24f))
