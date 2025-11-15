@@ -146,6 +146,9 @@ export class CoreUtils extends oObject {
     const decoded = new TextDecoder().decode(bytes);
     const utils = new CoreUtils();
     try {
+      if (decoded.indexOf('}{') > -1) {
+        return decoded.split('}{')[0] + '}';
+      }
       if (decoded.startsWith('{')) {
         return JSON.parse(decoded);
       } else {
@@ -168,19 +171,8 @@ export class CoreUtils extends oObject {
 
   public static async processStreamResponse(event: any): Promise<oResponse> {
     const res = await CoreUtils.processStream(event);
-    const payload =
-      typeof res === 'string' ? { data: { text: res } } : res.result;
-    if (typeof res === 'string') {
-      const utils = new CoreUtils();
-      utils.logger.debug(
-        'Found a non-JSON response: ',
-        res,
-        'with payload: ',
-        payload,
-      );
-    }
     return new oResponse({
-      ...payload,
+      ...res.result,
     });
   }
 
