@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.61 (2025-11-15)</small>
+
+- experiment with non-readable stream ([1a08e46](https://github.com/olane-labs/olane/commit/1a08e46))
+
 ## <small>0.7.12-alpha.60 (2025-11-15)</small>
 
 - added test cases with claude code ([dd387a9](https://github.com/olane-labs/olane/commit/dd387a9))
