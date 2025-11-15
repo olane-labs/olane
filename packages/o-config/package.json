@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-config",
-  "version": "0.7.12-alpha.64",
+  "version": "0.7.12-alpha.65",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -78,5 +78,5 @@
     "libp2p": "^3.0.6",
     "uint8arraylist": "^2.4.8"
   },
-  "gitHead": "7210ff28c62ea39dda8fda616aa35ec5b66a2394"
+  "gitHead": "7b48124de4b3b378e090840ac81d8ae81aad1483"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool",
-  "version": "0.7.12-alpha.64",
+  "version": "0.7.12-alpha.65",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -54,11 +54,11 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.64",
-    "@olane/o-core": "0.7.12-alpha.64",
-    "@olane/o-protocol": "0.7.12-alpha.64",
+    "@olane/o-config": "0.7.12-alpha.65",
+    "@olane/o-core": "0.7.12-alpha.65",
+    "@olane/o-protocol": "0.7.12-alpha.65",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   },
-  "gitHead": "7210ff28c62ea39dda8fda616aa35ec5b66a2394"
+  "gitHead": "7b48124de4b3b378e090840ac81d8ae81aad1483"
 }

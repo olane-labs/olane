@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.7.12-alpha.64",
+  "version": "0.7.12-alpha.65",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
@@ -53,5 +53,5 @@
     "typescript": "^5.6.2",
     "typescript-json-schema": "^0.65.1"
   },
-  "gitHead": "7210ff28c62ea39dda8fda616aa35ec5b66a2394"
+  "gitHead": "7b48124de4b3b378e090840ac81d8ae81aad1483"
 }
