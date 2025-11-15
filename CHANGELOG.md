@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.63 (2025-11-15)</small>
+
+- added test cases with claude code ([dd387a9](https://github.com/olane-labs/olane/commit/dd387a9))
+- fix ([c3122f6](https://github.com/olane-labs/olane/commit/c3122f6))
+- fix ([fb6b1f8](https://github.com/olane-labs/olane/commit/fb6b1f8))
+- minor change for experiment ([374a1d6](https://github.com/olane-labs/olane/commit/374a1d6))
+
 ## <small>0.7.12-alpha.59 (2025-11-14)</small>
 
 - added more functionality around lane capabilities ([d441454](https://github.com/olane-labs/olane/commit/d441454))
