@@ -147,7 +147,12 @@ export class CoreUtils extends oObject {
     const utils = new CoreUtils();
     try {
       if (decoded.indexOf('}{') > -1) {
-        return decoded.split('}{')[0] + '}';
+        const first = decoded.split('}{')[0] + '}';
+        utils.logger.warn(
+          'Received multiple responses in a single event, returning the first response',
+          first,
+        );
+        return JSON.parse(first);
       }
       if (decoded.startsWith('{')) {
         return JSON.parse(decoded);
