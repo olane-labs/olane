@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.64 (2025-11-15)</small>
+
+- removed chunk handler from task management ([0ffa119](https://github.com/olane-labs/olane/commit/0ffa119))
+
 ## <small>0.7.12-alpha.63 (2025-11-15)</small>
 
 - added test cases with claude code ([dd387a9](https://github.com/olane-labs/olane/commit/dd387a9))
