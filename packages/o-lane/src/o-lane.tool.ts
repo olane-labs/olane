@@ -98,6 +98,7 @@ export class oLaneTool extends oNodeTool {
         return s.result;
       }),
     };
+    await new Promise((resolve) => setTimeout(resolve, 3_000)); // TODO: fix this: wait for 3 seconds to let the stream send 2 messages lol
     console.log('completeResponse', completeResponse);
     return completeResponse;
   }

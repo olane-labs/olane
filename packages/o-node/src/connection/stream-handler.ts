@@ -13,7 +13,7 @@ import type { oRouterRequest } from '@olane/o-core';
 import type { oConnection } from '@olane/o-core';
 import type { RunResult } from '@olane/o-tool';
 import type { StreamHandlerConfig } from './stream-handler.config.js';
-import { Multiaddr } from '@olane/o-config';
+import { lpStream, Multiaddr } from '@olane/o-config';
 
 /**
  * StreamHandler centralizes all stream-related functionality including:
@@ -114,11 +114,12 @@ export class StreamHandler {
 
     // Create new stream
     this.logger.debug('Creating new stream');
-    return connection.newStream(protocol, {
+    const stream = await connection.newStream(protocol, {
       signal: config.signal,
       maxOutboundStreams: config.maxOutboundStreams ?? 1000,
       runOnLimitedConnection: config.runOnLimitedConnection ?? false,
     });
+    return stream;
   }
 
   /**
@@ -196,10 +197,6 @@ export class StreamHandler {
         }
         const message = await this.decodeMessage(event);
         if (typeof message === 'string') {
-          // this.logger.warn(
-          //   'Received string message on server-side stream, ignoring',
-          //   message,
-          // );
           return;
         }
 

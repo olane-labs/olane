@@ -2,8 +2,8 @@ import {
   generateKeyPairFromSeed,
   createEd25519PeerId,
   Stream,
-  pushable,
   Uint8ArrayList,
+  lpStream,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';

@@ -71,7 +71,7 @@
     "@libp2p/utils": "^7.0.5",
     "@libp2p/websockets": "^10.0.6",
     "@libp2p/webtransport": "^6.0.7",
-    "@multiformats/multiaddr": "^12.5.0",
+    "@multiformats/multiaddr": "^13.0.1",
     "it-all": "^3.0.9",
     "it-pair": "^2.0.6",
     "it-pushable": "^3.2.3",

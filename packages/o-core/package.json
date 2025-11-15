@@ -67,7 +67,8 @@
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "multiformats": "^13.3.7"
+    "multiformats": "^13.3.7",
+    "stream-json": "^1.9.1"
   },
   "gitHead": "f34a9f9e784931ae2e2b779a8a6fed7066c91e44"
 }
