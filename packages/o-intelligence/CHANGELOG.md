@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.60 (2025-11-15)</small>
+
+**Note:** Version bump only for package @olane/o-intelligence
+
 ## <small>0.7.12-alpha.59 (2025-11-14)</small>
 
 - added more functionality around lane capabilities ([d441454](https://github.com/olane-labs/olane/commit/d441454))
