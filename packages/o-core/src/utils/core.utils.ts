@@ -13,6 +13,10 @@ import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { oObject } from '../core/o-object.js';
+import { Readable } from 'stream';
+import StreamJson from 'stream-json';
+import StreamValues from 'stream-json/streamers/StreamValues.js';
+import { chain } from 'stream-chain';
 
 export class CoreUtils extends oObject {
   static async generatePeerId(): Promise<any> {
@@ -140,48 +144,58 @@ export class CoreUtils extends oObject {
     return CoreUtils.sendResponse(response, stream);
   }
 
-  public static async processStream(event: any): Promise<any> {
+  public static async extractAllJsonObjects(
+    jsonString: string,
+  ): Promise<any[]> {
+    const stream = Readable.from([jsonString]);
+
+    const pipeline = chain([
+      stream,
+      StreamJson.parser(),
+      StreamValues.streamValues(),
+    ]);
+
+    const objects = [];
+
+    for await (const data of pipeline) {
+      objects.push(data.value);
+    }
+
+    return objects;
+  }
+
+  public static async processStream(event: any): Promise<any[]> {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
     const decoded = new TextDecoder().decode(bytes);
     const utils = new CoreUtils();
     try {
-      if (decoded.startsWith('{')) {
-        return JSON.parse(decoded);
-      } else {
-        return decoded;
-      }
+      const objects = await CoreUtils.extractAllJsonObjects(decoded);
+      return objects;
     } catch (error) {
       utils.logger.error(
         '[ERROR] Error processing stream event: ',
         error,
         decoded,
       );
-      return decoded;
+      throw error;
     }
   }
 
-  public static async processStreamRequest(event: any): Promise<oRequest> {
+  public static async processStreamRequest(event: any): Promise<oRequest[]> {
     const req = await CoreUtils.processStream(event);
-    return new oRequest(req);
+    return req.map((req) => new oRequest(req));
   }
 
-  public static async processStreamResponse(event: any): Promise<oResponse> {
+  public static async processStreamResponse(event: any): Promise<oResponse[]> {
     const res = await CoreUtils.processStream(event);
-    const payload =
-      typeof res === 'string' ? { data: { text: res } } : res.result;
-    if (typeof res === 'string') {
-      const utils = new CoreUtils();
-      utils.logger.debug(
-        'Found a non-JSON response: ',
-        res,
-        'with payload: ',
-        payload,
-      );
-    }
-    return new oResponse({
-      ...payload,
-    });
+
+    return res.map(
+      (response) =>
+        new oResponse({
+          ...response.result,
+        }),
+    );
   }
 
   public static async toCID(data: any): Promise<CID> {

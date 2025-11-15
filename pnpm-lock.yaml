@@ -390,6 +390,9 @@ importers:
       multiformats:
         specifier: ^13.3.7
         version: 13.4.1
+      stream-chain:
+        specifier: ^3.4.0
+        version: 3.4.0
       stream-json:
         specifier: ^1.9.1
         version: 1.9.1
@@ -406,6 +409,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/stream-json':
+        specifier: ^1.7.8
+        version: 1.7.8
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
@@ -5087,6 +5093,12 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
+
+  '@types/stream-chain@2.1.0':
+    resolution: {integrity: sha512-guDyAl6s/CAzXUOWpGK2bHvdiopLIwpGu8v10+lb9hnQOyo4oj/ZUQFOvqFjKGsE3wJP1fpIesCcMvbXuWsqOg==}
+
+  '@types/stream-json@1.7.8':
+    resolution: {integrity: sha512-MU1OB1eFLcYWd1LjwKXrxdoPtXSRzRmAnnxs4Js/ayB5O/NvHraWwuOaqMWIebpYwM6khFlsJOHEhI9xK/ab4Q==}
 
   '@types/touch@3.1.5':
     resolution: {integrity: sha512-tnu5L7yEvstLAJCjEQRYTtFIqMgJ4fvlDlgJwemY0V6UbeJ8NQCUuj85tPcCm54q/hAlLXFStIEClNlp8mSlMA==}
@@ -11594,6 +11606,9 @@ packages:
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
 
+  stream-chain@3.4.0:
+    resolution: {integrity: sha512-cyDiaDqAfgmeiv0PWFXCg9oKNVYNzYxHK9j5CMsYMHZDk+/yYcSV+CXQZliZ0U4mNU8DLqiVNZXUfs8BqhgwMw==}
+
   stream-combiner2@1.1.1:
     resolution: {integrity: sha512-3PnJbYgS56AeWgtKF5jtJRT6uFJe56Z0Hc5Ngg/6sI6rIt8iiMBTa9cvdyFfpMQjaVHr8dusbNeFGIIonxOvKw==}
 
@@ -16861,6 +16876,15 @@ snapshots:
 
   '@types/stack-utils@2.0.3': {}
 
+  '@types/stream-chain@2.1.0':
+    dependencies:
+      '@types/node': 20.19.25
+
+  '@types/stream-json@1.7.8':
+    dependencies:
+      '@types/node': 20.19.25
+      '@types/stream-chain': 2.1.0
+
   '@types/touch@3.1.5':
     dependencies:
       '@types/node': 20.19.25
@@ -17444,7 +17468,7 @@ snapshots:
       micromark-extension-gfm-table: 2.1.1
       micromark-extension-gfm-task-list-item: 2.1.0
       mocha: 11.7.5
-      neostandard: 0.12.2(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3)
+      neostandard: 0.12.2(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3)
       npm-package-json-lint: 9.0.0(typescript@5.8.3)
       nyc: 17.1.0
       p-map: 7.0.4
@@ -19420,6 +19444,22 @@ snapshots:
       debug: 3.2.7
       is-core-module: 2.16.1
       resolve: 1.22.11
+    transitivePeerDependencies:
+      - supports-color
+
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@9.39.1(jiti@1.21.7)))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7)):
+    dependencies:
+      '@nolyfill/is-core-module': 1.0.39
+      debug: 4.4.3(supports-color@8.1.1)
+      eslint: 9.39.1(jiti@1.21.7)
+      get-tsconfig: 4.13.0
+      is-bun-module: 2.0.0
+      stable-hash: 0.0.5
+      tinyglobby: 0.2.15
+      unrs-resolver: 1.11.1
+    optionalDependencies:
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7))
+      eslint-plugin-import-x: 4.16.1(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@9.39.1(jiti@1.21.7))
     transitivePeerDependencies:
       - supports-color
 
@@ -23339,12 +23379,12 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  neostandard@0.12.2(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3):
+  neostandard@0.12.2(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3):
     dependencies:
       '@humanwhocodes/gitignore-to-minimatch': 1.0.2
       '@stylistic/eslint-plugin': 2.11.0(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3)
       eslint: 9.39.1(jiti@1.21.7)
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3))(eslint-import-resolver-node@0.3.9)(eslint@9.39.1(jiti@1.21.7)))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.9.3))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import-x@4.16.1(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@9.39.1(jiti@1.21.7)))(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7)))(eslint@9.39.1(jiti@1.21.7))
       eslint-plugin-import-x: 4.16.1(@typescript-eslint/utils@8.46.4(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint@9.39.1(jiti@1.21.7))
       eslint-plugin-n: 17.23.1(eslint@9.39.1(jiti@1.21.7))(typescript@5.8.3)
       eslint-plugin-promise: 7.2.1(eslint@9.39.1(jiti@1.21.7))
@@ -25690,6 +25730,8 @@ snapshots:
       readable-stream: 3.6.2
 
   stream-chain@2.2.5: {}
+
+  stream-chain@3.4.0: {}
 
   stream-combiner2@1.1.1:
     dependencies:

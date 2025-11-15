@@ -13,7 +13,6 @@ import type { oRouterRequest } from '@olane/o-core';
 import type { oConnection } from '@olane/o-core';
 import type { RunResult } from '@olane/o-tool';
 import type { StreamHandlerConfig } from './stream-handler.config.js';
-import { lpStream, Multiaddr } from '@olane/o-config';
 
 /**
  * StreamHandler centralizes all stream-related functionality including:
@@ -49,7 +48,7 @@ export class StreamHandler {
   /**
    * Decodes a stream message event into a JSON object
    */
-  async decodeMessage(event: any): Promise<any> {
+  async decodeMessage(event: any): Promise<any[]> {
     return CoreUtils.processStream(event);
   }
 
@@ -195,21 +194,22 @@ export class StreamHandler {
         if (!event.data) {
           return;
         }
-        const message = await this.decodeMessage(event);
-        if (typeof message === 'string') {
-          return;
-        }
+        const messages: any[] = await this.decodeMessage(event);
 
-        if (this.isRequest(message)) {
-          await this.handleRequestMessage(message, stream, toolExecutor);
-        } else if (this.isResponse(message)) {
-          this.logger.warn(
-            'Received response message on server-side stream, ignoring',
-            message,
-          );
-        } else {
-          this.logger.warn('Received unknown message type', message);
-        }
+        await Promise.all(
+          messages.map(async (message) => {
+            if (this.isRequest(message)) {
+              await this.handleRequestMessage(message, stream, toolExecutor);
+            } else if (this.isResponse(message)) {
+              this.logger.warn(
+                'Received response message on server-side stream, ignoring',
+                message,
+              );
+            } else {
+              this.logger.warn('Received unknown message type', message);
+            }
+          }),
+        );
       } catch (error: any) {
         this.logger.error('Error handling stream message:', error);
         // Error already logged, stream will be closed by remote peer or timeout
@@ -287,45 +287,43 @@ export class StreamHandler {
           return;
         }
         try {
-          const message = await this.decodeMessage(event);
+          const messages: any[] = await this.decodeMessage(event);
 
-          if (typeof message === 'string') {
-            // this.logger.warn(
-            //   'Received string message on server-side stream, ignoring',
-            //   message,
-            // );
-            return;
-          }
+          await Promise.all(
+            messages.map(async (message) => {
+              if (this.isResponse(message)) {
+                // Emit chunk for streaming responses
+                emitter.emit('chunk', message);
 
-          if (this.isResponse(message)) {
-            const response = await CoreUtils.processStreamResponse(event);
-
-            // Emit chunk for streaming responses
-            emitter.emit('chunk', response);
-
-            // Check if this is the last chunk
-            if (response.result._last || !response.result._isStreaming) {
-              lastResponse = response;
-              cleanup();
-              resolve(response);
-            }
-          } else if (this.isRequest(message)) {
-            // Process incoming router requests if handler is provided
-            if (requestHandler) {
-              this.logger.debug(
-                'Received router request on client-side stream, processing...',
-                message,
-              );
-              await this.handleRequestMessage(message, stream, requestHandler);
-            } else {
-              this.logger.warn(
-                'Received request message on client-side stream, ignoring (no handler)',
-                message,
-              );
-            }
-          } else {
-            this.logger.warn('Received unknown message type', message);
-          }
+                // Check if this is the last chunk
+                if (message.result._last || !message.result._isStreaming) {
+                  lastResponse = message;
+                  cleanup();
+                  resolve(message);
+                }
+              } else if (this.isRequest(message)) {
+                // Process incoming router requests if handler is provided
+                if (requestHandler) {
+                  this.logger.debug(
+                    'Received router request on client-side stream, processing...',
+                    message,
+                  );
+                  await this.handleRequestMessage(
+                    message,
+                    stream,
+                    requestHandler,
+                  );
+                } else {
+                  this.logger.warn(
+                    'Received request message on client-side stream, ignoring (no handler)',
+                    message,
+                  );
+                }
+              } else {
+                this.logger.warn('Received unknown message type', message);
+              }
+            }),
+          );
         } catch (error: any) {
           this.logger.error('Error handling response message:', error);
           cleanup();
