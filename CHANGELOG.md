@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.62 (2025-11-15)</small>
+
+- fix ([a670272](https://github.com/olane-labs/olane/commit/a670272))
+
 ## <small>0.7.12-alpha.61 (2025-11-15)</small>
 
 - experiment with non-readable stream ([1a08e46](https://github.com/olane-labs/olane/commit/1a08e46))
