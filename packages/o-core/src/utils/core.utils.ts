@@ -13,56 +13,6 @@ import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { oObject } from '../core/o-object.js';
-import StreamJson from 'stream-json';
-import StreamValues from 'stream-json/streamers/StreamValues.js';
-import { chain } from 'stream-chain';
-
-class JsonRpcStreamHandler {
-  private pipeline: any;
-  private messages: any[];
-
-  constructor() {
-    this.pipeline = chain([StreamJson.parser(), StreamValues.streamValues()]);
-
-    this.messages = [];
-
-    this.pipeline.on('data', (data: any) => {
-      this.messages.push(data.value);
-      this.onMessage?.(data.value);
-    });
-
-    this.pipeline.on('error', (err: any) => {
-      console.error('JSON parse error:', err);
-    });
-  }
-
-  // Set a callback for each message
-  onMessage(callback: any) {
-    this.onMessage = callback;
-  }
-
-  // Write a chunk of data
-  write(chunk: any) {
-    this.pipeline.write(chunk);
-  }
-
-  // Finish and get all messages
-  async finish(): Promise<any[]> {
-    return new Promise((resolve) => {
-      this.pipeline.on('end', () => {
-        resolve(this.messages);
-      });
-      this.pipeline.end();
-    });
-  }
-
-  // Parse complete string at once
-  static async parseString(jsonString: string): Promise<any[]> {
-    const handler = new JsonRpcStreamHandler();
-    handler.write(jsonString);
-    return handler.finish();
-  }
-}
 
 export class CoreUtils extends oObject {
   static async generatePeerId(): Promise<any> {
@@ -196,8 +146,13 @@ export class CoreUtils extends oObject {
     const decoded = new TextDecoder().decode(bytes);
     const utils = new CoreUtils();
     try {
-      const objects = await JsonRpcStreamHandler.parseString(decoded);
-      return objects;
+      // check if there are multiple json objects
+      if (decoded.match(/\}\{/g)) {
+        // Split on }{ boundary using lookahead/lookbehind to preserve braces
+        const parts = decoded.split(/(?<=\})(?=\{)/);
+        return parts.map((part) => JSON.parse(part));
+      }
+      return [JSON.parse(decoded)];
     } catch (error) {
       utils.logger.error(
         '[ERROR] Error processing stream event: ',
