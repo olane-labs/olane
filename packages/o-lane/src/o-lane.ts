@@ -315,7 +315,7 @@ export class oLane extends oObject {
         this.logger.debug('Executing capability: ', capabilityType);
         const result = await capability.execute({
           ...capabilityConfig,
-          onChunk: this.onChunk,
+          // onChunk: this.onChunk,
         } as oCapabilityConfig);
         return result;
       }
