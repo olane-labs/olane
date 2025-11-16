@@ -1,4 +1,11 @@
-import { CoreUtils, oAddress, oRequest, oResponse } from '@olane/o-core';
+import {
+  CoreUtils,
+  oAddress,
+  oError,
+  oErrorCodes,
+  oRequest,
+  oResponse,
+} from '@olane/o-core';
 import {
   oNodeConfig,
   oNodeTool,
@@ -63,6 +70,16 @@ export class oLaneTool extends oNodeTool {
       useStream: _isStreaming,
       onChunk: _isStreaming
         ? async (chunk: any) => {
+            if (chunk?._last || chunk?.result?._last) {
+              this.logger.error(
+                'UNEXPECTED LAST CHUNK RECEIVED',
+                JSON.stringify(chunk, null, 2),
+              );
+              throw new oError(
+                oErrorCodes.INVALID_ACTION,
+                'Misbehaving client sent unexpected last chunk',
+              );
+            }
             await CoreUtils.sendStreamResponse(
               oResponse.fromJSON(chunk),
               request.stream,
@@ -75,8 +92,6 @@ export class oLaneTool extends oNodeTool {
           ])
         : undefined,
     });
-
-    const stream = request.stream as Stream;
 
     // TODO: brendon experiment review
     // stream.addEventListener('close', () => {

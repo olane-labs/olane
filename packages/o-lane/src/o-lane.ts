@@ -307,18 +307,27 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
-    const capabilityType = currentStep.type;
-    for (const capability of this.capabilities) {
-      if (capability.type === capabilityType && currentStep.config) {
-        const capabilityConfig: oCapabilityConfig =
-          this.resultToConfig(currentStep);
-        this.logger.debug('Executing capability: ', capabilityType);
-        const result = await capability.execute({
-          ...capabilityConfig,
-          // onChunk: this.onChunk,
-        } as oCapabilityConfig);
-        return result;
+    try {
+      const capabilityType = currentStep.type;
+      for (const capability of this.capabilities) {
+        if (capability.type === capabilityType && currentStep.config) {
+          const capabilityConfig: oCapabilityConfig =
+            this.resultToConfig(currentStep);
+          this.logger.debug('Executing capability: ', capabilityType);
+          const result = await capability.execute({
+            ...capabilityConfig,
+          } as oCapabilityConfig);
+          return result;
+        }
       }
+    } catch (error) {
+      this.logger.error('Error in doCapability: ', error);
+      const errorResult = new oCapabilityResult({
+        type: oCapabilityType.ERROR,
+        result: null,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      return errorResult;
     }
     throw new oError(oErrorCodes.INVALID_CAPABILITY, 'Unknown capability');
   }
@@ -361,21 +370,12 @@ export class oLane extends oObject {
         this.config.persistToConfig = true;
       }
 
-      if (this.config.useStream && this.onChunk) {
-        this.onChunk(
-          new oResponse({
-            data: {
-              ...result,
-              config: undefined,
-            },
-            _last: false,
-            _isStreaming: true,
-            _connectionId: this.node.address.toString(),
-            _requestMethod: 'unknown',
-            id: uuidv4(),
-          }),
-        );
-      }
+      await this.emitNonFinalChunk(result, {
+        data: {
+          ...result,
+          config: undefined,
+        },
+      });
 
       if (result.type === oCapabilityType.STOP) {
         return result;
@@ -384,6 +384,21 @@ export class oLane extends oObject {
       currentStep = result;
     }
     throw new Error('Plan failed');
+  }
+
+  async emitNonFinalChunk(result: oCapabilityResult, payload: any) {
+    if (this.config.useStream && this.onChunk) {
+      await this.onChunk(
+        new oResponse({
+          ...payload,
+          _last: false,
+          _isStreaming: true,
+          _connectionId: this.node.address.toString(),
+          _requestMethod: 'unknown',
+          id: uuidv4(),
+        }),
+      );
+    }
   }
 
   async postflight(
