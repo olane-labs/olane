@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-config",
-  "version": "0.7.12-alpha.65",
+  "version": "0.7.12-alpha.66",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-client-limited",
-  "version": "0.7.12-alpha.65",
+  "version": "0.7.12-alpha.66",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -53,12 +53,12 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.65",
-    "@olane/o-core": "0.7.12-alpha.65",
-    "@olane/o-lane": "0.7.12-alpha.65",
-    "@olane/o-node": "0.7.12-alpha.65",
-    "@olane/o-protocol": "0.7.12-alpha.65",
-    "@olane/o-tool": "0.7.12-alpha.65",
+    "@olane/o-config": "0.7.12-alpha.66",
+    "@olane/o-core": "0.7.12-alpha.66",
+    "@olane/o-lane": "0.7.12-alpha.66",
+    "@olane/o-node": "0.7.12-alpha.66",
+    "@olane/o-protocol": "0.7.12-alpha.66",
+    "@olane/o-tool": "0.7.12-alpha.66",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   },

@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.66 (2025-11-16)</small>
+
+- fix ([e1975ce](https://github.com/olane-labs/olane/commit/e1975ce))
+
 ## <small>0.7.12-alpha.65 (2025-11-15)</small>
 
 - minor change ([7b48124](https://github.com/olane-labs/olane/commit/7b48124))
