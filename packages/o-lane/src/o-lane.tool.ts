@@ -68,9 +68,14 @@ export class oLaneTool extends oNodeTool {
       caller: this.address,
       streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
       useStream: _isStreaming,
+      requestId: request.id, // Pass request ID for proper response correlation
       onChunk: _isStreaming
         ? async (chunk: any) => {
-            if (chunk?._last || chunk?.result?._last) {
+            if (
+              chunk?._last ||
+              chunk?.result?._last ||
+              chunk?.result?.data?._last
+            ) {
               this.logger.error(
                 'UNEXPECTED LAST CHUNK RECEIVED',
                 JSON.stringify(chunk, null, 2),

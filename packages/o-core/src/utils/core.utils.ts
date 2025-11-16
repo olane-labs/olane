@@ -178,6 +178,7 @@ export class CoreUtils extends oObject {
     const res = await CoreUtils.processStream(event);
     return new oResponse({
       ...res.result,
+      id: res.id, // Preserve request ID for proper request/response correlation
     });
   }
 

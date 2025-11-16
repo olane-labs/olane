@@ -395,7 +395,7 @@ export class oLane extends oObject {
           _isStreaming: true,
           _connectionId: this.node.address.toString(),
           _requestMethod: 'unknown',
-          id: uuidv4(),
+          id: this.config.requestId ?? uuidv4(), // Use request ID for proper correlation, fallback to UUID
         }),
       );
     }

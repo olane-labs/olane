@@ -92,11 +92,13 @@ export class oNodeConnection extends oConnection {
 
       // Handle response using StreamHandler
       // Pass request handler if configured to enable bidirectional stream processing
+      // Pass request ID to enable proper response correlation on shared streams
       const response = await this.streamHandler.handleOutgoingStream(
         stream,
         this.emitter,
         streamConfig,
         this.config.requestHandler,
+        request.id,
       );
 
       // Handle cleanup of the stream

@@ -26,4 +26,5 @@ export interface oLaneConfig {
   persistToConfig?: boolean;
   onChunk?: (chunk: any) => void;
   useStream?: boolean;
+  requestId?: string | number; // Request ID for proper request/response correlation
 }

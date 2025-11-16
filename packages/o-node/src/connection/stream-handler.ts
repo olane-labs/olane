@@ -74,26 +74,6 @@ export class StreamHandler {
 
     // Check for existing stream if reuse is enabled
     if (reusePolicy === 'reuse') {
-      this.logger.debug(
-        'Reusing existing stream if we can find one. Stream insights:',
-        JSON.stringify({
-          streamCount: connection.streams.length,
-          protocol: protocol,
-        }),
-      );
-      connection.streams.forEach((stream) => {
-        this.logger.debug(
-          'Stream re-use option:',
-          stream.protocol,
-          stream.status,
-          stream.direction,
-          stream.remoteWriteStatus,
-          stream.writeStatus,
-          stream.remoteReadStatus,
-          stream.readStatus,
-        );
-      });
-
       const existingStream = connection.streams.find(
         (stream) =>
           stream.status === 'open' &&
@@ -270,6 +250,7 @@ export class StreamHandler {
    * @param emitter - Event emitter for chunk events
    * @param config - Configuration including abort signal
    * @param requestHandler - Optional handler for processing router requests received on this stream
+   * @param requestId - Optional request ID to filter responses (for stream reuse scenarios)
    * @returns Promise that resolves with the final response
    */
   async handleOutgoingStream(
@@ -277,6 +258,7 @@ export class StreamHandler {
     emitter: EventEmitter,
     config: StreamHandlerConfig = {},
     requestHandler?: (request: oRequest, stream: Stream) => Promise<RunResult>,
+    requestId?: string | number,
   ): Promise<oResponse> {
     return new Promise((resolve, reject) => {
       let lastResponse: any;
@@ -300,10 +282,19 @@ export class StreamHandler {
           if (this.isResponse(message)) {
             const response = await CoreUtils.processStreamResponse(event);
 
+            // If requestId is provided, filter responses to only process those matching our request
+            // This prevents premature termination when multiple requests share the same stream
+            if (requestId !== undefined && response.id !== requestId) {
+              this.logger.debug(
+                `Ignoring response for different request (expected: ${requestId}, received: ${response.id})`,
+              );
+              return;
+            }
+
             // Emit chunk for streaming responses
             emitter.emit('chunk', response);
 
-            // Check if this is the last chunk
+            // Check if this is the last chunk for THIS request
             if (response.result._last || !response.result._isStreaming) {
               lastResponse = response;
               cleanup();

@@ -31,6 +31,7 @@ export class oResponse implements Response {
   static fromJSON(json: any): oResponse {
     return new oResponse({
       ...json.result,
+      id: json.id, // Preserve request ID for proper request/response correlation
       _connectionId: json.result?._connectionId,
       _requestMethod: json.result?._requestMethod,
     });
