@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.67 (2025-11-16)</small>
+
+- fix for shared stream response handling ([f189928](https://github.com/olane-labs/olane/commit/f189928))
+
 ## <small>0.7.12-alpha.66 (2025-11-16)</small>
 
 - confirmed fix for pre-emptive stream closure bug ([b65b3d3](https://github.com/olane-labs/olane/commit/b65b3d3))
