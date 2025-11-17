@@ -4,4 +4,5 @@ export interface oParameter {
   value?: any;
   description?: string;
   required?: boolean;
+  options?: any[];
 }

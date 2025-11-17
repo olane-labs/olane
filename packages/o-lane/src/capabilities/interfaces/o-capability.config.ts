@@ -1,9 +1,10 @@
 import { oIntent } from '../../intent/o-intent.js';
 import { oLaneConfig } from '../../interfaces/o-lane.config.js';
-import type { oLaneTool } from '../../o-lane.tool.js';
+import { oToolBase } from '@olane/o-tool';
 
 export interface oCapabilityConfig {
-  node: oLaneTool;
+  // Using oToolBase to allow any tool that extends it (oLaneTool, or other mixin-based tools)
+  node: oToolBase;
   intent: oIntent;
   laneConfig: oLaneConfig;
   history: string;

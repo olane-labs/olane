@@ -5,8 +5,19 @@ import {
 } from '@olane/o-node';
 import { oLimitedConnectionManager } from './connection/o-limited-connection-manager.js';
 import { oLaneTool } from '@olane/o-lane';
+import { oNodeConfig } from '@olane/o-node';
 
 export class oLimitedTool extends oLaneTool {
+  constructor(config: oNodeConfig) {
+    super({
+      ...config,
+      network: {
+        ...(config.network || {}),
+        listeners: config.network?.listeners || [], // default to no listeners
+      },
+    });
+  }
+
   async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
     this.handleProtocol(config.nextHopAddress).catch((error) => {
       this.logger.error('Error handling protocol:', error);

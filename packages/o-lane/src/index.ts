@@ -2,6 +2,7 @@ export * from './o-lane.js';
 export * from './interfaces/index.js';
 export * from './manager/o-lane.manager.js';
 export * from './o-lane.context.js';
+export * from './o-lane.mixin.js';
 export * from './o-lane.tool.js';
 export * from './capabilities/index.js';
 export * from './intent/index.js';
