@@ -32,6 +32,7 @@ import { oLeaderResolverFallback } from './router/index.js';
 import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
 import { oNodeConnectionConfig } from './connection/index.js';
+import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -41,6 +42,7 @@ export class oNode extends oToolBase {
   public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
+  protected reconnectionManager?: oReconnectionManager;
   protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
@@ -209,7 +211,7 @@ export class oNode extends oToolBase {
         this.parent.setTransports(this.leader?.libp2pTransports || []);
       } else {
         this.logger.debug('Waiting for parent and reconnecting...');
-        // await this.reconnectionManager?.waitForParentAndReconnect();
+        await this.reconnectionManager?.waitForParentAndReconnect();
       }
     }
 
@@ -525,6 +527,15 @@ export class oNode extends oToolBase {
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
 
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
     await this.hookInitializeFinished();
   }
 
