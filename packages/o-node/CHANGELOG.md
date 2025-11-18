@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.69 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
 ## <small>0.7.12-alpha.68 (2025-11-18)</small>
 
 - refactored re-connection process to use libp2p ([a419186](https://github.com/olane-labs/olane/commit/a419186))
