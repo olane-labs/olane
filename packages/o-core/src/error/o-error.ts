@@ -29,6 +29,12 @@ export class oError extends Error implements oErrorInterface {
   }
 
   toString() {
-    return `OLANE ERROR CODE: ${this.code}\nMESSAGE: ${this.message}\n-----\nDETAILS: ${this.details}`;
+    let details = this.details;
+    try {
+      details = JSON.stringify(this.details);
+    } catch (e) {
+      console.warn('Error serializing details: ', e);
+    }
+    return `OLANE ERROR CODE: ${this.code}\nMESSAGE: ${this.message}\n-----\nDETAILS: ${details}`;
   }
 }

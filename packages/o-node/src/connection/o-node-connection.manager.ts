@@ -137,10 +137,15 @@ export class oNodeConnectionManager extends oConnectionManager {
         return null;
       }
 
-      const connections = this.p2pNode.getConnections(peerIdString as any); // ignore since converting to a proper peer id breaks the browser implementation
+      const connections = this.p2pNode.getConnections(); // ignore since converting to a proper peer id breaks the browser implementation
+      const filteredConnections = connections.filter(
+        (conn) => conn.remotePeer?.toString() === peerIdString,
+      );
 
       // Return the first open connection, or null if none exist
-      const openConnection = connections.find((conn) => conn.status === 'open');
+      const openConnection = filteredConnections.find(
+        (conn) => conn.status === 'open',
+      );
       return openConnection || null;
     } catch (error) {
       this.logger.debug('Error getting cached connection:', error);
