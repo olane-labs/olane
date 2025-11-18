@@ -46,7 +46,14 @@ export class oNodeConnectionManager extends oConnectionManager {
         ),
       );
     }
-    this.connections.set(nextHopAddress.toString(), p2pConnection);
+    if (nextHopAddress.libp2pTransports.length) {
+      const peerIdString = (
+        nextHopAddress as oNodeAddress
+      ).libp2pTransports[0].toPeerId();
+      if (peerIdString) {
+        this.connections.set(peerIdString, p2pConnection);
+      }
+    }
     return p2pConnection;
   }
 
@@ -126,7 +133,15 @@ export class oNodeConnectionManager extends oConnectionManager {
   getCachedLibp2pConnection(address: oAddress): Connection | null {
     try {
       const nodeAddress = address as oNodeAddress;
-      const connection = this.connections.get(nodeAddress.toString());
+      if (!nodeAddress.libp2pTransports.length) {
+        return null;
+      }
+      const peerIdString = nodeAddress.libp2pTransports[0].toPeerId();
+      if (!peerIdString) {
+        return null;
+      }
+
+      const connection = this.connections.get(peerIdString);
       if (connection?.status === 'open') {
         return connection;
       }
