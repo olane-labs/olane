@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.68 (2025-11-18)</small>
+
+- added mixins ([e1a5a14](https://github.com/olane-labs/olane/commit/e1a5a14))
+
 ## <small>0.7.12-alpha.67 (2025-11-16)</small>
 
 - fix for shared stream response handling ([f189928](https://github.com/olane-labs/olane/commit/f189928))

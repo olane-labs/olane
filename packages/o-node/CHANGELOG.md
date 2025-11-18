@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.68 (2025-11-18)</small>
+
+- refactored re-connection process to use libp2p ([a419186](https://github.com/olane-labs/olane/commit/a419186))
+
 ## <small>0.7.12-alpha.67 (2025-11-16)</small>
 
 - fix for shared stream response handling ([f189928](https://github.com/olane-labs/olane/commit/f189928))
