@@ -49,10 +49,8 @@ export function withLeader<T extends new (...args: any[]) => oToolBase>(
     }
 
     async configure(): Promise<Libp2pConfig> {
-      // Call parent configure method - TypeScript doesn't know it exists on oToolBase
-      // but it will be available at runtime since we're extending a node-based tool
-      const proto = Object.getPrototypeOf(Object.getPrototypeOf(this));
-      const config = await proto.configure.call(this);
+      // @ts-ignore
+      const config = await super.configure();
       config.connectionGater = {
         ...config.connectionGater,
         denyDialPeer: (peerId: PeerId) => {

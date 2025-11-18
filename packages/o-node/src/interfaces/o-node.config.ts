@@ -6,31 +6,16 @@ export interface oNodeConfig extends oCoreConfig {
   parent: oNodeAddress | null;
 
   /**
-   * Connection heartbeat configuration (libp2p-native pings)
-   * Detects dead connections via periodic pings using libp2p's ping service
+   * Connection health monitoring configuration
+   * Detects dead connections by checking libp2p connection state
    */
   connectionHeartbeat?: {
     enabled?: boolean; // Default: true
     intervalMs?: number; // Default: 15000 (15s)
-    timeoutMs?: number; // Default: 5000 (5s)
     failureThreshold?: number; // Default: 3 consecutive failures
     checkChildren?: boolean; // Default: true
     checkParent?: boolean; // Default: true
     checkLeader?: boolean; // Default: controlled by ENABLE_LEADER_HEARTBEAT env var
-  };
-
-  /**
-   * Automatic reconnection configuration
-   * Handles parent connection failures and attempts to reconnect
-   */
-  reconnection?: {
-    enabled?: boolean; // Default: true
-    maxAttempts?: number; // Default: 10 (direct reconnection attempts)
-    baseDelayMs?: number; // Default: 5000 (5s)
-    maxDelayMs?: number; // Default: 60000 (60s)
-    useLeaderFallback?: boolean; // Default: true
-    parentDiscoveryIntervalMs?: number; // Default: 10000 (10s) - initial discovery interval
-    parentDiscoveryMaxDelayMs?: number; // Default: 60000 (60s) - max backoff for discovery
   };
 
   /**

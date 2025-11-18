@@ -27,6 +27,7 @@ export {
   Stream,
   Libp2pEvents,
   PeerId,
+  KEEP_ALIVE,
 } from '@libp2p/interface';
 export { Multiaddr, multiaddr } from '@multiformats/multiaddr';
 import all from 'it-all';
