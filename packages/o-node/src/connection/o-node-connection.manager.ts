@@ -9,6 +9,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   protected p2pNode: Libp2p;
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
+  private connections: Map<string, Connection> = new Map();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
     super(config);
@@ -45,6 +46,7 @@ export class oNodeConnectionManager extends oConnectionManager {
         ),
       );
     }
+    this.connections.set(nextHopAddress.toString(), p2pConnection);
     return p2pConnection;
   }
 
@@ -124,29 +126,13 @@ export class oNodeConnectionManager extends oConnectionManager {
   getCachedLibp2pConnection(address: oAddress): Connection | null {
     try {
       const nodeAddress = address as oNodeAddress;
-      if (
-        !nodeAddress.libp2pTransports ||
-        nodeAddress.libp2pTransports.length === 0
-      ) {
-        return null;
+      const connection = this.connections.get(nodeAddress.toString());
+      if (connection?.status === 'open') {
+        return connection;
       }
-
-      // Extract peer ID from the first transport
-      const peerIdString = nodeAddress.libp2pTransports[0].toPeerId();
-      if (!peerIdString) {
-        return null;
-      }
-
-      const connections = this.p2pNode.getConnections(); // ignore since converting to a proper peer id breaks the browser implementation
-      const filteredConnections = connections.filter(
-        (conn) => conn.remotePeer?.toString() === peerIdString,
-      );
 
       // Return the first open connection, or null if none exist
-      const openConnection = filteredConnections.find(
-        (conn) => conn.status === 'open',
-      );
-      return openConnection || null;
+      return connection ?? null;
     } catch (error) {
       this.logger.debug('Error getting cached connection:', error);
       return null;
