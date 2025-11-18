@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.70 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-config
+
 ## <small>0.7.12-alpha.69 (2025-11-18)</small>
 
 - re-enable unwise connection thrsholding ([f77785f](https://github.com/olane-labs/olane/commit/f77785f))
