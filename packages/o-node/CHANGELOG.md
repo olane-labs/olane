@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.75 (2025-11-19)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
 ## <small>0.7.12-alpha.74 (2025-11-18)</small>
 
 - minor change ([b829c6f](https://github.com/olane-labs/olane/commit/b829c6f))
