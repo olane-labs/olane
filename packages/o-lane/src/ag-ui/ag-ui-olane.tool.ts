@@ -1,5 +1,8 @@
 import { oLaneTool } from '../o-lane.tool.js';
-import { AGUIoLaneConfig, AGUIEventContext } from './types/ag-ui-config.interface.js';
+import {
+  AGUIoLaneConfig,
+  AGUIEventContext,
+} from './types/ag-ui-config.interface.js';
 import { AGUIEventMapper } from './ag-ui-event-mapper.js';
 import { AGUIStreamManager } from './ag-ui-stream-manager.js';
 import { ONodeAGUITransport } from './transports/onode-transport.js';
@@ -33,7 +36,8 @@ export class AGUIoLaneTool extends oLaneTool {
       debugAGUI: config.debugAGUI ?? AG_UI_DEFAULTS.DEBUG_ENABLED,
       stateSnapshotInterval:
         config.stateSnapshotInterval ?? AG_UI_DEFAULTS.STATE_SNAPSHOT_INTERVAL,
-      maxDeltaHistory: config.maxDeltaHistory ?? AG_UI_DEFAULTS.MAX_DELTA_HISTORY,
+      maxDeltaHistory:
+        config.maxDeltaHistory ?? AG_UI_DEFAULTS.MAX_DELTA_HISTORY,
     };
   }
 
@@ -42,7 +46,13 @@ export class AGUIoLaneTool extends oLaneTool {
    * This is the main entry point for AG-UI enabled intent resolution
    */
   async _tool_ag_ui_intent(request: oStreamRequest): Promise<any> {
-    const { intent, context, threadId: providedThreadId, _isStreaming = false } = request.params;
+    const {
+      intent,
+      context,
+      threadId: providedThreadId,
+      _isStreaming = false,
+    } = request.params;
+    this.logger.debug('AG-UI intent received:', request.params);
 
     // Generate IDs
     const runId = generateRunId();
@@ -65,7 +75,8 @@ export class AGUIoLaneTool extends oLaneTool {
     });
 
     // Create transport
-    const transport = this.agUIConfig.agUITransport || this.createDefaultTransport(request);
+    const transport =
+      this.agUIConfig.agUITransport || this.createDefaultTransport(request);
 
     // Create stream manager
     const streamManager = new AGUIStreamManager({
@@ -100,11 +111,19 @@ export class AGUIoLaneTool extends oLaneTool {
         useStream: _isStreaming,
         requestId: request.id,
         onChunk: async (chunk: any) => {
-          // Emit chunk as activity event
-          if (this.agUIConfig.debugAGUI) {
-            await streamManager.emit(
-              eventMapper.mapChunkToActivity(chunk, cycleNumber),
+          console.log('Chunk received:', chunk);
+          // Emit chunk as activity event for real-time progress
+          // Note: This fires AFTER addSequence has emitted full capability events,
+          // so ActivitySnapshot provides a complementary progress update
+          try {
+            const activityEvent = eventMapper.mapChunkToActivity(
+              chunk,
+              cycleNumber,
             );
+            console.log('Activity event:', activityEvent);
+            await streamManager.emit(activityEvent);
+          } catch (error) {
+            this.logger.error('Error mapping chunk to activity:', error);
           }
         },
         context: context
@@ -136,7 +155,10 @@ export class AGUIoLaneTool extends oLaneTool {
             );
 
             // Map capability to events
-            const events = eventMapper.mapCapabilityToEvents(result, cycleNumber);
+            const events = eventMapper.mapCapabilityToEvents(
+              result,
+              cycleNumber,
+            );
             await streamManager.emitBatch(events);
 
             // Emit state updates
@@ -185,7 +207,9 @@ export class AGUIoLaneTool extends oLaneTool {
 
         // Emit RunFinished
         if (result) {
-          await streamManager.emit(eventMapper.mapLaneCompleteToRunFinished(result));
+          await streamManager.emit(
+            eventMapper.mapLaneCompleteToRunFinished(result),
+          );
         }
       } catch (err) {
         error = err as Error;

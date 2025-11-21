@@ -10,21 +10,22 @@ import { oLimitedTool } from '@olane/o-client-limited';
 
 const network = defaultOSInstance;
 
-const entryNode = tmpNode;
+// const entryNode = tmpNode;
 let humanNode: oHumanLoginTool;
 
 describe('playground running', async () => {
   it('should be able to use stream from a provider service', async () => {
-    await entryNode.start();
+    await network.start();
+    const entryNode = network.entryNode();
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
 
-    const leader = new oNodeAddress('o://leader', [
-      new oNodeTransport(
-        // '/dns4/leader.olane.com/tcp/4000/tls/ws',
-        '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
-      ),
-    ]);
+    // const leader = new oNodeAddress('o://leader', [
+    //   new oNodeTransport(
+    //     // '/dns4/leader.olane.com/tcp/4000/tls/ws',
+    //     // '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
+    //   ),
+    // ]);
 
     // const joinedNode = new oLimitedTool({
     //   address: new oNodeAddress('o://joined'),
@@ -50,14 +51,15 @@ describe('playground running', async () => {
     //   },
     // });
     // await humanNode.start();
+    console.log('Using entry node:', entryNode.address.toString());
     const response = await entryNode.useStream(
-      leader,
+      entryNode.address,
       {
         method: 'intent',
         params: {
           _isStreaming: true,
-          intent:
-            'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
+          intent: 'what is the weather in tokyo?',
+          // 'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
           _token: 'test',
         },
       },

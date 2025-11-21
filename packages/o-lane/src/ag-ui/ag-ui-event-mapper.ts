@@ -1,6 +1,5 @@
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 import { oCapabilityResult } from '../capabilities/o-capability.result.js';
-import { oLane } from '../o-lane.js';
 import { oIntent } from '../intent/o-intent.js';
 import {
   AGUIEvent,
@@ -49,11 +48,15 @@ export class AGUIEventMapper {
   ) {
     this.context = context;
     this.config = {
-      includeRawEvents: config.includeRawEvents ?? AG_UI_DEFAULTS.INCLUDE_RAW_EVENTS,
-      emitActivityEvents: config.emitActivityEvents ?? AG_UI_DEFAULTS.EMIT_ACTIVITY_EVENTS,
-      emitReasoningEvents: config.emitReasoningEvents ?? AG_UI_DEFAULTS.EMIT_REASONING_EVENTS,
+      includeRawEvents:
+        config.includeRawEvents ?? AG_UI_DEFAULTS.INCLUDE_RAW_EVENTS,
+      emitActivityEvents:
+        config.emitActivityEvents ?? AG_UI_DEFAULTS.EMIT_ACTIVITY_EVENTS,
+      emitReasoningEvents:
+        config.emitReasoningEvents ?? AG_UI_DEFAULTS.EMIT_REASONING_EVENTS,
       textChunkSize: config.textChunkSize ?? AG_UI_DEFAULTS.TEXT_CHUNK_SIZE,
-      autoGenerateThreadId: config.autoGenerateThreadId ?? AG_UI_DEFAULTS.AUTO_GENERATE_THREAD_ID,
+      autoGenerateThreadId:
+        config.autoGenerateThreadId ?? AG_UI_DEFAULTS.AUTO_GENERATE_THREAD_ID,
     };
   }
 
@@ -74,9 +77,7 @@ export class AGUIEventMapper {
   /**
    * Map lane completion to RunFinished event
    */
-  mapLaneCompleteToRunFinished(
-    result: oCapabilityResult,
-  ): RunFinished {
+  mapLaneCompleteToRunFinished(result: oCapabilityResult): RunFinished {
     return {
       type: 'RunFinished',
       threadId: this.context.threadId,
@@ -95,7 +96,10 @@ export class AGUIEventMapper {
     return {
       type: 'RunError',
       message,
-      code: typeof error === 'object' && 'code' in error ? (error as any).code : undefined,
+      code:
+        typeof error === 'object' && 'code' in error
+          ? (error as any).code
+          : undefined,
       timestamp: generateTimestamp(),
     };
   }
@@ -208,10 +212,14 @@ export class AGUIEventMapper {
       result.result?.summary ||
       'Evaluating next steps...';
 
-    const content = typeof reasoning === 'string' ? reasoning : safeJSONStringify(reasoning);
+    const content =
+      typeof reasoning === 'string' ? reasoning : safeJSONStringify(reasoning);
 
     // Chunk the content for streaming effect
-    if (this.config.textChunkSize && content.length > this.config.textChunkSize) {
+    if (
+      this.config.textChunkSize &&
+      content.length > this.config.textChunkSize
+    ) {
       const chunks = chunkString(content, this.config.textChunkSize);
       for (const chunk of chunks) {
         events.push({
@@ -274,7 +282,8 @@ export class AGUIEventMapper {
     } as ToolCallStart);
 
     // Tool call arguments
-    const args = result.config?.params?.task?.payload || result.config?.params || {};
+    const args =
+      result.config?.params?.task?.payload || result.config?.params || {};
     const argsStr = safeJSONStringify(args);
 
     events.push({
@@ -496,19 +505,114 @@ export class AGUIEventMapper {
 
   /**
    * Map streaming chunk to activity event
+   * Extracts capability result from oResponse wrapper and maps appropriately
    */
   mapChunkToActivity(chunk: any, cycleNumber: number): ActivitySnapshot {
     const messageId = generateMessageId();
 
+    // Extract capability result from oResponse wrapper
+    // Structure: { data: { id, result, humanResult, type, error, ... }, _last, _isStreaming, ... }
+    const capabilityData = chunk.data || chunk;
+    const capabilityType = capabilityData.type as oCapabilityType;
+    const result = capabilityData.result;
+    const humanResult = capabilityData.humanResult;
+    const error = capabilityData.error;
+
+    // Determine activity type based on capability type
+    let activityType: string;
+    let content: any;
+
+    switch (capabilityType) {
+      case oCapabilityType.EVALUATE:
+        activityType = ACTIVITY_TYPES.EVALUATE;
+        content = {
+          cycle: cycleNumber,
+          reasoning: result?.reasoning || result?.summary || humanResult,
+          status: error ? 'error' : 'evaluating',
+        };
+        break;
+
+      case oCapabilityType.TASK:
+        activityType = ACTIVITY_TYPES.EXECUTE;
+        content = {
+          cycle: cycleNumber,
+          task: result?.task?.address || result?.tool || 'task',
+          status: error ? 'error' : 'executing',
+          result: humanResult || result,
+        };
+        break;
+
+      case oCapabilityType.SEARCH:
+        activityType = ACTIVITY_TYPES.SEARCH;
+        content = {
+          cycle: cycleNumber,
+          query: result?.query || 'searching',
+          results: result?.results || result,
+          status: error ? 'error' : 'searching',
+        };
+        break;
+
+      case oCapabilityType.CONFIGURE:
+        activityType = ACTIVITY_TYPES.CONFIGURE;
+        content = {
+          cycle: cycleNumber,
+          configuration: result,
+          status: error ? 'error' : 'configuring',
+        };
+        break;
+
+      case oCapabilityType.ERROR:
+        activityType = ACTIVITY_TYPES.ERROR;
+        content = {
+          cycle: cycleNumber,
+          error: error || result?.error || 'Unknown error',
+          recovery: result?.recovery || result?.message,
+          status: 'error',
+        };
+        break;
+
+      case oCapabilityType.MULTIPLE_STEP:
+        activityType = ACTIVITY_TYPES.PLAN;
+        content = {
+          cycle: cycleNumber,
+          steps: result?.steps || [],
+          currentStep: result?.currentStep || 0,
+          status: error ? 'error' : 'planning',
+        };
+        break;
+
+      case oCapabilityType.STOP:
+        activityType = ACTIVITY_TYPES.EXECUTE;
+        content = {
+          cycle: cycleNumber,
+          status: 'completed',
+          result: humanResult || result,
+        };
+        break;
+
+      default:
+        // Unknown capability type - provide generic progress
+        activityType = ACTIVITY_TYPES.PROGRESS;
+        content = {
+          cycle: cycleNumber,
+          type: capabilityType,
+          result: humanResult || result,
+          status: error ? 'error' : 'processing',
+        };
+        break;
+    }
+
+    // Add error details if present
+    if (error) {
+      content.error = error;
+    }
+
     return {
       type: 'ActivitySnapshot',
       messageId,
-      activityType: ACTIVITY_TYPES.PROGRESS,
-      content: {
-        cycle: cycleNumber,
-        data: chunk,
-      },
-      replace: false,
+      activityType,
+      content,
+      replace: false, // Don't replace - show progress updates
       timestamp: generateTimestamp(),
     };
   }
