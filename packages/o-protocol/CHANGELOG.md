@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.76 (2025-11-21)</small>
+
+**Note:** Version bump only for package @olane/o-protocol
+
 ## <small>0.7.12-alpha.75 (2025-11-19)</small>
 
 - minor improvements to o-protocol ([15f26d9](https://github.com/olane-labs/olane/commit/15f26d9))
