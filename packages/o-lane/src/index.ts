@@ -15,3 +15,6 @@ export * from './capabilities-task/o-capability.task.js';
 export * from './prompts/custom.prompt.js';
 export * from './intent-encoder/index.js';
 export * from './enum/o-lane.status-enum.js';
+
+// AG-UI Protocol Support
+export * from './ag-ui/index.js';
