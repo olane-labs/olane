@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@olane/o-config": "0.7.12-alpha.51",
-    "@olane/o-core": "0.7.12-alpha.51",
+    "@olane/o-core": "0.7.12-alpha.76",
     "@olane/o-protocol": "0.7.12-alpha.51",
     "@olane/o-tool": "0.7.12-alpha.51",
     "debug": "^4.4.1",
