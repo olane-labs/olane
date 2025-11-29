@@ -1,16 +1,9 @@
 import { CUSTOM_AGENT_PROMPT } from './custom.prompt.js';
 
-export const AGENT_PROMPT = (
-  intent: string,
-  context: string,
-  agentHistory: string,
-  extraInstructions: string,
-) =>
-  CUSTOM_AGENT_PROMPT(
-    intent,
-    context,
-    agentHistory,
-    `
+/**
+ * Cycle instructions for seeding - extracted from agent workflow
+ */
+export const CYCLE_INSTRUCTIONS_SEED = `
   Every Step Instructions:
 1. Review the provided user intent, context and agent history
 2. If you can complete the user intent, return the "Stop Response" using the [RETURN INSTRUCTIONS] steps
@@ -65,8 +58,12 @@ Step 6 - Review the tool use results
 4. If it failed, clearly explain why in a user-friendly way
 
 
-  `,
-    `
+  `;
+
+/**
+ * Output instructions for seeding - extracted from return format specifications
+ */
+export const OUTPUT_INSTRUCTIONS_SEED = `
 [RETURN INSTRUCTIONS BEGIN]
 These are the types of cycle responses: "Complex Intent Response", "Search Response", "Use Tool Response", "Stop Response", "Error Response", "Configure Response".
 
@@ -142,6 +139,22 @@ Use Tool Response:
 }
 [RETURN INSTRUCTIONS END]
 
-  `,
+  `;
+
+/**
+ * Runtime agent prompt function with parameter interpolation
+ */
+export const AGENT_PROMPT = (
+  intent: string,
+  context: string,
+  agentHistory: string,
+  extraInstructions: string,
+) =>
+  CUSTOM_AGENT_PROMPT(
+    intent,
+    context,
+    agentHistory,
+    CYCLE_INSTRUCTIONS_SEED,
+    OUTPUT_INSTRUCTIONS_SEED,
     extraInstructions,
   );
