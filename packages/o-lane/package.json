@@ -58,6 +58,7 @@
     "@olane/o-core": "0.7.12-alpha.76",
     "@olane/o-node": "0.7.12-alpha.76",
     "@olane/o-protocol": "0.7.12-alpha.76",
+    "@olane/o-storage": "0.7.12-alpha.76",
     "@olane/o-tool": "0.7.12-alpha.76",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
