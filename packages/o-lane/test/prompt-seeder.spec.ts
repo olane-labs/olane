@@ -15,7 +15,7 @@ import {
   TestEnvironment,
   assertSuccess,
   assertDefined,
-} from '@olane-labs/o-test';
+} from '@olane/o-test';
 
 describe('Prompt Seeding and Loading', () => {
   const env = new TestEnvironment();

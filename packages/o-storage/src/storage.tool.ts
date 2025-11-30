@@ -4,10 +4,9 @@ import { MemoryStorageProvider } from './providers/memory-storage-provider.tool.
 import { SecureStorageProvider } from './providers/secure-storage-provider.tool.js';
 import { PlaceholderTool } from './placeholder.tool.js';
 import { OSConfigStorageTool } from './os-config-storage.tool.js';
-import { oNodeToolConfig } from '@olane/o-node';
-import { oLaneTool } from '@olane/o-lane';
+import { oNodeTool, oNodeToolConfig } from '@olane/o-node';
 
-export class StorageTool extends oLaneTool {
+export class StorageTool extends oNodeTool {
   constructor(config: oNodeToolConfig) {
     super({
       ...config,

@@ -108,7 +108,7 @@ export class oToolBase extends oCore {
       );
       throw new oError(
         oErrorCodes.MISSING_PARAMETERS,
-        'Missing required parameters',
+        'Missing required parameters: ' + missingParams.join(','),
         {
           parameters: missingParams,
           toolAddress: this.address.toString(),

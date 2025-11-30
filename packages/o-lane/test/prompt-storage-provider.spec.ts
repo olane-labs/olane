@@ -8,7 +8,7 @@ import {
   assertStopped,
   assertSuccess,
   assertError,
-} from '@olane-labs/o-test';
+} from '@olane/o-test';
 import { oNodeAddress } from '@olane/o-node';
 
 describe('PromptStorageProvider', () => {

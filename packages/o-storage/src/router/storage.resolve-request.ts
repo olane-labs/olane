@@ -1,6 +1,6 @@
 import { ResolveRequest } from '@olane/o-core';
-import { oLaneTool } from '@olane/o-lane';
+import { oNodeTool } from '@olane/o-node';
 
 export interface StorageResolveRequest extends ResolveRequest {
-  node: oLaneTool;
+  node: oNodeTool;
 }

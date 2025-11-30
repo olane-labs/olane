@@ -56,7 +56,6 @@
   "dependencies": {
     "@olane/o-config": "0.7.12-alpha.76",
     "@olane/o-core": "0.7.12-alpha.76",
-    "@olane/o-lane": "0.7.12-alpha.76",
     "@olane/o-node": "0.7.12-alpha.76",
     "@olane/o-protocol": "0.7.12-alpha.76",
     "@olane/o-tool": "0.7.12-alpha.76",
