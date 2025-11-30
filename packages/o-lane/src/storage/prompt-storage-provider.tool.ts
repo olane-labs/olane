@@ -11,6 +11,7 @@ import {
   ClearPromptResponse,
   PromptMetadata,
 } from './interfaces/prompt-storage.interface.js';
+import { oNodeAddress } from '@olane/o-node';
 
 /**
  * Prompt-specific storage provider that isolates data per prompt/conversation
@@ -24,6 +25,11 @@ import {
  * - Memory-efficient nested Map structure
  */
 export class PromptStorageProvider extends StorageProviderTool {
+  /**
+   * Node address (inherited from base class)
+   */
+  public readonly address!: oNodeAddress;
+
   /**
    * Nested storage: Map<promptId, Map<key, value>>
    * Provides O(1) access with automatic namespace isolation
@@ -231,7 +237,7 @@ export class PromptStorageProvider extends StorageProviderTool {
   /**
    * List all prompt IDs with active storage
    */
-  async _tool_list_prompts(request: oRequest): Promise<ListPromptsResponse> {
+  async _tool_list_prompts(_request: oRequest): Promise<ListPromptsResponse> {
     const promptIds = Array.from(this.storage.keys());
 
     return {
