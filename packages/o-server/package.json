@@ -38,7 +38,7 @@
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",
     "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
@@ -61,7 +61,7 @@
     "cors": "^2.8.5",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "express": "^4.19.2"
+    "express": "^5.1.0"
   },
   "gitHead": "3f98b8d1d9ddb2bb73fe2f50d79cff4e3c1b6f68"
 }
