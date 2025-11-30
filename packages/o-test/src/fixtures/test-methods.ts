@@ -21,9 +21,11 @@ export const TEST_METHOD_SIMPLE: oMethod = {
       exampleValues: ['test-value'],
     },
   ],
+  dependencies: [],
   examples: [
     {
       description: 'Basic usage',
+      intent: 'Test the basic functionality',
       params: { param1: 'test' },
       expectedResult: {
         success: true,
@@ -65,10 +67,14 @@ export const TEST_METHOD_COMPLEX: oMethod = {
       description: 'Array of strings',
       required: false,
       structure: {
-        itemType: 'string',
+        arrayItems: {
+          name: 'item',
+          type: 'string',
+        },
       },
     },
   ],
+  dependencies: [],
 };
 
 /**
@@ -92,18 +98,19 @@ export const TEST_METHOD_VALIDATION: oMethod = {
       required: true,
     },
   ],
+  dependencies: [],
   commonErrors: [
     {
       errorCode: 'INVALID_EMAIL',
       message: 'Email format is invalid',
+      causes: ['Invalid email format provided'],
       remediation: 'Provide a valid email address',
-      retryable: false,
     },
     {
       errorCode: 'INVALID_AGE',
       message: 'Age must be >= 0',
+      causes: ['Negative age value provided'],
       remediation: 'Provide a non-negative age',
-      retryable: false,
     },
   ],
 };
@@ -123,6 +130,7 @@ export const TEST_METHODS: { [key: string]: oMethod } = {
         required: true,
       },
     ],
+    dependencies: [],
   },
   test_add: {
     name: 'test_add',
@@ -141,11 +149,13 @@ export const TEST_METHODS: { [key: string]: oMethod } = {
         required: true,
       },
     ],
+    dependencies: [],
   },
   test_error: {
     name: 'test_error',
     description: 'Always throws an error (for testing error handling)',
     parameters: [],
+    dependencies: [],
   },
   test_timeout: {
     name: 'test_timeout',
@@ -159,6 +169,7 @@ export const TEST_METHODS: { [key: string]: oMethod } = {
         defaultValue: 5000,
       },
     ],
+    dependencies: [],
   },
 };
 
@@ -181,5 +192,6 @@ export function createTestMethod(
     name,
     description,
     parameters,
+    dependencies: [],
   };
 }

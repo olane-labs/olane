@@ -7,9 +7,8 @@
 
 import 'dotenv/config';
 import { expect } from 'chai';
-import { describe, it, beforeEach, afterEach } from 'aegir/test';
 import { NodeState } from '@olane/o-core';
-import { oNodeAddress } from '@olane/o-node';
+import { oNodeAddress, type oNode } from '@olane/o-node';
 import {
   TestEnvironment,
   SimpleNodeBuilder,
@@ -26,7 +25,7 @@ import {
 } from '../src/index.js';
 
 // Mock node class for testing
-class MockNode {
+class MockNode implements Partial<oNode> {
   public state: NodeState = NodeState.STOPPED;
   public address: oNodeAddress;
   public config: any;
@@ -59,7 +58,7 @@ describe('TestEnvironment', () => {
   describe('Lifecycle Management', () => {
     it('should track nodes for cleanup', async () => {
       const node = new MockNode();
-      env.track(node);
+      env.track(node as oNode);
 
       expect(env.getNodeCount()).to.equal(1);
       expect(env.getNodes()).to.have.lengthOf(1);
@@ -67,21 +66,21 @@ describe('TestEnvironment', () => {
     });
 
     it('should create and track simple node', async () => {
-      const node = await env.createNode(MockNode, {}, false);
+      const node = await env.createNode(MockNode as any, {}, false);
 
       expect(env.getNodeCount()).to.equal(1);
       expect(node.state).to.equal(NodeState.STOPPED);
     });
 
     it('should auto-start nodes by default', async () => {
-      const node = await env.createNode(MockNode);
+      const node = await env.createNode(MockNode as any);
 
       expect(node.state).to.equal(NodeState.RUNNING);
     });
 
     it('should stop all nodes in cleanup', async () => {
-      const node1 = await env.createNode(MockNode);
-      const node2 = await env.createNode(MockNode);
+      const node1 = await env.createNode(MockNode as any);
+      const node2 = await env.createNode(MockNode as any);
 
       expect(node1.state).to.equal(NodeState.RUNNING);
       expect(node2.state).to.equal(NodeState.RUNNING);
@@ -106,7 +105,7 @@ describe('TestEnvironment', () => {
     });
 
     it('should clear tracking after cleanup', async () => {
-      const node = await env.createNode(MockNode);
+      const node = await env.createNode(MockNode as any);
       expect(env.getNodeCount()).to.equal(1);
 
       await env.cleanup();
@@ -122,17 +121,17 @@ describe('TestEnvironment', () => {
         timeout: 5000,
       };
 
-      const node = await env.createNode(MockNode, testConfig);
+      const node = await env.createNode(MockNode as any, testConfig);
 
-      expect(node.config.apiKey).to.equal('test-key');
-      expect(node.config.timeout).to.equal(5000);
+      expect((node.config as any).apiKey).to.equal('test-key');
+      expect((node.config as any).timeout).to.equal(5000);
     });
 
     it('should set parent and leader to null for simple nodes', async () => {
-      const node = await env.createNode(MockNode);
+      const node = await env.createNode(MockNode as any);
 
-      expect(node.config.parent).to.be.null;
-      expect(node.config.leader).to.be.null;
+      expect((node.config as any).parent).to.be.null;
+      expect((node.config as any).leader).to.be.null;
     });
   });
 
@@ -184,7 +183,7 @@ describe('Test Builders', () => {
 
   describe('SimpleNodeBuilder', () => {
     it('should build node with fluent API', async () => {
-      const node = await new SimpleNodeBuilder(MockNode)
+      const node = await new SimpleNodeBuilder(MockNode as any)
         .withAddress('o://test-builder')
         .withDescription('Test node')
         .build(env);
@@ -195,7 +194,7 @@ describe('Test Builders', () => {
     });
 
     it('should respect autoStart flag', async () => {
-      const node = await new SimpleNodeBuilder(MockNode)
+      const node = await new SimpleNodeBuilder(MockNode as any)
         .withAutoStart(false)
         .build(env);
 
@@ -203,11 +202,11 @@ describe('Test Builders', () => {
     });
 
     it('should pass config through', async () => {
-      const node = await new SimpleNodeBuilder(MockNode)
+      const node = await new SimpleNodeBuilder(MockNode as any)
         .withConfig({ custom: 'value' })
         .build(env);
 
-      expect(node.config.custom).to.equal('value');
+      expect((node.config as any).custom).to.equal('value');
     });
   });
 });
@@ -368,14 +367,14 @@ describe('Assertions', () => {
       const node = new MockNode();
       node.state = NodeState.RUNNING;
 
-      expect(() => assertRunning(node)).to.not.throw();
+      expect(() => assertRunning(node as oNode)).to.not.throw();
     });
 
     it('should throw for stopped node', () => {
       const node = new MockNode();
       node.state = NodeState.STOPPED;
 
-      expect(() => assertRunning(node)).to.throw('RUNNING');
+      expect(() => assertRunning(node as oNode)).to.throw('RUNNING');
     });
   });
 
@@ -384,14 +383,14 @@ describe('Assertions', () => {
       const node = new MockNode();
       node.state = NodeState.STOPPED;
 
-      expect(() => assertStopped(node)).to.not.throw();
+      expect(() => assertStopped(node as oNode)).to.not.throw();
     });
 
     it('should throw for running node', () => {
       const node = new MockNode();
       node.state = NodeState.RUNNING;
 
-      expect(() => assertStopped(node)).to.throw('STOPPED');
+      expect(() => assertStopped(node as oNode)).to.throw('STOPPED');
     });
   });
 

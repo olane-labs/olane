@@ -3,5 +3,5 @@
  */
 
 export { SimpleNodeBuilder } from './simple-node-builder.js';
-export { LeaderChildBuilder } from './leader-child-builder.js';
-export { ManagerWorkerBuilder } from './manager-worker-builder.js';
+export { LeaderChildBuilder, type LeaderConfig } from './leader-child-builder.js';
+export { ManagerWorkerBuilder, type ManagerWorkerResult } from './manager-worker-builder.js';
