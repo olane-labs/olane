@@ -1,7 +1,6 @@
 import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
-import { oLaneTool } from '@olane/o-lane';
-import { oNodeToolConfig } from '@olane/o-node';
+import { oNodeTool, oNodeToolConfig } from '@olane/o-node';
 import { OS_CONFIG_METHODS } from './methods/os-config.methods.js';
 
 export interface OSConfigStorageConfig extends oNodeToolConfig {
@@ -27,7 +26,7 @@ export interface OSConfigStorageConfig extends oNodeToolConfig {
  *
  * Address: o://os-config
  */
-export class OSConfigStorageTool extends oLaneTool {
+export class OSConfigStorageTool extends oNodeTool {
   private storageBackend: 'disk' | 'memory' | string;
   private configKeyPrefix = 'os-config:';
 

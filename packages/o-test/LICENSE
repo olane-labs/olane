@@ -1,0 +1,33 @@
+# Dual License: MIT OR Apache-2.0
+
+Copyright (c) 2025 Olane Inc.
+
+Olane OS is dual-licensed under your choice of either:
+
+- **MIT License** (LICENSE-MIT or https://opensource.org/licenses/MIT)
+- **Apache License, Version 2.0** (LICENSE-APACHE or https://www.apache.org/licenses/LICENSE-2.0)
+
+## Why Dual Licensing?
+
+Dual licensing provides developers with flexibility when integrating Olane OS into their projects:
+
+- **Choose MIT**: If you prefer a simple, permissive license without patent provisions
+- **Choose Apache 2.0**: If you desire explicit patent protection and other features of the Apache license
+
+You may choose either license to govern your use of this software.
+
+## License Terms
+
+### MIT License
+The MIT license is very permissive and allows users to do almost anything with the software, including using, copying, modifying, merging, publishing, distributing, and selling it. The primary requirement is that the original copyright and license notice must be included in all copies of the software.
+
+See LICENSE-MIT for the full license text.
+
+### Apache License 2.0
+The Apache License 2.0 is also a permissive free software license. It grants users the right to use, modify, and distribute the software. It also includes provisions regarding patent grants, which are not present in the MIT license.
+
+See LICENSE-APACHE for the full license text.
+
+## Contributing
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual-licensed as above, without any additional terms or conditions.

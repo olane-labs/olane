@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import 'dotenv/config';
+import { describe, it, before, after } from 'mocha';
+import { expect } from 'chai';
 import { PromptStorageProvider } from '../src/storage/prompt-storage-provider.tool.js';
 import { PromptSeeder } from '../src/storage/prompt-seeder.js';
 import { PromptLoader } from '../src/storage/prompt-loader.js';
@@ -9,28 +11,32 @@ import {
 } from '../src/storage/prompt-schema.js';
 import { AGENT_PROMPT } from '../src/prompts/agent.prompt.js';
 import { CONFIGURE_INSTRUCTIONS } from '../src/prompts/configure.prompt.js';
+import {
+  TestEnvironment,
+  assertSuccess,
+  assertDefined,
+} from '@olane/o-test';
 
 describe('Prompt Seeding and Loading', () => {
+  const env = new TestEnvironment();
   let storage: PromptStorageProvider;
   let seeder: PromptSeeder;
   let loader: PromptLoader;
 
-  beforeAll(async () => {
-    storage = new PromptStorageProvider({});
-    await storage.start();
-
+  before(async () => {
+    storage = await env.createNode(PromptStorageProvider, {});
     seeder = new PromptSeeder(storage);
     loader = new PromptLoader(storage);
   });
 
-  afterAll(async () => {
-    await storage.stop();
+  after(async () => {
+    await env.cleanup();
   });
 
   describe('PromptSeeder', () => {
     it('should check if prompts are not seeded initially', async () => {
       const isSeeded = await seeder.isSeeded();
-      expect(isSeeded).toBe(false);
+      expect(isSeeded).to.equal(false);
     });
 
     it('should seed all prompts successfully', async () => {
@@ -44,8 +50,8 @@ describe('Prompt Seeding and Loading', () => {
           key: PROMPT_KEYS.BASE_TEMPLATE,
         },
       });
-      expect(baseTemplateResponse.success).toBe(true);
-      expect(baseTemplateResponse.result?.data?.exists).toBe(true);
+      assertSuccess(baseTemplateResponse);
+      expect(baseTemplateResponse.result?.data?.exists).to.equal(true);
 
       const cycleResponse = await storage.use(storage.address, {
         method: 'has',
@@ -54,8 +60,8 @@ describe('Prompt Seeding and Loading', () => {
           key: PROMPT_KEYS.CYCLE_INSTRUCTIONS,
         },
       });
-      expect(cycleResponse.success).toBe(true);
-      expect(cycleResponse.result?.data?.exists).toBe(true);
+      assertSuccess(cycleResponse);
+      expect(cycleResponse.result?.data?.exists).to.equal(true);
 
       const outputResponse = await storage.use(storage.address, {
         method: 'has',
@@ -64,8 +70,8 @@ describe('Prompt Seeding and Loading', () => {
           key: PROMPT_KEYS.OUTPUT_INSTRUCTIONS,
         },
       });
-      expect(outputResponse.success).toBe(true);
-      expect(outputResponse.result?.data?.exists).toBe(true);
+      assertSuccess(outputResponse);
+      expect(outputResponse.result?.data?.exists).to.equal(true);
 
       const configureResponse = await storage.use(storage.address, {
         method: 'has',
@@ -74,13 +80,13 @@ describe('Prompt Seeding and Loading', () => {
           key: PROMPT_KEYS.CONFIGURE_INSTRUCTIONS,
         },
       });
-      expect(configureResponse.success).toBe(true);
-      expect(configureResponse.result?.data?.exists).toBe(true);
+      assertSuccess(configureResponse);
+      expect(configureResponse.result?.data?.exists).to.equal(true);
     });
 
     it('should confirm prompts are seeded after seeding', async () => {
       const isSeeded = await seeder.isSeeded();
-      expect(isSeeded).toBe(true);
+      expect(isSeeded).to.equal(true);
     });
 
     it('should store prompts with correct metadata', async () => {
@@ -92,13 +98,13 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
-      expect(response.success).toBe(true);
+      assertSuccess(response);
       const template = response.result?.data?.value as StoredPromptTemplate;
-      expect(template).toBeDefined();
-      expect(template.content).toBeDefined();
-      expect(template.metadata).toBeDefined();
-      expect(template.metadata.version).toBe('1.0.0');
-      expect(template.metadata.source).toBe('custom.prompt.ts');
+      assertDefined(template, 'template');
+      expect(template.content).to.exist;
+      expect(template.metadata).to.exist;
+      expect(template.metadata.version).to.equal('1.0.0');
+      expect(template.metadata.source).to.equal('custom.prompt.ts');
     });
 
     it('should store base template with placeholders', async () => {
@@ -110,13 +116,15 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
+      assertSuccess(response);
       const template = response.result?.data?.value as StoredPromptTemplate;
-      expect(template.content).toContain('{{intent}}');
-      expect(template.content).toContain('{{context}}');
-      expect(template.content).toContain('{{agentHistory}}');
-      expect(template.content).toContain('{{cycleInstructions}}');
-      expect(template.content).toContain('{{outputInstructions}}');
-      expect(template.content).toContain('{{extraInstructions}}');
+      assertDefined(template, 'template');
+      expect(template.content).to.include('{{intent}}');
+      expect(template.content).to.include('{{context}}');
+      expect(template.content).to.include('{{agentHistory}}');
+      expect(template.content).to.include('{{cycleInstructions}}');
+      expect(template.content).to.include('{{outputInstructions}}');
+      expect(template.content).to.include('{{extraInstructions}}');
     });
 
     it('should store cycle instructions with step details', async () => {
@@ -128,13 +136,15 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
+      assertSuccess(response);
       const template = response.result?.data?.value as StoredPromptTemplate;
-      expect(template.content).toContain('Step 1 - Evaluate the intent');
-      expect(template.content).toContain('Step 2 - Search for tools and context');
-      expect(template.content).toContain('Step 3 - Filter Search Results');
-      expect(template.content).toContain('Step 4 - Configure the target tool address use');
-      expect(template.content).toContain('Step 5 - Use target tool address');
-      expect(template.content).toContain('Step 6 - Review the tool use results');
+      assertDefined(template, 'template');
+      expect(template.content).to.include('Step 1 - Evaluate the intent');
+      expect(template.content).to.include('Step 2 - Search for tools and context');
+      expect(template.content).to.include('Step 3 - Filter Search Results');
+      expect(template.content).to.include('Step 4 - Configure the target tool address use');
+      expect(template.content).to.include('Step 5 - Use target tool address');
+      expect(template.content).to.include('Step 6 - Review the tool use results');
     });
 
     it('should store output instructions with return types', async () => {
@@ -146,34 +156,36 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
+      assertSuccess(response);
       const template = response.result?.data?.value as StoredPromptTemplate;
-      expect(template.content).toContain('Complex Intent Results');
-      expect(template.content).toContain('Configure Response');
-      expect(template.content).toContain('Search Response');
-      expect(template.content).toContain('Stop Response');
-      expect(template.content).toContain('Error Response');
-      expect(template.content).toContain('Use Tool Response');
+      assertDefined(template, 'template');
+      expect(template.content).to.include('Complex Intent Results');
+      expect(template.content).to.include('Configure Response');
+      expect(template.content).to.include('Search Response');
+      expect(template.content).to.include('Stop Response');
+      expect(template.content).to.include('Error Response');
+      expect(template.content).to.include('Use Tool Response');
     });
 
     it('should clear all prompts', async () => {
       await seeder.clearAll();
 
       const isSeeded = await seeder.isSeeded();
-      expect(isSeeded).toBe(false);
+      expect(isSeeded).to.equal(false);
     });
   });
 
   describe('PromptLoader', () => {
-    beforeAll(async () => {
+    before(async () => {
       // Ensure prompts are seeded for loader tests
       await seeder.seedAll();
     });
 
     it('should load configure instructions from storage', async () => {
       const instructions = await loader.loadConfigureInstructions();
-      expect(instructions).toBeDefined();
-      expect(instructions).toContain('Configure Request Instructions');
-      expect(instructions).toContain('Step 1 - Validate the intent');
+      expect(instructions).to.exist;
+      expect(instructions).to.include('Configure Request Instructions');
+      expect(instructions).to.include('Step 1 - Validate the intent');
     });
 
     it('should generate agent prompt from storage', async () => {
@@ -184,13 +196,13 @@ describe('Prompt Seeding and Loading', () => {
         'test extra',
       );
 
-      expect(prompt).toBeDefined();
-      expect(prompt).toContain('test intent');
-      expect(prompt).toContain('test context');
-      expect(prompt).toContain('test history');
-      expect(prompt).toContain('test extra');
-      expect(prompt).toContain('Step 1 - Evaluate the intent');
-      expect(prompt).toContain('Stop Response');
+      expect(prompt).to.exist;
+      expect(prompt).to.include('test intent');
+      expect(prompt).to.include('test context');
+      expect(prompt).to.include('test history');
+      expect(prompt).to.include('test extra');
+      expect(prompt).to.include('Step 1 - Evaluate the intent');
+      expect(prompt).to.include('Stop Response');
     });
 
     it('should generate prompt identical to hardcoded version', async () => {
@@ -208,7 +220,7 @@ describe('Prompt Seeding and Loading', () => {
 
       const hardcodedPrompt = AGENT_PROMPT(intent, context, history, extra);
 
-      expect(storagePrompt).toBe(hardcodedPrompt);
+      expect(storagePrompt).to.equal(hardcodedPrompt);
     });
 
     it('should cache loaded templates', async () => {
@@ -231,7 +243,7 @@ describe('Prompt Seeding and Loading', () => {
         'test',
       );
 
-      expect(prompt1).toBe(prompt2);
+      expect(prompt1).to.equal(prompt2);
     });
 
     it('should fallback to hardcoded prompts when storage unavailable', async () => {
@@ -244,9 +256,9 @@ describe('Prompt Seeding and Loading', () => {
         'test extra',
       );
 
-      expect(prompt).toBeDefined();
-      expect(prompt).toContain('test intent');
-      expect(prompt).toContain('Step 1 - Evaluate the intent');
+      expect(prompt).to.exist;
+      expect(prompt).to.include('test intent');
+      expect(prompt).to.include('Step 1 - Evaluate the intent');
     });
 
     it('should fallback to hardcoded configure instructions when storage unavailable', async () => {
@@ -254,7 +266,7 @@ describe('Prompt Seeding and Loading', () => {
 
       const instructions = await loaderWithoutStorage.loadConfigureInstructions();
 
-      expect(instructions).toBe(CONFIGURE_INSTRUCTIONS);
+      expect(instructions).to.equal(CONFIGURE_INSTRUCTIONS);
     });
 
     it('should allow disabling storage usage', async () => {
@@ -267,7 +279,7 @@ describe('Prompt Seeding and Loading', () => {
         'test',
       );
 
-      expect(prompt).toBeDefined();
+      expect(prompt).to.exist;
 
       // Re-enable for other tests
       loader.setUseStorage(true);
@@ -278,11 +290,11 @@ describe('Prompt Seeding and Loading', () => {
     it('should handle complete seed-load-clear cycle', async () => {
       // Clear first
       await seeder.clearAll();
-      expect(await seeder.isSeeded()).toBe(false);
+      expect(await seeder.isSeeded()).to.equal(false);
 
       // Seed
       await seeder.seedAll();
-      expect(await seeder.isSeeded()).toBe(true);
+      expect(await seeder.isSeeded()).to.equal(true);
 
       // Load and verify
       loader.clearCache();
@@ -292,14 +304,14 @@ describe('Prompt Seeding and Loading', () => {
         'test',
         'test',
       );
-      expect(prompt).toContain('test');
+      expect(prompt).to.include('test');
 
       const instructions = await loader.loadConfigureInstructions();
-      expect(instructions).toContain('Configure Request Instructions');
+      expect(instructions).to.include('Configure Request Instructions');
 
       // Clear again
       await seeder.clearAll();
-      expect(await seeder.isSeeded()).toBe(false);
+      expect(await seeder.isSeeded()).to.equal(false);
     });
 
     it('should list all seeded prompts', async () => {
@@ -312,14 +324,14 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
-      expect(response.success).toBe(true);
-      expect(response.result?.data?.keys).toContain(PROMPT_KEYS.BASE_TEMPLATE);
-      expect(response.result?.data?.keys).toContain(PROMPT_KEYS.CYCLE_INSTRUCTIONS);
-      expect(response.result?.data?.keys).toContain(PROMPT_KEYS.OUTPUT_INSTRUCTIONS);
-      expect(response.result?.data?.keys).toContain(
+      assertSuccess(response);
+      expect(response.result?.data?.keys).to.include(PROMPT_KEYS.BASE_TEMPLATE);
+      expect(response.result?.data?.keys).to.include(PROMPT_KEYS.CYCLE_INSTRUCTIONS);
+      expect(response.result?.data?.keys).to.include(PROMPT_KEYS.OUTPUT_INSTRUCTIONS);
+      expect(response.result?.data?.keys).to.include(
         PROMPT_KEYS.CONFIGURE_INSTRUCTIONS,
       );
-      expect(response.result?.data?.count).toBe(4);
+      expect(response.result?.data?.count).to.equal(4);
     });
 
     it('should get stats for seeded prompts', async () => {
@@ -330,10 +342,10 @@ describe('Prompt Seeding and Loading', () => {
         },
       });
 
-      expect(response.success).toBe(true);
-      expect(response.result?.data?.exists).toBe(true);
-      expect(response.result?.data?.keyCount).toBe(4);
-      expect(response.result?.data?.promptId).toBe(PROMPT_IDS.AGENT);
+      assertSuccess(response);
+      expect(response.result?.data?.exists).to.equal(true);
+      expect(response.result?.data?.keyCount).to.equal(4);
+      expect(response.result?.data?.promptId).to.equal(PROMPT_IDS.AGENT);
     });
   });
 });

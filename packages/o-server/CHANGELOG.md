@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12 (2025-11-30)</small>
+
+**Note:** Version bump only for package @olane/o-server
+
 ## <small>0.7.12-alpha.76 (2025-11-21)</small>
 
 **Note:** Version bump only for package @olane/o-server

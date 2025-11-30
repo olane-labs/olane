@@ -1,10 +1,14 @@
 import { ToolResult } from '@olane/o-tool';
 import { oRequest } from '@olane/o-core';
 import { GetDataResponse } from '../interfaces/get-data.response.js';
-import { oLaneTool } from '@olane/o-lane';
 import { oStorageResolver } from '../router/storage.resolver.js';
+import { oNodeConfig, oNodeTool } from '@olane/o-node';
 
-export abstract class StorageProviderTool extends oLaneTool {
+export abstract class StorageProviderTool extends oNodeTool {
+  constructor(config: oNodeConfig) {
+    super(config);
+  }
+
   abstract _tool_put(request: oRequest): Promise<ToolResult>;
 
   abstract _tool_get(request: oRequest): Promise<GetDataResponse>;

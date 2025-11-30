@@ -1,31 +1,40 @@
-import { NodeState, oAddress } from '@olane/o-core';
+import 'dotenv/config';
 import { expect } from 'chai';
 import { PromptStorageProvider } from '../src/storage/prompt-storage-provider.tool.js';
+import {
+  TestEnvironment,
+  SimpleNodeBuilder,
+  assertRunning,
+  assertStopped,
+  assertSuccess,
+  assertError,
+} from '@olane/o-test';
+import { oNodeAddress } from '@olane/o-node';
 
 describe('PromptStorageProvider', () => {
+  const env = new TestEnvironment();
   let storage: PromptStorageProvider;
 
   beforeEach(async () => {
-    storage = new PromptStorageProvider({
-      address: new oAddress('o://prompt-storage-test'),
-    });
-    await storage.start();
+    storage = await new SimpleNodeBuilder(PromptStorageProvider)
+      .withAddress(new oNodeAddress('o://prompt-storage-test'))
+      .build(env);
   });
 
   afterEach(async () => {
-    await storage.stop();
+    await env.cleanup();
   });
 
   describe('Lifecycle', () => {
     it('should initialize successfully', () => {
       expect(storage).to.exist;
-      expect(storage.state).to.equal(NodeState.RUNNING);
+      assertRunning(storage);
       expect(storage.address.toString()).to.equal('o://prompt-storage-test');
     });
 
     it('should stop successfully', async () => {
       await storage.stop();
-      expect(storage.state).to.equal(NodeState.STOPPED);
+      assertStopped(storage);
     });
   });
 
@@ -40,9 +49,9 @@ describe('PromptStorageProvider', () => {
         },
       });
 
-      expect(putResult.success).to.be.true;
+      assertSuccess(putResult);
 
-      const getResult = await storage.use(storage.address, {
+      const response = await storage.use(storage.address, {
         method: 'get',
         params: {
           promptId: 'test-prompt-1',
@@ -50,8 +59,8 @@ describe('PromptStorageProvider', () => {
         },
       });
 
-      expect(getResult.success).to.be.true;
-      expect(getResult.result.data.value).to.equal('Alice');
+      assertSuccess(response);
+      expect(response.result.data.value).to.equal('Alice');
     });
 
     it('should return null for non-existent key', async () => {
@@ -63,7 +72,7 @@ describe('PromptStorageProvider', () => {
         },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.value).to.be.null;
     });
 
@@ -76,7 +85,7 @@ describe('PromptStorageProvider', () => {
         },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.value).to.be.null;
     });
 
@@ -99,6 +108,7 @@ describe('PromptStorageProvider', () => {
           key: 'temp_data',
         },
       });
+      assertSuccess(beforeDelete);
       expect(beforeDelete.result.data.value).to.equal('temporary');
 
       // Delete it
@@ -109,7 +119,7 @@ describe('PromptStorageProvider', () => {
           key: 'temp_data',
         },
       });
-      expect(deleteResult.success).to.be.true;
+      assertSuccess(deleteResult);
 
       // Verify it's gone
       const afterDelete = await storage.use(storage.address, {
@@ -119,6 +129,7 @@ describe('PromptStorageProvider', () => {
           key: 'temp_data',
         },
       });
+      assertSuccess(afterDelete);
       expect(afterDelete.result.data.value).to.be.null;
     });
 
@@ -131,6 +142,7 @@ describe('PromptStorageProvider', () => {
           key: 'test_key',
         },
       });
+      assertSuccess(beforePut);
       expect(beforePut.result.data.success).to.be.false;
 
       // Store data
@@ -151,6 +163,7 @@ describe('PromptStorageProvider', () => {
           key: 'test_key',
         },
       });
+      assertSuccess(afterPut);
       expect(afterPut.result.data.success).to.be.true;
     });
   });
@@ -254,7 +267,7 @@ describe('PromptStorageProvider', () => {
         params: {},
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.count).to.equal(3);
       expect(result.result.data.promptIds).to.have.members([
         'prompt-1',
@@ -284,7 +297,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1' },
       });
 
-      expect(clearResult.success).to.be.true;
+      assertSuccess(clearResult);
       expect(clearResult.result.data.success).to.be.true;
       expect(clearResult.result.data.keysDeleted).to.equal(3);
 
@@ -293,6 +306,7 @@ describe('PromptStorageProvider', () => {
         method: 'get',
         params: { promptId: 'prompt-1', key: 'key1' },
       });
+      assertSuccess(getResult);
       expect(getResult.result.data.value).to.be.null;
     });
 
@@ -317,7 +331,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1' },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.count).to.equal(3);
       expect(result.result.data.keys).to.have.members(['name', 'email', 'role']);
     });
@@ -339,7 +353,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1' },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.promptId).to.equal('prompt-1');
       expect(result.result.data.keyCount).to.equal(2);
       expect(result.result.data.exists).to.be.true;
@@ -353,7 +367,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'nonexistent' },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.exists).to.be.false;
       expect(result.result.data.keyCount).to.equal(0);
     });
@@ -361,13 +375,12 @@ describe('PromptStorageProvider', () => {
 
   describe('Validation', () => {
     it('should throw error for missing promptId in put', async () => {
-      const result = await storage.use(storage.address, {
+      const response = await storage.use(storage.address, {
         method: 'put',
         params: { key: 'key', value: 'value' },
       });
 
-      expect(result.success).to.be.false;
-      expect(result.error).to.include('promptId is required');
+      assertError(response, 'Missing required parameters');
     });
 
     it('should throw error for missing key in put', async () => {
@@ -376,8 +389,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', value: 'value' },
       });
 
-      expect(result.success).to.be.false;
-      expect(result.error).to.include('key is required');
+      assertError(result, 'Missing required parameters');
     });
 
     it('should throw error for missing value in put', async () => {
@@ -386,8 +398,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', key: 'key' },
       });
 
-      expect(result.success).to.be.false;
-      expect(result.error).to.include('value is required');
+      assertError(result, 'Missing required parameters');
     });
 
     it('should throw error for invalid promptId type', async () => {
@@ -396,8 +407,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 123, key: 'key' },
       });
 
-      expect(result.success).to.be.false;
-      expect(result.error).to.include('promptId is required and must be a string');
+      assertError(result, 'promptId is required and must be a string');
     });
   });
 
@@ -408,7 +418,7 @@ describe('PromptStorageProvider', () => {
         params: {},
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.count).to.equal(0);
       expect(result.result.data.promptIds).to.be.an('array').that.is.empty;
     });
@@ -419,7 +429,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'nonexistent' },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
       expect(result.result.data.keysDeleted).to.equal(0);
     });
 
@@ -429,7 +439,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', key: 'nonexistent' },
       });
 
-      expect(result.success).to.be.true;
+      assertSuccess(result);
     });
 
     it('should handle overwriting existing value', async () => {
@@ -451,6 +461,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', key: 'key' },
       });
 
+      assertSuccess(result);
       expect(result.result.data.value).to.equal('value2');
     });
   });
@@ -459,11 +470,10 @@ describe('PromptStorageProvider', () => {
     it('should evict oldest prompt when max limit reached', async () => {
       // Create storage with limit
       await storage.stop();
-      storage = new PromptStorageProvider({
-        address: new oAddress('o://prompt-storage-test'),
-        maxPrompts: 3,
-      });
-      await storage.start();
+      storage = await new SimpleNodeBuilder(PromptStorageProvider)
+        .withAddress(new oNodeAddress('o://prompt-storage-test'))
+        .withConfig({ maxPrompts: 3 })
+        .build(env);
 
       // Add 3 prompts
       await storage.use(storage.address, {
@@ -491,6 +501,7 @@ describe('PromptStorageProvider', () => {
         method: 'list_prompts',
         params: {},
       });
+      assertSuccess(before);
       expect(before.result.data.count).to.equal(3);
 
       // Add 4th prompt (should evict prompt-1)
@@ -504,6 +515,7 @@ describe('PromptStorageProvider', () => {
         method: 'list_prompts',
         params: {},
       });
+      assertSuccess(after);
       expect(after.result.data.count).to.equal(3);
 
       // Verify prompt-1 was evicted
@@ -511,6 +523,7 @@ describe('PromptStorageProvider', () => {
         method: 'get',
         params: { promptId: 'prompt-1', key: 'key' },
       });
+      assertSuccess(result1);
       expect(result1.result.data.value).to.be.null;
 
       // Verify prompt-4 exists
@@ -518,6 +531,7 @@ describe('PromptStorageProvider', () => {
         method: 'get',
         params: { promptId: 'prompt-4', key: 'key' },
       });
+      assertSuccess(result4);
       expect(result4.result.data.value).to.equal('value4');
     });
   });

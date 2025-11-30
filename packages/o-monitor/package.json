@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-monitor",
-  "version": "0.7.12-alpha.76",
+  "version": "0.7.12",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -38,15 +38,15 @@
   },
   "dependencies": {
     "@libp2p/prometheus-metrics": "^5.0.7",
-    "@olane/o-config": "0.7.12-alpha.76",
-    "@olane/o-core": "0.7.12-alpha.76",
-    "@olane/o-intelligence": "0.7.12-alpha.76",
-    "@olane/o-lane": "0.7.12-alpha.76",
-    "@olane/o-leader": "0.7.12-alpha.76",
-    "@olane/o-node": "0.7.12-alpha.76",
-    "@olane/o-protocol": "0.7.12-alpha.76",
-    "@olane/o-storage": "0.7.12-alpha.76",
-    "@olane/o-tool": "0.7.12-alpha.76",
+    "@olane/o-config": "0.7.12",
+    "@olane/o-core": "0.7.12",
+    "@olane/o-intelligence": "0.7.12",
+    "@olane/o-lane": "0.7.12",
+    "@olane/o-leader": "0.7.12",
+    "@olane/o-node": "0.7.12",
+    "@olane/o-protocol": "0.7.12",
+    "@olane/o-storage": "0.7.12",
+    "@olane/o-tool": "0.7.12",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "express": "^4.18.2",
@@ -74,5 +74,5 @@
     "tsx": "^4.20.3",
     "typescript": "5.4.5"
   },
-  "gitHead": "3f98b8d1d9ddb2bb73fe2f50d79cff4e3c1b6f68"
+  "gitHead": "580d8c51fe0a12695ba1d77f077029200f0c8af4"
 }

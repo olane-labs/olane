@@ -5,7 +5,7 @@ import { IntelligenceTool } from '@olane/o-intelligence';
 import { StorageTool } from '../src/index.js';
 import { bigfile } from './data/bigfile.js';
 import * as dotenv from 'dotenv';
-import { oLaneTool } from '@olane/o-lane';
+import { oNodeTool } from '@olane/o-node';
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ const leader = new oLeaderNode({
 describe('o-storage @placeholder', () => {
   it('should be able to start a node', async () => {
     await leader.start();
-    const node = new oLaneTool({
+    const node = new oNodeTool({
       parent: leader.address,
       leader: leader.address,
       address: new oAddress('o://node'),

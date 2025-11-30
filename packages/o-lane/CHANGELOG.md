@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12 (2025-11-30)</small>
+
+- correction around testing ([62f8845](https://github.com/olane-labs/olane/commit/62f8845))
+- init o-test ([51c60ca](https://github.com/olane-labs/olane/commit/51c60ca))
+- minor fixes to error handling tests ([68484fa](https://github.com/olane-labs/olane/commit/68484fa))
+- prompt loading / seeding ([19b0683](https://github.com/olane-labs/olane/commit/19b0683))
+- prompt storage ([21b35ca](https://github.com/olane-labs/olane/commit/21b35ca))
+- refactor the tests ([779cfa2](https://github.com/olane-labs/olane/commit/779cfa2))
+- removed md ([111a691](https://github.com/olane-labs/olane/commit/111a691))
+
 ## <small>0.7.12-alpha.76 (2025-11-21)</small>
 
 - added ag-ui support ([5d7bc5e](https://github.com/olane-labs/olane/commit/5d7bc5e))
