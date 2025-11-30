@@ -49,8 +49,6 @@ export {
   generateMockArray,
 } from './utils/index.js';
 
-export type { ToolResponse } from './utils/assertions.js';
-
 export {
   INVALID_PARAMS,
   VALID_PARAMS,

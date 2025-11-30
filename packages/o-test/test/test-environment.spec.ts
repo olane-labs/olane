@@ -316,49 +316,89 @@ describe('Assertions', () => {
   describe('assertSuccess', () => {
     it('should pass for successful response', () => {
       const response = {
-        success: true,
-        result: { data: { test: 'value' } },
+        jsonrpc: '2.0' as const,
+        id: 'test-1',
+        result: {
+          success: true,
+          data: { test: 'value' },
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertSuccess(response)).to.not.throw();
+      expect(() => assertSuccess(response as any)).to.not.throw();
     });
 
     it('should throw for error response', () => {
       const response = {
-        success: false,
-        error: 'Test error',
+        jsonrpc: '2.0' as const,
+        id: 'test-2',
+        result: {
+          success: false,
+          error: 'Test error',
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertSuccess(response)).to.throw('Test error');
+      expect(() => assertSuccess(response as any)).to.throw('Test error');
     });
   });
 
   describe('assertError', () => {
     it('should pass for error response', () => {
       const response = {
-        success: false,
-        error: 'Expected error',
+        jsonrpc: '2.0' as const,
+        id: 'test-3',
+        result: {
+          success: false,
+          error: 'Expected error',
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertError(response)).to.not.throw();
+      expect(() => assertError(response as any)).to.not.throw();
     });
 
     it('should match error substring', () => {
       const response = {
-        success: false,
-        error: 'Parameter userId is required',
+        jsonrpc: '2.0' as const,
+        id: 'test-4',
+        result: {
+          success: false,
+          error: 'Parameter userId is required',
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertError(response, 'required')).to.not.throw();
+      expect(() => assertError(response as any, 'required')).to.not.throw();
     });
 
     it('should throw if error does not match', () => {
       const response = {
-        success: false,
-        error: 'Different error',
+        jsonrpc: '2.0' as const,
+        id: 'test-5',
+        result: {
+          success: false,
+          error: 'Different error',
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertError(response, 'required')).to.throw();
+      expect(() => assertError(response as any, 'required')).to.throw();
     });
   });
 
@@ -397,20 +437,35 @@ describe('Assertions', () => {
   describe('assertHasData', () => {
     it('should pass when data exists', () => {
       const response = {
-        success: true,
-        result: { data: { test: 'value' } },
+        jsonrpc: '2.0' as const,
+        id: 'test-6',
+        result: {
+          success: true,
+          data: { test: 'value' },
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertHasData(response)).to.not.throw();
+      expect(() => assertHasData(response as any)).to.not.throw();
     });
 
     it('should throw when data missing', () => {
       const response = {
-        success: true,
-        result: {},
+        jsonrpc: '2.0' as const,
+        id: 'test-7',
+        result: {
+          success: true,
+          _connectionId: '',
+          _requestMethod: '',
+          _last: true,
+          _isStreaming: false,
+        },
       };
 
-      expect(() => assertHasData(response)).to.throw('result.data');
+      expect(() => assertHasData(response as any)).to.throw('result.data');
     });
   });
 });

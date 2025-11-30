@@ -4,23 +4,56 @@
 
 ---
 
+## ⚠️ CRITICAL: Testing Framework for libp2p Ecosystem
+
+**We use Mocha (via aegir), NOT Jest.**
+
+Since O-Network is built on the **libp2p ecosystem**, we use **aegir** as our test runner, which internally uses **Mocha** (not Jest).
+
+### Quick Migration Guide
+
+| Aspect | ❌ Jest (DON'T USE) | ✅ Mocha (USE THIS) |
+|--------|---------------------|---------------------|
+| **Imports** | `import { describe, it } from '@jest/globals'` | `import { describe, it, before, after } from 'mocha'` |
+| **Setup** | `beforeAll()` | `before()` |
+| **Teardown** | `afterAll()` | `after()` |
+| **Equality** | `expect(x).toBe(y)` | `expect(x).to.equal(y)` |
+| **Deep equality** | `expect(x).toEqual(y)` | `expect(x).to.deep.equal(y)` |
+| **Existence** | `expect(x).toBeDefined()` | `expect(x).to.exist` |
+| **Contains** | `expect(x).toContain(y)` | `expect(x).to.include(y)` |
+| **Boolean** | `expect(x).toBe(true)` | `expect(x).to.be.true` |
+| **Dependencies** | `jest`, `@types/jest`, `ts-jest` | `aegir`, `chai` |
+
+### Installation
+
+```bash
+# ✅ CORRECT - Install only these
+pnpm install --save-dev aegir chai
+
+# ❌ WRONG - Do NOT install these
+pnpm install --save-dev jest @types/jest ts-jest
+```
+
+---
+
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Testing Philosophy](#testing-philosophy)
-3. [Baseline Requirements](#baseline-requirements)
-4. [Testing Stack](#testing-stack)
-5. [Test Structure Patterns](#test-structure-patterns)
-6. [Using TestEnvironment (Recommended)](#using-testenvironment-recommended)
-7. [Critical Lifecycle Testing](#critical-lifecycle-testing)
-8. [Method Testing Patterns](#method-testing-patterns)
-9. [Parent-Child Testing](#parent-child-testing)
-10. [Error Handling Tests](#error-handling-tests)
-11. [Test Helpers & Utilities](#test-helpers--utilities)
-12. [Running Tests](#running-tests)
-13. [CI/CD Integration](#cicd-integration)
-14. [Common Pitfalls](#common-pitfalls)
-15. [Quick Reference](#quick-reference)
+1. [⚠️ CRITICAL: Testing Framework for libp2p Ecosystem](#️-critical-testing-framework-for-libp2p-ecosystem)
+2. [Overview](#overview)
+3. [Testing Philosophy](#testing-philosophy)
+4. [Baseline Requirements](#baseline-requirements)
+5. [Testing Stack](#testing-stack)
+6. [Test Structure Patterns](#test-structure-patterns)
+7. [Using TestEnvironment (Recommended)](#using-testenvironment-recommended)
+8. [Critical Lifecycle Testing](#critical-lifecycle-testing)
+9. [Method Testing Patterns](#method-testing-patterns)
+10. [Parent-Child Testing](#parent-child-testing)
+11. [Error Handling Tests](#error-handling-tests)
+12. [Test Helpers & Utilities](#test-helpers--utilities)
+13. [Running Tests](#running-tests)
+14. [CI/CD Integration](#cicd-integration)
+15. [Common Pitfalls](#common-pitfalls)
+16. [Quick Reference](#quick-reference)
 
 ---
 
@@ -73,9 +106,10 @@ Testing in the O-Network ecosystem focuses on **practical, integration-oriented 
 | **Test Directory** | Contains all test files | `/test/` |
 | **Lifecycle Test** | Validates start/stop behavior | `test/lifecycle.spec.ts` |
 | **Method Tests** | Tests each `_tool_*` method | `test/methods.spec.ts` |
-| **Jest Config** | Test runner configuration | `jest.config.js` |
-| **Aegir Config** | Build and test tooling | `.aegir.js` |
+| **Aegir Config** | Build and test tooling (optional) | `.aegir.js` |
 | **Test Script** | Package.json test command | `"test": "aegir test"` |
+
+**Note:** No Jest configuration needed - aegir uses Mocha internally.
 
 ### Minimum Test Coverage Requirements
 
@@ -95,9 +129,6 @@ Testing in the O-Network ecosystem focuses on **practical, integration-oriented 
 {
   "devDependencies": {
     "aegir": "^47.0.21",
-    "jest": "^30.0.0",
-    "@types/jest": "^30.0.0",
-    "ts-jest": "^29.4.0",
     "chai": "^5.1.2",
     "@types/node": "^22.0.0",
     "typescript": "^5.8.3",
@@ -106,46 +137,28 @@ Testing in the O-Network ecosystem focuses on **practical, integration-oriented 
 }
 ```
 
+**Important:** For the **libp2p ecosystem**, aegir v47+ uses **Mocha** as the test runner. Do NOT install Jest dependencies.
+
 ### Framework Details
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| **aegir** | ^47.0.21 | Test runner wrapper (Jest/Mocha) |
-| **Jest** | ^30.0.0 | Test framework and runner |
-| **ts-jest** | ^29.4.0 | TypeScript support for Jest |
+| **aegir** | ^47.0.21 | Test runner using Mocha internally |
+| **Mocha** | (via aegir) | Test framework and runner |
 | **Chai** | ^5.1.2 | Assertion library (`expect`) |
 | **dotenv** | Latest | Environment configuration |
 
 ### Configuration Files
 
-#### `jest.config.js` (required)
+#### `.aegir.js` (Optional)
 
-```javascript
-export default {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testTimeout: 30000,
-  extensionsToTreatAsEsm: ['.ts'],
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-  },
-  transform: {
-    '^.+\\.tsx?$': [
-      'ts-jest',
-      {
-        useESM: true,
-      },
-    ],
-  },
-};
-```
-
-#### `.aegir.js` (required)
+Aegir works with zero configuration. Only create this file if you need customization:
 
 ```javascript
 export default {
   test: {
     target: ['node'], // node, browser, or both
+    timeout: 30000,   // Optional: test timeout in ms
   },
   build: {
     bundlesizeMax: '100KB',
@@ -160,11 +173,30 @@ export default {
   "scripts": {
     "test": "aegir test",
     "test:node": "aegir test -t node",
-    "test:browser": "aegir test -t browser",
-    "test:watch": "aegir test --watch"
+    "test:browser": "aegir test -t browser"
   }
 }
 ```
+
+### Test Framework: Mocha vs Jest
+
+**For libp2p ecosystem packages:**
+- ✅ Use **Mocha** (via aegir)
+- ✅ Import: `import { describe, it, before, after, beforeEach, afterEach } from 'mocha'`
+- ✅ Assertions: Use Chai - `expect().to.equal()`, `expect().to.exist`, `expect().to.include()`
+- ❌ Do NOT install `jest`, `@types/jest`, or `ts-jest`
+
+**Key differences:**
+
+| Feature | Jest | Mocha (aegir) |
+|---------|------|---------------|
+| Setup | `beforeAll()` | `before()` |
+| Teardown | `afterAll()` | `after()` |
+| Per-test setup | `beforeEach()` | `beforeEach()` |
+| Per-test teardown | `afterEach()` | `afterEach()` |
+| Assertions | `.toBe()`, `.toEqual()` | `.to.equal()`, `.to.deep.equal()` |
+| Check existence | `.toBeDefined()` | `.to.exist` |
+| String contains | `.toContain()` | `.to.include()` |
 
 ---
 
@@ -175,6 +207,7 @@ export default {
 ```typescript
 // test/feature-name.spec.ts
 import 'dotenv/config';                    // ✅ Load env vars first
+import { describe, it, before, after, beforeEach, afterEach } from 'mocha'; // ✅ Mocha imports
 import { expect } from 'chai';             // ✅ Use chai assertions
 import { NodeState } from '@olane/o-core'; // ✅ Import types
 import { oLeaderNode } from '@olane/o-leader';
@@ -184,7 +217,7 @@ describe('MyTool', () => {
   let leaderNode: oLeaderNode;
   let tool: MyTool;
 
-  // ✅ Setup before each test
+  // ✅ Setup before each test (use beforeEach or before)
   beforeEach(async () => {
     leaderNode = new oLeaderNode({
       parent: null,
@@ -205,7 +238,7 @@ describe('MyTool', () => {
     await tool.start();
   });
 
-  // ✅ Cleanup after each test
+  // ✅ Cleanup after each test (use afterEach or after)
   afterEach(async () => {
     await tool.stop();
     await leaderNode.stop();

@@ -33,14 +33,16 @@
   },
   "author": "oLane Inc.",
   "license": "(MIT OR Apache-2.0)",
-  "description": "Comprehensive testing utilities and best practices for O-Network node development",
+  "description": "Comprehensive testing utilities and best practices for O-Network node development using Mocha/Chai (libp2p ecosystem)",
   "keywords": [
     "olane",
     "o-network",
     "testing",
     "test-utilities",
-    "jest",
+    "mocha",
     "chai",
+    "aegir",
+    "libp2p",
     "test-environment"
   ],
   "devDependencies": {

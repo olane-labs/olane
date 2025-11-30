@@ -4,41 +4,28 @@
  * Provides type-safe, expressive assertions for common test scenarios
  */
 
-import { NodeState } from '@olane/o-core';
+import { NodeState, oResponse } from '@olane/o-core';
 import type { oNode } from '@olane/o-node';
-
-/**
- * Response structure from tool methods
- */
-export interface ToolResponse {
-  success: boolean;
-  result?: {
-    data?: any;
-    [key: string]: any;
-  };
-  error?: string;
-  [key: string]: any;
-}
 
 /**
  * Assert that a tool response indicates success
  *
- * @param response - Tool method response
+ * @param response - Tool method response (oResponse)
  * @param message - Optional custom error message
  * @throws Error if response is not successful
  *
  * @example
  * ```typescript
- * const response = await tool.useSelf({ method: 'test', params: {} });
+ * const response = await tool.use(address, { method: 'test', params: {} });
  * assertSuccess(response);
  * ```
  */
 export function assertSuccess(
-  response: ToolResponse,
+  response: oResponse,
   message?: string
-): asserts response is ToolResponse & { success: true } {
-  if (!response.success) {
-    const errorMsg = message || `Expected success but got error: ${response.error}`;
+): asserts response is oResponse & { result: { success: true } } {
+  if (!response.result.success) {
+    const errorMsg = message || `Expected success but got error: ${response.result.error}`;
     throw new Error(errorMsg);
   }
 }
@@ -46,27 +33,31 @@ export function assertSuccess(
 /**
  * Assert that a tool response indicates failure
  *
- * @param response - Tool method response
+ * @param response - Tool method response (oResponse)
  * @param expectedError - Optional substring to match in error message
  * @throws Error if response is successful or error doesn't match
  *
  * @example
  * ```typescript
- * const response = await tool.useSelf({ method: 'test', params: {} });
+ * const response = await tool.use(address, { method: 'test', params: {} });
  * assertError(response, 'required');
  * ```
  */
 export function assertError(
-  response: ToolResponse,
+  response: oResponse,
   expectedError?: string
-): asserts response is ToolResponse & { success: false } {
-  if (response.success) {
+): asserts response is oResponse & { result: { success: false } } {
+  if (response.result.success) {
     throw new Error('Expected error but got success');
   }
 
-  if (expectedError && !response.error?.includes(expectedError)) {
+  const errorMessage = typeof response.result.error === 'string'
+    ? response.result.error
+    : response.result.error?.message || JSON.stringify(response.result.error);
+
+  if (expectedError && !errorMessage?.includes(expectedError)) {
     throw new Error(
-      `Expected error to include "${expectedError}" but got: ${response.error}`
+      `Expected error to include "${expectedError}" but got: ${errorMessage}`
     );
   }
 }
@@ -119,21 +110,21 @@ export function assertStopped(
 /**
  * Assert that response has data
  *
- * @param response - Tool method response
+ * @param response - Tool method response (oResponse)
  * @param message - Optional custom error message
  * @throws Error if response doesn't have data
  *
  * @example
  * ```typescript
- * const response = await tool.useSelf({ method: 'get_data', params: {} });
+ * const response = await tool.use(address, { method: 'get_data', params: {} });
  * assertHasData(response);
  * const data = response.result.data;
  * ```
  */
 export function assertHasData(
-  response: ToolResponse,
+  response: oResponse,
   message?: string
-): asserts response is ToolResponse & { result: { data: any } } {
+): asserts response is oResponse & { result: { data: any } } {
   if (!response.result?.data) {
     const errorMsg = message || 'Expected response to have result.data';
     throw new Error(errorMsg);
