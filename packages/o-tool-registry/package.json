@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.5.2",
-    "@langchain/community": "0.3.47",
+    "@langchain/community": "1.0.5",
     "@langchain/core": "0.3.61",
     "@olane/o-config": "0.7.12-alpha.76",
     "@olane/o-core": "0.7.12-alpha.76",
