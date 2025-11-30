@@ -8,13 +8,17 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
+import { StreamHandler } from './stream-handler.js';
+import type { StreamHandlerConfig } from './stream-handler.config.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
+  protected streamHandler: StreamHandler;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
+    this.streamHandler = new StreamHandler(this.logger);
     this.setupConnectionListeners();
   }
 
@@ -50,17 +54,21 @@ export class oNodeConnection extends oConnection {
   }
 
   async getOrCreateStream(): Promise<Stream> {
-    if (this.p2pConnection.status !== 'open') {
-      throw new oError(oErrorCodes.INVALID_STATE, 'Connection not open');
-    }
-
-    return this.p2pConnection.newStream(this.nextHopAddress.protocol, {
+    const streamConfig: StreamHandlerConfig = {
       signal: this.abortSignal,
       maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
         ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
         : 1000,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-    });
+      reusePolicy: 'none', // Default policy, can be overridden in subclasses
+      drainTimeoutMs: this.config.drainTimeoutMs,
+    };
+
+    return this.streamHandler.getOrCreateStream(
+      this.p2pConnection,
+      this.nextHopAddress.protocol,
+      streamConfig,
+    );
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
@@ -72,63 +80,30 @@ export class oNodeConnection extends oConnection {
 
       this.validate(stream);
 
-      // Send the data with backpressure handling (libp2p v3 best practice)
+      const streamConfig: StreamHandlerConfig = {
+        signal: this.abortSignal,
+        drainTimeoutMs: this.config.drainTimeoutMs,
+        reusePolicy: 'none', // Default policy
+      };
+
+      // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
-      const sent = stream.send(data);
+      await this.streamHandler.send(stream, data, streamConfig);
 
-      let lastResponse: any;
+      // Handle response using StreamHandler
+      // Pass request handler if configured to enable bidirectional stream processing
+      // Pass request ID to enable proper response correlation on shared streams
+      const response = await this.streamHandler.handleOutgoingStream(
+        stream,
+        this.emitter,
+        streamConfig,
+        this.config.requestHandler,
+        request.id,
+      );
 
-      await new Promise((resolve, reject) => {
-        const abortHandler = async () => {
-          try {
-            await stream.abort(new Error('Request aborted'));
-          } catch (e) {
-            // Stream may already be closed
-          }
-          reject(new Error('Request aborted'));
-        };
-
-        // Listen for abort signal
-        if (this.abortSignal) {
-          this.abortSignal.addEventListener('abort', abortHandler);
-        }
-
-        stream.addEventListener('message', async (event) => {
-          const response = await CoreUtils.processStreamResponse(event);
-          this.emitter.emit('chunk', response);
-          // marked as the last chunk let's close
-          if (response.result._last || !response.result._isStreaming) {
-            lastResponse = response;
-            // Clean up abort listener before closing
-            if (this.abortSignal) {
-              this.abortSignal.removeEventListener('abort', abortHandler);
-            }
-            resolve(true);
-          }
-        });
-      });
-
-      stream.addEventListener('close', async () => {
-        this.logger.debug(
-          'Stream closed by remote peer, closing connection...',
-        );
-        stream.close().catch((error) => {
-          this.logger.error('Error closing stream: ', error);
-        });
-      });
-
-      // If send() returns false, wait for the stream to drain before continuing
-      if (!sent) {
-        this.logger.debug('Stream buffer full, waiting for drain...');
-        await stream.onDrain({
-          signal: AbortSignal.timeout(this.config.drainTimeoutMs ?? 30_000),
-        }); // Default: 30 second timeout
-      }
-
-      // handle cleanup of the stream
+      // Handle cleanup of the stream
       await this.postTransmit(stream);
 
-      const response = oResponse.fromJSON(lastResponse);
       return response;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
@@ -139,13 +114,11 @@ export class oNodeConnection extends oConnection {
   }
 
   async postTransmit(stream: Stream) {
-    if (stream.status === 'open') {
-      stream.close().catch((error) => {
-        this.logger.error('Error closing stream after transmission: ', error);
-      });
-    } else {
-      this.logger.debug('Stream is not open, skipping cleanup');
-    }
+    const streamConfig: StreamHandlerConfig = {
+      reusePolicy: 'none', // Default policy, can be overridden in subclasses
+    };
+
+    await this.streamHandler.close(stream, streamConfig);
   }
 
   async abort(error: Error) {

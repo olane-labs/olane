@@ -21,6 +21,7 @@ import {
   oCapabilityType,
 } from './capabilities/index.js';
 import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
+import { MarkdownBuilder } from './formatters/index.js';
 
 export class oLane extends oObject {
   public sequence: oCapabilityResult[] = [];
@@ -117,45 +118,163 @@ export class oLane extends oObject {
 
   get agentHistory() {
     const added: { [key: string]: boolean } = {};
+    const MAX_RESULT_LENGTH = 1000; // Truncate large results
+    const KEEP_FULL_DETAIL_COUNT = 3; // Keep full detail for last N cycles
+
+    const filteredSequence = this.sequence?.filter((s) => {
+      if (added[s.id]) {
+        return false;
+      }
+      added[s.id] = true;
+      return true;
+    });
+
     return (
-      this.sequence
-        ?.filter((s) => {
-          if (added[s.id]) {
-            return false;
-          }
-          added[s.id] = true;
-          return true;
-        })
+      filteredSequence
         ?.map((s, index) => {
+          const isRecent =
+            index >= filteredSequence.length - KEEP_FULL_DETAIL_COUNT;
           const result = s.result || s.error;
-          return `[Cycle ${index + 1} Begin ${s.id}]\n
-            Cycle Intent: ${s.config?.intent.toString()}\n
-            Cycle Result:\n
-            ${
-              typeof result === 'string'
+          const params = s.config?.params || {};
+
+          // Extract summary and reasoning if available
+          const summary = params.summary || '';
+          const reasoning = params.reasoning || '';
+
+          // Format result, truncating if not a recent cycle
+          let formattedResult: string;
+          if (typeof result === 'string') {
+            formattedResult =
+              isRecent || result.length <= MAX_RESULT_LENGTH
                 ? result
-                : JSON.stringify(
-                    {
-                      ...result,
-                    },
-                    null,
-                    2,
-                  )
-            } \n[Cycle ${index + 1} End ${s.id}]`;
+                : result.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
+          } else {
+            const jsonStr = JSON.stringify(result, null, 2);
+            formattedResult =
+              isRecent || jsonStr.length <= MAX_RESULT_LENGTH
+                ? jsonStr
+                : jsonStr.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
+          }
+
+          // Build formatted history entry
+          let entry = `[Cycle ${index + 1}: ${s.type}]\n`;
+          entry += `Intent: ${s.config?.intent.toString()}\n`;
+
+          if (summary) {
+            entry += `Summary: ${summary}\n`;
+          }
+
+          if (reasoning) {
+            entry += `Reasoning: ${reasoning}\n`;
+          }
+
+          if (s.error) {
+            entry += `Error: ${s.error}\n`;
+          } else {
+            entry += `Result: ${formattedResult}\n`;
+          }
+
+          return entry;
         })
         .join('\n') || ''
     );
   }
+
+  /**
+   * Generate a human-readable execution trace of the lane
+   * Shows the decision points and flow of execution
+   */
+  getExecutionTrace(): string {
+    const mb = MarkdownBuilder.create();
+
+    mb.header('Execution Trace', 2);
+    mb.paragraph(`Intent: ${this.config.intent.value}`);
+    mb.paragraph(`Cycles: ${this.sequence.length}`);
+    mb.paragraph(`Status: ${this.status}`);
+
+    if (this.sequence.length === 0) {
+      mb.paragraph('No execution cycles recorded.');
+      return mb.build();
+    }
+
+    mb.br();
+    mb.header('Cycle Details', 3);
+
+    this.sequence.forEach((step, index) => {
+      const params = step.config?.params || {};
+      const summary = params.summary || '';
+      const reasoning = params.reasoning || '';
+
+      mb.br();
+      mb.raw(`${mb.bold(`Cycle ${index + 1}`)} [${step.type}]`);
+
+      if (summary) {
+        mb.raw(`\n└─ ${mb.italic('Summary:')} ${summary}`);
+      }
+
+      if (reasoning) {
+        mb.raw(`\n└─ ${mb.italic('Reasoning:')} ${reasoning}`);
+      }
+
+      if (step.error) {
+        mb.raw(`\n└─ ❌ ${mb.bold('Error:')} ${step.error}`);
+      } else if (step.type === oCapabilityType.STOP) {
+        mb.raw(`\n└─ ✓ ${mb.bold('Completed')}`);
+      }
+    });
+
+    // Add final result summary
+    if (this.result) {
+      mb.br();
+      mb.hr();
+      mb.header('Final Result', 3);
+
+      const resultParams = this.result.config?.params || {};
+      const finalSummary = resultParams.summary || '';
+
+      if (finalSummary) {
+        mb.paragraph(finalSummary);
+      }
+
+      if (this.result.error) {
+        mb.paragraph(`${mb.bold('Status:')} Failed`);
+        mb.paragraph(`${mb.bold('Error:')} ${this.result.error}`);
+      } else {
+        mb.paragraph(`${mb.bold('Status:')} Success`);
+      }
+    }
+
+    return mb.build();
+  }
+
   async preflight(): Promise<void> {
     this.logger.debug('Preflight...');
     this.status = oLaneStatus.PREFLIGHT;
+    this.logger.debug('Pinging intelligence tool...');
+    // ping the intelligence tool to ensure it is available
+    await this.node.use(new oAddress('o://intelligence'), {
+      method: 'ping',
+      params: {},
+    });
   }
 
   async execute(): Promise<oCapabilityResult | undefined> {
     this.logger.debug('Executing...');
-    await this.preflight();
-    this.status = oLaneStatus.RUNNING;
     try {
+      await this.preflight().catch((error) => {
+        this.logger.error('Error in preflight: ', error);
+
+        this.result = new oCapabilityResult({
+          type: oCapabilityType.ERROR,
+          result: null,
+          error: 'Intelligence services are not available. Try again later.',
+        });
+        throw new oError(
+          oErrorCodes.INVALID_STATE,
+          'Intelligence services are not available. Try again later.',
+        );
+      });
+      this.status = oLaneStatus.RUNNING;
       this.result = await this.loop();
     } catch (error) {
       this.logger.error('Error in execute: ', error);
@@ -188,18 +307,27 @@ export class oLane extends oObject {
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
-    const capabilityType = currentStep.type;
-    for (const capability of this.capabilities) {
-      if (capability.type === capabilityType && currentStep.config) {
-        const capabilityConfig: oCapabilityConfig =
-          this.resultToConfig(currentStep);
-        this.logger.debug('Executing capability: ', capabilityType);
-        const result = await capability.execute({
-          ...capabilityConfig,
-          onChunk: this.onChunk,
-        } as oCapabilityConfig);
-        return result;
+    try {
+      const capabilityType = currentStep.type;
+      for (const capability of this.capabilities) {
+        if (capability.type === capabilityType && currentStep.config) {
+          const capabilityConfig: oCapabilityConfig =
+            this.resultToConfig(currentStep);
+          this.logger.debug('Executing capability: ', capabilityType);
+          const result = await capability.execute({
+            ...capabilityConfig,
+          } as oCapabilityConfig);
+          return result;
+        }
       }
+    } catch (error) {
+      this.logger.error('Error in doCapability: ', error);
+      const errorResult = new oCapabilityResult({
+        type: oCapabilityType.ERROR,
+        result: null,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      return errorResult;
     }
     throw new oError(oErrorCodes.INVALID_CAPABILITY, 'Unknown capability');
   }
@@ -242,21 +370,12 @@ export class oLane extends oObject {
         this.config.persistToConfig = true;
       }
 
-      if (this.config.useStream && this.onChunk) {
-        this.onChunk(
-          new oResponse({
-            data: {
-              ...result,
-              config: undefined,
-            },
-            _last: false,
-            _isStreaming: true,
-            _connectionId: this.node.address.toString(),
-            _requestMethod: 'unknown',
-            id: uuidv4(),
-          }),
-        );
-      }
+      await this.emitNonFinalChunk(result, {
+        data: {
+          ...result,
+          config: undefined,
+        },
+      });
 
       if (result.type === oCapabilityType.STOP) {
         return result;
@@ -265,6 +384,21 @@ export class oLane extends oObject {
       currentStep = result;
     }
     throw new Error('Plan failed');
+  }
+
+  async emitNonFinalChunk(result: oCapabilityResult, payload: any) {
+    if (this.config.useStream && this.onChunk) {
+      await this.onChunk(
+        new oResponse({
+          ...payload,
+          _last: false,
+          _isStreaming: true,
+          _connectionId: this.node.address.toString(),
+          _requestMethod: 'unknown',
+          id: this.config.requestId ?? uuidv4(), // Use request ID for proper correlation, fallback to UUID
+        }),
+      );
+    }
   }
 
   async postflight(

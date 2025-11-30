@@ -1,6 +1,6 @@
 {
   "name": "@olane/os",
-  "version": "0.7.12-alpha.51",
+  "version": "0.7.12-alpha.76",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -21,6 +21,7 @@
     "test:browser": "aegir test -t browser",
     "test:benchmarks": "aegir test -- test/benchmarks/benchmark.spec",
     "test:basic": "aegir test -- test/basic/basic-usage.spec",
+    "test:capabilities": "aegir test -- test/capabilities",
     "build:all": "npm run build --prefix ../.. && npm run build --prefix ../o-tool && npm run build --prefix ../o-tools-common && npm run build --prefix ../o-tool-registry && npm run build --prefix ../o-mcp",
     "build": "tsc",
     "start:prod": "node dist/index.js",
@@ -57,22 +58,23 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.12-alpha.51",
-    "@olane/o-core": "0.7.12-alpha.51",
-    "@olane/o-intelligence": "0.7.12-alpha.51",
-    "@olane/o-lane": "0.7.12-alpha.51",
-    "@olane/o-leader": "0.7.12-alpha.51",
-    "@olane/o-login": "0.7.12-alpha.51",
-    "@olane/o-protocol": "0.7.12-alpha.51",
-    "@olane/o-storage": "0.7.12-alpha.51",
-    "@olane/o-tool": "0.7.12-alpha.51",
-    "@olane/o-tool-registry": "0.7.12-alpha.51",
-    "@olane/o-tools-common": "0.7.12-alpha.51",
+    "@olane/o-client-limited": "0.7.12-alpha.76",
+    "@olane/o-config": "0.7.12-alpha.76",
+    "@olane/o-core": "0.7.12-alpha.76",
+    "@olane/o-intelligence": "0.7.12-alpha.76",
+    "@olane/o-lane": "0.7.12-alpha.76",
+    "@olane/o-leader": "0.7.12-alpha.76",
+    "@olane/o-login": "0.7.12-alpha.76",
+    "@olane/o-protocol": "0.7.12-alpha.76",
+    "@olane/o-storage": "0.7.12-alpha.76",
+    "@olane/o-tool": "0.7.12-alpha.76",
+    "@olane/o-tool-registry": "0.7.12-alpha.76",
+    "@olane/o-tools-common": "0.7.12-alpha.76",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "fs-extra": "^11.3.0",
     "touch": "^3.1.1"
   },
-  "gitHead": "4d1ec96b34625cd8239e853411f0a970f4ea26e5"
+  "gitHead": "3f98b8d1d9ddb2bb73fe2f50d79cff4e3c1b6f68"
 }

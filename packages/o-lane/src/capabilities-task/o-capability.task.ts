@@ -118,9 +118,9 @@ export class oCapabilityTask extends oCapability {
         method: task.payload?.method,
         params: params,
       });
-      if (this.config.onChunk) {
-        this.config.onChunk(response);
-      }
+      // if (this.config.onChunk) {
+      //   this.config.onChunk(response);
+      // }
 
       // Check if the tool response contains _save flag
       const shouldPersist = (response.result?.data as any)?._save === true;

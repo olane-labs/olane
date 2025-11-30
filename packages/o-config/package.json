@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-config",
-  "version": "0.7.12-alpha.51",
+  "version": "0.7.12-alpha.76",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -71,12 +71,12 @@
     "@libp2p/utils": "^7.0.5",
     "@libp2p/websockets": "^10.0.6",
     "@libp2p/webtransport": "^6.0.7",
-    "@multiformats/multiaddr": "^12.5.0",
+    "@multiformats/multiaddr": "^13.0.1",
     "it-all": "^3.0.9",
     "it-pair": "^2.0.6",
     "it-pushable": "^3.2.3",
     "libp2p": "^3.0.6",
     "uint8arraylist": "^2.4.8"
   },
-  "gitHead": "4d1ec96b34625cd8239e853411f0a970f4ea26e5"
+  "gitHead": "3f98b8d1d9ddb2bb73fe2f50d79cff4e3c1b6f68"
 }

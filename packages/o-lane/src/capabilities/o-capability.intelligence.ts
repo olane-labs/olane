@@ -48,10 +48,25 @@ export abstract class oCapabilityIntelligence extends oCapability {
 
       // Use the parsed result value if available, otherwise fall back to full message
       const processedResult = RegexUtils.extractResultFromAI(message);
+
+      // Extract structured fields from AI response
+      // The AI returns JSON with fields like: type, summary, reasoning, result, etc.
+      const { type, summary, reasoning, ...rest } = processedResult;
+
       return new oCapabilityIntelligenceResult({
-        result: processedResult,
-        type: processedResult.type,
-        config: this.config,
+        result: processedResult, // Keep full result for backwards compatibility
+        humanResult: processedResult.result, // AI-generated result is already human-readable
+        type: type || oCapabilityType.EVALUATE,
+        config: {
+          ...this.config,
+          // Preserve summary and reasoning in params for access
+          params: {
+            ...this.config.params,
+            ...processedResult, // Store full AI response in params
+            summary,
+            reasoning,
+          },
+        },
         error: undefined,
       });
     } catch (error: any) {

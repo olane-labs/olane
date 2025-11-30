@@ -4,6 +4,7 @@ import {
   defaultLibp2pConfig,
   Libp2p,
   Libp2pConfig,
+  KEEP_ALIVE,
 } from '@olane/o-config';
 import { v4 as uuidv4 } from 'uuid';
 import { PeerId } from '@olane/o-config';
@@ -30,8 +31,8 @@ import { oMethodResolver, oToolBase } from '@olane/o-tool';
 import { oLeaderResolverFallback } from './router/index.js';
 import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
-import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 import { oNodeConnectionConfig } from './connection/index.js';
+import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -41,7 +42,7 @@ export class oNode extends oToolBase {
   public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
-  public reconnectionManager?: oReconnectionManager;
+  protected reconnectionManager?: oReconnectionManager;
   protected didRegister: boolean = false;
 
   constructor(config: oNodeConfig) {
@@ -160,6 +161,42 @@ export class oNode extends oToolBase {
     });
   }
 
+  async setKeepAliveTag(address: oNodeAddress): Promise<void> {
+    if (!address || !address.libp2pTransports?.length) {
+      this.logger.warn(
+        'Address has no transports, skipping keep alive tag!',
+        address,
+      );
+      return;
+    }
+    try {
+      const peers = await this.p2pNode.peerStore.all();
+
+      // find the peer that is already indexed rather than building the PeerId from the string value to avoid browser issues
+      const peer = peers.find(
+        (p) =>
+          p.id.toString() === address.libp2pTransports[0].toPeerId().toString(),
+      );
+      if (!peer) {
+        this.logger.warn('Peer not found, skipping keep alive tag!', address);
+        return;
+      }
+      await this.p2pNode.peerStore.merge(peer.id, {
+        tags: {
+          [KEEP_ALIVE]: { value: 100 },
+        },
+      });
+      this.logger.debug(
+        'Set keep alive tag for peer:',
+        peer.id.toString(),
+        ' with address:',
+        address.toString(),
+      );
+    } catch (error) {
+      this.logger.error('Failed to set keep alive tag:', error);
+    }
+  }
+
   async registerParent(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping parent registration, node is leader');
@@ -194,6 +231,7 @@ export class oNode extends oToolBase {
           _token: this.config.joinToken,
         },
       });
+      this.setKeepAliveTag(this.parent as oNodeAddress);
     }
   }
 
@@ -212,6 +250,8 @@ export class oNode extends oToolBase {
     };
 
     await this.use(address, params);
+
+    this.setKeepAliveTag(this.leader as oNodeAddress);
   }
 
   async register(): Promise<void> {
@@ -369,6 +409,14 @@ export class oNode extends oToolBase {
       };
     }
 
+    params.connectionManager = {
+      ...(params.connectionManager || {}),
+      reconnectRetries: 20,
+      reconnectRetryInterval: 2_000,
+      reconnectBackoffFactor: 1.2,
+      maxParallelReconnects: 10,
+    };
+
     // handle the address encapsulation
     if (
       this.config.leader &&
@@ -421,33 +469,15 @@ export class oNode extends oToolBase {
     });
   }
 
-  async initReconnectionManager(): Promise<void> {
-    // Initialize reconnection manager
-    if (this.config.reconnection?.enabled !== false) {
-      this.reconnectionManager = new oReconnectionManager(this, {
-        enabled: true,
-        maxAttempts: this.config.reconnection?.maxAttempts ?? 10,
-        baseDelayMs: this.config.reconnection?.baseDelayMs ?? 5000,
-        maxDelayMs: this.config.reconnection?.maxDelayMs ?? 60000,
-        useLeaderFallback: this.config.reconnection?.useLeaderFallback ?? true,
-        parentDiscoveryIntervalMs:
-          this.config.reconnection?.parentDiscoveryIntervalMs ?? 10000,
-        parentDiscoveryMaxDelayMs:
-          this.config.reconnection?.parentDiscoveryMaxDelayMs ?? 60000,
-      });
-    }
-  }
-
   async hookInitializeFinished(): Promise<void> {}
 
   async hookStartFinished(): Promise<void> {
-    // Initialize connection heartbeat manager
+    // Initialize connection health monitor
     this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
       this as any,
       {
         enabled: this.config.connectionHeartbeat?.enabled ?? true,
         intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
-        timeoutMs: this.config.connectionHeartbeat?.timeoutMs ?? 15_000,
         failureThreshold:
           this.config.connectionHeartbeat?.failureThreshold ?? 3,
         checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
@@ -497,8 +527,15 @@ export class oNode extends oToolBase {
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
 
-    // initialize reconnection manager
-    await this.initReconnectionManager();
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
     await this.hookInitializeFinished();
   }
 

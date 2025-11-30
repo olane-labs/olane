@@ -234,10 +234,6 @@ export abstract class oCore extends oObject {
    */
   private handleResponseError(response: oResponse): void {
     if (response.result.error) {
-      this.logger.error(
-        'response.result.error',
-        JSON.stringify(response.result.error, null, 2),
-      );
       throw oError.fromJSON(response.result.error);
     }
   }

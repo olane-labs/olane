@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.7.12-alpha.51",
+  "version": "0.7.12-alpha.76",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -29,7 +29,7 @@
     "test:browser": "aegir test -t browser",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",
     "lint": "aegir lint"
@@ -63,11 +63,12 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@olane/o-protocol": "0.7.12-alpha.51",
+    "@olane/o-protocol": "0.7.12-alpha.76",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "multiformats": "^13.3.7"
+    "multiformats": "^13.3.7",
+    "stream-json": "^1.9.1"
   },
-  "gitHead": "4d1ec96b34625cd8239e853411f0a970f4ea26e5"
+  "gitHead": "3f98b8d1d9ddb2bb73fe2f50d79cff4e3c1b6f68"
 }

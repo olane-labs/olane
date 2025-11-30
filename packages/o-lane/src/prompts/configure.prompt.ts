@@ -1,4 +1,7 @@
-export const CONFIGURE_INSTRUCTIONS = `
+/**
+ * Configure instructions for seeding - extracted from configure capability
+ */
+export const CONFIGURE_INSTRUCTIONS_SEED = `
   Configure Request Instructions:
 1. Review the provided user intent and context
 2. If you can complete the user intent, return the answer using the [RETURN INSTRUCTIONS] steps
@@ -38,3 +41,8 @@ Step 5 - Finish
 3. If you do not have enough information to complete the configure request, return an error.
 
   `;
+
+/**
+ * Alias for backwards compatibility - runtime usage
+ */
+export const CONFIGURE_INSTRUCTIONS = CONFIGURE_INSTRUCTIONS_SEED;

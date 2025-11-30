@@ -23,6 +23,7 @@ export class oLimitedConnectionManager extends oNodeConnectionManager {
         p2pConnection: p2pConnection,
         callerAddress: callerAddress,
         runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+        requestHandler: config.requestHandler,
       });
       return connection;
     } catch (error) {

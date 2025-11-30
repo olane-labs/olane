@@ -13,7 +13,6 @@ import { IHeartbeatableNode } from '../interfaces/i-heartbeatable-node.js';
 export interface HeartbeatConfig {
   enabled: boolean;
   intervalMs: number; // Default: 15000 (15s)
-  timeoutMs: number; // Default: 5000 (5s)
   failureThreshold: number; // Default: 3 consecutive failures
   checkChildren: boolean; // Default: true
   checkParent: boolean; // Default: true
@@ -30,14 +29,15 @@ export interface ConnectionHealth {
 }
 
 /**
- * Connection Heartbeat Manager
+ * Connection Health Monitor
  *
- * Uses libp2p's native ping service to detect dead connections early.
- * Continuously pings parent and children to ensure they're alive.
+ * Monitors connection health by checking libp2p's connection state directly.
+ * Continuously checks parent and children connections to detect failures early.
  *
  * How it works:
- * - Every `intervalMs`, pings all tracked connections
- * - If ping fails, increments failure counter
+ * - Every `intervalMs`, checks connection status of all tracked connections
+ * - Uses libp2p's connection state (no network overhead from pings)
+ * - If connection is not open, increments failure counter
  * - After `failureThreshold` failures, marks connection as dead
  * - Emits events for degraded/recovered/dead connections
  * - Automatically removes dead children from hierarchy
@@ -57,21 +57,21 @@ export class oConnectionHeartbeatManager extends oObject {
 
   async start() {
     if (!this.config.enabled) {
-      this.logger.debug('Connection heartbeat disabled');
+      this.logger.debug('Connection health monitoring disabled');
       return;
     }
 
     this.logger.info(
-      `Starting connection heartbeat: interval=${this.config.intervalMs}ms, ` +
-        `timeout=${this.config.timeoutMs}ms, threshold=${this.config.failureThreshold}`,
+      `Starting connection health monitoring: interval=${this.config.intervalMs}ms, ` +
+        `threshold=${this.config.failureThreshold}`,
     );
 
     // Immediate first check
-    await this.performHeartbeatCycle();
+    await this.performHealthCheckCycle();
 
     // Schedule recurring checks
     this.heartbeatInterval = setInterval(
-      () => this.performHeartbeatCycle(),
+      () => this.performHealthCheckCycle(),
       this.config.intervalMs,
     );
   }
@@ -84,8 +84,8 @@ export class oConnectionHeartbeatManager extends oObject {
     this.healthMap.clear();
   }
 
-  private async performHeartbeatCycle() {
-    if (!this.isRunning) {
+  private async performHealthCheckCycle() {
+    if (this.isRunning) {
       return;
     }
     this.isRunning = true;
@@ -111,7 +111,7 @@ export class oConnectionHeartbeatManager extends oObject {
       // rather than getParents() which may have a stale reference
       const parent = this.node.parent;
 
-      // make sure that we don't double ping the leader
+      // make sure that we don't double check the leader
       if (parent && parent?.toString() !== oAddress.leader().toString()) {
         targets.push({ address: parent as oNodeAddress, role: 'parent' });
       }
@@ -125,33 +125,56 @@ export class oConnectionHeartbeatManager extends oObject {
       }
     }
 
-    // Ping all targets in parallel
+    // Check all targets in parallel
     await Promise.allSettled(
-      targets.map((target) => this.pingTarget(target.address, target.role)),
+      targets.map((target) => this.checkTarget(target.address, target.role)),
     );
     this.isRunning = false;
   }
 
-  private doPing(address: oNodeAddress) {
+  /**
+   * Check if a connection to the given address is open by examining libp2p's connection state
+   * @returns true if an open connection exists, false otherwise
+   */
+  private checkConnectionStatus(address: oNodeAddress): boolean {
     if (address.toString() === this.node.address.toString()) {
-      return Promise.resolve();
+      return true; // Self-connection is always "open"
     }
-    const transport = address.libp2pTransports[0].toMultiaddr();
-    if (transport.toString().indexOf('p2p-circuit') > -1) {
-      return this.node.use(address, {
-        method: 'ping',
-        params: {},
-      });
+
+    if (!address.libp2pTransports.length) {
+      return false;
     }
-    return (this.node.p2pNode.services as any).ping.ping(transport);
+
+    try {
+      // Get peer ID from the address
+      const peerIdString = address.libp2pTransports[0].toPeerId();
+
+      // Get all connections to this peer from libp2p
+      // Note: Using 'as any' since converting to proper PeerId breaks browser implementation
+      const connections = this.node.p2pNode.getConnections(
+        peerIdString as any,
+      );
+
+      // Check if any connection is open
+      return connections.some((conn) => conn.status === 'open');
+    } catch (error) {
+      this.logger.debug(
+        `Error checking connection status for ${address}`,
+        error,
+      );
+      return false;
+    }
   }
 
-  private async pingTarget(
+  private async checkTarget(
     address: oNodeAddress,
     role: 'parent' | 'child' | 'leader',
   ) {
     if (!address.libp2pTransports.length) {
-      this.logger.debug(`${role} has no transports, skipping ping`, address);
+      this.logger.debug(
+        `${role} has no transports, skipping health check`,
+        address,
+      );
       return;
     }
 
@@ -170,50 +193,28 @@ export class oConnectionHeartbeatManager extends oObject {
       this.healthMap.set(key, health);
     }
 
-    try {
-      // Use libp2p's native ping service
-      const startTime = Date.now();
+    // Check connection status using libp2p's connection state
+    const isOpen = this.checkConnectionStatus(address);
 
-      // Create timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error('Ping timeout')),
-          this.config.timeoutMs,
-        );
-      });
-
-      // Race between ping and timeout
-      // The ping service accepts PeerId as string or object
-      await Promise.race([this.doPing(address), timeoutPromise]);
-
-      const latency = Date.now() - startTime;
-
-      // Success - update health
+    if (isOpen) {
+      // Connection is open - success
       health.lastSuccessfulPing = Date.now();
       health.consecutiveFailures = 0;
-      health.averageLatency =
-        health.averageLatency === 0
-          ? latency
-          : health.averageLatency * 0.7 + latency * 0.3; // Exponential moving average
 
       const previousStatus = health.status;
       health.status = 'healthy';
 
       // Emit recovery event if was degraded
       if (previousStatus === 'degraded') {
-        this.logger.info(
-          `Connection recovered: ${address} (latency: ${latency}ms)`,
-        );
+        this.logger.info(`Connection recovered: ${address}`);
         this.emitConnectionRecoveredEvent(address, role);
       }
-
-      // this.logger.debug(`Ping successful: ${address} (${latency}ms)`);
-    } catch (error) {
+    } else {
+      // Connection is not open
       health.consecutiveFailures++;
 
       this.logger.warn(
-        `Ping failed: ${address} (failures: ${health.consecutiveFailures}/${this.config.failureThreshold})`,
-        error,
+        `Connection check failed: ${address} (failures: ${health.consecutiveFailures}/${this.config.failureThreshold})`,
       );
 
       // Update status based on failure count

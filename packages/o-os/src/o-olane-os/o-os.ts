@@ -1,14 +1,14 @@
 import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
 import { OlaneOSConfig } from './interfaces/o-os.config.js';
-import touch from 'touch';
+import * as touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
-import { Logger, oAddress, oObject, oTransport } from '@olane/o-core';
+import { oAddress, oObject, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import { oLaneTool } from '@olane/o-lane';
+import {  oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
@@ -141,16 +141,19 @@ export class OlaneOS extends oObject {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
+        (commonNode as any).hookInitializeFinished = () => {
+          this.rootLeader?.addChildNode(commonNode as any);
+        };
         await commonNode.start();
-        this.rootLeader?.addChildNode(commonNode);
         const olaneStorage = new oLaneStorage({
           name: 'lane-storage',
           parent: commonNode.address,
           leader: this.rootLeader?.address || null,
         });
+        (olaneStorage as any).hookInitializeFinished = () => {
+          commonNode.addChildNode(olaneStorage as any);
+        };
         await olaneStorage.start();
-        commonNode.addChildNode(olaneStorage);
-        await initCommonTools(commonNode);
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);
       }

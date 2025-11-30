@@ -1,16 +1,9 @@
 import { CUSTOM_AGENT_PROMPT } from './custom.prompt.js';
 
-export const AGENT_PROMPT = (
-  intent: string,
-  context: string,
-  agentHistory: string,
-  extraInstructions: string,
-) =>
-  CUSTOM_AGENT_PROMPT(
-    intent,
-    context,
-    agentHistory,
-    `
+/**
+ * Cycle instructions for seeding - extracted from agent workflow
+ */
+export const CYCLE_INSTRUCTIONS_SEED = `
   Every Step Instructions:
 1. Review the provided user intent, context and agent history
 2. If you can complete the user intent, return the "Stop Response" using the [RETURN INSTRUCTIONS] steps
@@ -54,13 +47,23 @@ Step 5 - Use target tool address
 
 Step 6 - Review the tool use results
 1. Analyze each tool use result
-2. Summarize the result of each tool use in 1 concise sentence
-3. In the summary, clearly mention if it succeeded or failed
-4. If it failed, make sure to include why it failed
+2. When formatting tool results for the user in a Stop Response, present as clean markdown:
+   - For general contexts, present as clean markdown:
+     * Use headings to organize different sections
+     * Use lists for multiple items
+     * Use bold for important values or labels
+     * Use code blocks for addresses (e.g., \`o://tool-address\`)
+     * Transform raw JSON into readable prose and structured lists
+3. In the summary field, provide a 1-2 sentence overview
+4. If it failed, clearly explain why in a user-friendly way
 
 
-  `,
-    `
+  `;
+
+/**
+ * Output instructions for seeding - extracted from return format specifications
+ */
+export const OUTPUT_INSTRUCTIONS_SEED = `
 [RETURN INSTRUCTIONS BEGIN]
 These are the types of cycle responses: "Complex Intent Response", "Search Response", "Use Tool Response", "Stop Response", "Error Response", "Configure Response".
 
@@ -110,10 +113,10 @@ Search Response:
 
 Stop Response:
 {
-  "result": string,
+  "result": string, // IMPORTANT: Format this as clean, readable markdown. Use headers (##, ###), lists (-, 1.), bold (**text**), and code blocks (\`code\`) to make the response easy to read. Structure tool outputs, search results, and data clearly. Focus on what the user needs to know, not raw data dumps.
   "reasoning": string,
   "addresses_to_index": [string], // COMMENT: If the results of a tool use include "address_to_index", list them in the "addresses_to_index" array.
-  "summary": string,
+  "summary": string, // A concise 1-2 sentence summary for the user
   "type": "stop",
 }
 
@@ -136,6 +139,22 @@ Use Tool Response:
 }
 [RETURN INSTRUCTIONS END]
 
-  `,
+  `;
+
+/**
+ * Runtime agent prompt function with parameter interpolation
+ */
+export const AGENT_PROMPT = (
+  intent: string,
+  context: string,
+  agentHistory: string,
+  extraInstructions: string,
+) =>
+  CUSTOM_AGENT_PROMPT(
+    intent,
+    context,
+    agentHistory,
+    CYCLE_INSTRUCTIONS_SEED,
+    OUTPUT_INSTRUCTIONS_SEED,
     extraInstructions,
   );

@@ -2,8 +2,8 @@ import {
   generateKeyPairFromSeed,
   createEd25519PeerId,
   Stream,
-  pushable,
   Uint8ArrayList,
+  lpStream,
 } from '@olane/o-config';
 import { createHash } from 'crypto';
 import { oAddress } from '../router/o-address.js';
@@ -107,23 +107,19 @@ export class CoreUtils extends oObject {
     return new oAddress(parentAddress.toString() + '/' + childAddress.paths);
   }
 
+  /**
+   * Sends a response through a stream
+   * Consolidated method that handles both regular and streaming responses
+   *
+   * @param response - The response to send
+   * @param stream - The stream to send the response through
+   */
   public static async sendResponse(response: oResponse, stream: Stream) {
-    if (stream.status !== 'open') {
-      return;
-    }
-
-    try {
-      await stream.send(new TextEncoder().encode(response.toString()));
-    } catch (error) {
-      console.error('Error sending response: ', error);
-    }
-  }
-
-  public static async sendStreamResponse(response: oResponse, stream: Stream) {
     const utils = new CoreUtils();
+
     if (!stream || stream.status !== 'open') {
       utils.logger.warn(
-        'Stream is not open. Status: ' + stream?.status || 'undefined',
+        'Stream is not open. Status: ' + (stream?.status || 'undefined'),
       );
       return;
     }
@@ -131,14 +127,46 @@ export class CoreUtils extends oObject {
     try {
       await stream.send(new TextEncoder().encode(response.toString()));
     } catch (error) {
-      utils.logger.error('Error sending stream response: ', error);
+      utils.logger.error('Error sending response: ', error);
     }
+  }
+
+  /**
+   * @deprecated Use sendResponse instead - both methods are now identical
+   * Sends a streaming response through a stream
+   * This method is maintained for backward compatibility
+   */
+  public static async sendStreamResponse(response: oResponse, stream: Stream) {
+    return CoreUtils.sendResponse(response, stream);
   }
 
   public static async processStream(event: any): Promise<any> {
     const bytes =
       event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
-    return JSON.parse(new TextDecoder().decode(bytes));
+    const decoded = new TextDecoder().decode(bytes);
+    const utils = new CoreUtils();
+    try {
+      if (decoded.indexOf('}{') > -1) {
+        const first = decoded.split('}{')[0] + '}';
+        utils.logger.warn(
+          'Received multiple responses in a single event, returning the first response',
+          first,
+        );
+        return JSON.parse(first);
+      }
+      if (decoded.startsWith('{')) {
+        return JSON.parse(decoded);
+      } else {
+        return decoded;
+      }
+    } catch (error) {
+      utils.logger.error(
+        '[ERROR] Error processing stream event: ',
+        error,
+        decoded,
+      );
+      return decoded;
+    }
   }
 
   public static async processStreamRequest(event: any): Promise<oRequest> {
@@ -150,6 +178,7 @@ export class CoreUtils extends oObject {
     const res = await CoreUtils.processStream(event);
     return new oResponse({
       ...res.result,
+      id: res.id, // Preserve request ID for proper request/response correlation
     });
   }
 

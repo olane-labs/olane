@@ -65,7 +65,6 @@ export class McpBridgeTool extends oLaneTool {
       const mcpClient = new Client({
         name: 'o-node:mcp:' + (this as any).peerId.toString(),
         version: '1.0.0',
-        headers: headers,
       });
       await mcpClient.connect(transport);
       const mcpTool = await this.createMcpTool(

@@ -1,4 +1,3 @@
-import { NERTool } from './nlp/ner.tool.js';
 import { HuggingfaceTextEmbeddingsTool } from './embeddings/index.js';
 import { LangchainMemoryVectorStoreTool } from './vector-store/index.js';
 import { IntelligenceTool } from '@olane/o-intelligence';
@@ -15,10 +14,6 @@ export const initRegistryTools = async (oNode: oLaneTool): Promise<void> => {
         : oNode.hierarchyManager.leader,
   };
   const tools = [
-    new NERTool({
-      name: 'ner',
-      ...params,
-    }),
     new IntelligenceTool({
       name: 'intelligence',
       ...params,
@@ -39,8 +34,10 @@ export const initRegistryTools = async (oNode: oLaneTool): Promise<void> => {
   ];
   await Promise.all(
     tools.map(async (tool) => {
+      (tool as any).hookInitializeFinished = () => {
+        oNode.addChildNode(tool as any);
+      };
       await tool.start();
-      oNode.addChildNode(tool as any);
     }),
   );
 };

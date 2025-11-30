@@ -1,31 +1,40 @@
+import 'dotenv/config';
 import { oAddress, NodeState } from '@olane/o-core';
 import { expect } from 'chai';
-import dotenv from 'dotenv';
 import { defaultOSInstance } from '../utils/os.default.js';
 import { OlaneOSSystemStatus } from '../../src/o-olane-os/enum/o-os.status-enum.js';
 import { oNodeAddress, oNodeTransport } from '@olane/o-node';
 import { tmpNode } from '../utils/tmp.node.js';
 import { oHumanLoginTool } from '@olane/o-login';
-
-dotenv.config();
+import { oLimitedTool } from '@olane/o-client-limited';
 
 const network = defaultOSInstance;
 
-const entryNode = tmpNode;
+// const entryNode = tmpNode;
 let humanNode: oHumanLoginTool;
 
 describe('playground running', async () => {
   it('should be able to use stream from a provider service', async () => {
-    await entryNode.start();
+    await network.start();
+    const entryNode = network.entryNode();
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
 
-    console.log('Using intelligence tool');
-    const leader = new oNodeAddress('o://leader', [
-      new oNodeTransport(
-        '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
-      ),
-    ]);
+    // const leader = new oNodeAddress('o://leader', [
+    //   new oNodeTransport(
+    //     // '/dns4/leader.olane.com/tcp/4000/tls/ws',
+    //     // '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
+    //   ),
+    // ]);
+
+    // const joinedNode = new oLimitedTool({
+    //   address: new oNodeAddress('o://joined'),
+    //   leader: leader,
+    //   parent: leader,
+    //   joinToken: 'test',
+    // });
+
+    // await joinedNode.start(); // should join the network
 
     // humanNode = new oHumanLoginTool({
     //   address: new oNodeAddress('o://human'),
@@ -42,14 +51,15 @@ describe('playground running', async () => {
     //   },
     // });
     // await humanNode.start();
+    console.log('Using entry node:', entryNode.address.toString());
     const response = await entryNode.useStream(
-      leader,
+      entryNode.address,
       {
         method: 'intent',
         params: {
           _isStreaming: true,
-          intent:
-            'Use the perplexity tool to search for the latest news on the stock market',
+          intent: 'what is the weather in tokyo?',
+          // 'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
           _token: 'test',
         },
       },
@@ -63,6 +73,15 @@ describe('playground running', async () => {
         },
       },
     );
+
+    console.log('Response:', JSON.stringify(response, null, 2));
+    // const response = await entryNode.use(
+    //   new oNodeAddress('o://leader/joined', leader.transports),
+    //   {
+    //     method: 'ping',
+    //     params: {},
+    //   },
+    // );
     // console.log('Response:', response.result.data);
     await entryNode.stop();
   });

@@ -3,6 +3,105 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12-alpha.76 (2025-11-21)</small>
+
+- added ag-ui support ([5d7bc5e](https://github.com/olane-labs/olane/commit/5d7bc5e))
+- fixes for the ag-ui event emission ([e6e9b7f](https://github.com/olane-labs/olane/commit/e6e9b7f))
+
+## <small>0.7.12-alpha.75 (2025-11-19)</small>
+
+- minor improvements to o-protocol ([15f26d9](https://github.com/olane-labs/olane/commit/15f26d9))
+
+## <small>0.7.12-alpha.74 (2025-11-18)</small>
+
+- minor change ([b829c6f](https://github.com/olane-labs/olane/commit/b829c6f))
+
+## <small>0.7.12-alpha.73 (2025-11-18)</small>
+
+- minor change ([b3ff27e](https://github.com/olane-labs/olane/commit/b3ff27e))
+
+## <small>0.7.12-alpha.72 (2025-11-18)</small>
+
+- update cache ([6a9a6ba](https://github.com/olane-labs/olane/commit/6a9a6ba))
+
+## <small>0.7.12-alpha.71 (2025-11-18)</small>
+
+- minor change ([73723b4](https://github.com/olane-labs/olane/commit/73723b4))
+
+## <small>0.7.12-alpha.70 (2025-11-18)</small>
+
+- re-enabled reconnect manager ([7829185](https://github.com/olane-labs/olane/commit/7829185))
+
+## <small>0.7.12-alpha.69 (2025-11-18)</small>
+
+- re-enable unwise connection thrsholding ([f77785f](https://github.com/olane-labs/olane/commit/f77785f))
+
+## <small>0.7.12-alpha.68 (2025-11-18)</small>
+
+- added mixins ([e1a5a14](https://github.com/olane-labs/olane/commit/e1a5a14))
+- refactored re-connection process to use libp2p ([a419186](https://github.com/olane-labs/olane/commit/a419186))
+
+## <small>0.7.12-alpha.67 (2025-11-16)</small>
+
+- fix for shared stream response handling ([f189928](https://github.com/olane-labs/olane/commit/f189928))
+
+## <small>0.7.12-alpha.66 (2025-11-16)</small>
+
+- confirmed fix for pre-emptive stream closure bug ([b65b3d3](https://github.com/olane-labs/olane/commit/b65b3d3))
+- fix ([e1975ce](https://github.com/olane-labs/olane/commit/e1975ce))
+
+## <small>0.7.12-alpha.65 (2025-11-15)</small>
+
+- minor change ([7b48124](https://github.com/olane-labs/olane/commit/7b48124))
+
+## <small>0.7.12-alpha.64 (2025-11-15)</small>
+
+- removed chunk handler from task management ([0ffa119](https://github.com/olane-labs/olane/commit/0ffa119))
+
+## <small>0.7.12-alpha.63 (2025-11-15)</small>
+
+- added test cases with claude code ([dd387a9](https://github.com/olane-labs/olane/commit/dd387a9))
+- fix ([c3122f6](https://github.com/olane-labs/olane/commit/c3122f6))
+- fix ([fb6b1f8](https://github.com/olane-labs/olane/commit/fb6b1f8))
+- minor change for experiment ([374a1d6](https://github.com/olane-labs/olane/commit/374a1d6))
+
+## <small>0.7.12-alpha.59 (2025-11-14)</small>
+
+- added more functionality around lane capabilities ([d441454](https://github.com/olane-labs/olane/commit/d441454))
+
+## <small>0.7.12-alpha.58 (2025-11-14)</small>
+
+- annoyingly added more logging ([d36e819](https://github.com/olane-labs/olane/commit/d36e819))
+- minor fixes ([71a484e](https://github.com/olane-labs/olane/commit/71a484e))
+
+## <small>0.7.12-alpha.57 (2025-11-14)</small>
+
+- more logging + experimentation ([84ff369](https://github.com/olane-labs/olane/commit/84ff369))
+
+## <small>0.7.12-alpha.56 (2025-11-14)</small>
+
+- added messy implementation of stream handling via reuse ([77872fb](https://github.com/olane-labs/olane/commit/77872fb))
+- minor changes ([6022f84](https://github.com/olane-labs/olane/commit/6022f84))
+
+## <small>0.7.12-alpha.55 (2025-11-14)</small>
+
+- more logging + experiment ([ea2c24f](https://github.com/olane-labs/olane/commit/ea2c24f))
+
+## <small>0.7.12-alpha.54 (2025-11-14)</small>
+
+- added logging ([c973589](https://github.com/olane-labs/olane/commit/c973589))
+
+## <small>0.7.12-alpha.53 (2025-11-14)</small>
+
+- adopted pnpm ([f899026](https://github.com/olane-labs/olane/commit/f899026))
+
+## <small>0.7.12-alpha.52 (2025-11-13)</small>
+
+- 0.7.5 ([e0522ed](https://github.com/olane-labs/olane/commit/e0522ed))
+- stream handler isolation ([b97f419](https://github.com/olane-labs/olane/commit/b97f419))
+- update version ([9aff117](https://github.com/olane-labs/olane/commit/9aff117))
+- update version ([4c7ddf1](https://github.com/olane-labs/olane/commit/4c7ddf1))
+
 ## <small>0.7.12-alpha.51 (2025-11-13)</small>
 
 - refactored node connections + added new package for limited clients ([1271a51](https://github.com/olane-labs/olane/commit/1271a51))

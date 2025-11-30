@@ -1,8 +1,8 @@
 import { oAddress, oCore } from '@olane/o-core';
+import { oToolBase } from '@olane/o-tool';
 import { oLaneContext } from '../o-lane.context.js';
 import { oCapability } from '../capabilities/o-capability.js';
 import { oIntent } from '../intent/o-intent.js';
-import { oLaneTool } from '../o-lane.tool.js';
 
 export interface oLaneConfig {
   // an oAddress that contains the config for the plan
@@ -16,7 +16,8 @@ export interface oLaneConfig {
   capabilities?: oCapability[];
 
   // o-networking information
-  currentNode: oLaneTool;
+  // Using oToolBase to allow any tool that extends it (oLaneTool, or other mixin-based tools)
+  currentNode: oToolBase;
   extraInstructions?: string;
   parentLaneId?: string;
 
@@ -26,4 +27,5 @@ export interface oLaneConfig {
   persistToConfig?: boolean;
   onChunk?: (chunk: any) => void;
   useStream?: boolean;
+  requestId?: string | number; // Request ID for proper request/response correlation
 }
