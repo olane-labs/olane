@@ -33,8 +33,18 @@
   },
   "author": "oLane Inc.",
   "license": "(MIT OR Apache-2.0)",
-  "description": "Olane suite of test utilities",
+  "description": "Comprehensive testing utilities and best practices for O-Network node development",
+  "keywords": [
+    "olane",
+    "o-network",
+    "testing",
+    "test-utilities",
+    "jest",
+    "chai",
+    "test-environment"
+  ],
   "devDependencies": {
+    "chai": "^5.1.2",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@types/fs-extra": "^11.0.4",
@@ -62,7 +72,9 @@
     "@olane/o-protocol": "^0.7.12-alpha.76",
     "@olane/o-tool": "^0.7.12-alpha.76",
     "@olane/o-lane": "^0.7.12-alpha.76",
-    "@olane/o-node": "^0.7.12-alpha.76"
+    "@olane/o-node": "^0.7.12-alpha.76",
+    "@olane/o-leader": "^0.7.12-alpha.76",
+    "chai": "^5.1.2"
   },
   "dependencies": {
     "chalk": "^5.4.1",
