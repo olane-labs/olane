@@ -3,12 +3,12 @@ import { OlaneOSConfig } from './interfaces/o-os.config.js';
 import * as touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
-import { Logger, oAddress, oObject, oTransport } from '@olane/o-core';
+import { oAddress, oObject, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import { AGUIoLaneTool, oLaneTool } from '@olane/o-lane';
+import {  oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
@@ -135,7 +135,7 @@ export class OlaneOS extends oObject {
         this.logger.debug(
           'Starting non-leader node: ' + node.address.toString(),
         );
-        const commonNode = new AGUIoLaneTool({
+        const commonNode = new oLaneTool({
           ...node,
           address: node.address,
           leader: this.rootLeader?.address || null,
