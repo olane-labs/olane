@@ -375,12 +375,12 @@ describe('PromptStorageProvider', () => {
 
   describe('Validation', () => {
     it('should throw error for missing promptId in put', async () => {
-      const result = await storage.use(storage.address, {
+      const response = await storage.use(storage.address, {
         method: 'put',
         params: { key: 'key', value: 'value' },
       });
 
-      assertError(result, 'promptId is required');
+      assertError(response, 'Missing required parameters');
     });
 
     it('should throw error for missing key in put', async () => {
@@ -389,7 +389,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', value: 'value' },
       });
 
-      assertError(result, 'key is required');
+      assertError(result, 'Missing required parameters');
     });
 
     it('should throw error for missing value in put', async () => {
@@ -398,7 +398,7 @@ describe('PromptStorageProvider', () => {
         params: { promptId: 'prompt-1', key: 'key' },
       });
 
-      assertError(result, 'value is required');
+      assertError(result, 'Missing required parameters');
     });
 
     it('should throw error for invalid promptId type', async () => {
