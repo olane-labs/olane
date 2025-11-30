@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.12 (2025-11-30)</small>
+
+**Note:** Version bump only for package @olane/o-tool-registry
+
 ## <small>0.7.12-alpha.76 (2025-11-21)</small>
 
 - fixes for the ag-ui event emission ([e6e9b7f](https://github.com/olane-labs/olane/commit/e6e9b7f))

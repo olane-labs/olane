@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-test",
-  "version": "0.1.0",
+  "version": "0.7.12",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -46,16 +46,16 @@
     "test-environment"
   ],
   "devDependencies": {
-    "chai": "^5.1.2",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
+    "@tsconfig/node20": "^20.1.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
     "@types/touch": "^3.1.5",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
-    "@tsconfig/node20": "^20.1.6",
     "aegir": "^47.0.21",
+    "chai": "^5.1.2",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.6",
     "eslint-plugin-prettier": "^5.5.0",
@@ -71,11 +71,11 @@
   "peerDependencies": {
     "@olane/o-config": "^0.7.12-alpha.76",
     "@olane/o-core": "^0.7.12-alpha.76",
+    "@olane/o-lane": "^0.7.12-alpha.76",
+    "@olane/o-leader": "^0.7.12-alpha.76",
+    "@olane/o-node": "^0.7.12-alpha.76",
     "@olane/o-protocol": "^0.7.12-alpha.76",
     "@olane/o-tool": "^0.7.12-alpha.76",
-    "@olane/o-lane": "^0.7.12-alpha.76",
-    "@olane/o-node": "^0.7.12-alpha.76",
-    "@olane/o-leader": "^0.7.12-alpha.76",
     "chai": "^5.1.2"
   },
   "dependencies": {
