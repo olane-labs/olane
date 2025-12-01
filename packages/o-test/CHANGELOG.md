@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+- remove o-lane package dependencies ([03bd12e](https://github.com/olane-labs/olane/commit/03bd12e))
+
 ## <small>0.7.12 (2025-11-30)</small>
 
 - correction around testing ([62f8845](https://github.com/olane-labs/o-node-template/commit/62f8845))

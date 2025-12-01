@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-test",
-  "version": "0.7.12",
+  "version": "0.7.13-alpha.0",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

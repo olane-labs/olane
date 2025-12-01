@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+
 ## <small>0.7.12 (2025-11-30)</small>
 
 **Note:** Version bump only for package @olane/o-config
