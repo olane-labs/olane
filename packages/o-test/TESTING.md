@@ -204,10 +204,12 @@ export default {
 
 ### Basic Test File Structure
 
+CRITICAL, do not import these or else it will silently fail.
+`import { describe, it, before, after, beforeEach, afterEach } from 'mocha';`
+
 ```typescript
 // test/feature-name.spec.ts
 import 'dotenv/config';                    // ✅ Load env vars first
-import { describe, it, before, after, beforeEach, afterEach } from 'mocha'; // ✅ Mocha imports
 import { expect } from 'chai';             // ✅ Use chai assertions
 import { NodeState } from '@olane/o-core'; // ✅ Import types
 import { oLeaderNode } from '@olane/o-leader';

@@ -169,9 +169,6 @@ importers:
       '@olane/o-core':
         specifier: 0.7.12
         version: link:../o-core
-      '@olane/o-lane':
-        specifier: 0.7.12
-        version: link:../o-lane
       '@olane/o-node':
         specifier: 0.7.12
         version: link:../o-node
