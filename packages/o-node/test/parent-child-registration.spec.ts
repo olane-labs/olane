@@ -183,10 +183,10 @@ describe('Parent-Child Registration', () => {
       });
 
       // Verify correct nodes responded
-      expect(response1.success).to.be.true;
+      expect(response1.result.success).to.be.true;
       expect(response1.result.data.address).to.include('child1');
 
-      expect(response2.success).to.be.true;
+      expect(response2.result.success).to.be.true;
       expect(response2.result.data.address).to.include('child2');
     });
   });
@@ -274,7 +274,7 @@ describe('Parent-Child Registration', () => {
         params: { message: 'from leader to grandchild' },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal(
         'from leader to grandchild',
       );
@@ -405,7 +405,7 @@ describe('Parent-Child Registration', () => {
         params: {},
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
     });
   });
 

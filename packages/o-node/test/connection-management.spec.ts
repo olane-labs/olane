@@ -229,7 +229,7 @@ describe('Connection Management', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
     });
 
     it('should handle connection to unreachable node', async () => {
@@ -250,8 +250,8 @@ describe('Connection Management', () => {
         params: { message: 'test' },
       });
 
-      expect(response.success).to.be.false;
-      expect(response.error).to.exist;
+      expect(response.result.success).to.be.false;
+      expect(response.result.error).to.exist;
     });
 
     it('should verify connection is open before use', async () => {
@@ -299,7 +299,7 @@ describe('Connection Management', () => {
         },
       );
 
-      expect(response1.success).to.be.true;
+      expect(response1.result.success).to.be.true;
 
       // Simulate brief disconnection by stopping and restarting child
       await builder.stopNode('o://child');
@@ -321,10 +321,10 @@ describe('Connection Management', () => {
 
       // This may fail if connection not re-established
       // Test verifies graceful error handling
-      if (response2.success) {
+      if (response2.result.success) {
         expect(response2.result.data.message).to.equal('after');
       } else {
-        expect(response2.error).to.exist;
+        expect(response2.result.error).to.exist;
       }
     });
 
@@ -356,7 +356,7 @@ describe('Connection Management', () => {
         params: { message: 'child2-after' },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal('child2-after');
     });
   });
@@ -526,7 +526,7 @@ describe('Connection Management', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
     });
 
     it('should allow connections within hierarchy', async () => {
@@ -553,9 +553,9 @@ describe('Connection Management', () => {
         params: { message: 'child-to-parent' },
       });
 
-      expect(response1.success).to.be.true;
-      expect(response2.success).to.be.true;
-      expect(response3.success).to.be.true;
+      expect(response1.result.success).to.be.true;
+      expect(response2.result.success).to.be.true;
+      expect(response3.result.success).to.be.true;
     });
   });
 
@@ -624,7 +624,7 @@ describe('Connection Management', () => {
         params: {},
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
     });
   });
 });

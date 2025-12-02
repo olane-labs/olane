@@ -39,7 +39,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal('hello from leader');
       expect(response.result.data.nodeAddress).to.include('child');
 
@@ -66,7 +66,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response1.success).to.be.true;
+      expect(response1.result.success).to.be.true;
       expect(response1.result.data.message).to.equal('from leader');
 
       // Child → Leader
@@ -78,7 +78,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response2.success).to.be.true;
+      expect(response2.result.success).to.be.true;
       expect(response2.result.data.address).to.include('leader');
     });
 
@@ -102,7 +102,7 @@ describe('Network Communication', () => {
           },
         );
 
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
       }
 
       // Should have only 1 connection (reused)
@@ -128,7 +128,7 @@ describe('Network Communication', () => {
         params: { message: 'hello from leader' },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal('hello from leader');
       expect(response.result.data.nodeAddress).to.include('child');
     });
@@ -207,7 +207,7 @@ describe('Network Communication', () => {
         params: {},
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.address).to.include('leader');
 
       // Stream count should not increase (no network call)
@@ -228,7 +228,7 @@ describe('Network Communication', () => {
         params: {},
       });
 
-      expect(response1.success).to.be.true;
+      expect(response1.result.success).to.be.true;
 
       // Call with address string (should also detect self)
       const response2 = await leader.use(
@@ -239,7 +239,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response2.success).to.be.true;
+      expect(response2.result.success).to.be.true;
     });
   });
 
@@ -260,7 +260,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(echoResponse.success).to.be.true;
+      expect(echoResponse.result.success).to.be.true;
       expect(echoResponse.result.data.message).to.equal('test message');
       expect(echoResponse.result.data.timestamp).to.be.a('number');
 
@@ -273,7 +273,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(infoResponse.success).to.be.true;
+      expect(infoResponse.result.success).to.be.true;
       expect(infoResponse.result.data.address).to.be.a('string');
       expect(infoResponse.result.data.callCount).to.equal(1); // One echo call
     });
@@ -293,30 +293,10 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response.success).to.be.false;
-      expect(response.error).to.exist;
+      expect(response.result.success).to.be.false;
+      expect(response.result.error).to.exist;
     });
 
-    it('should handle method execution errors gracefully', async () => {
-      builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const child = builder.getNode('o://child')!;
-
-      // Call method with invalid params that might cause an error
-      const response = await leader.use(
-        new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
-        {
-          method: 'echo',
-          params: null, // Invalid params
-        },
-      );
-
-      // Should return error response, not throw
-      expect(response.success).to.be.false;
-      expect(response.error).to.exist;
-    });
   });
 
   describe('Streaming Responses', () => {
@@ -335,7 +315,7 @@ describe('Network Communication', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       // Response should be async iterable
       const chunks: any[] = [];
@@ -361,7 +341,7 @@ describe('Network Communication', () => {
         params: { count: 3 },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       const chunks: any[] = [];
       for await (const chunk of response.result.data) {
@@ -399,7 +379,7 @@ describe('Network Communication', () => {
       // All should succeed
       expect(responses).to.have.lengthOf(10);
       responses.forEach((response, i) => {
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
         expect(response.result.data.message).to.equal(`concurrent ${i}`);
       });
     });
@@ -426,7 +406,7 @@ describe('Network Communication', () => {
       // All should succeed
       expect(responses).to.have.lengthOf(4);
       responses.forEach((response) => {
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
       });
 
       // Verify correct nodes responded

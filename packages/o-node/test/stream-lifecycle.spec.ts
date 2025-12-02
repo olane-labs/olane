@@ -68,7 +68,7 @@ describe('Stream Lifecycle', () => {
           },
         );
 
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
       }
 
       // Streams should be cleaned up between requests
@@ -127,7 +127,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal(message);
     });
 
@@ -149,7 +149,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.have.lengthOf(100 * 1024);
     });
 
@@ -168,7 +168,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal('');
     });
 
@@ -189,7 +189,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
       expect(response.result.data.message).to.equal(unicodeMessage);
     });
   });
@@ -210,7 +210,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       const chunks: any[] = [];
       for await (const chunk of response.result.data) {
@@ -237,7 +237,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       let chunkCount = 0;
       for await (const chunk of response.result.data) {
@@ -278,8 +278,8 @@ describe('Stream Lifecycle', () => {
       ]);
 
       // Both should succeed
-      expect(response1.success).to.be.true;
-      expect(response2.success).to.be.true;
+      expect(response1.result.success).to.be.true;
+      expect(response2.result.success).to.be.true;
 
       // Consume both streams
       const chunks1: any[] = [];
@@ -317,7 +317,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       // Consume only first 10 chunks, then break
       let chunkCount = 0;
@@ -348,7 +348,7 @@ describe('Stream Lifecycle', () => {
         params: { count: 5 },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       const chunks: any[] = [];
       for await (const chunk of response.result.data) {
@@ -371,7 +371,7 @@ describe('Stream Lifecycle', () => {
         params: { count: 20 },
       });
 
-      expect(response.success).to.be.true;
+      expect(response.result.success).to.be.true;
 
       // Verify all chunks arrive in order
       let expectedChunk = 1;
@@ -402,9 +402,9 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(response.success).to.be.false;
-      expect(response.error).to.exist;
-      expect(response.error).to.be.a('string');
+      expect(response.result.success).to.be.false;
+      expect(response.result.error).to.exist;
+      expect(response.result.error).to.be.a('string');
     });
 
     it('should handle errors without breaking stream', async () => {
@@ -423,7 +423,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(errorResponse.success).to.be.false;
+      expect(errorResponse.result.success).to.be.false;
 
       // Subsequent requests should still work
       const successResponse = await leader.use(
@@ -434,7 +434,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(successResponse.success).to.be.true;
+      expect(successResponse.result.success).to.be.true;
       expect(successResponse.result.data.message).to.equal('recovery test');
     });
   });
@@ -460,7 +460,7 @@ describe('Stream Lifecycle', () => {
           },
         );
 
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
       }
 
       // Connection should remain stable
@@ -497,7 +497,7 @@ describe('Stream Lifecycle', () => {
       // All should succeed
       expect(responses).to.have.lengthOf(20);
       responses.forEach((response, i) => {
-        expect(response.success).to.be.true;
+        expect(response.result.success).to.be.true;
         expect(response.result.data.message).to.equal(`rapid-${i}`);
       });
     });
@@ -518,7 +518,7 @@ describe('Stream Lifecycle', () => {
         },
       );
 
-      expect(streamResponse.success).to.be.true;
+      expect(streamResponse.result.success).to.be.true;
 
       // Consume stream while making regular requests
       const streamChunks: any[] = [];
