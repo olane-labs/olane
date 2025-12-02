@@ -45,6 +45,13 @@ export abstract class oCore extends oObject {
     super(
       (config.name ? `:${config.name}` : '') + ':' + config.address.toString(),
     );
+
+    // Validate that initial address is not nested
+    // Nested addresses should only be created at runtime during registration
+    if (config.address && !config._allowNestedAddress) {
+      config.address.validateNotNested();
+    }
+
     this.address = config.address || new oAddress('o://node');
     this.hierarchyManager = new oHierarchyManager({
       leaders: this.config.leader ? [this.config.leader] : [],

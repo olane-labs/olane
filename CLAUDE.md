@@ -17,6 +17,13 @@
 - ❌ **NEVER**: Return `{ success: false, error: ... }` objects
 - ❌ **NEVER**: Wrap success responses in `{ success: true, result: ... }`
 
+**Address Construction:**
+- ✅ **DO**: Use simple addresses in constructors (e.g., `new oNodeAddress('o://my-tool')`)
+- ✅ **DO**: Set `parent` and `leader` properties for hierarchical nodes
+- ✅ **DO**: Let the system create nested addresses during registration
+- ❌ **NEVER**: Create nested addresses in constructors (e.g., `new oNodeAddress('o://parent/child')`)
+- ❌ **NEVER**: Manually construct hierarchical addresses - they're created at runtime
+
 **Response Structure (when calling other tools):**
 - When using `node.use()`, access data via `response.result.data`
 - Always check `response.success` before accessing data
@@ -348,10 +355,10 @@ export class MyManager extends oNodeTool {
       throw new Error(`Max instances (${this.maxInstances}) reached`);
     }
 
-    // Create worker with parent linkage
+    // Create worker with simple address - parent linkage creates nested address
     const worker = new MyWorker({
-      address: new oNodeAddress(`o://my-manager/${finalWorkerId}`),
-      parent: this.address,
+      address: new oNodeAddress(`o://${finalWorkerId}`), // ✅ Simple address
+      parent: this.address,  // System creates nested address during registration
       leader: this.leader,
       ...config,
     });
@@ -365,9 +372,11 @@ export class MyManager extends oNodeTool {
     await worker.start();
     this.workers.set(finalWorkerId, worker);
 
+    // After start(), worker.address is automatically 'o://my-manager/{workerId}'
+
     return {
       workerId: finalWorkerId,
-      address: `o://my-manager/${finalWorkerId}`,
+      address: worker.address.toString(), // Returns nested address after registration
     };
   }
 
@@ -479,9 +488,9 @@ export class MyWorker extends oNodeTool {
 ```typescript
 // In parent's create method:
 const child = new ChildTool({
-  address: new oNodeAddress(`o://parent/${childId}`),
-  parent: this.address,    // ✅ Parent reference
-  leader: this.leader,      // ✅ Leader reference
+  address: new oNodeAddress(`o://${childId}`), // ✅ Simple address
+  parent: this.address,    // ✅ Parent reference (creates nested path)
+  leader: this.leader,     // ✅ Leader reference
 });
 
 // ✅ Inject hook to register with parent
@@ -490,6 +499,7 @@ const child = new ChildTool({
 };
 
 await child.start();
+// After start(), child.address becomes 'o://parent/{childId}'
 this.children.set(childId, child);
 ```
 
@@ -1057,8 +1067,8 @@ export class BrowserManager extends oNodeTool {
     }
 
     const session = new BrowserSession({
-      address: new oNodeAddress(`o://browser/${finalSessionId}`),
-      parent: this.address,
+      address: new oNodeAddress(`o://${finalSessionId}`), // ✅ Simple address
+      parent: this.address,  // System creates nested address during registration
       leader: this.leader,
       headless,
     });
@@ -1073,9 +1083,10 @@ export class BrowserManager extends oNodeTool {
     this.sessions.set(finalSessionId, session);
 
     // ✅ PATTERN: Return raw data
+    // After start(), session.address is automatically 'o://browser/{sessionId}'
     return {
       sessionId: finalSessionId,
-      address: `o://browser/${finalSessionId}`,
+      address: session.address.toString(), // Returns nested address after registration
       createdAt: Date.now(),
     };
   }
@@ -1284,8 +1295,8 @@ async hookInitializeFinished(): Promise<void> {
 **Create child node:**
 ```typescript
 const child = new ChildTool({
-  address: new oNodeAddress(`o://parent/${id}`),
-  parent: this.address,
+  address: new oNodeAddress(`o://${id}`), // Simple address
+  parent: this.address,  // Creates nested address at runtime
   leader: this.leader,
 });
 
@@ -1294,6 +1305,7 @@ const child = new ChildTool({
 };
 
 await child.start();
+// After start(), child.address is 'o://parent/{id}'
 ```
 
 **Call another tool:**
