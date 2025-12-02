@@ -1,9 +1,7 @@
 import { oNodeTool } from '../../src/o-node.tool.js';
-import { oNode } from '../../src/o-node.js';
 import { oNodeAddress } from '../../src/router/o-node.address.js';
 import { oNodeToolConfig } from '../../src/interfaces/o-node.tool-config.js';
-import { oNodeConfig } from '../../src/interfaces/o-node.config.js';
-import { NodeType } from '@olane/o-core';
+import { oRequest } from '@olane/o-core';
 
 /**
  * Simple test tool for network communication testing
@@ -15,7 +13,7 @@ export class TestTool extends oNodeTool {
     super(config);
   }
 
-  async _tool_echo(request: any): Promise<any> {
+  async _tool_echo(request: oRequest): Promise<any> {
     this.callCount++;
     return {
       message: request.params.message || 'echo',
@@ -24,17 +22,16 @@ export class TestTool extends oNodeTool {
     };
   }
 
-  async _tool_get_info(request: any): Promise<any> {
+  async _tool_get_info(request: oRequest): Promise<any> {
     return {
       address: this.address.toString(),
-      leader: this.leader?.toString(),
       parent: this.parent?.toString(),
       children: this.getChildren().map((c) => c.toString()),
       callCount: this.callCount,
     };
   }
 
-  async *_tool_stream(request: any): AsyncGenerator<any> {
+  async *_tool_stream(request: oRequest): AsyncGenerator<any> {
     const count = request.params.count || 5;
     for (let i = 0; i < count; i++) {
       yield {
@@ -53,141 +50,56 @@ export class TestTool extends oNodeTool {
  */
 export interface NodeConfig {
   address: string;
-  type?: NodeType;
   parent?: string;
-  leader?: string;
   seed?: string;
   disableHeartbeat?: boolean;
-  disableReconnection?: boolean;
 }
 
 /**
- * Network topology builder for testing
- * Simplifies creation of multi-node hierarchical networks
+ * Simplified network topology builder for testing node-to-node communication
+ * Focuses on peer connections and parent-child relationships without leader abstractions
  */
 export class NetworkBuilder {
-  private nodes: Map<string, oNode | oNodeTool> = new Map();
+  private nodes: Map<string, TestTool> = new Map();
   private startedNodes: Set<string> = new Set();
 
   /**
-   * Add a leader node to the network
+   * Add a node to the network
+   * If parentAddress is provided, the node will register as a child
    */
-  async addLeader(config: Partial<NodeConfig> = {}): Promise<oNode> {
-    const address = config.address || 'o://leader';
-    const seed = config.seed || `leader-seed-${Date.now()}`;
-
-    const node = new oNode({
-      address: new oNodeAddress(address),
-      type: NodeType.LEADER,
-      leader: null,
-      parent: null,
-      seed,
-      connectionHeartbeat: {
-        enabled: !config.disableHeartbeat,
-      },
-    });
-
-    this.nodes.set(address, node);
-    return node;
-  }
-
-  /**
-   * Add a parent node (middle tier) to the network
-   */
-  async addParent(
-    leaderAddress: string,
+  async addNode(
+    address: string,
+    parentAddress?: string,
     config: Partial<NodeConfig> = {},
-  ): Promise<oNodeTool> {
-    const address = config.address || `o://parent-${this.nodes.size}`;
-    const seed = config.seed || `parent-seed-${Date.now()}-${this.nodes.size}`;
+  ): Promise<TestTool> {
+    const seed = config.seed || `node-seed-${address}-${Date.now()}`;
 
-    const leader = this.nodes.get(leaderAddress);
-    if (!leader) {
-      throw new Error(`Leader not found: ${leaderAddress}`);
+    let parentNode: TestTool | undefined;
+    let parentRef: oNodeAddress | null = null;
+
+    if (parentAddress) {
+      parentNode = this.nodes.get(parentAddress);
+      if (!parentNode) {
+        throw new Error(`Parent node not found: ${parentAddress}`);
+      }
+
+      // Wait for parent to have transports
+      // await this.waitForTransports(parentNode);
+
+      parentRef = new oNodeAddress(
+        parentNode.address.toString(),
+        parentNode.address.libp2pTransports,
+      );
     }
 
-    // Wait for leader to have transports
-    await this.waitForTransports(leader);
-
     const node = new TestTool({
       address: new oNodeAddress(address),
-      leader: new oNodeAddress(
-        leader.address.toString(),
-        leader.address.libp2pTransports,
-      ),
-      parent: new oNodeAddress(
-        leader.address.toString(),
-        leader.address.libp2pTransports,
-      ),
+      parent: parentRef,
+      leader: null, // No leader abstraction in o-node tests
       seed,
       connectionHeartbeat: {
         enabled: !config.disableHeartbeat,
-      },
-    });
-
-    this.nodes.set(address, node);
-    return node;
-  }
-
-  /**
-   * Add a child node to a parent
-   */
-  async addChild(
-    parentAddress: string,
-    config: Partial<NodeConfig> = {},
-  ): Promise<oNodeTool> {
-    const address = config.address || `o://child-${this.nodes.size}`;
-    const seed = config.seed || `child-seed-${Date.now()}-${this.nodes.size}`;
-
-    const parent = this.nodes.get(parentAddress);
-    if (!parent) {
-      throw new Error(`Parent not found: ${parentAddress}`);
-    }
-
-    // Wait for parent to have transports
-    await this.waitForTransports(parent);
-
-    // Get leader reference
-    const leader = parent.leader
-      ? new oNodeAddress(
-          parent.leader.toString(),
-          parent.leader.libp2pTransports,
-        )
-      : null;
-
-    const node = new TestTool({
-      address: new oNodeAddress(address),
-      leader,
-      parent: new oNodeAddress(
-        parent.address.toString(),
-        parent.address.libp2pTransports,
-      ),
-      seed,
-      connectionHeartbeat: {
-        enabled: !config.disableHeartbeat,
-        checkChildren: false, // Children don't monitor children by default
-      },
-    });
-
-    this.nodes.set(address, node);
-    return node;
-  }
-
-  /**
-   * Add a standalone node (no leader, no parent)
-   */
-  async addStandalone(config: Partial<NodeConfig> = {}): Promise<oNodeTool> {
-    const address = config.address || `o://standalone-${this.nodes.size}`;
-    const seed =
-      config.seed || `standalone-seed-${Date.now()}-${this.nodes.size}`;
-
-    const node = new TestTool({
-      address: new oNodeAddress(address),
-      leader: null,
-      parent: null,
-      seed,
-      connectionHeartbeat: {
-        enabled: !config.disableHeartbeat,
+        checkChildren: parentAddress ? false : true, // Only root monitors children
       },
     });
 
@@ -212,15 +124,18 @@ export class NetworkBuilder {
     this.startedNodes.add(address);
 
     // Wait for transports to be available
-    await this.waitForTransports(node);
+    // await this.waitForTransports(node);
   }
 
   /**
    * Start all nodes in the network
+   * Starts in dependency order: parents first, then children
    */
   async startAll(): Promise<void> {
-    // Start in dependency order: leaders first, then parents, then children
-    for (const [address, node] of this.nodes.entries()) {
+    // Sort nodes by hierarchy depth (nodes with no parent first)
+    const sortedNodes = this.getSortedNodesByDepth();
+
+    for (const address of sortedNodes) {
       if (!this.startedNodes.has(address)) {
         await this.startNode(address);
         // Small delay to ensure registration completes
@@ -248,12 +163,12 @@ export class NetworkBuilder {
 
   /**
    * Stop all nodes in the network
+   * Stops in reverse dependency order: children first, then parents
    */
   async stopAll(): Promise<void> {
-    // Stop in reverse dependency order: children first, then parents, then leaders
-    const sortedNodes = Array.from(this.nodes.entries()).reverse();
+    const sortedNodes = this.getSortedNodesByDepth().reverse();
 
-    for (const [address] of sortedNodes) {
+    for (const address of sortedNodes) {
       if (this.startedNodes.has(address)) {
         await this.stopNode(address);
       }
@@ -263,22 +178,66 @@ export class NetworkBuilder {
   /**
    * Get a node by address
    */
-  getNode(address: string): oNode | oNodeTool | undefined {
+  getNode(address: string): TestTool | undefined {
     return this.nodes.get(address);
   }
 
   /**
    * Get all nodes
    */
-  getAllNodes(): Map<string, oNode | oNodeTool> {
+  getAllNodes(): Map<string, TestTool> {
     return new Map(this.nodes);
+  }
+
+  /**
+   * Sort nodes by hierarchy depth (root nodes first)
+   */
+  private getSortedNodesByDepth(): string[] {
+    const depths = new Map<string, number>();
+    const addresses = Array.from(this.nodes.keys());
+
+    // Calculate depth for each node
+    const calculateDepth = (address: string): number => {
+      if (depths.has(address)) {
+        return depths.get(address)!;
+      }
+
+      const node = this.nodes.get(address)!;
+      if (!node.parent) {
+        depths.set(address, 0);
+        return 0;
+      }
+
+      // Find parent address in our map
+      const parentAddress = Array.from(this.nodes.entries()).find(
+        ([_, n]) => n.address.toString() === node.parent?.toString(),
+      )?.[0];
+
+      if (!parentAddress) {
+        depths.set(address, 0);
+        return 0;
+      }
+
+      const depth = calculateDepth(parentAddress) + 1;
+      depths.set(address, depth);
+      return depth;
+    };
+
+    addresses.forEach((addr) => calculateDepth(addr));
+
+    // Sort by depth (ascending)
+    return addresses.sort((a, b) => {
+      const depthA = depths.get(a) || 0;
+      const depthB = depths.get(b) || 0;
+      return depthA - depthB;
+    });
   }
 
   /**
    * Wait for a node to have transports available
    */
   private async waitForTransports(
-    node: oNode | oNodeTool,
+    node: TestTool,
     timeoutMs = 5000,
   ): Promise<void> {
     const startTime = Date.now();
@@ -306,69 +265,81 @@ export class NetworkBuilder {
 }
 
 /**
- * Quick network topology builders for common scenarios
+ * Quick network topology builders for common test scenarios
+ * All topologies use simple parent-child relationships without leader abstractions
+ * Note: "leader" in address names is just a convention, not a special node type
  */
 export class NetworkTopologies {
   /**
    * Create a simple two-node network (parent-child)
+   * Addresses: o://leader (root), o://child
    */
   static async twoNode(): Promise<NetworkBuilder> {
     const builder = new NetworkBuilder();
-    await builder.addLeader({ address: 'o://leader' });
-    await builder.addChild('o://leader', { address: 'o://child' });
+    await builder.addNode('o://leader');
+    await builder.addNode('o://child', 'o://leader');
     return builder;
   }
 
   /**
    * Create a three-node hierarchy (leader → parent → child)
+   * Addresses: o://leader (root), o://parent, o://child
    */
   static async threeNode(): Promise<NetworkBuilder> {
     const builder = new NetworkBuilder();
-    await builder.addLeader({ address: 'o://leader' });
-    await builder.addParent('o://leader', { address: 'o://parent' });
-    await builder.addChild('o://parent', { address: 'o://child' });
+    await builder.addNode('o://leader');
+    await builder.addNode('o://parent', 'o://leader');
+    await builder.addNode('o://child', 'o://parent');
     return builder;
   }
 
   /**
-   * Create a five-node hierarchy (leader → 2 parents → 2 children each)
+   * Create a five-node hierarchy with two branches
+   * Structure: leader → parent1 → child1, child2
+   *                  → parent2
    */
   static async fiveNode(): Promise<NetworkBuilder> {
     const builder = new NetworkBuilder();
-    await builder.addLeader({ address: 'o://leader' });
+    await builder.addNode('o://leader');
+    await builder.addNode('o://parent1', 'o://leader');
+    await builder.addNode('o://parent2', 'o://leader');
+    await builder.addNode('o://child1', 'o://parent1');
+    await builder.addNode('o://child2', 'o://parent1');
+    return builder;
+  }
 
-    // Add two parent nodes
-    await builder.addParent('o://leader', { address: 'o://parent1' });
-    await builder.addParent('o://leader', { address: 'o://parent2' });
-
-    // Add children to first parent
-    await builder.addChild('o://parent1', { address: 'o://child1' });
-    await builder.addChild('o://parent1', { address: 'o://child2' });
-
+  /**
+   * Create two standalone nodes (peer-to-peer)
+   */
+  static async twoStandalone(): Promise<NetworkBuilder> {
+    const builder = new NetworkBuilder();
+    await builder.addNode('o://node1');
+    await builder.addNode('o://node2');
     return builder;
   }
 
   /**
    * Create a complex hierarchy for integration testing
-   * Leader with 3 parents, each parent has 2 children
+   * Structure: leader → parent1 → child1, child2
+   *                  → parent2 → child3, child4
+   *                  → parent3 → child5, child6
    */
   static async complex(): Promise<NetworkBuilder> {
     const builder = new NetworkBuilder();
-    await builder.addLeader({ address: 'o://leader' });
+    await builder.addNode('o://leader');
 
     // Add three parent nodes
-    for (let i = 1; i <= 3; i++) {
-      await builder.addParent('o://leader', {
-        address: `o://parent${i}`,
-      });
+    await builder.addNode('o://parent1', 'o://leader');
+    await builder.addNode('o://parent2', 'o://leader');
+    await builder.addNode('o://parent3', 'o://leader');
 
-      // Add two children per parent
-      for (let j = 1; j <= 2; j++) {
-        await builder.addChild(`o://parent${i}`, {
-          address: `o://parent${i}-child${j}`,
-        });
-      }
-    }
+    // Add children to each parent
+    await builder.addNode('o://parent1-child1', 'o://parent1');
+    await builder.addNode('o://parent1-child2', 'o://parent1');
+    await builder.addNode('o://parent2-child1', 'o://parent2');
+    await builder.addNode('o://parent2-child2', 'o://parent2');
+    await builder.addNode('o://parent3-child1', 'o://parent3');
+    await builder.addNode('o://parent3-child2', 'o://parent3');
 
     return builder;
   }

@@ -494,7 +494,7 @@ export class oNode extends oToolBase {
 
   async initialize(): Promise<void> {
     this.logger.debug('Initializing node...');
-    if (this.p2pNode && this.state !== NodeState.STOPPED) {
+    if (this.state !== NodeState.STOPPED && this.state !== NodeState.STARTING) {
       throw new Error('Node is not in a valid state to be initialized');
     }
     if (!this.address.validate()) {
@@ -569,6 +569,43 @@ export class oNode extends oToolBase {
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }
+
+    // Reset state to allow restart
+    this.resetState();
+  }
+
+  /**
+   * Reset node state to allow restart after stop
+   * Called at the end of teardown()
+   */
+  protected resetState(): void {
+    // Reset registration flag
+    this.didRegister = false;
+
+    // Clear peer references
+    this.peerId = undefined as any;
+    this.p2pNode = undefined as any;
+
+    // Clear managers
+    this.connectionManager = undefined as any;
+    this.connectionHeartbeatManager = undefined;
+    this.reconnectionManager = undefined;
+
+    // Reset address to staticAddress with no transports
+    this.address = new oNodeAddress(this.staticAddress.value, []);
+
+    // Reset hierarchy manager
+    this.hierarchyManager = new oNodeHierarchyManager({
+      leaders: this.config.leader ? [this.config.leader] : [],
+      parents: this.config.parent ? [this.config.parent] : [],
+      children: [],
+    });
+
+    // Clear router (will be recreated in initialize)
+    this.router = undefined as any;
+
+    // Call parent reset
+    super.resetState();
   }
 
   // IHeartbeatableNode interface methods

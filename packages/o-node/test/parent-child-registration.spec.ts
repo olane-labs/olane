@@ -17,12 +17,10 @@ describe('Parent-Child Registration', () => {
   describe('Basic Registration', () => {
     it('should register child with parent during startup', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
       await builder.startNode('o://child');
 
       // Wait for registration to complete
@@ -36,12 +34,10 @@ describe('Parent-Child Registration', () => {
 
     it('should exchange transports during registration', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
 
       // Child should have parent reference but no transports yet
       expect(child.parent).to.exist;
@@ -58,12 +54,10 @@ describe('Parent-Child Registration', () => {
 
     it('should construct nested addresses after registration', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
 
       // Before start, address is simple
       expect(child.address.toString()).to.equal('o://child');
@@ -77,12 +71,10 @@ describe('Parent-Child Registration', () => {
 
     it('should establish connection during registration', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
       await builder.startNode('o://child');
 
       // Wait for registration
@@ -101,18 +93,12 @@ describe('Parent-Child Registration', () => {
   describe('Multiple Children Registration', () => {
     it('should register multiple children with same parent', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child1 = await builder.addChild('o://leader', {
-        address: 'o://child1',
-      });
-      const child2 = await builder.addChild('o://leader', {
-        address: 'o://child2',
-      });
-      const child3 = await builder.addChild('o://leader', {
-        address: 'o://child3',
-      });
+      const child1 = await builder.addNode('o://child1', 'o://leader');
+      const child2 = await builder.addNode('o://child2', 'o://leader');
+      const child3 = await builder.addNode('o://child3', 'o://leader');
 
       await builder.startNode('o://child1');
       await builder.startNode('o://child2');
@@ -133,11 +119,11 @@ describe('Parent-Child Registration', () => {
 
     it('should maintain separate connections for each child', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      await builder.addChild('o://leader', { address: 'o://child1' });
-      await builder.addChild('o://leader', { address: 'o://child2' });
+      await builder.addNode('o://child1', 'o://leader');
+      await builder.addNode('o://child2', 'o://leader');
 
       await builder.startNode('o://child1');
       await builder.startNode('o://child2');
@@ -156,15 +142,11 @@ describe('Parent-Child Registration', () => {
 
     it('should route to correct child', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child1 = await builder.addChild('o://leader', {
-        address: 'o://child1',
-      });
-      const child2 = await builder.addChild('o://leader', {
-        address: 'o://child2',
-      });
+      const child1 = await builder.addNode('o://child1', 'o://leader');
+      const child2 = await builder.addNode('o://child2', 'o://leader');
 
       await builder.startNode('o://child1');
       await builder.startNode('o://child2');
@@ -194,19 +176,15 @@ describe('Parent-Child Registration', () => {
   describe('Hierarchical Registration', () => {
     it('should register grandchildren through parent', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const parent = await builder.addParent('o://leader', {
-        address: 'o://parent',
-      });
+      const parent = await builder.addNode('o://parent', 'o://leader');
       await builder.startNode('o://parent');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const child = await builder.addChild('o://parent', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://parent');
       await builder.startNode('o://child');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -223,17 +201,13 @@ describe('Parent-Child Registration', () => {
 
     it('should maintain hierarchy references', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const parent = await builder.addParent('o://leader', {
-        address: 'o://parent',
-      });
+      const parent = await builder.addNode('o://parent', 'o://leader');
       await builder.startNode('o://parent');
 
-      const child = await builder.addChild('o://parent', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://parent');
       await builder.startNode('o://child');
 
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -253,17 +227,13 @@ describe('Parent-Child Registration', () => {
 
     it('should route through hierarchy correctly', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const parent = await builder.addParent('o://leader', {
-        address: 'o://parent',
-      });
+      const parent = await builder.addNode('o://parent', 'o://leader');
       await builder.startNode('o://parent');
 
-      const child = await builder.addChild('o://parent', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://parent');
       await builder.startNode('o://child');
 
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -285,14 +255,12 @@ describe('Parent-Child Registration', () => {
   describe('Registration Edge Cases', () => {
     it('should handle registration with deterministic peer IDs', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({
-        address: 'o://leader',
+      const leader = await builder.addNode('o://leader', undefined, {
         seed: 'deterministic-seed-1',
       });
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
+      const child = await builder.addNode('o://child', 'o://leader', {
         seed: 'deterministic-seed-2',
       });
       await builder.startNode('o://child');
@@ -309,15 +277,13 @@ describe('Parent-Child Registration', () => {
 
     it('should handle rapid sequential registrations', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
       // Add and start children rapidly
       const children = [];
       for (let i = 0; i < 5; i++) {
-        const child = await builder.addChild('o://leader', {
-          address: `o://child${i}`,
-        });
+        const child = await builder.addNode(`o://child${i}`, 'o://leader');
         children.push(child);
       }
 
@@ -335,10 +301,8 @@ describe('Parent-Child Registration', () => {
 
     it('should update parent transports on registration', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const leader = await builder.addNode('o://leader');
+      const child = await builder.addNode('o://child', 'o://leader');
 
       // Before starting, child has parent reference but no transports
       const initialTransports = child.parent?.libp2pTransports.length || 0;
@@ -358,12 +322,10 @@ describe('Parent-Child Registration', () => {
   describe('Child Disconnection', () => {
     it('should remove child from hierarchy when stopped', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
       await builder.startNode('o://child');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -381,12 +343,12 @@ describe('Parent-Child Registration', () => {
 
     it('should handle graceful disconnection of multiple children', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
 
-      await builder.addChild('o://leader', { address: 'o://child1' });
-      await builder.addChild('o://leader', { address: 'o://child2' });
-      await builder.addChild('o://leader', { address: 'o://child3' });
+      await builder.addNode('o://child1', 'o://leader');
+      await builder.addNode('o://child2', 'o://leader');
+      await builder.addNode('o://child3', 'o://leader');
 
       await builder.startNode('o://child1');
       await builder.startNode('o://child2');
@@ -412,10 +374,8 @@ describe('Parent-Child Registration', () => {
   describe('Parent Startup Sequence', () => {
     it('should wait for parent transports before registering', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const leader = await builder.addNode('o://leader');
+      const child = await builder.addNode('o://child', 'o://leader');
 
       // Start leader first
       await builder.startNode('o://leader');
@@ -434,12 +394,10 @@ describe('Parent-Child Registration', () => {
       builder = new NetworkBuilder();
 
       // Create leader but don't start
-      await builder.addLeader({ address: 'o://leader' });
+      await builder.addNode('o://leader');
 
       // Create child (parent not started yet)
-      const child = await builder.addChild('o://leader', {
-        address: 'o://child',
-      });
+      const child = await builder.addNode('o://child', 'o://leader');
 
       // Start leader first
       await builder.startNode('o://leader');

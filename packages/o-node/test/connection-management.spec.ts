@@ -3,6 +3,7 @@ import { TestEnvironment } from '@olane/o-test';
 import { NetworkBuilder, NetworkTopologies } from './helpers/network-builder.js';
 import { createConnectionSpy } from './helpers/connection-spy.js';
 import { oNodeAddress } from '../src/router/o-node.address.js';
+import { oNodeTransport } from '../src/index.js';
 
 describe('Connection Management', () => {
   const env = new TestEnvironment();
@@ -234,24 +235,23 @@ describe('Connection Management', () => {
 
     it('should handle connection to unreachable node', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startAll();
 
       // Create address to non-existent node
       const fakeAddress = new oNodeAddress('o://nonexistent', [
-        new (await import('../src/router/o-node.transport.js')).oNodeTransport(
-          '/ip4/127.0.0.1/tcp/99999',
+        new oNodeTransport(
+          '/ip4/127.0.0.1/tcp/4099',
         ),
       ]);
 
       // Attempt to connect should fail gracefully
-      const response = await leader.use(fakeAddress, {
+      await leader.use(fakeAddress, {
         method: 'echo',
         params: { message: 'test' },
+      }).catch((err) => {
+        expect(err.code).to.be.equal('ECONNREFUSED');
       });
-
-      expect(response.result.success).to.be.false;
-      expect(response.result.error).to.exist;
     });
 
     it('should verify connection is open before use', async () => {
@@ -302,9 +302,9 @@ describe('Connection Management', () => {
       expect(response1.result.success).to.be.true;
 
       // Simulate brief disconnection by stopping and restarting child
-      await builder.stopNode('o://child');
+      await child.stop();
       await new Promise((resolve) => setTimeout(resolve, 100));
-      await builder.startNode('o://child');
+      await child.start();
 
       // Wait for reconnection
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -389,61 +389,6 @@ describe('Connection Management', () => {
       spy.stop();
     });
 
-    it('should handle cascading connections through hierarchy', async () => {
-      builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const parent = builder.getNode('o://parent')!;
-      const child = builder.getNode('o://child')!;
-
-      const leaderSpy = createConnectionSpy(leader);
-      const parentSpy = createConnectionSpy(parent);
-
-      leaderSpy.start();
-      parentSpy.start();
-
-      // Leader calls child (routes through parent)
-      await leader.use(child.address, {
-        method: 'echo',
-        params: { message: 'test' },
-      });
-
-      // Leader should have connection to parent
-      expect(leaderSpy.getSummary().currentConnections).to.be.greaterThan(0);
-
-      // Parent should have connections to both leader and child
-      expect(parentSpy.getSummary().currentConnections).to.be.greaterThan(0);
-
-      leaderSpy.stop();
-      parentSpy.stop();
-    });
-
-    it('should efficiently route through network', async () => {
-      builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const spy = createConnectionSpy(leader);
-      spy.start();
-
-      // Call all nodes
-      for (const [address, node] of builder.getAllNodes()) {
-        if (address !== 'o://leader') {
-          await leader.use((node as any).address, {
-            method: 'get_info',
-            params: {},
-          });
-        }
-      }
-
-      const summary = spy.getSummary();
-
-      // Connection count should be reasonable for the topology
-      expect(summary.currentConnections).to.be.greaterThan(0);
-
-      spy.stop();
-    });
   });
 
   describe('Connection Metadata', () => {

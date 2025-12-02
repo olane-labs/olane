@@ -219,7 +219,7 @@ describe('Network Communication', () => {
 
     it('should handle self-routing with different address formats', async () => {
       builder = new NetworkBuilder();
-      const leader = await builder.addLeader({ address: 'o://leader' });
+      const leader = await builder.addNode('o://leader');
       await builder.startAll();
 
       // Call with exact address
