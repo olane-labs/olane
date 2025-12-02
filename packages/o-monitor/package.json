@@ -33,9 +33,6 @@
   "author": "oLane Inc.",
   "license": "(MIT OR Apache-2.0)",
   "description": "oLane Core",
-  "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.18.1"
-  },
   "dependencies": {
     "@libp2p/prometheus-metrics": "^5.0.7",
     "@olane/o-config": "0.7.13-alpha.0",

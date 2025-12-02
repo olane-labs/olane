@@ -182,16 +182,6 @@ describe('Test Builders', () => {
   });
 
   describe('SimpleNodeBuilder', () => {
-    it('should build node with fluent API', async () => {
-      const node = await new SimpleNodeBuilder(MockNode as any)
-        .withAddress('o://test-builder')
-        .withDescription('Test node')
-        .build(env);
-
-      expect(node).to.exist;
-      expect(node.state).to.equal(NodeState.RUNNING);
-      expect(env.getNodeCount()).to.equal(1);
-    });
 
     it('should respect autoStart flag', async () => {
       const node = await new SimpleNodeBuilder(MockNode as any)

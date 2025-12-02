@@ -93,7 +93,7 @@ o-node-template/
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
-  "peerDependencies": {
+  "dependencies": {
     "@olane/o-core": "^0.7.12",
     "@olane/o-node": "^0.7.12",
     "@olane/o-tool": "^0.7.12"

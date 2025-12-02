@@ -10,11 +10,11 @@
  * ```
  */
 
-import type { oNode, oNodeAddress } from '@olane/o-node';
+import type { oNode, oNodeAddress, oNodeTool } from '@olane/o-node';
 import type { TestEnvironment } from '../test-environment.js';
 import type { TestNodeConfig } from '../test-environment.js';
 
-export class SimpleNodeBuilder<T extends oNode = any> {
+export class SimpleNodeBuilder<T extends oNodeTool = any> {
   private nodeClass: new (config: any) => T;
   private config: TestNodeConfig = {};
   private autoStart: boolean = true;
@@ -34,7 +34,7 @@ export class SimpleNodeBuilder<T extends oNode = any> {
   /**
    * Set node address
    */
-  withAddress(address: string | oNodeAddress): this {
+  withAddress(address: oNodeAddress): this {
     this.config.address = address as any;
     return this;
   }
