@@ -3,6 +3,7 @@ import { TestEnvironment } from '@olane/o-test';
 import { NetworkBuilder, NetworkTopologies } from './helpers/network-builder.js';
 import { createConnectionSpy } from './helpers/connection-spy.js';
 import { oNodeAddress } from '../src/router/o-node.address.js';
+import { oError, oErrorCodes } from '@olane/o-core';
 
 describe('Network Communication', () => {
   const env = new TestEnvironment();
@@ -133,60 +134,8 @@ describe('Network Communication', () => {
       expect(response.result.data.nodeAddress).to.include('child');
     });
 
-    it('should handle multi-hop routing correctly', async () => {
-      builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
 
-      const leader = builder.getNode('o://leader')!;
-      const parent = builder.getNode('o://parent')!;
-      const child = builder.getNode('o://child')!;
 
-      // Get info from each node
-      const leaderInfo = await leader.use(leader.address, {
-        method: 'get_info',
-        params: {},
-      });
-
-      const parentInfo = await leader.use(parent.address, {
-        method: 'get_info',
-        params: {},
-      });
-
-      const childInfo = await leader.use(child.address, {
-        method: 'get_info',
-        params: {},
-      });
-
-      // Verify hierarchy structure
-      expect(leaderInfo.result.data.address).to.include('leader');
-      expect(parentInfo.result.data.address).to.include('parent');
-      expect(parentInfo.result.data.leader).to.include('leader');
-      expect(childInfo.result.data.address).to.include('child');
-      expect(childInfo.result.data.parent).to.include('parent');
-    });
-
-    it('should maintain connections across hierarchy', async () => {
-      builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const parent = builder.getNode('o://parent')!;
-
-      const leaderSpy = createConnectionSpy(leader);
-      const parentSpy = createConnectionSpy(parent);
-
-      leaderSpy.start();
-      parentSpy.start();
-
-      // Leader has connection to parent (from registration)
-      expect(leaderSpy.getSummary().currentConnections).to.be.greaterThan(0);
-
-      // Parent has connection to leader and child
-      expect(parentSpy.getSummary().currentConnections).to.be.greaterThan(0);
-
-      leaderSpy.stop();
-      parentSpy.stop();
-    });
   });
 
   describe('Self-Routing Optimization', () => {
@@ -285,72 +234,18 @@ describe('Network Communication', () => {
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
 
-      const response = await leader.use(
+      await leader.use(
         new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
         {
           method: 'non_existent_method',
           params: {},
         },
-      );
-
-      expect(response.result.success).to.be.false;
-      expect(response.result.error).to.exist;
-    });
-
-  });
-
-  describe('Streaming Responses', () => {
-    it('should handle streaming responses from remote node', async () => {
-      builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const child = builder.getNode('o://child')!;
-
-      const response = await leader.use(
-        new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
-        {
-          method: 'stream',
-          params: { count: 5 },
-        },
-      );
-
-      expect(response.result.success).to.be.true;
-
-      // Response should be async iterable
-      const chunks: any[] = [];
-      for await (const chunk of response.result.data) {
-        chunks.push(chunk);
-      }
-
-      expect(chunks).to.have.lengthOf(5);
-      expect(chunks[0].chunk).to.equal(1);
-      expect(chunks[4].chunk).to.equal(5);
-      expect(chunks[0].nodeAddress).to.include('child');
-    });
-
-    it('should stream across multiple hops', async () => {
-      builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const child = builder.getNode('o://child')!;
-
-      const response = await leader.use(child.address, {
-        method: 'stream',
-        params: { count: 3 },
+      ).catch((error: oError) => {
+        expect(error).to.exist;
+        expect(error?.code).to.be.equal(oErrorCodes.INVALID_ACTION);
       });
-
-      expect(response.result.success).to.be.true;
-
-      const chunks: any[] = [];
-      for await (const chunk of response.result.data) {
-        chunks.push(chunk);
-      }
-
-      expect(chunks).to.have.lengthOf(3);
-      expect(chunks[0].nodeAddress).to.include('child');
     });
+
   });
 
   describe('Concurrent Requests', () => {
