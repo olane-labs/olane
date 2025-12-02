@@ -19,6 +19,11 @@ export class oNodeTool extends oTool(oServerNode) {
   private streamHandler!: StreamHandler;
 
   async handleProtocol(address: oAddress) {
+    const protocols = this.p2pNode.getProtocols();
+    if (protocols.find((p) => p === address.protocol)) {
+      // already handling
+      return;
+    }
     this.logger.debug('Handling protocol: ' + address.protocol);
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
       maxInboundStreams: 10_000,

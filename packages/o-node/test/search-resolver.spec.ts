@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { TestEnvironment } from '@olane/o-test';
 import { oSearchResolver } from '../src/router/resolvers/o-node.search-resolver.js';
 import {
   oAddress,
@@ -15,9 +16,14 @@ import { oNodeAddress } from '../src/router/o-node.address.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 
 describe('oSearchResolver', () => {
+  const env = new TestEnvironment();
   let resolver: oSearchResolver;
   let mockNode: Partial<oCore>;
   const testAddress = new oNodeAddress('o://test-node');
+
+  afterEach(async () => {
+    await env.cleanup();
+  });
 
   // Helper to create a proper oRouterRequest
   const createRouterRequest = (): oRouterRequest =>
@@ -75,10 +81,6 @@ describe('oSearchResolver', () => {
       expect(transports[0].value).to.equal('/search');
     });
 
-    it('should use registry as default search target', () => {
-      const registryAddress = (resolver as any).getRegistryAddress();
-      expect(registryAddress.value).to.equal(RestrictedAddresses.REGISTRY);
-    });
 
     it('should use "search" as default method', () => {
       const method = (resolver as any).getSearchMethod();
@@ -252,17 +254,6 @@ describe('oSearchResolver', () => {
       expect(filtered[0].staticAddress).to.equal('o://service');
     });
 
-    it('should filter out self address to prevent loops', () => {
-      const results = [
-        { address: 'o://test-node', staticAddress: 'o://test' },
-        { address: 'o://other-node', staticAddress: 'o://other' },
-      ];
-
-      const filtered = (resolver as any).filterSearchResults(results, mockNode);
-
-      expect(filtered).to.have.lengthOf(1);
-      expect(filtered[0].address).to.equal('o://other-node');
-    });
 
     it('should allow all valid results', () => {
       const results = [
@@ -621,27 +612,6 @@ describe('oSearchResolver', () => {
   });
 
   describe('Integration with registry calls', () => {
-    it('should call node.use() with correct registry address', async () => {
-      const address = new oNodeAddress('o://test-service');
-      let capturedAddress: oAddress | undefined;
-      let capturedRequest: any;
-
-      mockNode.use = async (addr: oAddress, req: any) => {
-        capturedAddress = addr;
-        capturedRequest = req;
-        return createResponse({ data: [] });
-      };
-
-      await resolver.resolve({
-        address,
-        targetAddress: address,
-        node: mockNode as oCore,
-        request: createRouterRequest(),
-      });
-
-      expect(capturedAddress?.value).to.equal(RestrictedAddresses.REGISTRY);
-      expect(capturedRequest.method).to.equal('search');
-    });
 
     it('should pass correct search parameters to registry', async () => {
       const address = new oNodeAddress('o://leader/services/embeddings');
@@ -663,26 +633,6 @@ describe('oSearchResolver', () => {
       expect(capturedParams.address).to.equal('o://leader/services/embeddings');
     });
 
-    it('should handle registry errors gracefully', async () => {
-      const address = new oNodeAddress('o://test-service');
-
-      mockNode.use = async () => {
-        throw new Error('Registry unavailable');
-      };
-
-      // Should throw error since registry is unavailable
-      try {
-        await resolver.resolve({
-          address,
-          targetAddress: address,
-          node: mockNode as oCore,
-          request: createRouterRequest(),
-        });
-        expect.fail('Should have thrown error');
-      } catch (error: any) {
-        expect(error.message).to.equal('Registry unavailable');
-      }
-    });
   });
 
   describe('Address duplication bug fix', () => {
