@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+- added leader address validation ([c365513](https://github.com/olane-labs/olane/commit/c365513))
+- minor change ([24fef80](https://github.com/olane-labs/olane/commit/24fef80))
+
 ## <small>0.7.13-alpha.1 (2025-12-03)</small>
 
 - fix ([222647e](https://github.com/olane-labs/olane/commit/222647e))

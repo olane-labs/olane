@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
 ## <small>0.7.13-alpha.1 (2025-12-03)</small>
 
 - added WARP.md + fix for lane tests ([0bf560d](https://github.com/olane-labs/olane/commit/0bf560d))
