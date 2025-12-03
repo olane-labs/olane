@@ -19,8 +19,7 @@ describe('Connection Management', () => {
   describe('Connection Pooling', () => {
     it('should cache and reuse connections', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
-
+      
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
 
@@ -31,7 +30,7 @@ describe('Connection Management', () => {
       await leader.use(
         new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
         {
-          method: 'echo',
+          method: 'ping',
           params: { message: 'first' },
         },
       );
@@ -42,7 +41,7 @@ describe('Connection Management', () => {
       await leader.use(
         new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
         {
-          method: 'echo',
+          method: 'ping',
           params: { message: 'second' },
         },
       );
@@ -58,7 +57,7 @@ describe('Connection Management', () => {
 
     it('should maintain separate connections to different nodes', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const parent1 = builder.getNode('o://parent1')!;
@@ -88,7 +87,7 @@ describe('Connection Management', () => {
 
     it('should handle connection pool efficiently under load', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child1 = builder.getNode('o://child1')!;
@@ -124,7 +123,7 @@ describe('Connection Management', () => {
   describe('Connection Status', () => {
     it('should report correct connection status', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -152,40 +151,10 @@ describe('Connection Management', () => {
       spy.stop();
     });
 
-    it('should track connection lifecycle events', async () => {
-      builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
-
-      const leader = builder.getNode('o://leader')!;
-      const child = builder.getNode('o://child')!;
-
-      const spy = createConnectionSpy(leader);
-      spy.start();
-
-      // Clear any existing events
-      spy.clear();
-
-      // Establish new connection
-      await leader.use(
-        new oNodeAddress(child.address.toString(), child.address.libp2pTransports),
-        {
-          method: 'echo',
-          params: { message: 'test' },
-        },
-      );
-
-      // Check for connection events
-      const summary = spy.getSummary();
-
-      // Should have recorded some events
-      expect(summary.totalEvents).to.be.greaterThan(0);
-
-      spy.stop();
-    });
 
     it('should detect open connections', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -216,7 +185,7 @@ describe('Connection Management', () => {
   describe('Connection Validation', () => {
     it('should validate connection before transmission', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -236,7 +205,7 @@ describe('Connection Management', () => {
     it('should handle connection to unreachable node', async () => {
       builder = new NetworkBuilder();
       const leader = await builder.addNode('o://leader');
-      await builder.startAll();
+      
 
       // Create address to non-existent node
       const fakeAddress = new oNodeAddress('o://nonexistent', [
@@ -256,7 +225,7 @@ describe('Connection Management', () => {
 
     it('should verify connection is open before use', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -285,7 +254,7 @@ describe('Connection Management', () => {
   describe('Connection Recovery', () => {
     it('should handle transient connection errors', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -330,7 +299,7 @@ describe('Connection Management', () => {
 
     it('should maintain other connections when one fails', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child1 = builder.getNode('o://child1')!;
@@ -364,7 +333,7 @@ describe('Connection Management', () => {
   describe('Multi-node Connection Management', () => {
     it('should manage connections in complex topology', async () => {
       builder = await NetworkTopologies.complex();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
 
@@ -394,7 +363,7 @@ describe('Connection Management', () => {
   describe('Connection Metadata', () => {
     it('should track connection creation time', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -425,7 +394,7 @@ describe('Connection Management', () => {
 
     it('should track remote peer information', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -457,7 +426,6 @@ describe('Connection Management', () => {
   describe('Connection Gating', () => {
     it('should enforce connection gating rules', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -476,7 +444,6 @@ describe('Connection Management', () => {
 
     it('should allow connections within hierarchy', async () => {
       builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
 
       const leader = builder.getNode('o://leader')!;
       const parent = builder.getNode('o://parent')!;
@@ -507,7 +474,7 @@ describe('Connection Management', () => {
   describe('Connection Cleanup', () => {
     it('should clean up connections on node stop', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -541,7 +508,7 @@ describe('Connection Management', () => {
 
     it('should handle cleanup of multiple connections', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
 

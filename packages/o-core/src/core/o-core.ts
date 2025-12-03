@@ -193,7 +193,7 @@ export abstract class oCore extends oObject {
       : await this.router.translate(address, this);
 
     if (
-      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
+      nextHopAddress?.toStaticAddress().equals(this.address.toStaticAddress())
     ) {
       return this.useSelf(data);
     }
@@ -522,26 +522,41 @@ export abstract class oCore extends oObject {
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
     this.state = NodeState.STOPPING;
-    for (const child of this.hierarchyManager.children) {
-      this.logger.debug('Stopping child: ' + child.toString());
-      await this.useChild(child, {
-        method: 'stop',
-        params: {},
-      }).catch((error) => {
-        if (error.message === 'No data received') {
-          // ignore
-        } else {
-          this.logger.error('Potential error stopping child', error);
-        }
-      });
-      this.logger.debug('Child stopped: ' + child.toString());
-    }
     this.hierarchyManager.clear();
 
     // Teardown notification manager
     if (this.notificationManager) {
       await this.notificationManager.teardown();
     }
+
+    // Reset state to allow restart
+    this.resetState();
+  }
+
+  /**
+   * Reset node state to allow restart after stop
+   * Called at the end of teardown()
+   */
+  protected resetState(): void {
+    // Reset state tracking
+    this.errors = [];
+    this.metrics = new oMetrics();
+    this.requestManager = new oRequestManager();
+
+    // Clear heartbeat
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
+
+    // Reset address to config address with no transports
+    this.address = new oAddress(this.config.address.toStaticAddress().value, []);
+
+    // Reset hierarchy manager to initial state
+    this.hierarchyManager = new oHierarchyManager({
+      leaders: this.config.leader ? [this.config.leader] : [],
+      parents: this.config.parent ? [this.config.parent] : [],
+    });
   }
 
   get dependencies(): oDependency[] {

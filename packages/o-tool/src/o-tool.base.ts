@@ -139,6 +139,10 @@ export class oToolBase extends oCore {
     // TODO: implement this
     // this.requests[request.id] = request;
     // @ts-ignore
+    if (!this[`_tool_${method}`]) {
+      throw new oError(oErrorCodes.INVALID_ACTION, 'Selected method does not exist');
+    }
+    // @ts-ignore
     const result = await this[`_tool_${method}`]({
       ...request.toJSON(),
       stream,

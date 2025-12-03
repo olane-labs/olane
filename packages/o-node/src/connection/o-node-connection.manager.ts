@@ -10,12 +10,14 @@ export class oNodeConnectionManager extends oConnectionManager {
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
   private connections: Map<string, Connection> = new Map();
+  private pendingDials: Map<string, Promise<Connection>> = new Map();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
     super(config);
     this.p2pNode = config.p2pNode;
     this.defaultReadTimeoutMs = config.defaultReadTimeoutMs;
     this.defaultDrainTimeoutMs = config.defaultDrainTimeoutMs;
+    this.logger.setNamespace(`oNodeConnectionManager[${config.originAddress}]`);
   }
 
   async getOrCreateConnection(
@@ -27,34 +29,52 @@ export class oNodeConnectionManager extends oConnectionManager {
       nextHopAddress,
     ) as Connection | null;
 
-    let p2pConnection: Connection;
-
     if (existingConnection && existingConnection.status === 'open') {
       this.logger.debug(
         'Reusing existing libp2p connection for address: ' +
           nextHopAddress.toString(),
       );
-      p2pConnection = existingConnection;
-    } else {
-      // No existing connection or connection is closed, dial a new one
-      this.logger.debug(
-        'Dialing new connection for address: ' + address.toString(),
-      );
-      p2pConnection = await this.p2pNode.dial(
-        (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
-          ma.toMultiaddr(),
-        ),
-      );
+      return existingConnection;
     }
-    if (nextHopAddress.libp2pTransports.length) {
-      const peerIdString = (
-        nextHopAddress as oNodeAddress
-      ).libp2pTransports[0].toPeerId();
-      if (peerIdString) {
-        this.connections.set(peerIdString, p2pConnection);
-      }
+
+    // Use address value as cache key
+    const cacheKey = nextHopAddress.value;
+
+    // Check if dial is already in progress
+    const pendingDial = this.pendingDials.get(cacheKey);
+    if (pendingDial) {
+      this.logger.debug('Awaiting existing dial for address:', cacheKey);
+      return pendingDial;
     }
-    return p2pConnection;
+
+    // Start new dial and cache the promise
+    const dialPromise = this.performDial(nextHopAddress);
+    this.pendingDials.set(cacheKey, dialPromise);
+
+    try {
+      return await dialPromise;
+    } finally {
+      this.pendingDials.delete(cacheKey);
+    }
+  }
+
+  private async performDial(
+    nextHopAddress: oAddress,
+  ): Promise<Connection> {
+    this.logger.debug('Dialing new connection for address:', nextHopAddress.value);
+    const connection = await this.p2pNode.dial(
+      (nextHopAddress as oNodeAddress).libp2pTransports.map((ma) =>
+        ma.toMultiaddr(),
+      ),
+    );
+
+    // Cache by peer ID for getCachedLibp2pConnection lookups
+    const peerIdString = (nextHopAddress as oNodeAddress).libp2pTransports[0]?.toPeerId();
+    if (peerIdString) {
+      this.connections.set(peerIdString, connection);
+    }
+
+    return connection;
   }
 
   /**

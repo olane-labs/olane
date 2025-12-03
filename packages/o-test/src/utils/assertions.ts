@@ -5,7 +5,6 @@
  */
 
 import { NodeState, oResponse } from '@olane/o-core';
-import type { oNode } from '@olane/o-node';
 
 /**
  * Assert that a tool response indicates success
@@ -75,7 +74,7 @@ export function assertError(
  * ```
  */
 export function assertRunning(
-  node: oNode,
+  node: any,
   message?: string
 ): void {
   if (node.state !== NodeState.RUNNING) {
@@ -98,7 +97,7 @@ export function assertRunning(
  * ```
  */
 export function assertStopped(
-  node: oNode,
+  node: any,
   message?: string
 ): void {
   if (node.state !== NodeState.STOPPED) {

@@ -205,15 +205,6 @@ export class oNodeRouter extends oToolRouter {
    * First checks routing policy for external routing, then applies resolver chain.
    */
   async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
-    // Check if external routing is needed
-    const externalRoute = this.routingPolicy.getExternalRoutingStrategy(
-      address,
-      node,
-    );
-    if (externalRoute) {
-      return externalRoute;
-    }
-
     // Apply resolver chain for internal routing
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.addressResolution.resolve({
@@ -221,6 +212,18 @@ export class oNodeRouter extends oToolRouter {
         node,
         targetAddress: address,
       });
+
+      // if we defaulted back to the leader
+    if (nextHopAddress.value === oAddress.leader().value) {
+      // Check if external routing is needed for leader routing
+      const externalRoute = this.routingPolicy.getExternalRoutingStrategy(
+        address,
+        node,
+      );
+      if (externalRoute) {
+        return externalRoute;
+      }
+    }
 
     return {
       nextHopAddress,

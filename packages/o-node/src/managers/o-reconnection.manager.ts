@@ -302,6 +302,9 @@ export class oReconnectionManager extends oObject {
     const startTime = Date.now();
     let attempt = 0;
     let currentDelay = this.config.parentDiscoveryIntervalMs;
+    if (!this.node.config.leader) {
+      throw new Error('Cannot connect to parent without leader');
+    }
 
     // Infinite retry loop - keep trying until parent is found
     while (true) {
@@ -314,10 +317,12 @@ export class oReconnectionManager extends oObject {
 
       try {
         // Query registry for parent by its known address
-        const response = await this.node.use(oAddress.registry(), {
-          method: 'find_available_parent',
+        if (!this.node.config.parent) {
+          throw new Error('Invalid parent definition');
+        }
+        const response = await this.node.use(this.node.config.parent, {
+          method: 'ping',
           params: {
-            parentAddress: this.node.config.parent?.toString(),
           },
         });
 

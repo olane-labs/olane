@@ -25,6 +25,11 @@ export class oNodeRoutingPolicy extends oRoutingPolicy {
       return true;
     }
 
+    // if we are trying to connect to a child, it's internal
+    if (node.hierarchyManager.children.some((p) => p.equals(address))) {
+      return true;
+    }
+
     if (
       nodeAddress.paths.indexOf(oAddress.leader().paths) !== -1 && // if the address has a leader
       nodeAddress.libp2pTransports?.length > 0

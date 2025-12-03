@@ -70,7 +70,6 @@ export class StreamHandler {
     }
 
     const reusePolicy = config.reusePolicy ?? 'none';
-    this.logger.debug('Reuse policy:', reusePolicy);
 
     // Check for existing stream if reuse is enabled
     if (reusePolicy === 'reuse') {
@@ -93,7 +92,6 @@ export class StreamHandler {
     }
 
     // Create new stream
-    this.logger.debug('Creating new stream');
     const stream = await connection.newStream(protocol, {
       signal: config.signal,
       maxOutboundStreams: config.maxOutboundStreams ?? 1000,

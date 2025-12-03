@@ -1,6 +1,7 @@
 import { oNodeTool } from '../../src/o-node.tool.js';
 import { oNodeToolConfig } from '../../src/interfaces/o-node.tool-config.js';
 import { oNodeAddress } from '../../src/index.js';
+import { Libp2pConfig } from '@olane/o-config';
 
 /**
  * Test-only extension of oNodeTool that adds streaming test methods.
@@ -25,6 +26,20 @@ export class TestNodeTool extends oNodeTool {
       ...config,
       address: new oNodeAddress('o://test')
     });
+  }
+
+  async configure(): Promise<Libp2pConfig> {
+    const config = await super.configure();
+    config.connectionGater = {
+      denyDialPeer: (peerId) => {
+        return false;
+      },
+      // who can call us?
+      denyInboundEncryptedConnection: (peerId, maConn) => {
+        return false;
+      },
+    };
+    return config;
   }
 
   /**

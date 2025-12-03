@@ -203,6 +203,11 @@ export class oNode extends oToolBase {
       return;
     }
 
+    if (!this.parent) {
+      this.logger.warn('no parent, skipping registration');
+      return;
+    }
+
     if (!this.parent?.libp2pTransports?.length) {
       this.logger.debug(
         'Parent has no transports, waiting for reconnection & leader ack',
@@ -236,6 +241,11 @@ export class oNode extends oToolBase {
   }
 
   async registerLeader(): Promise<void> {
+    this.logger.info('Register leader called...');
+    if (!this.leader) {
+      this.logger.warn('No leader defined, skipping registration');
+      return;
+    }
     const address = oAddress.registry();
 
     const params = {
@@ -268,6 +278,8 @@ export class oNode extends oToolBase {
 
     this.logger.debug('Registering node...');
 
+    await this.registerParent();
+
     // register with the leader global registry
     if (!this.config.leader) {
       this.logger.warn('No leaders found, skipping registration');
@@ -275,8 +287,6 @@ export class oNode extends oToolBase {
     } else {
       this.logger.debug('Registering node with leader...');
     }
-
-    await this.registerParent();
     await this.registerLeader();
 
     this.logger.debug('Registration successful');
@@ -418,11 +428,8 @@ export class oNode extends oToolBase {
     };
 
     // handle the address encapsulation
-    if (
-      this.config.leader &&
-      !this.address.protocol.includes(this.config.leader.protocol)
-    ) {
-      const parentAddress = this.config.parent || this.config.leader;
+    if (this.config.parent) {
+      const parentAddress = this.config.parent
       this.address = CoreUtils.childAddress(
         parentAddress,
         this.address,
@@ -466,6 +473,7 @@ export class oNode extends oToolBase {
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      originAddress: this.address?.value
     });
   }
 
@@ -522,7 +530,7 @@ export class oNode extends oToolBase {
     this.router.addResolver(new oNodeResolver(this.address));
 
     // setup a fallback resolver for non-leader nodes
-    if (this.isLeader === false) {
+    if (this.isLeader === false && !!this.leader) {
       this.logger.debug('Adding leader resolver fallback...');
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }

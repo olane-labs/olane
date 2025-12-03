@@ -19,7 +19,7 @@ describe('Network Communication', () => {
   describe('Two-Node Direct Communication', () => {
     it('should establish connection between parent and child', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -53,7 +53,7 @@ describe('Network Communication', () => {
 
     it('should allow bidirectional communication', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -85,7 +85,7 @@ describe('Network Communication', () => {
 
     it('should reuse connections for multiple requests', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -117,7 +117,7 @@ describe('Network Communication', () => {
   describe('Three-Node Hierarchical Communication', () => {
     it('should route through hierarchy (leader → parent → child)', async () => {
       builder = await NetworkTopologies.threeNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const parent = builder.getNode('o://parent')!;
@@ -141,7 +141,7 @@ describe('Network Communication', () => {
   describe('Self-Routing Optimization', () => {
     it('should execute locally when routing to self', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
 
@@ -169,7 +169,7 @@ describe('Network Communication', () => {
     it('should handle self-routing with different address formats', async () => {
       builder = new NetworkBuilder();
       const leader = await builder.addNode('o://leader');
-      await builder.startAll();
+      
 
       // Call with exact address
       const response1 = await leader.use(leader.address, {
@@ -195,7 +195,7 @@ describe('Network Communication', () => {
   describe('Method Execution', () => {
     it('should execute tool methods correctly', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -229,7 +229,7 @@ describe('Network Communication', () => {
 
     it('should handle method not found errors', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -251,7 +251,7 @@ describe('Network Communication', () => {
   describe('Concurrent Requests', () => {
     it('should handle concurrent requests to same node', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
@@ -281,7 +281,7 @@ describe('Network Communication', () => {
 
     it('should handle concurrent requests to different nodes', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const parent1 = builder.getNode('o://parent1')!;
@@ -315,7 +315,7 @@ describe('Network Communication', () => {
   describe('Connection Pooling', () => {
     it('should pool connections efficiently', async () => {
       builder = await NetworkTopologies.fiveNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const spy = createConnectionSpy(leader);
@@ -348,7 +348,7 @@ describe('Network Communication', () => {
 
     it('should maintain connection status correctly', async () => {
       builder = await NetworkTopologies.twoNode();
-      await builder.startAll();
+      
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;

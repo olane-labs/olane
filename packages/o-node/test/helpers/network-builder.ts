@@ -2,6 +2,7 @@ import { oNodeTool } from '../../src/o-node.tool.js';
 import { oNodeAddress } from '../../src/router/o-node.address.js';
 import { oNodeToolConfig } from '../../src/interfaces/o-node.tool-config.js';
 import { oRequest } from '@olane/o-core';
+import { Libp2pConfig } from '@olane/o-config';
 
 /**
  * Simple test tool for network communication testing
@@ -11,6 +12,20 @@ export class TestTool extends oNodeTool {
 
   constructor(config: oNodeToolConfig & { address: oNodeAddress }) {
     super(config);
+  }
+
+  async configure(): Promise<Libp2pConfig> {
+    const config = await super.configure();
+    config.connectionGater = {
+      denyDialPeer: (peerId) => {
+        return false;
+      },
+      // who can call us?
+      denyInboundEncryptedConnection: (peerId, maConn) => {
+        return false;
+      },
+    };
+    return config;
   }
 
   async _tool_echo(request: oRequest): Promise<any> {
@@ -104,6 +119,7 @@ export class NetworkBuilder {
     });
 
     this.nodes.set(address, node);
+    await this.startNode(address);
     return node;
   }
 
@@ -127,22 +143,6 @@ export class NetworkBuilder {
     // await this.waitForTransports(node);
   }
 
-  /**
-   * Start all nodes in the network
-   * Starts in dependency order: parents first, then children
-   */
-  async startAll(): Promise<void> {
-    // Sort nodes by hierarchy depth (nodes with no parent first)
-    const sortedNodes = this.getSortedNodesByDepth();
-
-    for (const address of sortedNodes) {
-      if (!this.startedNodes.has(address)) {
-        await this.startNode(address);
-        // Small delay to ensure registration completes
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-    }
-  }
 
   /**
    * Stop a specific node
