@@ -1,14 +1,8 @@
 import 'dotenv/config';
 import { expect } from 'chai';
 import { PromptStorageProvider } from '../src/storage/prompt-storage-provider.tool.js';
-import {
-  TestEnvironment,
-  SimpleNodeBuilder,
-  assertRunning,
-  assertStopped,
-  assertSuccess,
-  assertError,
-} from '@olane/o-test';
+import { TestEnvironment, SimpleNodeBuilder } from '@olane/o-node/test/helpers';
+import { assertRunning, assertStopped, assertSuccess, assertError } from '@olane/o-test';
 import { oNodeAddress } from '@olane/o-node';
 
 describe('PromptStorageProvider', () => {
@@ -16,7 +10,7 @@ describe('PromptStorageProvider', () => {
   let storage: PromptStorageProvider;
 
   beforeEach(async () => {
-    storage = await new SimpleNodeBuilder(PromptStorageProvider)
+    storage = await new SimpleNodeBuilder(PromptStorageProvider as any)
       .withAddress(new oNodeAddress('o://prompt-storage-test'))
       .build(env);
   });
@@ -470,7 +464,7 @@ describe('PromptStorageProvider', () => {
     it('should evict oldest prompt when max limit reached', async () => {
       // Create storage with limit
       await storage.stop();
-      storage = await new SimpleNodeBuilder(PromptStorageProvider)
+      storage = await new SimpleNodeBuilder(PromptStorageProvider as any)
         .withAddress(new oNodeAddress('o://prompt-storage-test'))
         .withConfig({ maxPrompts: 3 })
         .build(env);

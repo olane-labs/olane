@@ -11,11 +11,8 @@ import {
 } from '../src/storage/prompt-schema.js';
 import { AGENT_PROMPT } from '../src/prompts/agent.prompt.js';
 import { CONFIGURE_INSTRUCTIONS } from '../src/prompts/configure.prompt.js';
-import {
-  TestEnvironment,
-  assertSuccess,
-  assertDefined,
-} from '@olane/o-test';
+import { TestEnvironment } from '@olane/o-node/test/helpers';
+import { assertSuccess, assertDefined } from '@olane/o-test';
 
 describe('Prompt Seeding and Loading', () => {
   const env = new TestEnvironment();
@@ -24,6 +21,7 @@ describe('Prompt Seeding and Loading', () => {
   let loader: PromptLoader;
 
   before(async () => {
+    // @ts-ignore
     storage = await env.createNode(PromptStorageProvider, {});
     seeder = new PromptSeeder(storage);
     loader = new PromptLoader(storage);
