@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
+    },
+    "./test/helpers": {
+      "types": "./dist/test/helpers/index.d.ts",
+      "default": "./dist/test/helpers/index.js"
     }
   },
   "files": [
