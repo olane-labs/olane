@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
 ## <small>0.7.13-alpha.2 (2025-12-03)</small>
 
 - added leader address validation ([c365513](https://github.com/olane-labs/olane/commit/c365513))
