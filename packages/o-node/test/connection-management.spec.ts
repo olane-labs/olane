@@ -219,7 +219,7 @@ describe('Connection Management', () => {
         method: 'echo',
         params: { message: 'test' },
       }).catch((err) => {
-        expect(err.code).to.be.equal('ECONNREFUSED');
+        expect(err.message).to.be.equal('Unable to extract peer ID from address: o://nonexistent');
       });
     });
 
