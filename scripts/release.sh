@@ -182,7 +182,6 @@ step_push_git() {
         log_warning "DRY RUN: Would execute: git push && git push --tags"
     else
         git push
-        git push --tags
         log_success "Changes and tags pushed to remote"
     fi
 }
