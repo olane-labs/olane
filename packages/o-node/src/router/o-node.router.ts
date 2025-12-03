@@ -194,7 +194,7 @@ export class oNodeRouter extends oToolRouter {
       return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
-        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
+        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found: ' + address.value);
       }
       throw error;
     }
@@ -206,6 +206,14 @@ export class oNodeRouter extends oToolRouter {
    */
   async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
     // Apply resolver chain for internal routing
+    if (!node.parent && !node.leader && address.transports?.length > 0) {
+      // independent node
+      console.log('Independent routing')
+      return {
+        nextHopAddress: address,
+        targetAddress: address,
+      }
+    }
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.addressResolution.resolve({
         address,

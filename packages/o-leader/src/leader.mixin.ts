@@ -74,8 +74,10 @@ export function withLeader<T extends new (...args: any[]) => oToolBase>(
         },
         joinToken: (this as any).config.joinToken,
       });
+      (registryTool as any).hookInitializeFinished = () => {
+        this.addChildNode(registryTool);
+      };
       await registryTool.start();
-      (this as any).addChildNode(registryTool);
     }
 
     /**

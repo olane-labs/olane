@@ -227,7 +227,8 @@ export class oNode extends oToolBase {
         'Registering node with parent...',
         this.config.parent?.toString(),
       );
-      await this.use(this.config.parent, {
+      // avoid transports to ensure we do not try direct connection, we need to route via the leader for proper access controls
+      await this.use(new oNodeAddress(this.config.parent.value), {
         method: 'child_register',
         params: {
           address: this.address.toString(),
@@ -411,7 +412,6 @@ export class oNode extends oToolBase {
           if (this.config.type === NodeType.LEADER) {
             return false;
           }
-          // deny everything else
           return true;
         },
         // allow the user to override the default connection gater

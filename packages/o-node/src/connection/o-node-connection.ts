@@ -94,6 +94,7 @@ export class oNodeConnection extends oConnection {
       return response;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
+        console.warn('Unable to find address:', request);
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
       }
       throw error;
