@@ -440,6 +440,11 @@ export abstract class oCore extends oObject {
     }
     this.state = NodeState.STARTING;
 
+    // Run pre-start validation outside the try/catch block so that
+    // validation errors surface directly to callers without being
+    // wrapped in start()/teardown() error handling.
+    await this.validate();
+
     try {
       await this.initialize();
       await this.register().catch((error) => {
@@ -462,6 +467,17 @@ export abstract class oCore extends oObject {
       await this.teardown();
     }
   }
+
+  /**
+   * Validation hook that runs before initialize()/register() in start().
+   *
+   * Subclasses can override this to perform cheap, synchronous/async
+   * configuration validation. Any error thrown here will surface
+   * directly to the caller of start() and will prevent initialization
+   * and resource allocation from occurring.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected async validate(): Promise<void> {}
 
   /**
    * Stops the node by performing cleanup and transitioning to a stopped state.

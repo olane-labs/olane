@@ -121,11 +121,11 @@ export class oNode extends oToolBase {
             params: {
               eventType: 'node:stopping',
               eventData: {
-                address: this.address.toString(),
+                address: this.address?.toString(),
                 reason: 'graceful_shutdown',
                 expectedDowntime: null,
               },
-              source: this.address.toString(),
+              source: this.address?.toString(),
             },
           }),
           new Promise((_, reject) =>
@@ -146,13 +146,18 @@ export class oNode extends oToolBase {
       return;
     }
 
+    // no need to unregister since we did not generate a peerID yet
+    if (!this.peerId) {
+      return;
+    }
+
     const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
 
     // attempt to unregister from the network
     const params = {
       method: 'remove',
       params: {
-        peerId: this.peerId.toString(),
+        peerId: this.peerId?.toString(),
       },
     };
 
@@ -498,6 +503,49 @@ export class oNode extends oToolBase {
       `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
         `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
     );
+  }
+
+  /**
+   * Validates that if a leader address is defined, it has associated transports.
+   * This is critical for non-leader nodes to be able to connect to their leader.
+   * @throws Error if leader is defined but has no transports
+   */
+  private async validateLeaderTransports(): Promise<void> {
+    // Skip validation if this node is the leader itself
+    if (this.isLeader) {
+      return;
+    }
+
+    // Skip validation if no leader is configured
+    const leaderAddress = this.config?.leader;
+    if (!leaderAddress) {
+      return;
+    }
+
+    // Check if leader has transports
+    if (!leaderAddress.transports || leaderAddress.transports.length === 0) {
+      throw new Error(
+        `Leader address is defined (${leaderAddress.toString()}) but has no transports. ` +
+        `Non-leader nodes require leader transports for network connectivity. ` +
+        `Please provide transports in the leader address configuration.`
+      );
+    }
+
+    this.logger.debug('Leader transport validation passed', {
+      leader: leaderAddress.toString(),
+      transportCount: leaderAddress.transports.length
+    });
+  }
+
+  /**
+   * oNode-specific validation that runs before core start() logic.
+   *
+   * This ensures that leader transport configuration errors are
+   * surfaced quickly and before any libp2p nodes or other heavy
+   * resources are created.
+   */
+  protected async validate(): Promise<void> {
+    await this.validateLeaderTransports();
   }
 
   async initialize(): Promise<void> {
