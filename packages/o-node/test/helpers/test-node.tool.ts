@@ -7,11 +7,11 @@ import { Libp2pConfig } from '@olane/o-config';
  * Test-only extension of oNodeTool that adds streaming test methods.
  * This class should only be used in test files and is not part of the production code.
  *
- * Compatible with o-test TestEnvironment for automatic cleanup and lifecycle management.
+ * Compatible with TestEnvironment for automatic cleanup and lifecycle management.
  *
  * @example
  * ```typescript
- * import { TestEnvironment } from '@olane/o-test';
+ * import { TestEnvironment } from './helpers/index.js';
  * import { TestNodeTool } from './helpers/test-node.tool.js';
  *
  * const env = new TestEnvironment();

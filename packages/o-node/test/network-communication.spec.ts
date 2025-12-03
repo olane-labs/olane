@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { TestEnvironment } from '@olane/o-test';
+import { TestEnvironment } from './helpers/index.js';
 import { NetworkBuilder, NetworkTopologies } from './helpers/network-builder.js';
 import { createConnectionSpy } from './helpers/connection-spy.js';
 import { oNodeAddress } from '../src/router/o-node.address.js';

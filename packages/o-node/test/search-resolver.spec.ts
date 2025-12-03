@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { TestEnvironment } from '@olane/o-test';
+import { TestEnvironment } from './helpers/index.js';
 import { oSearchResolver } from '../src/router/resolvers/o-node.search-resolver.js';
 import {
   oAddress,

@@ -1,25 +1,9 @@
 /**
- * @olane/o-test - Testing utilities for O-Network nodes
+ * @olane/o-test - Generic testing utilities for O-Network
  *
- * Provides comprehensive testing utilities, builders, and fixtures
- * to eliminate boilerplate in O-Network package tests.
+ * Provides generic testing utilities, assertions, mocks, and fixtures.
+ * Node-specific utilities (TestEnvironment, builders) have been moved to @olane/o-node/test/helpers
  */
-
-// Core test environment
-export { TestEnvironment } from './test-environment.js';
-export type {
-  TestNodeConfig,
-  LeaderNodeOptions,
-  ToolWithLeaderResult,
-} from './test-environment.js';
-
-// Test builders
-export {
-  SimpleNodeBuilder,
-  LeaderChildBuilder,
-  ManagerWorkerBuilder,
-} from './builders/index.js';
-export type { LeaderConfig, ManagerWorkerResult } from './builders/index.js';
 
 // Utilities
 export {
@@ -75,6 +59,5 @@ export {
 export { INVALID_PARAMS as FIXTURE_INVALID_PARAMS } from './fixtures/mock-data.js';
 export { VALID_PARAMS as FIXTURE_VALID_PARAMS } from './fixtures/mock-data.js';
 
-// Example tool (for reference/templates)
-export * from './example-tool.tool.js';
-export * from './methods/example.methods.js';
+// Note: example-tool.tool.ts and example.methods.ts are available in the src directory
+// as reference implementations, but are not exported to avoid dependencies on o-node/o-lane

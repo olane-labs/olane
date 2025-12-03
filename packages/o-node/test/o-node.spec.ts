@@ -1,6 +1,7 @@
 import { NodeState } from '@olane/o-core';
 import { expect } from 'chai';
-import { TestEnvironment, assertRunning, assertStopped } from '@olane/o-test';
+import { assertRunning, assertStopped } from '@olane/o-test';
+import { TestEnvironment } from './helpers/index.js';
 import { oNodeTool } from '../src/o-node.tool.js';
 import { oNodeAddress } from '../src/index.js';
 
