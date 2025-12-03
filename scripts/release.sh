@@ -105,7 +105,7 @@ get_lerna_command() {
 
     case $version_type in
         patch|minor|major)
-            echo "lerna version $version_type --yes"
+            echo "lerna version $version_type --force-publish --yes"
             ;;
         alpha)
             echo "lerna version prerelease --force-publish --preid alpha --yes"
