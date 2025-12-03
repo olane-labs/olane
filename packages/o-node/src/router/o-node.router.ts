@@ -208,7 +208,6 @@ export class oNodeRouter extends oToolRouter {
     // Apply resolver chain for internal routing
     if (!node.parent && !node.leader && address.transports?.length > 0) {
       // independent node
-      console.log('Independent routing')
       return {
         nextHopAddress: address,
         targetAddress: address,

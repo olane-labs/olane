@@ -156,7 +156,23 @@ export class oConnectionHeartbeatManager extends oObject {
       );
 
       // Check if any connection is open
-      return connections.some((conn) => conn.status === 'open');
+      const existing =  connections.some((conn) => conn.status === 'open');
+      if (existing) {
+        return true;
+      }
+
+      // check via ping
+      const pingResponse = this.node.use(address, {
+        method: 'ping'
+      }).catch((err) => {
+        if (err.message === 'Can not dial self') {
+          return true;
+        }
+        this.logger.warn('Could not reach address in heartbeat:' + address.value, err);
+        return null;
+      });
+      return !!pingResponse;
+
     } catch (error) {
       this.logger.debug(
         `Error checking connection status for ${address}`,

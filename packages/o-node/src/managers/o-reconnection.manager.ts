@@ -321,12 +321,13 @@ export class oReconnectionManager extends oObject {
           throw new Error('Invalid parent definition');
         }
         const response = await this.node.use(this.node.config.parent, {
-          method: 'ping',
-          params: {
-          },
+          method: 'identify',
+          params: {},
         });
 
-        const { parentAddress, parentTransports } = response.result.data as any;
+        this.logger.debug('Identify parent response:', response.result.data);
+
+        const { address: parentAddress, transports: parentTransports } = response.result.data as any;
 
         // Check if parent was found in registry
         if (parentAddress && parentTransports && parentTransports.length > 0) {
@@ -338,7 +339,7 @@ export class oReconnectionManager extends oObject {
           this.node.config.parent = new oNodeAddress(
             parentAddress,
             parentTransports.map(
-              (t: { value: string }) => new oNodeTransport(t.value),
+              (value: string) => new oNodeTransport(value),
             ),
           );
           // Attempt to register with parent and re-register with registry
