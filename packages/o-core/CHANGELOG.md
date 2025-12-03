@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+- prevent nested addresses during init ([9965696](https://github.com/olane-labs/olane/commit/9965696))
+
 ## <small>0.7.13-alpha.0 (2025-12-01)</small>
 
 - minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))

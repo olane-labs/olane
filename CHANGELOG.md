@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- added WARP.md + fix for lane tests ([0bf560d](https://github.com/olane-labs/olane/commit/0bf560d))
+- base tests ([0b393ef](https://github.com/olane-labs/olane/commit/0b393ef))
+- fix ([222647e](https://github.com/olane-labs/olane/commit/222647e))
+- fix dependency mismatch ([4ad6ede](https://github.com/olane-labs/olane/commit/4ad6ede))
+- improved leader with testing ([73efe32](https://github.com/olane-labs/olane/commit/73efe32))
+- initial tests generated ([9cbaac2](https://github.com/olane-labs/olane/commit/9cbaac2))
+- mid refactor cyclical test depenencies ([1946261](https://github.com/olane-labs/olane/commit/1946261))
+- minor fixes to tests ([8661c5e](https://github.com/olane-labs/olane/commit/8661c5e))
+- network communication tests working ([cbe3b9d](https://github.com/olane-labs/olane/commit/cbe3b9d))
+- node reset funcitonality + connection-management unit tests ([ce65d3b](https://github.com/olane-labs/olane/commit/ce65d3b))
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+- prevent nested addresses during init ([9965696](https://github.com/olane-labs/olane/commit/9965696))
+- proper export of helper test tools ([ed4f539](https://github.com/olane-labs/olane/commit/ed4f539))
+- search resolver tests working ([a1f976b](https://github.com/olane-labs/olane/commit/a1f976b))
+- stability fixes ([c1fa204](https://github.com/olane-labs/olane/commit/c1fa204))
+
 ## <small>0.7.13-alpha.0 (2025-12-01)</small>
 
 - minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
