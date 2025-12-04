@@ -124,7 +124,6 @@ export abstract class oNotificationManager extends oObject {
    * Emit a notification event
    */
   emit(event: oNotificationEvent): void {
-    this.logger.verbose(`Emitting event: ${event.type}`, event.toJSON());
 
     const customEvent = new CustomEvent(event.type, {
       detail: event,
