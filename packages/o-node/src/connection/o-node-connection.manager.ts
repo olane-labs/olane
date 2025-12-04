@@ -91,6 +91,9 @@ export class oNodeConnectionManager extends oConnectionManager {
     nextHopAddress: oAddress,
     address: oAddress,
   ): Promise<Connection> {
+    if (!nextHopAddress) {
+      throw new Error('Invalid address passed');
+    }
     // Build a transport-based cache key from the next hop address
     const transportKey = this.getTransportKeyFromAddress(nextHopAddress);
     if (!transportKey) {
