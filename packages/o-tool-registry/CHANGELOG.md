@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.18 (2025-12-05)</small>
+
+**Note:** Version bump only for package @olane/o-tool-registry
+
 ## <small>0.7.17 (2025-12-04)</small>
 
 **Note:** Version bump only for package @olane/o-tool-registry
