@@ -195,7 +195,6 @@ export class StreamHandler {
     };
 
     const closeHandler = () => {
-      this.logger.debug('Stream closed by remote peer');
       stream.removeEventListener('message', messageHandler);
       stream.removeEventListener('close', closeHandler);
     };
@@ -323,7 +322,6 @@ export class StreamHandler {
       };
 
       const closeHandler = () => {
-        this.logger.debug('Stream closed by remote peer');
         cleanup();
 
         if (lastResponse) {

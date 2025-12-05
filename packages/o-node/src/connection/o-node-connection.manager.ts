@@ -105,7 +105,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     // Check if we have a cached connection by transport key
     const cachedConnection = this.connectionsByTransportKey.get(transportKey);
     if (cachedConnection && cachedConnection.status === 'open') {
-      this.logger.debug('Reusing cached connection for transports:', transportKey);
+      this.logger.debug('Reusing cached connection for transports:', nextHopAddress);
       return cachedConnection;
     }
 
