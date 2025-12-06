@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.19 (2025-12-06)</small>
+
+- in progress refactor ([63dd8d6](https://github.com/olane-labs/olane/commit/63dd8d6))
+- minor change ([5c77677](https://github.com/olane-labs/olane/commit/5c77677))
+- more work on lane refactor ([0e13b9a](https://github.com/olane-labs/olane/commit/0e13b9a))
+- refactor complete ([799d07a](https://github.com/olane-labs/olane/commit/799d07a))
+
 ## <small>0.7.18 (2025-12-05)</small>
 
 **Note:** Version bump only for package @olane/o-lane
