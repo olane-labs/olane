@@ -12,6 +12,7 @@ import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
 import { oLaneStatus } from './enum/o-lane.status-enum.js';
 import {
+  oCapability,
   oCapabilityResult,
   oCapabilityType,
 } from './capabilities/index.js';
@@ -199,8 +200,40 @@ export class oLane extends oObject {
     return this.result;
   }
 
+  /**
+   * Filter capabilities by type from ALL_CAPABILITIES
+   * @param types Array of capability types to include
+   * @returns Array of instantiated capabilities matching the specified types
+   */
+  private filterCapabilitiesByType(types: oCapabilityType[]): oCapability[] {
+    return ALL_CAPABILITIES
+      .map((CapabilityClass) => {
+        const instance = new CapabilityClass({
+          promptLoader: this.promptLoader,
+          node: this.node
+        });
+        return instance;
+      })
+      .filter((capability) => types.includes(capability.type));
+  }
+
   get capabilities() {
-    return this.config.capabilities || ALL_CAPABILITIES.map((c) => new c({ promptLoader: this.promptLoader, node: this.node }));
+    // Priority order:
+    // 1. If config.capabilities exists, use it (full backward compatibility)
+    // 2. If config.enabledCapabilityTypes exists, filter ALL_CAPABILITIES
+    // 3. Otherwise, use ALL_CAPABILITIES (default behavior)
+    if (this.config.capabilities) {
+      return this.config.capabilities;
+    }
+
+    if (this.config.enabledCapabilityTypes) {
+      return this.filterCapabilitiesByType(this.config.enabledCapabilityTypes);
+    }
+
+    return ALL_CAPABILITIES.map((c) => new c({
+      promptLoader: this.promptLoader,
+      node: this.node
+    }));
   }
 
   resultToConfig(result: any): oCapabilityConfig {
