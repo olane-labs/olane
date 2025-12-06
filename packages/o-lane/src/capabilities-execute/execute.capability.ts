@@ -56,7 +56,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
     }
-    // this.logger.debug('Handshake: ', handshake.result);
+  
     const { tools, methods } = handshake.result;
     const prompt = await this.loadPrompt({ tools, methods });
     const aiResponse = await this.intelligence(prompt);

@@ -265,7 +265,7 @@ export class IntelligenceTool extends oLaneTool {
           apiKey: intelligence.apiKey,
           messages: !!userMessage ? [ 
             {
-              role: 'system',
+              role: 'assistant',
               content: prompt
             },
             {

@@ -23,6 +23,7 @@ export class oCapabilityConfig implements inter {
     this.useStream = params.useStream;
     this.onChunk = params.onChunk;
     this.chatHistory = params.chatHistory;
+    this.params = params.params;
   }
 
   toJSON() {
