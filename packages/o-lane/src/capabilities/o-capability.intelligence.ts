@@ -8,8 +8,11 @@ import { oCapabilityIntelligenceResult } from './interfaces/o-capability.intelli
 import { oCapability } from './o-capability.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
 import { ResultStreamParser } from './utils/result-stream-parser.js';
+import { oCapabilityConfig } from './o-capability.config.js';
 
 export abstract class oCapabilityIntelligence extends oCapability {
+  abstract loadPromptTemplate(): Promise<string>;
+
   async intelligence(prompt: string): Promise<oCapabilityIntelligenceResult> {
     try {
       if (!this.node.isRunning) {
@@ -57,7 +60,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
         result: processedResult, // Keep full result for backwards compatibility
         humanResult: processedResult.result, // AI-generated result is already human-readable
         type: type || oCapabilityType.EVALUATE,
-        config: {
+        config: oCapabilityConfig.fromJSON({
           ...this.config,
           // Preserve summary and reasoning in params for access
           params: {
@@ -66,7 +69,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
             summary,
             reasoning,
           },
-        },
+        }),
         error: undefined,
       });
     } catch (error: any) {

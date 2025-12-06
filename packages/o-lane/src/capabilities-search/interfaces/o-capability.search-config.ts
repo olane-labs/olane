@@ -1,4 +1,4 @@
-import { oCapabilityConfig } from '../../capabilities/interfaces/o-capability.config.js';
+import { oCapabilityConfig } from '../../capabilities/interfaces/o-capability.config-interface.js';
 
 export interface oCapabilitySearchConfig extends oCapabilityConfig {
   params: {

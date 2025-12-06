@@ -1,4 +1,4 @@
-import { oCapabilityConfig } from '../../capabilities/interfaces/o-capability.config.js';
+import { oCapabilityConfig } from '../../capabilities/interfaces/o-capability.config-interface.js';
 import { oIntent } from '../../intent/o-intent.js';
 import { oLaneConfig } from '../../interfaces/index.js';
 

@@ -219,9 +219,9 @@ export class StreamHandler {
     const responseBuilder = ResponseBuilder.create();
 
     try {
-      this.logger.debug(
-        `Processing request on stream: method=${request.method}, id=${request.id}`,
-      );
+      // this.logger.debug(
+      //   `Processing request on stream: method=${request.method}, id=${request.id}`,
+      // );
       const result = await toolExecutor(request, stream);
       const response = await responseBuilder.build(request, result, null);
       await CoreUtils.sendResponse(response, stream);

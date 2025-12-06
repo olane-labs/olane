@@ -178,6 +178,7 @@ export class oNode extends oToolBase {
       const peers = await this.p2pNode.peerStore.all();
 
       // find the peer that is already indexed rather than building the PeerId from the string value to avoid browser issues
+      // TODO: for remote configured leader nodes, this keep alive fails due to the transport composition
       const peer = peers.find(
         (p) =>
           p.id.toString() === address.libp2pTransports[0].toPeerId().toString(),

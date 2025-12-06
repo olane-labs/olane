@@ -16,13 +16,13 @@ import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
 import { oLaneStatus } from './enum/o-lane.status-enum.js';
 import {
-  oCapabilityConfig,
   oCapabilityResult,
   oCapabilityType,
 } from './capabilities/index.js';
 import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
 import { MarkdownBuilder } from './formatters/index.js';
 import { PromptLoader } from './storage/prompt-loader.js';
+import { oCapabilityConfig } from './capabilities/o-capability.config.js';
 
 export class oLane extends oObject {
   public sequence: oCapabilityResult[] = [];
@@ -71,18 +71,6 @@ export class oLane extends oObject {
 
   addSequence(result: oCapabilityResult) {
     this.sequence.push(result);
-    if (this.config.streamTo) {
-      this.node
-        .use(this.config.streamTo, {
-          method: 'receive_stream',
-          params: {
-            data: result.result || result.error || '',
-          },
-        })
-        .catch((error: any) => {
-          this.logger.error('Error sending agent stream: ', error);
-        });
-    }
   }
 
   async toCID(): Promise<CID> {
@@ -120,8 +108,6 @@ export class oLane extends oObject {
 
   get agentHistory() {
     const added: { [key: string]: boolean } = {};
-    const MAX_RESULT_LENGTH = 1000; // Truncate large results
-    const KEEP_FULL_DETAIL_COUNT = 3; // Keep full detail for last N cycles
 
     const filteredSequence = this.sequence?.filter((s) => {
       if (added[s.id]) {
@@ -134,49 +120,7 @@ export class oLane extends oObject {
     return (
       filteredSequence
         ?.map((s, index) => {
-          const isRecent =
-            index >= filteredSequence.length - KEEP_FULL_DETAIL_COUNT;
-          const result = s.result || s.error;
-          const params = s.config?.params || {};
-
-          // Extract summary and reasoning if available
-          const summary = params.summary || '';
-          const reasoning = params.reasoning || '';
-
-          // Format result, truncating if not a recent cycle
-          let formattedResult: string;
-          if (typeof result === 'string') {
-            formattedResult =
-              isRecent || result.length <= MAX_RESULT_LENGTH
-                ? result
-                : result.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
-          } else {
-            const jsonStr = JSON.stringify(result, null, 2);
-            formattedResult =
-              isRecent || jsonStr.length <= MAX_RESULT_LENGTH
-                ? jsonStr
-                : jsonStr.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
-          }
-
-          // Build formatted history entry
-          let entry = `[Cycle ${index + 1}: ${s.type}]\n`;
-          entry += `Intent: ${s.config?.intent.toString()}\n`;
-
-          if (summary) {
-            entry += `Summary: ${summary}\n`;
-          }
-
-          if (reasoning) {
-            entry += `Reasoning: ${reasoning}\n`;
-          }
-
-          if (s.error) {
-            entry += `Error: ${s.error}\n`;
-          } else {
-            entry += `Result: ${formattedResult}\n`;
-          }
-
-          return entry;
+          return `\n<cycle_${index}>\n${JSON.stringify(s)}\n</cycle_${index}>`;
         })
         .join('\n') || ''
     );
@@ -316,9 +260,9 @@ export class oLane extends oObject {
           const capabilityConfig: oCapabilityConfig =
             this.resultToConfig(currentStep);
           this.logger.debug('Executing capability: ', capabilityType);
-          const result = await capability.execute({
+          const result = await capability.execute(oCapabilityConfig.fromJSON({
             ...capabilityConfig,
-          } as oCapabilityConfig);
+          }));
           return result;
         }
       }
@@ -343,12 +287,12 @@ export class oLane extends oObject {
     let currentStep = new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       result: null,
-      config: {
+      config: oCapabilityConfig.fromJSON({
         laneConfig: this.config,
         intent: this.intent,
         node: this.node,
         history: this.agentHistory,
-      },
+      }),
     });
 
     while (

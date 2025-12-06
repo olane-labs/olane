@@ -34,6 +34,12 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
         value: 'string',
         description: 'The prompt to send to the AI model',
       },
+      { name: 'user', 
+        type: 'string',
+        value: 'string',
+        description: 'The user message to send to the AI model',
+        required: false
+      },
       {
         name: 'stream',
         type: 'boolean',

@@ -3,13 +3,20 @@ import { oToolBase } from '@olane/o-tool';
 import { oLaneContext } from '../o-lane.context.js';
 import { oCapability } from '../capabilities/o-capability.js';
 import { oIntent } from '../intent/o-intent.js';
+import { PromptLoader } from '../storage/prompt-loader.js';
 
 export interface oLaneConfig {
   // an oAddress that contains the config for the plan
   intent: oIntent;
   caller: oAddress;
 
+  // prompt loader
+  promptLoader: PromptLoader;
+
+  // additional context
   context?: oLaneContext;
+  chatHistory?: oLaneContext;
+
   sequence?: any[];
 
   streamTo?: oAddress;

@@ -38,6 +38,7 @@
     "@eslint/js": "^9.29.0",
     "@olane/o-test": "0.7.18",
     "@tsconfig/node20": "^20.1.6",
+    "@types/handlebars": "^4.1.0",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
@@ -63,7 +64,8 @@
     "@olane/o-storage": "0.7.18",
     "@olane/o-tool": "0.7.18",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "handlebars": "^4.7.8"
   },
   "gitHead": "580d8c51fe0a12695ba1d77f077029200f0c8af4"
 }
