@@ -15,7 +15,7 @@ export interface oLaneConfig {
 
   // additional context
   context?: oLaneContext;
-  chatHistory?: oLaneContext;
+  chatHistory?: string;
 
   sequence?: any[];
 

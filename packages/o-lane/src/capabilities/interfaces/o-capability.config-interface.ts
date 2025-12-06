@@ -8,6 +8,7 @@ export interface oCapabilityConfigInterface {
   intent: oIntent;
   laneConfig?: oLaneConfig;
   history?: string;
+  chatHistory?: string;
   params?: any;
   isReplay?: boolean;
   useStream?: boolean;

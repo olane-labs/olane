@@ -72,7 +72,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
      */
     async _tool_intent(request: oStreamRequest): Promise<any> {
       this.logger.debug('Intent resolution called: ', request.params);
-      const { intent, context, streamTo, _isStreaming = false } = request.params;
+      const { intent, context, chatHistory, streamTo, _isStreaming = false } = request.params;
 
       const pc = await this.manager.createLane({
         intent: new oIntent({ intent: intent as string }),
@@ -80,6 +80,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
         caller: this.address,
         streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
         useStream: _isStreaming,
+        chatHistory: chatHistory,
         requestId: request.id, // Pass request ID for proper response correlation
         onChunk: _isStreaming
           ? async (chunk: any) => {
@@ -104,9 +105,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
             }
           : undefined,
         context: context
-          ? new oLaneContext([
-              `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
-            ])
+          ? new oLaneContext([])
           : undefined,
       });
 
@@ -121,7 +120,6 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
 
       const completeResponse = {
         result: response?.result,
-        humanResult: response?.humanResult, // Full human-readable formatted result (AI-generated markdown)
         summary: response?.config?.params?.summary, // Short 1-2 sentence summary
         error: response?.error,
         cycles: pc.sequence.length,

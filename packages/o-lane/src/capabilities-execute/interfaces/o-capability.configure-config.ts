@@ -1,7 +1,8 @@
 
-import { oCapabilityConfigInterface } from '../../capabilities/interfaces/o-capability.config-interface.js';
 
-export interface oCapabilityExecuteConfig extends oCapabilityConfigInterface {
+import { oCapabilityConfig } from '../../capabilities/o-capability.config.js';
+
+export interface oCapabilityExecuteConfig extends oCapabilityConfig {
   params: {
     address: string;
     intent: string;

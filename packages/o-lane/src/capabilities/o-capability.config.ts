@@ -22,6 +22,7 @@ export class oCapabilityConfig implements inter {
     this.isReplay = params.isReplay;
     this.useStream = params.useStream;
     this.onChunk = params.onChunk;
+    this.chatHistory = params.chatHistory;
   }
 
   toJSON() {
