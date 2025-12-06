@@ -26,7 +26,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       chat_history: '',
       past_cycles: '',
       address: this.config.params.address,
-      methods: methods
+      methods: methods ? JSON.stringify(methods) : ''
     })
     return prompt.render();
   }
