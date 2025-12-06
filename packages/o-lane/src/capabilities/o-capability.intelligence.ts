@@ -20,6 +20,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
           method: 'prompt',
           params: {
             prompt: prompt,
+            userMessage: `<intent>${this.config?.intent}</intent>`,
             intent: this.config?.intent,
             _isStreaming: _isStreaming,
           },

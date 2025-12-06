@@ -251,7 +251,7 @@ export class IntelligenceTool extends oLaneTool {
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
-    const { user, prompt, _isStreaming = false } = request.params;
+    const { userMessage, prompt, _isStreaming = false } = request.params;
     const stream = request.stream;
 
     const intelligence = await this.chooseIntelligence(request);
@@ -263,14 +263,14 @@ export class IntelligenceTool extends oLaneTool {
         params: {
           _isStreaming: _isStreaming as boolean,
           apiKey: intelligence.apiKey,
-          messages: !!user ? [ 
+          messages: !!userMessage ? [ 
             {
               role: 'system',
               content: prompt
             },
             {
               role: 'user',
-              content: user,
+              content: userMessage,
             },
           ] : [
             {
