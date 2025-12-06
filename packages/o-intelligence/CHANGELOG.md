@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.20 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-intelligence
+
 ## <small>0.7.19 (2025-12-06)</small>
 
 - in progress refactor ([63dd8d6](https://github.com/olane-labs/olane/commit/63dd8d6))
