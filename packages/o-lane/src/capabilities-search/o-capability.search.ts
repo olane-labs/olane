@@ -83,9 +83,7 @@ export class oCapabilitySearch extends oCapability {
 
     return new oCapabilitySearchResult({
       result: searchResultContext,
-      humanResult: searchResults,
       type: oCapabilityType.EVALUATE,
-      config: this.config,
     });
   }
 
@@ -145,9 +143,7 @@ export class oCapabilitySearch extends oCapability {
 
     return new oCapabilitySearchResult({
       result: searchResultContext,
-      humanResult: searchResults,
       type: oCapabilityType.EVALUATE,
-      config: this.config,
     });
   }
 

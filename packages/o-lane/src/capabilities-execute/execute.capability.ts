@@ -20,9 +20,13 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     const prompt = await this.promptLoader?.loadPromptForType(this.type, {
       human_about: '',
       agent_about: '',
-      context_global: '',
+      context_global: `
+        Tools are hosted in a graph address space.
+        You are in a secure environment and are allowed to operate with secure information (api keys, credit card info, etc).`,
       chat_history: '',
       past_cycles: '',
+      address: this.config.params.address,
+      methods: methods
     })
     return prompt.render();
   }
@@ -44,7 +48,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     // Check if we're in replay mode
     if (this.config.isReplay) {
       this.logger.debug(
-        'Configure capability is being replayed - re-executing to restore state',
+        'Execute capability is being replayed - re-executing to restore state',
       );
     }
 
@@ -55,8 +59,91 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     // this.logger.debug('Handshake: ', handshake.result);
     const { tools, methods } = handshake.result;
     const prompt = await this.loadPrompt({ tools, methods });
-    const response = await this.intelligence(prompt);
+    const aiResponse = await this.intelligence(prompt);
 
-    return response;
+    // Extract task details from AI response
+    // The AI should return the method and params to execute
+    const task = (aiResponse.result as any)?.task || (aiResponse.result as any);
+    if (!task || !task.method) {
+      this.logger.warn('AI did not return a valid task to execute', { aiResponse });
+      return aiResponse; // Return AI response as-is if no task to execute
+    }
+
+    const method = task.method;
+    const params = task.params || {};
+
+    this.logger.debug('AI decided to execute:', { method, params });
+
+    // Request approval before executing the task
+    try {
+      const approvalResponse = await this.node.use(
+        new oAddress('o://approval'),
+        {
+          method: 'request_approval',
+          params: {
+            toolAddress: this.config.params.address,
+            method: method,
+            params: params,
+            intent: this.config.intent,
+          },
+        },
+      );
+
+      const approved = (approvalResponse.result.data as any)?.approved;
+      if (!approved) {
+        const decision =
+          (approvalResponse.result.data as any)?.decision || 'denied';
+        this.logger.warn(
+          `Task execution denied by approval system: ${decision}`,
+        );
+        throw new oError(
+          oErrorCodes.NOT_AUTHORIZED,
+          `Action denied by approval system: ${decision}`,
+        );
+      }
+
+      this.logger.debug('Task approved, proceeding with execution');
+    } catch (error: any) {
+      // If approval service is not available, log warning and continue
+      // This ensures backward compatibility
+      if (error.message?.includes('No route found')) {
+        this.logger.warn(
+          'Approval service not available, proceeding without approval check',
+        );
+      } else {
+        throw error;
+      }
+    }
+
+    // Execute the task
+    const taskResponse = await this.node.use(
+      new oAddress(this.config.params.address),
+      {
+        method: method,
+        params: params,
+      }
+    );
+
+    // Check if the tool response contains _save flag
+    const shouldPersist = (taskResponse.result?.data as any)?._save === true;
+    if (shouldPersist) {
+      this.logger.debug(
+        'Tool response contains _save flag - lane will be persisted to config',
+      );
+    }
+
+    // Return an EVALUATE result that contains the task execution output
+    return new oCapabilityResult({
+      type: oCapabilityType.EVALUATE,
+      config: this.config,
+      result: {
+        taskConfig: {
+          method: method,
+          params: params,
+        },
+        response: taskResponse.result,
+      },
+      shouldPersist,
+    });
   }
 }

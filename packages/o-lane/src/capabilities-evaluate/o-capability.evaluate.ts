@@ -15,9 +15,11 @@ export class oCapabilityEvaluate extends oCapabilityIntelligence {
     const prompt = await this.promptLoader?.loadPromptForType(this.type, {
       human_about: '',
       agent_about: '',
-      context_global: '',
+      context_global: `
+        Tools are hosted in a graph address space.
+        You are in a secure environment and are allowed to operate with secure information (api keys, credit card info, etc).`,
       chat_history: '',
-      past_cycles: '',
+      past_cycles: this.config?.history,
     })
     return prompt.render();
   }

@@ -216,14 +216,14 @@ export class oLaneStorageManager {
 
   /**
    * Determine if a capability should be re-executed during replay
-   * Task and Configure capabilities are re-executed as they modify network state
+   * Execute and Configure capabilities are re-executed as they modify network state
    * Other capabilities use cached results
    * @param capabilityType The type of capability to check
    * @returns True if capability should be re-executed
    */
   shouldReplayCapability(capabilityType: oCapabilityType): boolean {
     const replayTypes = [
-      oCapabilityType.TASK,
+      oCapabilityType.EXECUTE,
       oCapabilityType.CONFIGURE,
       oCapabilityType.MULTIPLE_STEP,
     ];

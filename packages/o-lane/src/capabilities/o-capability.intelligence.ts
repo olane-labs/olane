@@ -7,7 +7,6 @@ import {
 import { oCapabilityIntelligenceResult } from './interfaces/o-capability.intelligence-result.js';
 import { oCapability } from './o-capability.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
-import { oCapabilityConfig } from './o-capability.config.js';
 
 export abstract class oCapabilityIntelligence extends oCapability {
 
@@ -21,6 +20,7 @@ export abstract class oCapabilityIntelligence extends oCapability {
           method: 'prompt',
           params: {
             prompt: prompt,
+            intent: this.config?.intent,
             _isStreaming: _isStreaming,
           },
         },

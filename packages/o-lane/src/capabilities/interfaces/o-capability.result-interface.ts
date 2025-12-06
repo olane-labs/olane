@@ -4,7 +4,6 @@ import { oCapabilityConfig } from '../o-capability.config.js';
 
 export interface oCapabilityResultInterface {
   result?: any;
-  humanResult?: any;
   type: oCapabilityType;
   error?: string;
   config?: oCapabilityConfig;

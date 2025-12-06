@@ -14,6 +14,8 @@ import { oIntent } from './intent/index.js';
 import { oLaneContext } from './o-lane.context.js';
 import { oLaneManager } from './manager/o-lane.manager.js';
 import { oCapabilityResult } from './capabilities/o-capability.result.js';
+import { PromptLoaderDefault } from './storage/default.prompt-loader.js';
+import { PromptLoader } from './storage/prompt-loader.js';
 
 /**
  * withLane mixin - adds lane execution capabilities to any tool base class
@@ -65,6 +67,10 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
       });
     }
 
+    getPromptLoader() {
+      return new PromptLoaderDefault();
+    }
+
     /**
      * Where all intents go to be resolved.
      * @param request
@@ -82,6 +88,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
         useStream: _isStreaming,
         chatHistory: chatHistory,
         requestId: request.id, // Pass request ID for proper response correlation
+        promptLoader: this.getPromptLoader(),
         onChunk: _isStreaming
           ? async (chunk: any) => {
               if (
@@ -152,6 +159,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
         intent: new oIntent({ intent: 'replay' }),
         currentNode: this,
         caller: this.address,
+        promptLoader: this.getPromptLoader(),
       });
 
       try {
