@@ -26,8 +26,8 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       chat_history: '',
       past_cycles: '',
       address: this.config.params.address,
-      methods: methods ? JSON.stringify(methods) : ''
-    })
+      methods: methods ? JSON.stringify(methods) : '',
+    });
     return prompt.render();
   }
 
@@ -56,7 +56,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
     }
-  
+
     const { tools, methods } = handshake.result;
     const prompt = await this.loadPrompt({ tools, methods });
     const aiResponse = await this.intelligence(prompt);
@@ -65,7 +65,9 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     // The AI should return the method and params to execute
     const task = (aiResponse.result as any)?.task || (aiResponse.result as any);
     if (!task || !task.method) {
-      this.logger.warn('AI did not return a valid task to execute', { aiResponse });
+      this.logger.warn('AI did not return a valid task to execute', {
+        aiResponse,
+      });
       return aiResponse; // Return AI response as-is if no task to execute
     }
 
@@ -115,35 +117,57 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       }
     }
 
-    // Execute the task
-    const taskResponse = await this.node.use(
-      new oAddress(this.config.params.address),
-      {
-        method: method,
-        params: params,
-      }
-    );
-
-    // Check if the tool response contains _save flag
-    const shouldPersist = (taskResponse.result?.data as any)?._save === true;
-    if (shouldPersist) {
-      this.logger.debug(
-        'Tool response contains _save flag - lane will be persisted to config',
-      );
-    }
-
-    // Return an EVALUATE result that contains the task execution output
-    return new oCapabilityResult({
-      type: oCapabilityType.EVALUATE,
-      config: this.config,
-      result: {
-        taskConfig: {
+    try {
+      // Execute the task
+      const taskResponse = await this.node.use(
+        new oAddress(this.config.params.address),
+        {
           method: method,
           params: params,
         },
-        response: taskResponse.result,
-      },
-      shouldPersist,
-    });
+      );
+
+      // Check if the tool response contains _save flag
+      const shouldPersist = (taskResponse.result?.data as any)?._save === true;
+      if (shouldPersist) {
+        this.logger.debug(
+          'Tool response contains _save flag - lane will be persisted to config',
+        );
+      }
+
+      // Return an EVALUATE result that contains the task execution output
+      return new oCapabilityResult({
+        type: oCapabilityType.EVALUATE,
+        config: this.config,
+        result: {
+          taskConfig: {
+            method: method,
+            params: params,
+          },
+          response: taskResponse.result,
+        },
+        shouldPersist,
+      });
+    } catch (error: any) {
+      this.logger.error(
+        'Failed to execute:',
+        `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+          {
+            method: method,
+            params: params,
+          },
+        )} resulting in error: ${error?.message}`,
+      );
+      return new oCapabilityResult({
+        type: oCapabilityType.EVALUATE,
+        config: this.config,
+        error: `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+          {
+            method: method,
+            params: params,
+          },
+        )} resulting in error: ${error?.message}`,
+      });
+    }
   }
 }
