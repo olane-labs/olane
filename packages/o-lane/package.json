@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-lane",
-  "version": "0.7.24",
+  "version": "0.7.25",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-test": "0.7.24",
+    "@olane/o-test": "0.7.25",
     "@tsconfig/node20": "^20.1.6",
     "@types/handlebars": "^4.1.0",
     "@types/jest": "^30.0.0",
@@ -57,12 +57,12 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.24",
-    "@olane/o-core": "0.7.24",
-    "@olane/o-node": "0.7.24",
-    "@olane/o-protocol": "0.7.24",
-    "@olane/o-storage": "0.7.24",
-    "@olane/o-tool": "0.7.24",
+    "@olane/o-config": "0.7.25",
+    "@olane/o-core": "0.7.25",
+    "@olane/o-node": "0.7.25",
+    "@olane/o-protocol": "0.7.25",
+    "@olane/o-storage": "0.7.25",
+    "@olane/o-tool": "0.7.25",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "handlebars": "^4.7.8"
