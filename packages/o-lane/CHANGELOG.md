@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.26 (2025-12-08)</small>
+
+- minor change ([c1a2c08](https://github.com/olane-labs/olane/commit/c1a2c08))
+
 ## <small>0.7.25 (2025-12-07)</small>
 
 - minor change ([6bde93e](https://github.com/olane-labs/olane/commit/6bde93e))
