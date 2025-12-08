@@ -52,7 +52,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       );
 
       // Extract stored execution data
-      const storedExecution = this.config.storedExecution;
+      const storedExecution = this.config.params.storedExecution;
 
       // Validate stored data exists (strict mode - fail if missing)
       if (!storedExecution) {

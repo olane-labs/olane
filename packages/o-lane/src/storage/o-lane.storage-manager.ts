@@ -196,7 +196,11 @@ export class oLaneStorageManager {
             capabilityType === oCapabilityType.EXECUTE &&
             sequenceItem.result
           ) {
-            replayConfig.storedExecution = {
+            // Ensure params object exists
+            if (!replayConfig.params) {
+              replayConfig.params = {};
+            }
+            replayConfig.params.storedExecution = {
               handshakeResult: sequenceItem?.result?.handshakeResult,
               taskConfig: sequenceItem?.result?.taskConfig,
             };

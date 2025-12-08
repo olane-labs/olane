@@ -7,15 +7,15 @@ export interface oCapabilityExecuteConfig extends oCapabilityConfig {
   params: {
     address: string;
     intent: string;
-  };
-  storedExecution?: {
-    handshakeResult: {
-      tools: string[];
-      methods: { [key: string]: oMethod };
-    };
-    taskConfig: {
-      method: string;
-      params: any;
+    storedExecution?: {
+      handshakeResult: {
+        tools: string[];
+        methods: { [key: string]: oMethod };
+      };
+      taskConfig: {
+        method: string;
+        params: any;
+      };
     };
   };
 }
