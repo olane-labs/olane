@@ -1,4 +1,3 @@
-
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
 import { oCapabilityConfig } from './o-capability.config.js';
 import { oCapabilityResultInterface } from './interfaces/o-capability.result-interface.js';
@@ -18,6 +17,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
     this.type = config.type || oCapabilityType.UNKNOWN;
     this.config = config.config;
     this.error = config.error;
+    this.shouldPersist = config.shouldPersist;
   }
 
   toJSON() {
@@ -26,7 +26,7 @@ export class oCapabilityResult implements oCapabilityResultInterface {
       result: this.result,
       type: this.type,
       error: this.error,
-      config: this.config?.toJSON()
+      config: this.config?.toJSON(),
     };
   }
 
