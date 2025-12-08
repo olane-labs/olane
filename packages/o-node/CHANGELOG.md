@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.29 (2025-12-08)</small>
+
+- fixed the replay functionality ([400a66e](https://github.com/olane-labs/olane/commit/400a66e))
+
 ## <small>0.7.28 (2025-12-08)</small>
 
 **Note:** Version bump only for package @olane/o-node
