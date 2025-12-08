@@ -13,7 +13,11 @@ import { oAddress, oError, oErrorCodes, NodeState } from '@olane/o-core';
 import { CID } from 'multiformats';
 import * as json from 'multiformats/codecs/json';
 import { sha256 } from 'multiformats/hashes/sha2';
-import { oCapabilityResult, oCapabilityType, oCapabilityConfig } from '../capabilities/index.js';
+import {
+  oCapabilityResult,
+  oCapabilityType,
+  oCapabilityConfig,
+} from '../capabilities/index.js';
 
 // Forward declaration to avoid circular dependency
 type oLane = any;
@@ -107,7 +111,8 @@ export class oLaneStorageManager {
 
     try {
       // Get the OS instance name from the node's system name
-      const systemName = (this.lane.node.config as any).systemName || 'default-os';
+      const systemName =
+        (this.lane.node.config as any).systemName || 'default-os';
 
       await this.lane.node.use(new oAddress('o://os-config'), {
         method: 'add_lane_to_config',
@@ -133,7 +138,9 @@ export class oLaneStorageManager {
         }
       }
 
-      this.lane.logger.debug('Lane CID added to startup config via o://os-config');
+      this.lane.logger.debug(
+        'Lane CID added to startup config via o://os-config',
+      );
     } catch (error) {
       this.lane.logger.error('Failed to add lane to startup config: ', error);
       throw error;
@@ -177,14 +184,27 @@ export class oLaneStorageManager {
           this.lane.logger.debug(`Replaying capability: ${capabilityType}`);
 
           // Create a capability result with replay flag
+          const replayConfig: any = {
+            ...sequenceItem.config,
+            isReplay: true,
+            node: this.lane.node,
+            history: this.lane.agentHistory,
+          };
+
+          // For EXECUTE capabilities, add stored execution data to skip handshake and intelligence
+          if (
+            capabilityType === oCapabilityType.EXECUTE &&
+            sequenceItem.result
+          ) {
+            replayConfig.storedExecution = {
+              handshakeResult: sequenceItem?.result?.handshakeResult,
+              taskConfig: sequenceItem?.result?.taskConfig,
+            };
+          }
+
           const replayStep = new oCapabilityResult({
             type: capabilityType,
-            config: {
-              ...sequenceItem.config,
-              isReplay: true,
-              node: this.lane.node,
-              history: this.lane.agentHistory,
-            },
+            config: replayConfig,
             result: sequenceItem.result,
             error: sequenceItem.error,
           });

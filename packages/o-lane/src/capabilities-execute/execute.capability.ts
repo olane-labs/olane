@@ -48,10 +48,89 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     // Check if we're in replay mode
     if (this.config.isReplay) {
       this.logger.debug(
-        'Execute capability is being replayed - re-executing to restore state',
+        'Execute capability is being replayed - using stored execution data',
       );
+
+      // Extract stored execution data
+      const storedExecution = this.config.storedExecution;
+
+      // Validate stored data exists (strict mode - fail if missing)
+      if (!storedExecution) {
+        throw new oError(
+          oErrorCodes.INVALID_RESPONSE,
+          'Replay mode enabled but no stored execution data found',
+        );
+      }
+
+      if (!storedExecution.handshakeResult || !storedExecution.taskConfig) {
+        throw new oError(
+          oErrorCodes.INVALID_RESPONSE,
+          'Replay mode enabled but stored execution data is incomplete',
+        );
+      }
+
+      const { handshakeResult, taskConfig } = storedExecution;
+      const { method, params } = taskConfig;
+
+      this.logger.debug('Replaying task execution with stored data', {
+        method,
+        params,
+        skipHandshake: true,
+        skipIntelligence: true,
+        skipApproval: true,
+      });
+
+      // Execute the stored task directly (skip handshake, AI, and approval)
+      try {
+        const taskResponse = await this.node.use(
+          new oAddress(this.config.params.address),
+          {
+            method: method,
+            params: params,
+          },
+        );
+
+        // Check if the tool response contains _save flag
+        const shouldPersist = (taskResponse.result?.data as any)?._save === true;
+        if (shouldPersist) {
+          this.logger.debug(
+            'Tool response contains _save flag - lane will be persisted to config',
+          );
+        }
+
+        // Return an EVALUATE result that contains the task execution output
+        return new oCapabilityResult({
+          type: oCapabilityType.EVALUATE,
+          config: this.config,
+          result: {
+            handshakeResult: handshakeResult,
+            taskConfig: taskConfig,
+            response: taskResponse.result,
+          },
+          shouldPersist,
+        });
+      } catch (error: any) {
+        this.logger.error(
+          'Failed to execute during replay:',
+          `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+            taskConfig,
+          )} resulting in error: ${error?.message}`,
+        );
+        return new oCapabilityResult({
+          type: oCapabilityType.EVALUATE,
+          config: this.config,
+          result: {
+            handshakeResult: handshakeResult,
+            taskConfig: taskConfig,
+          },
+          error: `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+            taskConfig,
+          )} resulting in error: ${error?.message}`,
+        });
+      }
     }
 
+    // Normal execution flow (not replay)
     const handshake = await this.handshake();
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
@@ -140,6 +219,10 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         type: oCapabilityType.EVALUATE,
         config: this.config,
         result: {
+          handshakeResult: {
+            tools: handshake.result.tools,
+            methods: handshake.result.methods,
+          },
           taskConfig: {
             method: method,
             params: params,
@@ -161,6 +244,16 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       return new oCapabilityResult({
         type: oCapabilityType.EVALUATE,
         config: this.config,
+        result: {
+          handshakeResult: {
+            tools: handshake.result.tools,
+            methods: handshake.result.methods,
+          },
+          taskConfig: {
+            method: method,
+            params: params,
+          },
+        },
         error: `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
           {
             method: method,
