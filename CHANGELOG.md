@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.27 (2025-12-08)</small>
+
+- support for execute replay ([081fc7f](https://github.com/olane-labs/olane/commit/081fc7f))
+- chore: update pnpm-lock.yaml after version bump ([ded2493](https://github.com/olane-labs/olane/commit/ded2493))
+
 ## <small>0.7.26 (2025-12-08)</small>
 
 - minor change ([c1a2c08](https://github.com/olane-labs/olane/commit/c1a2c08))
