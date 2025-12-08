@@ -10,7 +10,8 @@ export class oNodeConnectionManager extends oConnectionManager {
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
   private connectionsByTransportKey: Map<string, Connection> = new Map();
-  private pendingDialsByTransportKey: Map<string, Promise<Connection>> = new Map();
+  private pendingDialsByTransportKey: Map<string, Promise<Connection>> =
+    new Map();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
     super(config);
@@ -33,7 +34,10 @@ export class oNodeConnectionManager extends oConnectionManager {
         return;
       }
 
-      for (const [transportKey, cachedConnection] of this.connectionsByTransportKey.entries()) {
+      for (const [
+        transportKey,
+        cachedConnection,
+      ] of this.connectionsByTransportKey.entries()) {
         if (cachedConnection === connection) {
           this.logger.debug(
             'Connection closed, removing from cache for transport key:',
@@ -105,13 +109,19 @@ export class oNodeConnectionManager extends oConnectionManager {
     // Check if we have a cached connection by transport key
     const cachedConnection = this.connectionsByTransportKey.get(transportKey);
     if (cachedConnection && cachedConnection.status === 'open') {
-      this.logger.debug('Reusing cached connection for transports:', nextHopAddress);
+      this.logger.debug(
+        'Reusing cached connection for transports:',
+        nextHopAddress?.value,
+      );
       return cachedConnection;
     }
 
     // Clean up stale connection if it exists but is not open
     if (cachedConnection && cachedConnection.status !== 'open') {
-      this.logger.debug('Removing stale connection for transports:', transportKey);
+      this.logger.debug(
+        'Removing stale connection for transports:',
+        transportKey,
+      );
       this.connectionsByTransportKey.delete(transportKey);
     }
 
@@ -230,11 +240,15 @@ export class oNodeConnectionManager extends oConnectionManager {
       const connections = this.p2pNode.getConnections(peerId as any); // ignore since converting to a proper peer id breaks the browser implementation
 
       // Check if we have at least one open connection
-      const hasOpenConnection = connections.some((conn) => conn.status === 'open');
+      const hasOpenConnection = connections.some(
+        (conn) => conn.status === 'open',
+      );
 
       // If libp2p has an open connection, update our cache
       if (hasOpenConnection) {
-        const openConnection = connections.find((conn) => conn.status === 'open');
+        const openConnection = connections.find(
+          (conn) => conn.status === 'open',
+        );
         if (openConnection) {
           this.connectionsByTransportKey.set(transportKey, openConnection);
         }
@@ -311,12 +325,12 @@ export class oNodeConnectionManager extends oConnectionManager {
     return {
       cachedConnections: this.connectionsByTransportKey.size,
       pendingDials: this.pendingDialsByTransportKey.size,
-      connectionsByPeer: Array.from(this.connectionsByTransportKey.values()).map(
-        (conn) => ({
-          peerId: conn.remotePeer?.toString() ?? 'unknown',
-          status: conn.status,
-        }),
-      ),
+      connectionsByPeer: Array.from(
+        this.connectionsByTransportKey.values(),
+      ).map((conn) => ({
+        peerId: conn.remotePeer?.toString() ?? 'unknown',
+        status: conn.status,
+      })),
     };
   }
 
@@ -326,7 +340,10 @@ export class oNodeConnectionManager extends oConnectionManager {
    */
   cleanupStaleConnections(): number {
     let removed = 0;
-    for (const [transportKey, connection] of this.connectionsByTransportKey.entries()) {
+    for (const [
+      transportKey,
+      connection,
+    ] of this.connectionsByTransportKey.entries()) {
       if (connection.status !== 'open') {
         this.connectionsByTransportKey.delete(transportKey);
         removed++;

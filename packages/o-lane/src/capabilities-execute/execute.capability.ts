@@ -52,10 +52,11 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       );
 
       // Extract stored execution data
-      const storedExecution = this.config.params.storedExecution;
+      const storedExecution = this.config.params;
 
       // Validate stored data exists (strict mode - fail if missing)
       if (!storedExecution) {
+        this.logger.warn('Invalid replay:', this.config);
         throw new oError(
           oErrorCodes.INVALID_RESPONSE,
           'Replay mode enabled but no stored execution data found',
@@ -91,7 +92,8 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         );
 
         // Check if the tool response contains _save flag
-        const shouldPersist = (taskResponse.result?.data as any)?._save === true;
+        const shouldPersist =
+          (taskResponse.result?.data as any)?._save === true;
         if (shouldPersist) {
           this.logger.debug(
             'Tool response contains _save flag - lane will be persisted to config',
@@ -220,13 +222,14 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         config: this.config,
         result: {
           handshakeResult: {
-            tools: handshake.result.tools,
-            methods: handshake.result.methods,
+            tools: tools,
+            methods: methods,
           },
           taskConfig: {
             method: method,
             params: params,
           },
+          address: this.config.params.address,
           response: taskResponse.result,
         },
         shouldPersist,

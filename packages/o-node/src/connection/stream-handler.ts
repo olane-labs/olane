@@ -145,7 +145,6 @@ export class StreamHandler {
       try {
         // force the close for now until we can implement a proper close
         await stream.abort(new Error('Stream closed'));
-        this.logger.debug('Stream closed successfully');
       } catch (error: any) {
         this.logger.debug('Error closing stream:', error.message);
       }

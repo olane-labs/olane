@@ -206,15 +206,13 @@ export class oLane extends oObject {
    * @returns Array of instantiated capabilities matching the specified types
    */
   private filterCapabilitiesByType(types: oCapabilityType[]): oCapability[] {
-    return ALL_CAPABILITIES
-      .map((CapabilityClass) => {
-        const instance = new CapabilityClass({
-          promptLoader: this.promptLoader,
-          node: this.node
-        });
-        return instance;
-      })
-      .filter((capability) => types.includes(capability.type));
+    return ALL_CAPABILITIES.map((CapabilityClass) => {
+      const instance = new CapabilityClass({
+        promptLoader: this.promptLoader,
+        node: this.node,
+      });
+      return instance;
+    }).filter((capability) => types.includes(capability.type));
   }
 
   get capabilities() {
@@ -230,10 +228,13 @@ export class oLane extends oObject {
       return this.filterCapabilitiesByType(this.config.enabledCapabilityTypes);
     }
 
-    return ALL_CAPABILITIES.map((c) => new c({
-      promptLoader: this.promptLoader,
-      node: this.node
-    }));
+    return ALL_CAPABILITIES.map(
+      (c) =>
+        new c({
+          promptLoader: this.promptLoader,
+          node: this.node,
+        }),
+    );
   }
 
   resultToConfig(result: any): oCapabilityConfig {
@@ -263,9 +264,11 @@ export class oLane extends oObject {
           const capabilityConfig: oCapabilityConfig =
             this.resultToConfig(currentStep);
           this.logger.debug('Executing capability: ', capabilityType);
-          const result = await capability.execute(oCapabilityConfig.fromJSON({
-            ...capabilityConfig,
-          }));
+          const result = await capability.execute(
+            oCapabilityConfig.fromJSON({
+              ...capabilityConfig,
+            }),
+          );
           return result;
         }
       }

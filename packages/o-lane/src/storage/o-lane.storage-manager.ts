@@ -180,7 +180,7 @@ export class oLaneStorageManager {
         const capabilityType = sequenceItem.type;
 
         // Determine if this capability should be replayed
-        if (this.shouldReplayCapability(capabilityType)) {
+        if (this.shouldReplayCapability(sequenceItem)) {
           this.lane.logger.debug(`Replaying capability: ${capabilityType}`);
 
           // Create a capability result with replay flag
@@ -192,22 +192,21 @@ export class oLaneStorageManager {
           };
 
           // For EXECUTE capabilities, add stored execution data to skip handshake and intelligence
-          if (
-            capabilityType === oCapabilityType.EXECUTE &&
-            sequenceItem.result
-          ) {
+          if (sequenceItem.result?.taskConfig) {
             // Ensure params object exists
             if (!replayConfig.params) {
               replayConfig.params = {};
             }
-            replayConfig.params.storedExecution = {
+            replayConfig.params = {
+              ...replayConfig.params,
               handshakeResult: sequenceItem?.result?.handshakeResult,
               taskConfig: sequenceItem?.result?.taskConfig,
+              address: sequenceItem?.result?.address,
             };
           }
 
           const replayStep = new oCapabilityResult({
-            type: capabilityType,
+            type: oCapabilityType.EXECUTE,
             config: replayConfig,
             result: sequenceItem.result,
             error: sequenceItem.error,
@@ -245,13 +244,8 @@ export class oLaneStorageManager {
    * @param capabilityType The type of capability to check
    * @returns True if capability should be re-executed
    */
-  shouldReplayCapability(capabilityType: oCapabilityType): boolean {
-    const replayTypes = [
-      oCapabilityType.EXECUTE,
-      oCapabilityType.CONFIGURE,
-      oCapabilityType.MULTIPLE_STEP,
-    ];
-    return replayTypes.includes(capabilityType);
+  shouldReplayCapability(capabilityResult: any): boolean {
+    return !!capabilityResult?.result?.taskConfig;
   }
 
   /**

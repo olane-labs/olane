@@ -60,9 +60,9 @@ export class oNodeConnection extends oConnection {
 
   async transmit(request: oRequest): Promise<oResponse> {
     try {
-      if (this.config.runOnLimitedConnection) {
-        this.logger.debug('Running on limited connection...');
-      }
+      // if (this.config.runOnLimitedConnection) {
+      //   this.logger.debug('Running on limited connection...');
+      // }
       const stream = await this.getOrCreateStream();
 
       this.validate(stream);
