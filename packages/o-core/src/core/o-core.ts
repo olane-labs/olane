@@ -401,7 +401,7 @@ export abstract class oCore extends oObject {
     );
   }
 
-  async hookStartFinished(): Promise<void> {}
+  protected async hookStartFinished(): Promise<void> {}
 
   /**
    * Starts the node by transitioning through initialization and registration phases.
@@ -566,7 +566,10 @@ export abstract class oCore extends oObject {
     }
 
     // Reset address to config address with no transports
-    this.address = new oAddress(this.config.address.toStaticAddress().value, []);
+    this.address = new oAddress(
+      this.config.address.toStaticAddress().value,
+      [],
+    );
 
     // Reset hierarchy manager to initial state
     this.hierarchyManager = new oHierarchyManager({

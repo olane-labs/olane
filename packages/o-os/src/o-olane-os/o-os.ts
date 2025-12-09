@@ -8,7 +8,7 @@ import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import {  oLaneTool } from '@olane/o-lane';
+import { oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
@@ -104,18 +104,24 @@ export class OlaneOS extends oObject {
    */
   private async loadConfigFromStorage() {
     if (!this.rootLeader) {
-      this.logger.warn('No root leader available, skipping storage config load');
+      this.logger.warn(
+        'No root leader available, skipping storage config load',
+      );
       return;
     }
 
     try {
       const osInstanceName = await this.getOSInstanceName();
       if (!osInstanceName) {
-        this.logger.warn('No OS instance name available, skipping storage config load');
+        this.logger.warn(
+          'No OS instance name available, skipping storage config load',
+        );
         return;
       }
 
-      this.logger.debug(`Loading config from o://os-config for: ${osInstanceName}`);
+      this.logger.debug(
+        `Loading config from o://os-config for: ${osInstanceName}`,
+      );
 
       // Try to load existing config from storage
       const loadResult = await this.rootLeader.use(
@@ -163,7 +169,10 @@ export class OlaneOS extends oObject {
         this.logger.info('Created default config in storage');
       }
     } catch (error) {
-      this.logger.error('Failed to load config from storage (non-fatal):', error);
+      this.logger.error(
+        'Failed to load config from storage (non-fatal):',
+        error,
+      );
       // Don't throw - allow OS to continue with filesystem config
     }
   }
@@ -212,18 +221,18 @@ export class OlaneOS extends oObject {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
-        (commonNode as any).hookInitializeFinished = () => {
+        (commonNode as any).onInitFinished(() => {
           this.rootLeader?.addChildNode(commonNode as any);
-        };
+        });
         await commonNode.start();
         const olaneStorage = new oLaneStorage({
           name: 'lane-storage',
           parent: commonNode.address,
           leader: this.rootLeader?.address || null,
         });
-        (olaneStorage as any).hookInitializeFinished = () => {
+        (olaneStorage as any).onInitFinished(() => {
           commonNode.addChildNode(olaneStorage as any);
-        };
+        });
         await olaneStorage.start();
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);

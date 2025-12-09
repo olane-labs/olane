@@ -179,7 +179,7 @@ export class oLane extends oObject {
         this.logger.error('Error in preflight: ', error);
 
         this.result = new oCapabilityResult({
-          type: oCapabilityType.ERROR,
+          type: oCapabilityType.STOP,
           result: null,
           error: 'Intelligence services are not available. Try again later.',
         });
@@ -275,13 +275,23 @@ export class oLane extends oObject {
     } catch (error) {
       this.logger.error('Error in doCapability: ', error);
       const errorResult = new oCapabilityResult({
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         result: null,
         error: error instanceof Error ? error.message : 'Unknown error',
+        config: oCapabilityConfig.fromJSON({
+          laneConfig: this.config,
+          intent: this.intent,
+          node: this.node,
+          history: this.agentHistory,
+          chatHistory: this.config.chatHistory,
+        }),
       });
       return errorResult;
     }
-    throw new oError(oErrorCodes.INVALID_CAPABILITY, 'Unknown capability');
+    throw new oError(
+      oErrorCodes.INVALID_CAPABILITY,
+      'Unknown capability:' + currentStep.type,
+    );
   }
 
   async loop(): Promise<oCapabilityResult> {

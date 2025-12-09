@@ -40,9 +40,9 @@ export const initCommonTools = async (oNode: oLaneTool) => {
   ];
   await Promise.all(
     tools.map(async (tool) => {
-      (tool as any).hookInitializeFinished = () => {
+      (tool as any).onInitFinished(() => {
         oNode.addChildNode(tool as any);
-      };
+      });
       await tool.start();
     }),
   );

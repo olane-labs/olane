@@ -52,9 +52,9 @@ export class StorageTool extends oNodeTool {
     ];
 
     for (const tool of tools) {
-      (tool as any).hookInitializeFinished = () => {
+      (tool as any).onInitFinished(() => {
         this.addChildNode(tool);
-      };
+      });
       await tool.start();
     }
   }

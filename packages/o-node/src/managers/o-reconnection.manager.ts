@@ -73,6 +73,7 @@ export class oReconnectionManager extends oObject {
 
   async handleNodeConnected(event: any) {
     const connectedEvent = event as NodeConnectedEvent;
+    // if leader is back online re-register
     if (
       connectedEvent.nodeAddress.toString() === oAddress.leader().toString()
     ) {
@@ -81,6 +82,12 @@ export class oReconnectionManager extends oObject {
         method: 'register_leader',
         params: {},
       });
+    }
+    if (
+      connectedEvent.nodeAddress.toString() === this.node.config.parent?.value
+    ) {
+      // connect to the parent and register
+      await this.node.registerParent();
     }
   }
 
@@ -320,14 +327,19 @@ export class oReconnectionManager extends oObject {
         if (!this.node.config.parent) {
           throw new Error('Invalid parent definition');
         }
-        const response = await this.node.use(this.node.config.parent, {
-          method: 'identify',
-          params: {},
-        });
+        this.logger.debug('Calling parent identify');
+        const response = await this.node.use(
+          new oNodeAddress(this.node.config.parent.value),
+          {
+            method: 'identify',
+            params: {},
+          },
+        );
 
         this.logger.debug('Identify parent response:', response.result.data);
 
-        const { address: parentAddress, transports: parentTransports } = response.result.data as any;
+        const { address: parentAddress, transports: parentTransports } =
+          response.result.data as any;
 
         // Check if parent was found in registry
         if (parentAddress && parentTransports && parentTransports.length > 0) {
@@ -338,9 +350,7 @@ export class oReconnectionManager extends oObject {
           // Update parent reference with fresh transports
           this.node.config.parent = new oNodeAddress(
             parentAddress,
-            parentTransports.map(
-              (value: string) => new oNodeTransport(value),
-            ),
+            parentTransports.map((value: string) => new oNodeTransport(value)),
           );
           // Attempt to register with parent and re-register with registry
           try {

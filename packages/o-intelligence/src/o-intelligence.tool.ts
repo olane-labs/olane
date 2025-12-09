@@ -263,21 +263,23 @@ export class IntelligenceTool extends oLaneTool {
         params: {
           _isStreaming: _isStreaming as boolean,
           apiKey: intelligence.apiKey,
-          messages: !!userMessage ? [ 
-            {
-              role: 'assistant',
-              content: prompt
-            },
-            {
-              role: 'user',
-              content: userMessage,
-            },
-          ] : [
-            {
-              role: 'user',
-              content: prompt
-            },
-          ],
+          messages: !!userMessage
+            ? [
+                {
+                  role: 'assistant',
+                  content: prompt,
+                },
+                {
+                  role: 'user',
+                  content: userMessage,
+                },
+              ]
+            : [
+                {
+                  role: 'user',
+                  content: prompt,
+                },
+              ],
         },
       },
       {
@@ -323,9 +325,9 @@ export class IntelligenceTool extends oLaneTool {
     ];
 
     for (const tool of tools) {
-      (tool as any).hookInitializeFinished = () => {
+      (tool as any).onInitFinished(() => {
         this.addChildNode(tool);
-      };
+      });
       await tool.start();
     }
   }

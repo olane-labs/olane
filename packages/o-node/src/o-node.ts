@@ -44,6 +44,8 @@ export class oNode extends oToolBase {
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   protected reconnectionManager?: oReconnectionManager;
   protected didRegister: boolean = false;
+  protected hooksStartFinished: any[] = [];
+  protected hooksInitFinished: any[] = [];
 
   constructor(config: oNodeConfig) {
     super(config);
@@ -435,7 +437,7 @@ export class oNode extends oToolBase {
 
     // handle the address encapsulation
     if (this.config.parent) {
-      const parentAddress = this.config.parent
+      const parentAddress = this.config.parent;
       this.address = CoreUtils.childAddress(
         parentAddress,
         this.address,
@@ -479,13 +481,41 @@ export class oNode extends oToolBase {
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      originAddress: this.address?.value
+      originAddress: this.address?.value,
     });
   }
 
-  async hookInitializeFinished(): Promise<void> {}
+  protected async hookInitializeFinished(): Promise<void> {
+    this.logger.debug('Running init-finished hooks');
+    this.hooksInitFinished.forEach((hook) => {
+      try {
+        hook();
+      } catch (error) {
+        this.logger.error('Failed to run hook:', error);
+      }
+    });
+    this.logger.debug('Completed init-finished hooks');
+  }
 
-  async hookStartFinished(): Promise<void> {
+  onInitFinished(cb: Function) {
+    this.hooksInitFinished.push(cb);
+  }
+
+  onStartFinished(cb: Function) {
+    this.hooksStartFinished.push(cb);
+  }
+
+  protected async hookStartFinished(): Promise<void> {
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
+
     // Initialize connection health monitor
     this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
       this as any,
@@ -504,6 +534,15 @@ export class oNode extends oToolBase {
       `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
         `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
     );
+    this.logger.debug('Running start-finished hooks');
+    this.hooksStartFinished.forEach((hook) => {
+      try {
+        hook();
+      } catch (error) {
+        this.logger.error('Failed to run hook:', error);
+      }
+    });
+    this.logger.debug('Completed start-finished hooks');
   }
 
   /**
@@ -527,14 +566,14 @@ export class oNode extends oToolBase {
     if (!leaderAddress.transports || leaderAddress.transports.length === 0) {
       throw new Error(
         `Leader address is defined (${leaderAddress.toString()}) but has no transports. ` +
-        `Non-leader nodes require leader transports for network connectivity. ` +
-        `Please provide transports in the leader address configuration.`
+          `Non-leader nodes require leader transports for network connectivity. ` +
+          `Please provide transports in the leader address configuration.`,
       );
     }
 
     this.logger.debug('Leader transport validation passed', {
       leader: leaderAddress.toString(),
-      transportCount: leaderAddress.transports.length
+      transportCount: leaderAddress.transports.length,
     });
   }
 
@@ -584,15 +623,6 @@ export class oNode extends oToolBase {
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
 
-    this.reconnectionManager = new oReconnectionManager(this, {
-      enabled: true,
-      maxAttempts: 10,
-      baseDelayMs: 5_000,
-      maxDelayMs: 20_000,
-      useLeaderFallback: true,
-      parentDiscoveryIntervalMs: 5_000,
-      parentDiscoveryMaxDelayMs: 20_000,
-    });
     await this.hookInitializeFinished();
   }
 

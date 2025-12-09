@@ -76,7 +76,7 @@ export class TestEnvironment {
    */
   async createLeader<T extends oNode>(
     LeaderClass: new (config: any) => T,
-    options: LeaderNodeOptions = {}
+    options: LeaderNodeOptions = {},
   ): Promise<T> {
     const { autoStart = true, ...config } = options;
 
@@ -119,7 +119,7 @@ export class TestEnvironment {
   async createToolWithLeader<T extends oNode>(
     ToolClass: new (config: any) => T,
     config: TestNodeConfig = {},
-    LeaderClass?: new (config: any) => any
+    LeaderClass?: new (config: any) => any,
   ): Promise<ToolWithLeaderResult<T>> {
     // Dynamic import to avoid circular dependency
     let leader: any;
@@ -134,7 +134,7 @@ export class TestEnvironment {
       } catch (error) {
         throw new Error(
           'LeaderClass not provided and @olane/o-leader not available. ' +
-          'Please provide LeaderClass explicitly.'
+            'Please provide LeaderClass explicitly.',
         );
       }
     }
@@ -146,13 +146,9 @@ export class TestEnvironment {
     });
 
     // Inject hook for parent-child registration
-    const originalHook = (tool as any).hookInitializeFinished?.bind(tool);
-    (tool as any).hookInitializeFinished = async () => {
+    (tool as any).onInitFinished(() => {
       leader.addChildNode(tool);
-      if (originalHook) {
-        await originalHook();
-      }
-    };
+    });
 
     this.track(tool);
     await tool.start();
@@ -178,7 +174,7 @@ export class TestEnvironment {
   async createNode<T extends oNode>(
     NodeClass: new (config: any) => T,
     config: TestNodeConfig = {},
-    autoStart: boolean = true
+    autoStart: boolean = true,
   ): Promise<T> {
     const node = new NodeClass({
       parent: null,
@@ -295,7 +291,7 @@ export class TestEnvironment {
    * @returns True if all nodes are stopped
    */
   allNodesStopped(): boolean {
-    return this.nodes.every(node => node.state === NodeState.STOPPED);
+    return this.nodes.every((node) => node.state === NodeState.STOPPED);
   }
 
   /**
@@ -314,7 +310,7 @@ export class TestEnvironment {
   async waitFor(
     condition: () => boolean,
     timeoutMs: number = 5000,
-    intervalMs: number = 100
+    intervalMs: number = 100,
   ): Promise<void> {
     const startTime = Date.now();
 
@@ -322,7 +318,7 @@ export class TestEnvironment {
       if (Date.now() - startTime > timeoutMs) {
         throw new Error(`Timeout waiting for condition after ${timeoutMs}ms`);
       }
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
     }
   }
 }

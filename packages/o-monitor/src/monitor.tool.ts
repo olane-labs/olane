@@ -59,7 +59,8 @@ export class MonitorTool extends oLaneTool {
       config.enableHTTP ?? process.env.MONITOR_HTTP_ENABLED !== 'false';
 
     // Create a Prometheus registry if not provided
-    this.prometheusRegistry = config.prometheusRegistry || new promClient.Registry();
+    this.prometheusRegistry =
+      config.prometheusRegistry || new promClient.Registry();
   }
 
   async initialize(): Promise<void> {
@@ -118,10 +119,10 @@ export class MonitorTool extends oLaneTool {
     this.heartbeatProvider.initConnectionManager = async () => {
       this.heartbeatProvider!.connectionManager = this.connectionManager;
     };
-    this.heartbeatProvider.hookInitializeFinished = async () => {
+    this.heartbeatProvider.onInitFinished(() => {
       if (!this.heartbeatProvider) return;
       this.addChildNode(this.heartbeatProvider);
-    };
+    });
     await this.heartbeatProvider.start();
 
     // Node Health Provider
@@ -133,10 +134,10 @@ export class MonitorTool extends oLaneTool {
     this.nodeHealthProvider.initConnectionManager = async () => {
       this.nodeHealthProvider!.connectionManager = this.connectionManager;
     };
-    this.nodeHealthProvider.hookInitializeFinished = async () => {
+    this.nodeHealthProvider.onInitFinished(() => {
       if (!this.nodeHealthProvider) return;
       this.addChildNode(this.nodeHealthProvider);
-    };
+    });
     await this.nodeHealthProvider.start();
 
     // LibP2P Metrics Provider
@@ -154,10 +155,10 @@ export class MonitorTool extends oLaneTool {
     this.libp2pMetricsProvider.initConnectionManager = async () => {
       this.libp2pMetricsProvider!.connectionManager = this.connectionManager;
     };
-    this.libp2pMetricsProvider.hookInitializeFinished = async () => {
+    this.libp2pMetricsProvider.onInitFinished(() => {
       if (!this.libp2pMetricsProvider) return;
       this.addChildNode(this.libp2pMetricsProvider);
-    };
+    });
     await this.libp2pMetricsProvider.start();
 
     this.logger.debug('All provider nodes initialized');
