@@ -306,6 +306,7 @@ export class oReconnectionManager extends oObject {
    * Wait for non-leader parent to appear in registry and reconnect
    */
   async waitForParentAndReconnect() {
+    this.logger.debug('waitForParentAndReconnect...');
     const startTime = Date.now();
     let attempt = 0;
     let currentDelay = this.config.parentDiscoveryIntervalMs;

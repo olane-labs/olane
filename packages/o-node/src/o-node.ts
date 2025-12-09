@@ -216,6 +216,16 @@ export class oNode extends oToolBase {
       return;
     }
 
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
+
     if (!this.parent?.libp2pTransports?.length) {
       this.logger.debug(
         'Parent has no transports, waiting for reconnection & leader ack',
@@ -223,7 +233,7 @@ export class oNode extends oToolBase {
       if (this.parent?.toString() === oAddress.leader().toString()) {
         this.parent.setTransports(this.leader?.libp2pTransports || []);
       } else {
-        this.logger.debug('Waiting for parent and reconnecting...');
+        this.logger.debug('Waiting for parent and reconnecting... hello');
         await this.reconnectionManager?.waitForParentAndReconnect();
       }
     }
@@ -506,34 +516,24 @@ export class oNode extends oToolBase {
   }
 
   protected async hookStartFinished(): Promise<void> {
-    this.reconnectionManager = new oReconnectionManager(this, {
-      enabled: true,
-      maxAttempts: 10,
-      baseDelayMs: 5_000,
-      maxDelayMs: 20_000,
-      useLeaderFallback: true,
-      parentDiscoveryIntervalMs: 5_000,
-      parentDiscoveryMaxDelayMs: 20_000,
-    });
-
     // Initialize connection health monitor
-    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
-      this as any,
-      {
-        enabled: this.config.connectionHeartbeat?.enabled ?? true,
-        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
-        failureThreshold:
-          this.config.connectionHeartbeat?.failureThreshold ?? 3,
-        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
-        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
-        checkLeader: true,
-      },
-    );
+    // this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
+    //   this as any,
+    //   {
+    //     enabled: this.config.connectionHeartbeat?.enabled ?? true,
+    //     intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
+    //     failureThreshold:
+    //       this.config.connectionHeartbeat?.failureThreshold ?? 3,
+    //     checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
+    //     checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
+    //     checkLeader: true,
+    //   },
+    // );
 
-    this.logger.info(
-      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
-        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
-    );
+    // this.logger.info(
+    //   `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
+    //     `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
+    // );
     this.logger.debug('Running start-finished hooks');
     this.hooksStartFinished.forEach((hook) => {
       try {
