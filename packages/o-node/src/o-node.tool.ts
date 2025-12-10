@@ -1,8 +1,4 @@
-import {
-  oAddress,
-  oRequest,
-  ChildJoinedEvent,
-} from '@olane/o-core';
+import { oAddress, oRequest, ChildJoinedEvent } from '@olane/o-core';
 import { oTool } from '@olane/o-tool';
 import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
@@ -46,7 +42,6 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
-
     // Use StreamHandler for consistent stream handling
     // This follows libp2p v3 best practices for immediate message listener attachment
     await this.streamHandler.handleIncomingStream(
@@ -99,6 +94,12 @@ export class oNodeTool extends oTool(oServerNode) {
         }),
       );
     }
+
+    // create downward direction connection
+    await this.useChild(childAddress, {
+      method: 'ping',
+      params: {},
+    });
 
     return {
       message: `Child node registered with parent! ${childAddress.toString()}`,

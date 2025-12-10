@@ -34,7 +34,7 @@ export abstract class oCore extends oObject {
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
   public connectionManager!: oConnectionManager;
-  public hierarchyManager: oHierarchyManager;
+  public hierarchyManager!: oHierarchyManager;
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
   public router!: oRouter;
@@ -53,10 +53,6 @@ export abstract class oCore extends oObject {
     }
 
     this.address = config.address || new oAddress('o://node');
-    this.hierarchyManager = new oHierarchyManager({
-      leaders: this.config.leader ? [this.config.leader] : [],
-      parents: this.config.parent ? [this.config.parent] : [],
-    });
   }
 
   get isLeader(): boolean {
@@ -387,11 +383,7 @@ export abstract class oCore extends oObject {
   }
 
   // initialize
-  async initialize(): Promise<void> {
-    // Create and initialize notification manager
-    this.notificationManager = this.createNotificationManager();
-    await this.notificationManager.initialize();
-  }
+  async initialize(): Promise<void> {}
 
   get isRunning(): boolean {
     return (
@@ -572,10 +564,7 @@ export abstract class oCore extends oObject {
     );
 
     // Reset hierarchy manager to initial state
-    this.hierarchyManager = new oHierarchyManager({
-      leaders: this.config.leader ? [this.config.leader] : [],
-      parents: this.config.parent ? [this.config.parent] : [],
-    });
+    this.hierarchyManager.clear();
   }
 
   get dependencies(): oDependency[] {

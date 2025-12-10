@@ -77,20 +77,11 @@ export class oNode extends oToolBase {
   }
 
   async initializeRouter(): Promise<void> {
-    this.hierarchyManager = new oNodeHierarchyManager({
-      leaders: this.config.leader ? [this.config.leader] : [],
-      parents: this.config.parent ? [this.config.parent] : [],
-      children: [],
-    });
     this.router = new oNodeRouter();
   }
 
   protected createNotificationManager(): oNotificationManager {
-    return new oNodeNotificationManager(
-      this.p2pNode,
-      this.hierarchyManager,
-      this.address,
-    );
+    return new oNodeNotificationManager(this.p2pNode, this.address);
   }
 
   get staticAddress(): oNodeAddress {
@@ -216,16 +207,6 @@ export class oNode extends oToolBase {
       return;
     }
 
-    this.reconnectionManager = new oReconnectionManager(this, {
-      enabled: true,
-      maxAttempts: 10,
-      baseDelayMs: 5_000,
-      maxDelayMs: 20_000,
-      useLeaderFallback: true,
-      parentDiscoveryIntervalMs: 5_000,
-      parentDiscoveryMaxDelayMs: 20_000,
-    });
-
     if (!this.parent?.libp2pTransports?.length) {
       this.logger.debug(
         'Parent has no transports, waiting for reconnection & leader ack',
@@ -256,6 +237,7 @@ export class oNode extends oToolBase {
         },
       });
       this.setKeepAliveTag(this.parent as oNodeAddress);
+      this.hierarchyManager.addParent(this.parent);
     }
   }
 
@@ -497,6 +479,7 @@ export class oNode extends oToolBase {
 
   protected async hookInitializeFinished(): Promise<void> {
     this.logger.debug('Running init-finished hooks');
+
     this.hooksInitFinished.forEach((hook) => {
       try {
         hook();
@@ -516,6 +499,7 @@ export class oNode extends oToolBase {
   }
 
   protected async hookStartFinished(): Promise<void> {
+    await super.hookStartFinished();
     // Initialize connection health monitor
     // this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
     //   this as any,
@@ -534,6 +518,7 @@ export class oNode extends oToolBase {
     //   `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
     //     `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
     // );
+
     this.logger.debug('Running start-finished hooks');
     this.hooksStartFinished.forEach((hook) => {
       try {
@@ -598,7 +583,30 @@ export class oNode extends oToolBase {
     }
 
     await this.createNode();
+
+    // Create and initialize notification manager
+    this.notificationManager = this.createNotificationManager();
+    await this.notificationManager.initialize();
+
     await this.initializeRouter();
+
+    this.hierarchyManager = new oNodeHierarchyManager({
+      leaders: this.config.leader ? [this.config.leader] : [],
+      parents: this.config.parent ? [this.config.parent] : [],
+      children: [],
+      address: this.address,
+      notificationManager: this.notificationManager as oNodeNotificationManager,
+    });
+
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
 
     // need to wait until our libpp2 node is initialized before calling super.initialize
     await super.initialize();
@@ -686,6 +694,7 @@ export class oNode extends oToolBase {
       leaders: this.config.leader ? [this.config.leader] : [],
       parents: this.config.parent ? [this.config.parent] : [],
       children: [],
+      address: this.address,
     });
 
     // Clear router (will be recreated in initialize)

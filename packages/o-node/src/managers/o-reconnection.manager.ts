@@ -143,36 +143,36 @@ export class oReconnectionManager extends oObject {
     this.reconnecting = true;
     let attempt = 0;
 
-    while (attempt < this.config.maxAttempts) {
-      attempt++;
+    // while (attempt < this.config.maxAttempts) {
+    //   attempt++;
 
-      this.logger.info(
-        `Reconnection attempt ${attempt}/${this.config.maxAttempts} to parent: ${this.node.config.parent}`,
-      );
+    //   this.logger.info(
+    //     `Reconnection attempt ${attempt}/${this.config.maxAttempts} to parent: ${this.node.config.parent}`,
+    //   );
 
-      try {
-        // Strategy 1: Try direct parent reconnection
-        await this.tryDirectParentReconnection();
+    //   try {
+    //     // Strategy 1: Try direct parent reconnection
+    //     await this.tryDirectParentReconnection();
 
-        // Success!
-        this.reconnecting = false;
-        this.logger.info(
-          `Successfully reconnected to parent after ${attempt} attempts`,
-        );
-        return;
-      } catch (error) {
-        this.logger.warn(
-          `Reconnection attempt ${attempt} failed:`,
-          error instanceof Error ? error.message : error,
-        );
+    //     // Success!
+    //     this.reconnecting = false;
+    //     this.logger.info(
+    //       `Successfully reconnected to parent after ${attempt} attempts`,
+    //     );
+    //     return;
+    //   } catch (error) {
+    //     this.logger.warn(
+    //       `Reconnection attempt ${attempt} failed:`,
+    //       error instanceof Error ? error.message : error,
+    //     );
 
-        if (attempt < this.config.maxAttempts) {
-          const delay = this.calculateBackoffDelay(attempt);
-          this.logger.debug(`Waiting ${delay}ms before next attempt...`);
-          await this.sleep(delay);
-        }
-      }
-    }
+    //     if (attempt < this.config.maxAttempts) {
+    //       const delay = this.calculateBackoffDelay(attempt);
+    //       this.logger.debug(`Waiting ${delay}ms before next attempt...`);
+    //       await this.sleep(delay);
+    //     }
+    //   }
+    // }
 
     // All direct attempts failed - try leader fallback
     if (this.config.useLeaderFallback) {
