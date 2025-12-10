@@ -69,5 +69,5 @@
     "dotenv": "^16.5.0",
     "langchain": "0.3.29"
   },
-  "gitHead": "e835a1c5fe08badb3611ce9750c1eae5ce128aa5"
+  "gitHead": "4325f48b1bc522402e4e9d7fec0628d987eb4314"
 }
