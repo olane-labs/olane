@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.30 (2025-12-10)</small>
+
+- clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
+- fixes for reconnection after parent / leader disconnect ([92bbe0c](https://github.com/olane-labs/olane/commit/92bbe0c))
+
 ## <small>0.7.29 (2025-12-08)</small>
 
 **Note:** Version bump only for package @olane/o-core
