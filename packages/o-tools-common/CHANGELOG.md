@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.31 (2025-12-10)</small>
+
+- minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
+- minor change ([4325f48](https://github.com/olane-labs/olane/commit/4325f48))
+- minor change ([e835a1c](https://github.com/olane-labs/olane/commit/e835a1c))
+- minor change ([378008a](https://github.com/olane-labs/olane/commit/378008a))
+- minor change ([6be2758](https://github.com/olane-labs/olane/commit/6be2758))
+- minor change ([01a6f75](https://github.com/olane-labs/olane/commit/01a6f75))
+
 ## <small>0.7.30 (2025-12-10)</small>
 
 - clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
