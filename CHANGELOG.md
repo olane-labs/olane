@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.32 (2025-12-11)</small>
+
+- lane refactor complete ([2321784](https://github.com/olane-labs/olane/commit/2321784))
+- minor change ([d3ecec4](https://github.com/olane-labs/olane/commit/d3ecec4))
+- minor change ([a17496f](https://github.com/olane-labs/olane/commit/a17496f))
+- chore: update pnpm-lock.yaml after version bump ([0fdac42](https://github.com/olane-labs/olane/commit/0fdac42))
+
 ## <small>0.7.31 (2025-12-10)</small>
 
 - minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
