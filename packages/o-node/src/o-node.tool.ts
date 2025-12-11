@@ -62,6 +62,9 @@ export class oNodeTool extends oTool(oServerNode) {
           throw error; // StreamHandler will handle error response building
         }
       },
+      {
+        useLengthPrefixing: this.config.useLengthPrefixing ?? true,
+      },
     );
   }
 

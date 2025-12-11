@@ -129,6 +129,24 @@ export class StreamHandler {
   }
 
   /**
+   * Sends data through a stream using length-prefixed encoding (libp2p v3 best practice)
+   * Each message is automatically prefixed with a varint indicating the message length
+   * This ensures proper message boundaries and eliminates concatenation issues
+   *
+   * @param stream - The stream to send data through
+   * @param data - The data to send
+   * @param config - Configuration for timeout and other options
+   */
+  async sendLengthPrefixed(
+    stream: Stream,
+    data: Uint8Array,
+    config: StreamHandlerConfig = {},
+  ): Promise<void> {
+    const lp = lpStream(stream);
+    await lp.write(data, { signal: config.signal });
+  }
+
+  /**
    * Closes a stream safely with error handling
    *
    * @param stream - The stream to close
@@ -152,6 +170,54 @@ export class StreamHandler {
   }
 
   /**
+   * Handles an incoming stream on the server side using length-prefixed protocol
+   * Uses async read loops instead of event listeners (libp2p v3 best practice)
+   * Processes complete messages with proper boundaries
+   *
+   * @param stream - The incoming stream
+   * @param connection - The connection the stream belongs to
+   * @param toolExecutor - Function to execute tools for requests
+   */
+  async handleIncomingStreamLP(
+    stream: Stream,
+    connection: Connection,
+    toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
+  ): Promise<void> {
+    const lp = lpStream(stream);
+
+    try {
+      while (stream.status === 'open') {
+        // Read complete length-prefixed message
+        const messageBytes = await lp.read();
+        const decoded = new TextDecoder().decode(messageBytes.subarray());
+
+        // Ignore non-JSON messages
+        if (!decoded.startsWith('{')) {
+          continue;
+        }
+
+        const message = JSON.parse(decoded);
+
+        if (this.isRequest(message)) {
+          await this.handleRequestMessage(message, stream, toolExecutor, true);
+        } else if (this.isResponse(message)) {
+          this.logger.warn(
+            'Received response message on server-side stream, ignoring',
+            message,
+          );
+        } else {
+          this.logger.warn('Received unknown message type', message);
+        }
+      }
+    } catch (error: any) {
+      // Stream closed or error occurred
+      if (stream.status === 'open') {
+        this.logger.error('Error in length-prefixed stream handler:', error);
+      }
+    }
+  }
+
+  /**
    * Handles an incoming stream on the server side
    * Attaches message listener immediately (libp2p v3 best practice)
    * Routes requests or executes tools based on the message
@@ -159,12 +225,19 @@ export class StreamHandler {
    * @param stream - The incoming stream
    * @param connection - The connection the stream belongs to
    * @param toolExecutor - Function to execute tools for requests
+   * @param config - Configuration to determine protocol handling
    */
   async handleIncomingStream(
     stream: Stream,
     connection: Connection,
     toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
+    config: StreamHandlerConfig = {},
   ): Promise<void> {
+    // Route to length-prefixed handler if enabled
+    if (config.useLengthPrefixing) {
+      return this.handleIncomingStreamLP(stream, connection, toolExecutor);
+    }
+
     // CRITICAL: Attach message listener immediately to prevent buffer overflow (libp2p v3)
     const messageHandler = async (event: any) => {
       try {
@@ -208,11 +281,13 @@ export class StreamHandler {
    * @param message - The decoded request message
    * @param stream - The stream to send the response on
    * @param toolExecutor - Function to execute the tool
+   * @param useLengthPrefixing - Whether to use length-prefixed response encoding
    */
   private async handleRequestMessage(
     message: any,
     stream: Stream,
     toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
+    useLengthPrefixing: boolean = false,
   ): Promise<void> {
     const request = new oRequest(message);
     const responseBuilder = ResponseBuilder.create();
@@ -223,7 +298,14 @@ export class StreamHandler {
       // );
       const result = await toolExecutor(request, stream);
       const response = await responseBuilder.build(request, result, null);
-      await CoreUtils.sendResponse(response, stream);
+
+      // Use length-prefixed encoding if enabled
+      if (useLengthPrefixing) {
+        await CoreUtils.sendResponseLP(response, stream);
+      } else {
+        await CoreUtils.sendResponse(response, stream);
+      }
+
       this.logger.debug(
         `Successfully processed request: method=${request.method}, id=${request.id}`,
       );
@@ -233,7 +315,98 @@ export class StreamHandler {
         error,
       );
       const errorResponse = await responseBuilder.buildError(request, error);
-      await CoreUtils.sendResponse(errorResponse, stream);
+
+      // Use length-prefixed encoding if enabled
+      if (useLengthPrefixing) {
+        await CoreUtils.sendResponseLP(errorResponse, stream);
+      } else {
+        await CoreUtils.sendResponse(errorResponse, stream);
+      }
+    }
+  }
+
+  /**
+   * Handles an outgoing stream on the client side using length-prefixed protocol
+   * Uses async read loops to process responses with proper message boundaries
+   *
+   * @param stream - The outgoing stream
+   * @param emitter - Event emitter for chunk events
+   * @param config - Configuration including abort signal
+   * @param requestHandler - Optional handler for processing router requests received on this stream
+   * @param requestId - Optional request ID to filter responses (for stream reuse scenarios)
+   * @returns Promise that resolves with the final response
+   */
+  async handleOutgoingStreamLP(
+    stream: Stream,
+    emitter: EventEmitter,
+    config: StreamHandlerConfig = {},
+    requestHandler?: (request: oRequest, stream: Stream) => Promise<RunResult>,
+    requestId?: string | number,
+  ): Promise<oResponse> {
+    const lp = lpStream(stream);
+
+    try {
+      while (stream.status === 'open') {
+        // Read complete length-prefixed message
+        const messageBytes = await lp.read({ signal: config.signal });
+        const decoded = new TextDecoder().decode(messageBytes.subarray());
+
+        // Ignore non-JSON messages
+        if (!decoded.startsWith('{')) {
+          continue;
+        }
+
+        const message = JSON.parse(decoded);
+
+        if (this.isResponse(message)) {
+          const response = new oResponse({
+            ...message.result,
+            id: message.id,
+          });
+
+          // Filter by request ID if provided
+          if (requestId !== undefined && response.id !== requestId) {
+            this.logger.debug(
+              `Ignoring response for different request (expected: ${requestId}, received: ${response.id})`,
+            );
+            continue;
+          }
+
+          // Emit chunk for streaming responses
+          emitter.emit('chunk', response);
+
+          // Check if this is the last chunk
+          if (response.result._last || !response.result._isStreaming) {
+            return response;
+          }
+        } else if (this.isRequest(message)) {
+          // Process incoming router requests if handler is provided
+          if (requestHandler) {
+            this.logger.debug(
+              'Received router request on client-side stream, processing...',
+              message,
+            );
+            await this.handleRequestMessage(message, stream, requestHandler, true);
+          } else {
+            this.logger.warn(
+              'Received request message on client-side stream, ignoring (no handler)',
+              message,
+            );
+          }
+        } else {
+          this.logger.warn('Received unknown message type', message);
+        }
+      }
+
+      throw new oError(
+        oErrorCodes.TIMEOUT,
+        'Stream closed before response received',
+      );
+    } catch (error: any) {
+      if (config.signal?.aborted) {
+        throw new oError(oErrorCodes.TIMEOUT, 'Request aborted');
+      }
+      throw error;
     }
   }
 
@@ -256,6 +429,17 @@ export class StreamHandler {
     requestHandler?: (request: oRequest, stream: Stream) => Promise<RunResult>,
     requestId?: string | number,
   ): Promise<oResponse> {
+    // Route to length-prefixed handler if enabled
+    if (config.useLengthPrefixing) {
+      return this.handleOutgoingStreamLP(
+        stream,
+        emitter,
+        config,
+        requestHandler,
+        requestId,
+      );
+    }
+
     return new Promise((resolve, reject) => {
       let lastResponse: any;
 

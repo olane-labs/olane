@@ -39,6 +39,21 @@ export interface StreamHandlerConfig {
    * AbortSignal for cancellation
    */
   signal?: AbortSignal;
+
+  /**
+   * Enable length-prefixed streaming (libp2p v3 best practice)
+   * When enabled, all messages are prefixed with a varint indicating message length
+   * This provides proper message boundaries and eliminates concatenation issues
+   * @default false (for backward compatibility)
+   */
+  useLengthPrefixing?: boolean;
+
+  /**
+   * Auto-detect protocol (length-prefixed vs raw JSON)
+   * When enabled, automatically detects the protocol by examining first byte
+   * @default false
+   */
+  autoDetectProtocol?: boolean;
 }
 
 /**

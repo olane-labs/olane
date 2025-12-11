@@ -49,6 +49,7 @@ export class oNodeConnection extends oConnection {
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       reusePolicy: 'none', // Default policy, can be overridden in subclasses
       drainTimeoutMs: this.config.drainTimeoutMs,
+      useLengthPrefixing: true,
     };
 
     return this.streamHandler.getOrCreateStream(
@@ -71,11 +72,19 @@ export class oNodeConnection extends oConnection {
         signal: this.abortSignal,
         drainTimeoutMs: this.config.drainTimeoutMs,
         reusePolicy: 'none', // Default policy
+        useLengthPrefixing: this.config.useLengthPrefixing ?? true,
       };
 
       // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
-      await this.streamHandler.send(stream, data, streamConfig);
+
+      // Use length-prefixed encoding if enabled
+      if (streamConfig.useLengthPrefixing) {
+        this.logger.info('Length prefix enabled...');
+        await this.streamHandler.sendLengthPrefixed(stream, data, streamConfig);
+      } else {
+        await this.streamHandler.send(stream, data, streamConfig);
+      }
 
       // Handle response using StreamHandler
       // Pass request handler if configured to enable bidirectional stream processing

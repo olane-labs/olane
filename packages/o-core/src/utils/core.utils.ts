@@ -132,6 +132,32 @@ export class CoreUtils extends oObject {
   }
 
   /**
+   * Sends a response through a stream using length-prefixed encoding
+   * Uses lpStream for proper message boundaries (libp2p v3 best practice)
+   *
+   * @param response - The response to send
+   * @param stream - The stream to send the response through
+   */
+  public static async sendResponseLP(response: oResponse, stream: Stream) {
+    const utils = new CoreUtils();
+
+    if (!stream || stream.status !== 'open') {
+      utils.logger.warn(
+        'Stream is not open. Status: ' + (stream?.status || 'undefined'),
+      );
+      return;
+    }
+
+    try {
+      const lp = lpStream(stream);
+      const data = new TextEncoder().encode(response.toString());
+      await lp.write(data);
+    } catch (error) {
+      utils.logger.error('Error sending length-prefixed response: ', error);
+    }
+  }
+
+  /**
    * @deprecated Use sendResponse instead - both methods are now identical
    * Sends a streaming response through a stream
    * This method is maintained for backward compatibility
@@ -162,6 +188,36 @@ export class CoreUtils extends oObject {
     } catch (error) {
       utils.logger.error(
         '[ERROR] Error processing stream event: ',
+        error,
+        decoded,
+      );
+      return decoded;
+    }
+  }
+
+  /**
+   * Processes a length-prefixed stream event
+   * With length-prefixing, messages are guaranteed to be complete and not concatenated
+   * This eliminates the need for the '}{' splitting hack
+   *
+   * @param event - The stream event containing message data
+   * @returns The parsed message object
+   */
+  public static async processStreamLP(event: any): Promise<any> {
+    const bytes =
+      event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
+    const decoded = new TextDecoder().decode(bytes);
+    const utils = new CoreUtils();
+    try {
+      // With length-prefixing, no need to check for concatenated messages
+      if (decoded.startsWith('{')) {
+        return JSON.parse(decoded);
+      } else {
+        return decoded;
+      }
+    } catch (error) {
+      utils.logger.error(
+        '[ERROR] Error processing length-prefixed stream event: ',
         error,
         decoded,
       );
