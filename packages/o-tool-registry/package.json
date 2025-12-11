@@ -67,7 +67,7 @@
     "@olane/o-tools-common": "0.7.31",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
-    "langchain": "0.3.29"
+    "langchain": "1.1.5"
   },
   "gitHead": "0fdac42b4c586a759759c0dc2a43d821e71dd860"
 }
