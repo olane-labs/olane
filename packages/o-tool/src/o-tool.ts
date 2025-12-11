@@ -117,6 +117,9 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
           request.stream,
         );
       }
+      if (!this.router) {
+        throw new Error('Node is not in a state to process routes');
+      }
       return this.router.route(request, this);
     }
 

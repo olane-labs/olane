@@ -70,7 +70,6 @@ export class StreamHandler {
     }
 
     const reusePolicy = config.reusePolicy ?? 'none';
-    this.logger.debug('Reuse policy:', reusePolicy);
 
     // Check for existing stream if reuse is enabled
     if (reusePolicy === 'reuse') {
@@ -93,7 +92,6 @@ export class StreamHandler {
     }
 
     // Create new stream
-    this.logger.debug('Creating new stream');
     const stream = await connection.newStream(protocol, {
       signal: config.signal,
       maxOutboundStreams: config.maxOutboundStreams ?? 1000,
@@ -147,7 +145,6 @@ export class StreamHandler {
       try {
         // force the close for now until we can implement a proper close
         await stream.abort(new Error('Stream closed'));
-        this.logger.debug('Stream closed successfully');
       } catch (error: any) {
         this.logger.debug('Error closing stream:', error.message);
       }
@@ -197,7 +194,6 @@ export class StreamHandler {
     };
 
     const closeHandler = () => {
-      this.logger.debug('Stream closed by remote peer');
       stream.removeEventListener('message', messageHandler);
       stream.removeEventListener('close', closeHandler);
     };
@@ -222,9 +218,9 @@ export class StreamHandler {
     const responseBuilder = ResponseBuilder.create();
 
     try {
-      this.logger.debug(
-        `Processing request on stream: method=${request.method}, id=${request.id}`,
-      );
+      // this.logger.debug(
+      //   `Processing request on stream: method=${request.method}, id=${request.id}`,
+      // );
       const result = await toolExecutor(request, stream);
       const response = await responseBuilder.build(request, result, null);
       await CoreUtils.sendResponse(response, stream);
@@ -325,7 +321,6 @@ export class StreamHandler {
       };
 
       const closeHandler = () => {
-        this.logger.debug('Stream closed by remote peer');
         cleanup();
 
         if (lastResponse) {

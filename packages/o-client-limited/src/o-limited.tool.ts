@@ -4,10 +4,9 @@ import {
   oNodeTool,
 } from '@olane/o-node';
 import { oLimitedConnectionManager } from './connection/o-limited-connection-manager.js';
-import { oLaneTool } from '@olane/o-lane';
 import { oNodeConfig } from '@olane/o-node';
 
-export class oLimitedTool extends oLaneTool {
+export class oLimitedTool extends oNodeTool {
   constructor(config: oNodeConfig) {
     super({
       ...config,

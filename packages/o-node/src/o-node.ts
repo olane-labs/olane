@@ -44,6 +44,8 @@ export class oNode extends oToolBase {
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   protected reconnectionManager?: oReconnectionManager;
   protected didRegister: boolean = false;
+  protected hooksStartFinished: any[] = [];
+  protected hooksInitFinished: any[] = [];
 
   constructor(config: oNodeConfig) {
     super(config);
@@ -75,20 +77,11 @@ export class oNode extends oToolBase {
   }
 
   async initializeRouter(): Promise<void> {
-    this.hierarchyManager = new oNodeHierarchyManager({
-      leaders: this.config.leader ? [this.config.leader] : [],
-      parents: this.config.parent ? [this.config.parent] : [],
-      children: [],
-    });
     this.router = new oNodeRouter();
   }
 
   protected createNotificationManager(): oNotificationManager {
-    return new oNodeNotificationManager(
-      this.p2pNode,
-      this.hierarchyManager,
-      this.address,
-    );
+    return new oNodeNotificationManager(this.p2pNode, this.address);
   }
 
   get staticAddress(): oNodeAddress {
@@ -121,11 +114,11 @@ export class oNode extends oToolBase {
             params: {
               eventType: 'node:stopping',
               eventData: {
-                address: this.address.toString(),
+                address: this.address?.toString(),
                 reason: 'graceful_shutdown',
                 expectedDowntime: null,
               },
-              source: this.address.toString(),
+              source: this.address?.toString(),
             },
           }),
           new Promise((_, reject) =>
@@ -146,13 +139,18 @@ export class oNode extends oToolBase {
       return;
     }
 
+    // no need to unregister since we did not generate a peerID yet
+    if (!this.peerId) {
+      return;
+    }
+
     const address = new oNodeAddress(RestrictedAddresses.REGISTRY);
 
     // attempt to unregister from the network
     const params = {
       method: 'remove',
       params: {
-        peerId: this.peerId.toString(),
+        peerId: this.peerId?.toString(),
       },
     };
 
@@ -173,6 +171,7 @@ export class oNode extends oToolBase {
       const peers = await this.p2pNode.peerStore.all();
 
       // find the peer that is already indexed rather than building the PeerId from the string value to avoid browser issues
+      // TODO: for remote configured leader nodes, this keep alive fails due to the transport composition
       const peer = peers.find(
         (p) =>
           p.id.toString() === address.libp2pTransports[0].toPeerId().toString(),
@@ -203,6 +202,11 @@ export class oNode extends oToolBase {
       return;
     }
 
+    if (!this.parent) {
+      this.logger.warn('no parent, skipping registration');
+      return;
+    }
+
     if (!this.parent?.libp2pTransports?.length) {
       this.logger.debug(
         'Parent has no transports, waiting for reconnection & leader ack',
@@ -210,7 +214,7 @@ export class oNode extends oToolBase {
       if (this.parent?.toString() === oAddress.leader().toString()) {
         this.parent.setTransports(this.leader?.libp2pTransports || []);
       } else {
-        this.logger.debug('Waiting for parent and reconnecting...');
+        this.logger.debug('Waiting for parent and reconnecting... hello');
         await this.reconnectionManager?.waitForParentAndReconnect();
       }
     }
@@ -222,7 +226,8 @@ export class oNode extends oToolBase {
         'Registering node with parent...',
         this.config.parent?.toString(),
       );
-      await this.use(this.config.parent, {
+      // avoid transports to ensure we do not try direct connection, we need to route via the leader for proper access controls
+      await this.use(new oNodeAddress(this.config.parent.value), {
         method: 'child_register',
         params: {
           address: this.address.toString(),
@@ -232,10 +237,16 @@ export class oNode extends oToolBase {
         },
       });
       this.setKeepAliveTag(this.parent as oNodeAddress);
+      this.hierarchyManager.addParent(this.parent);
     }
   }
 
   async registerLeader(): Promise<void> {
+    this.logger.info('Register leader called...');
+    if (!this.leader) {
+      this.logger.warn('No leader defined, skipping registration');
+      return;
+    }
     const address = oAddress.registry();
 
     const params = {
@@ -268,6 +279,8 @@ export class oNode extends oToolBase {
 
     this.logger.debug('Registering node...');
 
+    await this.registerParent();
+
     // register with the leader global registry
     if (!this.config.leader) {
       this.logger.warn('No leaders found, skipping registration');
@@ -275,8 +288,6 @@ export class oNode extends oToolBase {
     } else {
       this.logger.debug('Registering node with leader...');
     }
-
-    await this.registerParent();
     await this.registerLeader();
 
     this.logger.debug('Registration successful');
@@ -401,7 +412,6 @@ export class oNode extends oToolBase {
           if (this.config.type === NodeType.LEADER) {
             return false;
           }
-          // deny everything else
           return true;
         },
         // allow the user to override the default connection gater
@@ -418,11 +428,8 @@ export class oNode extends oToolBase {
     };
 
     // handle the address encapsulation
-    if (
-      this.config.leader &&
-      !this.address.protocol.includes(this.config.leader.protocol)
-    ) {
-      const parentAddress = this.config.parent || this.config.leader;
+    if (this.config.parent) {
+      const parentAddress = this.config.parent;
       this.address = CoreUtils.childAddress(
         parentAddress,
         this.address,
@@ -466,35 +473,109 @@ export class oNode extends oToolBase {
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      originAddress: this.address?.value,
     });
   }
 
-  async hookInitializeFinished(): Promise<void> {}
+  protected async hookInitializeFinished(): Promise<void> {
+    this.logger.debug('Running init-finished hooks');
 
-  async hookStartFinished(): Promise<void> {
+    this.hooksInitFinished.forEach((hook) => {
+      try {
+        hook();
+      } catch (error) {
+        this.logger.error('Failed to run hook:', error);
+      }
+    });
+    this.logger.debug('Completed init-finished hooks');
+  }
+
+  onInitFinished(cb: Function) {
+    this.hooksInitFinished.push(cb);
+  }
+
+  onStartFinished(cb: Function) {
+    this.hooksStartFinished.push(cb);
+  }
+
+  protected async hookStartFinished(): Promise<void> {
+    await super.hookStartFinished();
     // Initialize connection health monitor
-    this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
-      this as any,
-      {
-        enabled: this.config.connectionHeartbeat?.enabled ?? true,
-        intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
-        failureThreshold:
-          this.config.connectionHeartbeat?.failureThreshold ?? 3,
-        checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
-        checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
-        checkLeader: true,
-      },
-    );
+    // this.connectionHeartbeatManager = new oConnectionHeartbeatManager(
+    //   this as any,
+    //   {
+    //     enabled: this.config.connectionHeartbeat?.enabled ?? true,
+    //     intervalMs: this.config.connectionHeartbeat?.intervalMs ?? 15000,
+    //     failureThreshold:
+    //       this.config.connectionHeartbeat?.failureThreshold ?? 3,
+    //     checkChildren: this.config.connectionHeartbeat?.checkChildren ?? false,
+    //     checkParent: this.config.connectionHeartbeat?.checkParent ?? true,
+    //     checkLeader: true,
+    //   },
+    // );
 
-    this.logger.info(
-      `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
-        `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
-    );
+    // this.logger.info(
+    //   `Connection heartbeat config: leader=${this.connectionHeartbeatManager.getConfig().checkLeader}, ` +
+    //     `parent=${this.connectionHeartbeatManager.getConfig().checkParent}`,
+    // );
+
+    this.logger.debug('Running start-finished hooks');
+    this.hooksStartFinished.forEach((hook) => {
+      try {
+        hook();
+      } catch (error) {
+        this.logger.error('Failed to run hook:', error);
+      }
+    });
+    this.logger.debug('Completed start-finished hooks');
+  }
+
+  /**
+   * Validates that if a leader address is defined, it has associated transports.
+   * This is critical for non-leader nodes to be able to connect to their leader.
+   * @throws Error if leader is defined but has no transports
+   */
+  private async validateLeaderTransports(): Promise<void> {
+    // Skip validation if this node is the leader itself
+    if (this.isLeader) {
+      return;
+    }
+
+    // Skip validation if no leader is configured
+    const leaderAddress = this.config?.leader;
+    if (!leaderAddress) {
+      return;
+    }
+
+    // Check if leader has transports
+    if (!leaderAddress.transports || leaderAddress.transports.length === 0) {
+      throw new Error(
+        `Leader address is defined (${leaderAddress.toString()}) but has no transports. ` +
+          `Non-leader nodes require leader transports for network connectivity. ` +
+          `Please provide transports in the leader address configuration.`,
+      );
+    }
+
+    this.logger.debug('Leader transport validation passed', {
+      leader: leaderAddress.toString(),
+      transportCount: leaderAddress.transports.length,
+    });
+  }
+
+  /**
+   * oNode-specific validation that runs before core start() logic.
+   *
+   * This ensures that leader transport configuration errors are
+   * surfaced quickly and before any libp2p nodes or other heavy
+   * resources are created.
+   */
+  protected async validate(): Promise<void> {
+    await this.validateLeaderTransports();
   }
 
   async initialize(): Promise<void> {
     this.logger.debug('Initializing node...');
-    if (this.p2pNode && this.state !== NodeState.STOPPED) {
+    if (this.state !== NodeState.STOPPED && this.state !== NodeState.STARTING) {
       throw new Error('Node is not in a valid state to be initialized');
     }
     if (!this.address.validate()) {
@@ -502,7 +583,30 @@ export class oNode extends oToolBase {
     }
 
     await this.createNode();
+
+    // Create and initialize notification manager
+    this.notificationManager = this.createNotificationManager();
+    await this.notificationManager.initialize();
+
     await this.initializeRouter();
+
+    this.hierarchyManager = new oNodeHierarchyManager({
+      leaders: this.config.leader ? [this.config.leader] : [],
+      parents: this.config.parent ? [this.config.parent] : [],
+      children: [],
+      address: this.address,
+      notificationManager: this.notificationManager as oNodeNotificationManager,
+    });
+
+    this.reconnectionManager = new oReconnectionManager(this, {
+      enabled: true,
+      maxAttempts: 10,
+      baseDelayMs: 5_000,
+      maxDelayMs: 20_000,
+      useLeaderFallback: true,
+      parentDiscoveryIntervalMs: 5_000,
+      parentDiscoveryMaxDelayMs: 20_000,
+    });
 
     // need to wait until our libpp2 node is initialized before calling super.initialize
     await super.initialize();
@@ -527,15 +631,6 @@ export class oNode extends oToolBase {
       this.router.addResolver(new oLeaderResolverFallback(this.address));
     }
 
-    this.reconnectionManager = new oReconnectionManager(this, {
-      enabled: true,
-      maxAttempts: 10,
-      baseDelayMs: 5_000,
-      maxDelayMs: 20_000,
-      useLeaderFallback: true,
-      parentDiscoveryIntervalMs: 5_000,
-      parentDiscoveryMaxDelayMs: 20_000,
-    });
     await this.hookInitializeFinished();
   }
 
@@ -569,6 +664,44 @@ export class oNode extends oToolBase {
     if (this.p2pNode) {
       await this.p2pNode.stop();
     }
+
+    // Reset state to allow restart
+    this.resetState();
+  }
+
+  /**
+   * Reset node state to allow restart after stop
+   * Called at the end of teardown()
+   */
+  protected resetState(): void {
+    // Reset registration flag
+    this.didRegister = false;
+
+    // Clear peer references
+    this.peerId = undefined as any;
+    this.p2pNode = undefined as any;
+
+    // Clear managers
+    this.connectionManager = undefined as any;
+    this.connectionHeartbeatManager = undefined;
+    this.reconnectionManager = undefined;
+
+    // Reset address to staticAddress with no transports
+    this.address = new oNodeAddress(this.staticAddress.value, []);
+
+    // Reset hierarchy manager
+    this.hierarchyManager = new oNodeHierarchyManager({
+      leaders: this.config.leader ? [this.config.leader] : [],
+      parents: this.config.parent ? [this.config.parent] : [],
+      children: [],
+      address: this.address,
+    });
+
+    // Clear router (will be recreated in initialize)
+    this.router = undefined as any;
+
+    // Call parent reset
+    super.resetState();
   }
 
   // IHeartbeatableNode interface methods

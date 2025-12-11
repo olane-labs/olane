@@ -1,4 +1,4 @@
-import { StorageTool } from '@olane/o-storage';
+import { StorageTool, OSConfigStorageTool } from '@olane/o-storage';
 import { SearchTool } from './search/search.tool.js';
 import { EncryptionTool } from './encryption/encryption.tool.js';
 import { oApprovalTool } from '@olane/o-approval';
@@ -13,6 +13,11 @@ export const initCommonTools = async (oNode: oLaneTool) => {
     new StorageTool({
       name: 'storage',
       ...params,
+    }),
+    new OSConfigStorageTool({
+      name: 'os-config',
+      ...params,
+      storageBackend: 'disk', // Use disk storage for local deployments
     }),
     new EncryptionTool({
       name: 'encryption',
@@ -35,9 +40,9 @@ export const initCommonTools = async (oNode: oLaneTool) => {
   ];
   await Promise.all(
     tools.map(async (tool) => {
-      (tool as any).hookInitializeFinished = () => {
+      (tool as any).onInitFinished(() => {
         oNode.addChildNode(tool as any);
-      };
+      });
       await tool.start();
     }),
   );

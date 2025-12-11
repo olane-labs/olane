@@ -14,6 +14,8 @@ import { oIntent } from './intent/index.js';
 import { oLaneContext } from './o-lane.context.js';
 import { oLaneManager } from './manager/o-lane.manager.js';
 import { oCapabilityResult } from './capabilities/o-capability.result.js';
+import { PromptLoaderDefault } from './storage/default.prompt-loader.js';
+import { PromptLoader } from './storage/prompt-loader.js';
 
 /**
  * withLane mixin - adds lane execution capabilities to any tool base class
@@ -65,6 +67,10 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
       });
     }
 
+    getPromptLoader() {
+      return new PromptLoaderDefault();
+    }
+
     /**
      * Where all intents go to be resolved.
      * @param request
@@ -72,7 +78,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
      */
     async _tool_intent(request: oStreamRequest): Promise<any> {
       this.logger.debug('Intent resolution called: ', request.params);
-      const { intent, context, streamTo, _isStreaming = false } = request.params;
+      const { intent, context, chatHistory, streamTo, _isStreaming = false } = request.params;
 
       const pc = await this.manager.createLane({
         intent: new oIntent({ intent: intent as string }),
@@ -80,7 +86,9 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
         caller: this.address,
         streamTo: streamTo ? new oAddress(streamTo as string) : undefined,
         useStream: _isStreaming,
+        chatHistory: chatHistory,
         requestId: request.id, // Pass request ID for proper response correlation
+        promptLoader: this.getPromptLoader(),
         onChunk: _isStreaming
           ? async (chunk: any) => {
               if (
@@ -104,9 +112,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
             }
           : undefined,
         context: context
-          ? new oLaneContext([
-              `[Chat History Context Begin]\n${context}\n[Chat History Context End]`,
-            ])
+          ? new oLaneContext([])
           : undefined,
       });
 
@@ -121,7 +127,6 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
 
       const completeResponse = {
         result: response?.result,
-        humanResult: response?.humanResult, // Full human-readable formatted result (AI-generated markdown)
         summary: response?.config?.params?.summary, // Short 1-2 sentence summary
         error: response?.error,
         cycles: pc.sequence.length,
@@ -154,6 +159,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
         intent: new oIntent({ intent: 'replay' }),
         currentNode: this,
         caller: this.address,
+        promptLoader: this.getPromptLoader(),
       });
 
       try {

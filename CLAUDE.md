@@ -17,10 +17,18 @@
 - ❌ **NEVER**: Return `{ success: false, error: ... }` objects
 - ❌ **NEVER**: Wrap success responses in `{ success: true, result: ... }`
 
+**Address Construction:**
+- ✅ **DO**: Use simple addresses in constructors (e.g., `new oNodeAddress('o://my-tool')`)
+- ✅ **DO**: Set `parent` and `leader` properties for hierarchical nodes
+- ✅ **DO**: Let the system create nested addresses during registration
+- ❌ **NEVER**: Create nested addresses in constructors (e.g., `new oNodeAddress('o://parent/child')`)
+- ❌ **NEVER**: Manually construct hierarchical addresses - they're created at runtime
+
 **Response Structure (when calling other tools):**
-- When using `node.use()`, access data via `response.result.data`
-- Always check `response.success` before accessing data
-- Base class automatically wraps your returns
+- When using `node.use()`, responses follow: `response.result.success`, `response.result.data`, `response.result.error`
+- Always check `response.result.success` before accessing data
+- Access data via `response.result.data` and errors via `response.result.error`
+- Base class automatically wraps your returns in this structure
 
 **Package Management:**
 - ⚠️ **ALWAYS use `pnpm`, not `npm`**
@@ -93,7 +101,7 @@ o-node-template/
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
-  "peerDependencies": {
+  "dependencies": {
     "@olane/o-core": "^0.7.12",
     "@olane/o-node": "^0.7.12",
     "@olane/o-tool": "^0.7.12"
@@ -285,9 +293,9 @@ async _tool_process_order(request: oRequest): Promise<any> {
     { method: 'get_customer', params: { customerId } }
   );
 
-  // ✅ Check success
-  if (!customerResponse.success) {
-    throw new Error(`Failed to get customer: ${customerResponse.error}`);
+  // ✅ Check success via result.success
+  if (!customerResponse.result.success) {
+    throw new Error(`Failed to get customer: ${customerResponse.result.error}`);
   }
 
   // ✅ Access data via result.data
@@ -348,10 +356,10 @@ export class MyManager extends oNodeTool {
       throw new Error(`Max instances (${this.maxInstances}) reached`);
     }
 
-    // Create worker with parent linkage
+    // Create worker with simple address - parent linkage creates nested address
     const worker = new MyWorker({
-      address: new oNodeAddress(`o://my-manager/${finalWorkerId}`),
-      parent: this.address,
+      address: new oNodeAddress(`o://${finalWorkerId}`), // ✅ Simple address
+      parent: this.address,  // System creates nested address during registration
       leader: this.leader,
       ...config,
     });
@@ -365,9 +373,11 @@ export class MyManager extends oNodeTool {
     await worker.start();
     this.workers.set(finalWorkerId, worker);
 
+    // After start(), worker.address is automatically 'o://my-manager/{workerId}'
+
     return {
       workerId: finalWorkerId,
-      address: `o://my-manager/${finalWorkerId}`,
+      address: worker.address.toString(), // Returns nested address after registration
     };
   }
 
@@ -479,9 +489,9 @@ export class MyWorker extends oNodeTool {
 ```typescript
 // In parent's create method:
 const child = new ChildTool({
-  address: new oNodeAddress(`o://parent/${childId}`),
-  parent: this.address,    // ✅ Parent reference
-  leader: this.leader,      // ✅ Leader reference
+  address: new oNodeAddress(`o://${childId}`), // ✅ Simple address
+  parent: this.address,    // ✅ Parent reference (creates nested path)
+  leader: this.leader,     // ✅ Leader reference
 });
 
 // ✅ Inject hook to register with parent
@@ -490,6 +500,7 @@ const child = new ChildTool({
 };
 
 await child.start();
+// After start(), child.address becomes 'o://parent/{childId}'
 this.children.set(childId, child);
 ```
 
@@ -545,50 +556,9 @@ export const MY_TOOL_METHODS: { [key: string]: oMethod } = {
         type: 'array',
         description: 'Specific fields to return',
         required: false,
-        structure: {
-          itemType: 'string',
-          enum: ['name', 'email', 'phone', 'status']
-        }
       }
     ],
 
-    examples: [
-      {
-        description: 'Get basic customer info',
-        params: { customerId: 'cust_abc123' },
-        expectedResult: {
-          success: true,
-          result: {
-            customerId: 'cust_abc123',
-            name: 'John Doe',
-            email: 'john@example.com',
-            status: 'active'
-          }
-        }
-      }
-    ],
-
-    commonErrors: [
-      {
-        errorCode: 'CUSTOMER_NOT_FOUND',
-        message: 'Customer does not exist',
-        remediation: 'Verify customer ID. Use list_customers to search.',
-        retryable: false
-      }
-    ],
-
-    performance: {
-      estimatedDuration: 500,
-      maxDuration: 5000,
-      idempotent: true,
-      cacheable: true
-    },
-
-    approvalMetadata: {
-      riskLevel: 'low',
-      category: 'read',
-      description: 'Read-only customer data retrieval'
-    }
   }
 };
 ```
@@ -712,6 +682,37 @@ jobs:
 
 ## 7. Testing
 
+### Response Assertion Patterns
+
+**CRITICAL**: When testing `node.use()` calls, responses are wrapped in the oResponse structure:
+
+```typescript
+const response = await node.use(address, { method: '...', params: {} });
+
+// ✅ CORRECT - access via result
+expect(response.result.success).to.be.true;
+expect(response.result.data.foo).to.equal('bar');
+expect(response.result.error).to.exist; // For error cases
+
+// ❌ WRONG - direct access will fail
+expect(response.success).to.be.true;  // Property doesn't exist!
+expect(response.data).to.exist;        // Property doesn't exist!
+expect(response.error).to.exist;       // Property doesn't exist!
+```
+
+**Response structure:**
+```typescript
+{
+  jsonrpc: "2.0",
+  id: "request-id",
+  result: {
+    success: boolean,    // ← Check this
+    data: any,          // ← Access this on success
+    error?: string      // ← Access this on failure
+  }
+}
+```
+
 ### Unit Test Structure
 
 ```typescript
@@ -739,23 +740,23 @@ describe('MyTool', () => {
 
   describe('_tool_my_method', () => {
     it('should process valid request', async () => {
-      const result = await tool.use(tool.address, {
+      const response = await tool.use(tool.address, {
         method: 'my_method',
         params: { param1: 'test' }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.result).toBeDefined();
+      expect(response.result.success).toBe(true);
+      expect(response.result.data).toBeDefined();
     });
 
     it('should validate required parameters', async () => {
-      const result = await tool.use(tool.address, {
+      const response = await tool.use(tool.address, {
         method: 'my_method',
         params: {}
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('param1 is required');
+      expect(response.result.success).toBe(false);
+      expect(response.result.error).toContain('param1 is required');
     });
   });
 });
@@ -777,13 +778,13 @@ describe('Manager and Worker', () => {
   });
 
   it('should create worker', async () => {
-    const result = await manager.use(manager.address, {
+    const response = await manager.use(manager.address, {
       method: 'create_worker',
       params: { workerId: 'test-1' }
     });
 
-    expect(result.success).toBe(true);
-    expect(result.workerId).toBe('test-1');
+    expect(response.result.success).toBe(true);
+    expect(response.result.data.workerId).toBe('test-1');
   });
 
   it('should route to worker', async () => {
@@ -792,7 +793,7 @@ describe('Manager and Worker', () => {
       params: { workerId: 'test-2' }
     });
 
-    const result = await manager.use(manager.address, {
+    const response = await manager.use(manager.address, {
       method: 'use_worker',
       params: {
         workerId: 'test-2',
@@ -801,7 +802,7 @@ describe('Manager and Worker', () => {
       }
     });
 
-    expect(result.success).toBe(true);
+    expect(response.result.success).toBe(true);
   });
 
   it('should enforce max instances', async () => {
@@ -812,13 +813,13 @@ describe('Manager and Worker', () => {
       });
     }
 
-    const result = await manager.use(manager.address, {
+    const response = await manager.use(manager.address, {
       method: 'create_worker',
       params: { workerId: 'overflow' }
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error.code).toBe('MAX_INSTANCES_REACHED');
+    expect(response.result.success).toBe(false);
+    expect(response.result.error).toContain('MAX_INSTANCES_REACHED');
   });
 });
 ```
@@ -1057,8 +1058,8 @@ export class BrowserManager extends oNodeTool {
     }
 
     const session = new BrowserSession({
-      address: new oNodeAddress(`o://browser/${finalSessionId}`),
-      parent: this.address,
+      address: new oNodeAddress(`o://${finalSessionId}`), // ✅ Simple address
+      parent: this.address,  // System creates nested address during registration
       leader: this.leader,
       headless,
     });
@@ -1073,9 +1074,10 @@ export class BrowserManager extends oNodeTool {
     this.sessions.set(finalSessionId, session);
 
     // ✅ PATTERN: Return raw data
+    // After start(), session.address is automatically 'o://browser/{sessionId}'
     return {
       sessionId: finalSessionId,
-      address: `o://browser/${finalSessionId}`,
+      address: session.address.toString(), // Returns nested address after registration
       createdAt: Date.now(),
     };
   }
@@ -1284,8 +1286,8 @@ async hookInitializeFinished(): Promise<void> {
 **Create child node:**
 ```typescript
 const child = new ChildTool({
-  address: new oNodeAddress(`o://parent/${id}`),
-  parent: this.address,
+  address: new oNodeAddress(`o://${id}`), // Simple address
+  parent: this.address,  // Creates nested address at runtime
   leader: this.leader,
 });
 
@@ -1294,6 +1296,7 @@ const child = new ChildTool({
 };
 
 await child.start();
+// After start(), child.address is 'o://parent/{id}'
 ```
 
 **Call another tool:**
@@ -1303,8 +1306,8 @@ const response = await this.otherTool.use(address, {
   params: { ... }
 });
 
-if (!response.success) {
-  throw new Error(response.error);
+if (!response.result.success) {
+  throw new Error(response.result.error);
 }
 
 const data = response.result.data;
@@ -1328,7 +1331,7 @@ You now have everything needed to build O-Network nodes:
 - ✅ Use `pnpm`, not npm
 - ✅ Never override `start()` - use hooks
 - ✅ Throw errors, return raw data
-- ✅ Access `response.result.data` when calling tools
+- ✅ Access responses via `response.result.success`, `response.result.data`, `response.result.error`
 - ✅ Inject hooks for child registration
 - ✅ Isolate state between children
 - ✅ Cascade cleanup from parent to children

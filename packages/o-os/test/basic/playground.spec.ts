@@ -20,12 +20,12 @@ describe('playground running', async () => {
     expect(entryNode).to.exist;
     expect(entryNode.state).to.equal(NodeState.RUNNING);
 
-    // const leader = new oNodeAddress('o://leader', [
-    //   new oNodeTransport(
-    //     // '/dns4/leader.olane.com/tcp/4000/tls/ws',
-    //     // '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
-    //   ),
-    // ]);
+    const leader = new oNodeAddress('o://leader', [
+      new oNodeTransport(
+        // '/dns4/leader.olane.com/tcp/4000/tls/ws',
+        '/ip4/127.0.0.1/tcp/4000/ws/p2p/12D3KooWPHdsHhEdyBd9DS2zHJ1vRSyqSkZ97iT7F8ByYJ7U7bw8',
+      ),
+    ]);
 
     // const joinedNode = new oLimitedTool({
     //   address: new oNodeAddress('o://joined'),
@@ -51,16 +51,14 @@ describe('playground running', async () => {
     //   },
     // });
     // await humanNode.start();
+
     console.log('Using entry node:', entryNode.address.toString());
     const response = await entryNode.useStream(
-      entryNode.address,
+      new oNodeAddress('o://intelligence'),
       {
-        method: 'intent',
+        method: 'prompt',
         params: {
-          _isStreaming: true,
-          intent: 'what is the weather in tokyo?',
-          // 'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
-          _token: 'test',
+          prompt: 'hi',
         },
       },
       {
@@ -75,6 +73,31 @@ describe('playground running', async () => {
     );
 
     console.log('Response:', JSON.stringify(response, null, 2));
+
+    // console.log('Using entry node:', entryNode.address.toString());
+    // const response = await entryNode.useStream(
+    //   entryNode.address,
+    //   {
+    //     method: 'intent',
+    //     params: {
+    //       _isStreaming: true,
+    //       intent: 'what is the weather in tokyo?',
+    //       // 'Use o://intelligence to generate the expo react native code for a new table view with example data populated',
+    //       _token: 'test',
+    //     },
+    //   },
+    //   {
+    //     abortSignal: AbortSignal.timeout(5_000),
+    //     onChunk: (chunk) => {
+    //       console.log(
+    //         'Received chunk:',
+    //         JSON.stringify(chunk.result.data, null, 2),
+    //       );
+    //     },
+    //   },
+    // );
+
+    // console.log('Response:', JSON.stringify(response, null, 2));
     // const response = await entryNode.use(
     //   new oNodeAddress('o://leader/joined', leader.transports),
     //   {

@@ -3,6 +3,112 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.31 (2025-12-10)</small>
+
+- minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
+- minor change ([4325f48](https://github.com/olane-labs/olane/commit/4325f48))
+- minor change ([e835a1c](https://github.com/olane-labs/olane/commit/e835a1c))
+- minor change ([378008a](https://github.com/olane-labs/olane/commit/378008a))
+- minor change ([6be2758](https://github.com/olane-labs/olane/commit/6be2758))
+- minor change ([01a6f75](https://github.com/olane-labs/olane/commit/01a6f75))
+
+## <small>0.7.30 (2025-12-10)</small>
+
+- clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
+- fixes for reconnection after parent / leader disconnect ([92bbe0c](https://github.com/olane-labs/olane/commit/92bbe0c))
+- refined hooks ([a7a7de7](https://github.com/olane-labs/olane/commit/a7a7de7))
+
+## <small>0.7.29 (2025-12-08)</small>
+
+- fixed the replay functionality ([400a66e](https://github.com/olane-labs/olane/commit/400a66e))
+
+## <small>0.7.28 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.27 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.26 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.25 (2025-12-07)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.24 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.23 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.22 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.21 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.20 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.19 (2025-12-06)</small>
+
+- in progress refactor ([63dd8d6](https://github.com/olane-labs/olane/commit/63dd8d6))
+
+## <small>0.7.18 (2025-12-05)</small>
+
+- minor log reduction + bug fixes ([0b36728](https://github.com/olane-labs/olane/commit/0b36728))
+
+## <small>0.7.17 (2025-12-04)</small>
+
+- minor change ([622d7ff](https://github.com/olane-labs/olane/commit/622d7ff))
+
+## <small>0.7.16 (2025-12-04)</small>
+
+- minor change ([681eceb](https://github.com/olane-labs/olane/commit/681eceb))
+
+## <small>0.7.15 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.14 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.13 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+- added leader address validation ([c365513](https://github.com/olane-labs/olane/commit/c365513))
+- minor change ([24fef80](https://github.com/olane-labs/olane/commit/24fef80))
+
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- fix ([222647e](https://github.com/olane-labs/olane/commit/222647e))
+- improved leader with testing ([73efe32](https://github.com/olane-labs/olane/commit/73efe32))
+- initial tests generated ([9cbaac2](https://github.com/olane-labs/olane/commit/9cbaac2))
+- mid refactor cyclical test depenencies ([1946261](https://github.com/olane-labs/olane/commit/1946261))
+- minor fixes to tests ([8661c5e](https://github.com/olane-labs/olane/commit/8661c5e))
+- network communication tests working ([cbe3b9d](https://github.com/olane-labs/olane/commit/cbe3b9d))
+- node reset funcitonality + connection-management unit tests ([ce65d3b](https://github.com/olane-labs/olane/commit/ce65d3b))
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+- proper export of helper test tools ([ed4f539](https://github.com/olane-labs/olane/commit/ed4f539))
+- search resolver tests working ([a1f976b](https://github.com/olane-labs/olane/commit/a1f976b))
+- stability fixes ([c1fa204](https://github.com/olane-labs/olane/commit/c1fa204))
+
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+
 ## <small>0.7.12 (2025-11-30)</small>
 
 **Note:** Version bump only for package @olane/o-node

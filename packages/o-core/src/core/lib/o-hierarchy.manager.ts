@@ -40,7 +40,7 @@ export class oHierarchyManager extends oObject {
     // remove child if it exists
     this.removeChild(address);
     // deduplicate
-    this.children = this.deduplicate([...this.children, address]);
+    this.children = this.deduplicate([address, ...this.children]);
   }
 
   getChild(address: oAddress): oAddress | undefined {
@@ -57,7 +57,7 @@ export class oHierarchyManager extends oObject {
   }
 
   addParent(address: oAddress): void {
-    this.parents = this.deduplicate([...this.parents, address]);
+    this.parents = this.deduplicate([address, ...this.parents]);
   }
 
   removeParent(address: oAddress | string): void {

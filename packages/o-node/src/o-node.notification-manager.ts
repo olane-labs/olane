@@ -1,25 +1,19 @@
-import { Libp2p } from '@olane/o-config';
+import { Connection, Libp2p } from '@olane/o-config';
 import {
   oNotificationManager,
-  NodeConnectedEvent,
-  NodeDisconnectedEvent,
-  NodeDiscoveredEvent,
-  ChildJoinedEvent,
-  ChildLeftEvent,
-  ParentConnectedEvent,
-  ParentDisconnectedEvent,
+  PeerConnectedEvent,
+  PeerDisconnectedEvent,
+  PeerDiscoveredEvent,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
-import { oNodeHierarchyManager } from './o-node.hierarchy-manager.js';
 
 /**
  * libp2p-specific implementation of oNotificationManager
- * Wraps libp2p events and enriches them with Olane context
+ * Emits low-level peer connection events without hierarchy awareness
  */
 export class oNodeNotificationManager extends oNotificationManager {
   constructor(
     private p2pNode: Libp2p,
-    private hierarchyManager: oNodeHierarchyManager,
     private address: oNodeAddress,
   ) {
     super();
@@ -62,130 +56,55 @@ export class oNodeNotificationManager extends oNotificationManager {
 
   /**
    * Handle peer connect event from libp2p
+   * Emits low-level peer connected event for hierarchy manager to process
    */
   private handlePeerConnect(evt: CustomEvent): void {
     const peerId = evt.detail;
-    // this.logger.debug(`Peer connected: ${peerId.toString()}`);
 
-    // Try to resolve peer ID to Olane address
-    const nodeAddress = this.peerIdToAddress(peerId.toString());
-
-    if (!nodeAddress) {
-      // this.logger.debug(
-      //   `Could not resolve peer ID ${peerId.toString()} to address`,
-      // );
-      return;
-    }
-
-    // Emit generic node connected event
+    // Emit low-level peer connected event
     this.emit(
-      new NodeConnectedEvent({
+      new PeerConnectedEvent({
         source: this.address,
-        nodeAddress,
+        peerId: peerId.toString(),
         connectionMetadata: {
-          peerId: peerId.toString(),
           transport: 'libp2p',
         },
       }),
     );
-
-    // Check if this is a child node
-    if (this.isChild(nodeAddress)) {
-      // this.logger.debug(`Child node connected: ${nodeAddress.toString()}`);
-      this.emit(
-        new ChildJoinedEvent({
-          source: this.address,
-          childAddress: nodeAddress,
-          parentAddress: this.address,
-        }),
-      );
-    }
-
-    // Check if this is a parent node
-    if (this.isParent(nodeAddress)) {
-      // this.logger.debug(`Parent node connected: ${nodeAddress.toString()}`);
-      this.emit(
-        new ParentConnectedEvent({
-          source: this.address,
-          parentAddress: nodeAddress,
-        }),
-      );
-    }
   }
 
   /**
    * Handle peer disconnect event from libp2p
+   * Emits low-level peer disconnected event for hierarchy manager to process
    */
   private handlePeerDisconnect(evt: CustomEvent): void {
     const peerId = evt.detail;
-    // this.logger.debug(`Peer disconnected: ${peerId.toString()}`);
 
-    // Try to resolve peer ID to Olane address
-    const nodeAddress = this.peerIdToAddress(peerId.toString());
-
-    if (!nodeAddress) {
-      // this.logger.debug(
-      //   `Could not resolve peer ID ${peerId.toString()} to address`,
-      // );
-      return;
-    }
-
-    // Emit generic node disconnected event
+    // Emit low-level peer disconnected event
     this.emit(
-      new NodeDisconnectedEvent({
+      new PeerDisconnectedEvent({
         source: this.address,
-        nodeAddress,
+        peerId: peerId.toString(),
         reason: 'peer_disconnected',
       }),
     );
-
-    // Check if this is a child node
-    if (this.isChild(nodeAddress)) {
-      this.logger.debug(`Child node disconnected: ${nodeAddress.toString()}`);
-      this.emit(
-        new ChildLeftEvent({
-          source: this.address,
-          childAddress: nodeAddress,
-          parentAddress: this.address,
-          reason: 'peer_disconnected',
-        }),
-      );
-
-      // Optionally remove from hierarchy (auto-cleanup)
-      // this.hierarchyManager.removeChild(nodeAddress);
-    }
-
-    // Check if this is a parent node
-    if (this.isParent(nodeAddress)) {
-      this.logger.debug(`Parent node disconnected: ${nodeAddress.toString()}`);
-      this.emit(
-        new ParentDisconnectedEvent({
-          source: this.address,
-          parentAddress: nodeAddress,
-          reason: 'peer_disconnected',
-        }),
-      );
-    }
   }
 
   /**
    * Handle peer discovery event from libp2p
+   * Emits low-level peer discovered event for hierarchy manager to process
    */
   private handlePeerDiscovery(evt: CustomEvent): void {
     const peerInfo = evt.detail;
-    // this.logger.debug(`Peer discovered: ${peerInfo.id.toString()}`);
 
-    // Try to resolve peer ID to Olane address
-    const nodeAddress = this.peerIdToAddress(peerInfo.id.toString());
-
-    if (!nodeAddress) {
-      return;
-    }
+    // Extract multiaddrs if available
+    const multiaddrs = peerInfo.multiaddrs?.map((ma: any) => ma.toString());
 
     this.emit(
-      new NodeDiscoveredEvent({
+      new PeerDiscoveredEvent({
         source: this.address,
-        nodeAddress,
+        peerId: peerInfo.id.toString(),
+        multiaddrs,
       }),
     );
   }
@@ -199,64 +118,39 @@ export class oNodeNotificationManager extends oNotificationManager {
 
   /**
    * Handle connection close event from libp2p
+   * Emits low-level peer disconnected event for hierarchy manager to process
    */
   private handleConnectionClose(evt: CustomEvent): void {
-    // do nothing for now
-  }
-
-  /**
-   * Try to resolve a libp2p peer ID to an Olane address
-   * Checks hierarchy manager for known peers
-   */
-  private peerIdToAddress(peerId: string): oNodeAddress | null {
-    // Check children
-    for (const child of this.hierarchyManager.children) {
-      const childTransports = child.transports;
-      for (const transport of childTransports) {
-        if (transport.toString().includes(peerId)) {
-          return child;
-        }
-      }
+    const connection = evt.detail as Connection | undefined;
+    if (!connection) {
+      return;
     }
 
-    // Check parents
-    for (const parent of this.hierarchyManager.parents) {
-      const parentTransports = parent.transports;
-      for (const transport of parentTransports) {
-        if (transport.toString().includes(peerId)) {
-          return parent;
-        }
-      }
+    const remotePeerId = connection.remotePeer?.toString();
+    if (!remotePeerId) {
+      return;
     }
 
-    // Check leaders
-    for (const leader of this.hierarchyManager.leaders) {
-      const leaderTransports = leader.transports;
-      for (const transport of leaderTransports) {
-        if (transport.toString().includes(peerId)) {
-          return leader;
-        }
-      }
+    // Check if there are any remaining open connections to this peer
+    const remainingConnections = this.p2pNode
+      .getConnections(remotePeerId as any)
+      .filter((conn) => conn.status === 'open');
+
+    // Only emit disconnect events if this was the last connection
+    if (remainingConnections.length > 0) {
+      this.logger.debug(
+        `Connection closed to ${remotePeerId}, but ${remainingConnections.length} connection(s) remain open`,
+      );
+      return;
     }
 
-    return null;
-  }
-
-  /**
-   * Check if an address is a direct child
-   */
-  private isChild(address: oNodeAddress): boolean {
-    return this.hierarchyManager.children.some(
-      (child) => child.toString() === address.toString(),
-    );
-  }
-
-  /**
-   * Check if an address is a parent
-   */
-  private isParent(address: oNodeAddress): boolean {
-    return this.hierarchyManager.parents.some(
-      (parent) => parent.toString() === address.toString(),
+    // Emit low-level peer disconnected event
+    this.emit(
+      new PeerDisconnectedEvent({
+        source: this.address,
+        peerId: remotePeerId,
+        reason: 'connection_closed',
+      }),
     );
   }
 }

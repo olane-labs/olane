@@ -1,19 +1,11 @@
-import { oCapabilityMultipleStepConfig } from '../capabilities-multiple-step/interfaces/o-capability.multiple-step-config.js';
-import { oCapabilitySearchConfig } from '../capabilities-search/interfaces/o-capability.search-config.js';
-import { oCapabilityTaskConfig } from '../capabilities-task/interfaces/o-capability.task-config.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
-import { oCapabilityConfig } from './interfaces/o-capability.config.js';
+import { oCapabilityConfig } from './o-capability.config.js';
 import { oCapabilityResultInterface } from './interfaces/o-capability.result-interface.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export class oCapabilityResult implements oCapabilityResultInterface {
   id: string;
-  result?:
-    | oCapabilitySearchConfig
-    | oCapabilityMultipleStepConfig
-    | oCapabilityTaskConfig
-    | any;
-  humanResult?: any;
+  result?: any;
   type: oCapabilityType;
   error?: string;
   config?: oCapabilityConfig;
@@ -22,10 +14,9 @@ export class oCapabilityResult implements oCapabilityResultInterface {
   constructor(config: oCapabilityResultInterface) {
     this.id = uuidv4();
     this.result = config.result;
-    this.humanResult = config.humanResult;
     this.type = config.type || oCapabilityType.UNKNOWN;
-    this.error = config.error || '';
     this.config = config.config;
+    this.error = config.error;
     this.shouldPersist = config.shouldPersist;
   }
 
@@ -33,15 +24,9 @@ export class oCapabilityResult implements oCapabilityResultInterface {
     return {
       id: this.id,
       result: this.result,
-      humanResult: this.humanResult, // Include human-readable result in serialization
       type: this.type,
       error: this.error,
-      shouldPersist: this.shouldPersist,
-      config: {
-        intent: this.config?.intent,
-        params: this.config?.params,
-        history: this.config?.history,
-      },
+      config: this.config?.toJSON(),
     };
   }
 

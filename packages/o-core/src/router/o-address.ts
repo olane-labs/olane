@@ -45,6 +45,36 @@ export class oAddress extends oObject {
     return true;
   }
 
+  /**
+   * Check if this address contains a nested path
+   * @returns true if address contains '/' in the path portion (e.g., 'o://parent/child')
+   */
+  isNested(): boolean {
+    const paths = this.paths; // Strips 'o://' prefix
+    return paths.includes('/');
+  }
+
+  /**
+   * Validates that this address is not nested (for constructor validation)
+   * @throws Error if address contains nested paths
+   */
+  validateNotNested(): void {
+    if (this.isNested()) {
+      throw new Error(
+        `Invalid address: "${this.value}". ` +
+          `Nested addresses should not be created directly in node constructors. ` +
+          `Use simple addresses (e.g., "o://tool-name") and let the system ` +
+          `create hierarchical addresses during parent/leader registration. ` +
+          `\n\nExample:\n` +
+          `  ✅ CORRECT: new oNodeAddress('o://my-tool')\n` +
+          `  ❌ WRONG:   new oNodeAddress('o://my-tool/type2')\n\n` +
+          `If you need nested addresses at runtime, they will be created ` +
+          `automatically during registration with parent/leader.\n\n` +
+          `For more info, see CLAUDE.md Section 4: Parent-Child System`,
+      );
+    }
+  }
+
   get paths(): string {
     return this.value.replace('o://', '');
   }

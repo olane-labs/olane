@@ -1,7 +1,7 @@
-import { oAddress } from '@olane/o-core';
-import { oCapabilityConfig } from '../../capabilities/interfaces/o-capability.config.js';
 
-export interface oCapabilityConfigureConfig extends oCapabilityConfig {
+import { oCapabilityConfigInterface } from '../../capabilities/interfaces/o-capability.config-interface.js';
+
+export interface oCapabilityConfigureConfig extends oCapabilityConfigInterface {
   params: {
     toolAddress: string;
     intent: string;

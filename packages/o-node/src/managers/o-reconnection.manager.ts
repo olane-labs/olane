@@ -73,6 +73,7 @@ export class oReconnectionManager extends oObject {
 
   async handleNodeConnected(event: any) {
     const connectedEvent = event as NodeConnectedEvent;
+    // if leader is back online re-register
     if (
       connectedEvent.nodeAddress.toString() === oAddress.leader().toString()
     ) {
@@ -81,6 +82,12 @@ export class oReconnectionManager extends oObject {
         method: 'register_leader',
         params: {},
       });
+    }
+    if (
+      connectedEvent.nodeAddress.toString() === this.node.config.parent?.value
+    ) {
+      // connect to the parent and register
+      await this.node.registerParent();
     }
   }
 
@@ -136,36 +143,36 @@ export class oReconnectionManager extends oObject {
     this.reconnecting = true;
     let attempt = 0;
 
-    while (attempt < this.config.maxAttempts) {
-      attempt++;
+    // while (attempt < this.config.maxAttempts) {
+    //   attempt++;
 
-      this.logger.info(
-        `Reconnection attempt ${attempt}/${this.config.maxAttempts} to parent: ${this.node.config.parent}`,
-      );
+    //   this.logger.info(
+    //     `Reconnection attempt ${attempt}/${this.config.maxAttempts} to parent: ${this.node.config.parent}`,
+    //   );
 
-      try {
-        // Strategy 1: Try direct parent reconnection
-        await this.tryDirectParentReconnection();
+    //   try {
+    //     // Strategy 1: Try direct parent reconnection
+    //     await this.tryDirectParentReconnection();
 
-        // Success!
-        this.reconnecting = false;
-        this.logger.info(
-          `Successfully reconnected to parent after ${attempt} attempts`,
-        );
-        return;
-      } catch (error) {
-        this.logger.warn(
-          `Reconnection attempt ${attempt} failed:`,
-          error instanceof Error ? error.message : error,
-        );
+    //     // Success!
+    //     this.reconnecting = false;
+    //     this.logger.info(
+    //       `Successfully reconnected to parent after ${attempt} attempts`,
+    //     );
+    //     return;
+    //   } catch (error) {
+    //     this.logger.warn(
+    //       `Reconnection attempt ${attempt} failed:`,
+    //       error instanceof Error ? error.message : error,
+    //     );
 
-        if (attempt < this.config.maxAttempts) {
-          const delay = this.calculateBackoffDelay(attempt);
-          this.logger.debug(`Waiting ${delay}ms before next attempt...`);
-          await this.sleep(delay);
-        }
-      }
-    }
+    //     if (attempt < this.config.maxAttempts) {
+    //       const delay = this.calculateBackoffDelay(attempt);
+    //       this.logger.debug(`Waiting ${delay}ms before next attempt...`);
+    //       await this.sleep(delay);
+    //     }
+    //   }
+    // }
 
     // All direct attempts failed - try leader fallback
     if (this.config.useLeaderFallback) {
@@ -299,9 +306,13 @@ export class oReconnectionManager extends oObject {
    * Wait for non-leader parent to appear in registry and reconnect
    */
   async waitForParentAndReconnect() {
+    this.logger.debug('waitForParentAndReconnect...');
     const startTime = Date.now();
     let attempt = 0;
     let currentDelay = this.config.parentDiscoveryIntervalMs;
+    if (!this.node.config.leader) {
+      throw new Error('Cannot connect to parent without leader');
+    }
 
     // Infinite retry loop - keep trying until parent is found
     while (true) {
@@ -314,14 +325,22 @@ export class oReconnectionManager extends oObject {
 
       try {
         // Query registry for parent by its known address
-        const response = await this.node.use(oAddress.registry(), {
-          method: 'find_available_parent',
-          params: {
-            parentAddress: this.node.config.parent?.toString(),
+        if (!this.node.config.parent) {
+          throw new Error('Invalid parent definition');
+        }
+        this.logger.debug('Calling parent identify');
+        const response = await this.node.use(
+          new oNodeAddress(this.node.config.parent.value),
+          {
+            method: 'identify',
+            params: {},
           },
-        });
+        );
 
-        const { parentAddress, parentTransports } = response.result.data as any;
+        this.logger.debug('Identify parent response:', response.result.data);
+
+        const { address: parentAddress, transports: parentTransports } =
+          response.result.data as any;
 
         // Check if parent was found in registry
         if (parentAddress && parentTransports && parentTransports.length > 0) {
@@ -332,9 +351,7 @@ export class oReconnectionManager extends oObject {
           // Update parent reference with fresh transports
           this.node.config.parent = new oNodeAddress(
             parentAddress,
-            parentTransports.map(
-              (t: { value: string }) => new oNodeTransport(t.value),
-            ),
+            parentTransports.map((value: string) => new oNodeTransport(value)),
           );
           // Attempt to register with parent and re-register with registry
           try {

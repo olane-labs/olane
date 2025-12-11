@@ -108,7 +108,7 @@ export class oToolBase extends oCore {
       );
       throw new oError(
         oErrorCodes.MISSING_PARAMETERS,
-        'Missing required parameters: ' + missingParams.join(','),
+        'Missing required parameters: ' + missingParams.map(({ name }) => name).join(','),
         {
           parameters: missingParams,
           toolAddress: this.address.toString(),
@@ -135,9 +135,15 @@ export class oToolBase extends oCore {
 
   async callMyTool(request: oRequest, stream?: Stream): Promise<ToolResult> {
     const method = request.method as string;
-    this.logger.verbose('Calling tool: ' + method);
+    if (method !== 'route') {
+      this.logger.verbose('Calling tool: ' + method);
+    }
     // TODO: implement this
     // this.requests[request.id] = request;
+    // @ts-ignore
+    if (!this[`_tool_${method}`]) {
+      throw new oError(oErrorCodes.INVALID_ACTION, 'Selected method does not exist');
+    }
     // @ts-ignore
     const result = await this[`_tool_${method}`]({
       ...request.toJSON(),

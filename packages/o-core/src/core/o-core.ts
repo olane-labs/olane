@@ -34,7 +34,7 @@ export abstract class oCore extends oObject {
   public state: NodeState = NodeState.STOPPED;
   public errors: Error[] = [];
   public connectionManager!: oConnectionManager;
-  public hierarchyManager: oHierarchyManager;
+  public hierarchyManager!: oHierarchyManager;
   public metrics: oMetrics = new oMetrics();
   public requestManager: oRequestManager = new oRequestManager();
   public router!: oRouter;
@@ -45,11 +45,14 @@ export abstract class oCore extends oObject {
     super(
       (config.name ? `:${config.name}` : '') + ':' + config.address.toString(),
     );
+
+    // Validate that initial address is not nested
+    // Nested addresses should only be created at runtime during registration
+    if (config.address && !config._allowNestedAddress) {
+      config.address.validateNotNested();
+    }
+
     this.address = config.address || new oAddress('o://node');
-    this.hierarchyManager = new oHierarchyManager({
-      leaders: this.config.leader ? [this.config.leader] : [],
-      parents: this.config.parent ? [this.config.parent] : [],
-    });
   }
 
   get isLeader(): boolean {
@@ -186,7 +189,7 @@ export abstract class oCore extends oObject {
       : await this.router.translate(address, this);
 
     if (
-      nextHopAddress.toStaticAddress().equals(this.address.toStaticAddress())
+      nextHopAddress?.toStaticAddress().equals(this.address.toStaticAddress())
     ) {
       return this.useSelf(data);
     }
@@ -380,11 +383,7 @@ export abstract class oCore extends oObject {
   }
 
   // initialize
-  async initialize(): Promise<void> {
-    // Create and initialize notification manager
-    this.notificationManager = this.createNotificationManager();
-    await this.notificationManager.initialize();
-  }
+  async initialize(): Promise<void> {}
 
   get isRunning(): boolean {
     return (
@@ -394,7 +393,7 @@ export abstract class oCore extends oObject {
     );
   }
 
-  async hookStartFinished(): Promise<void> {}
+  protected async hookStartFinished(): Promise<void> {}
 
   /**
    * Starts the node by transitioning through initialization and registration phases.
@@ -433,6 +432,11 @@ export abstract class oCore extends oObject {
     }
     this.state = NodeState.STARTING;
 
+    // Run pre-start validation outside the try/catch block so that
+    // validation errors surface directly to callers without being
+    // wrapped in start()/teardown() error handling.
+    await this.validate();
+
     try {
       await this.initialize();
       await this.register().catch((error) => {
@@ -455,6 +459,17 @@ export abstract class oCore extends oObject {
       await this.teardown();
     }
   }
+
+  /**
+   * Validation hook that runs before initialize()/register() in start().
+   *
+   * Subclasses can override this to perform cheap, synchronous/async
+   * configuration validation. Any error thrown here will surface
+   * directly to the caller of start() and will prevent initialization
+   * and resource allocation from occurring.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected async validate(): Promise<void> {}
 
   /**
    * Stops the node by performing cleanup and transitioning to a stopped state.
@@ -515,26 +530,41 @@ export abstract class oCore extends oObject {
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
     this.state = NodeState.STOPPING;
-    for (const child of this.hierarchyManager.children) {
-      this.logger.debug('Stopping child: ' + child.toString());
-      await this.useChild(child, {
-        method: 'stop',
-        params: {},
-      }).catch((error) => {
-        if (error.message === 'No data received') {
-          // ignore
-        } else {
-          this.logger.error('Potential error stopping child', error);
-        }
-      });
-      this.logger.debug('Child stopped: ' + child.toString());
-    }
     this.hierarchyManager.clear();
 
     // Teardown notification manager
     if (this.notificationManager) {
       await this.notificationManager.teardown();
     }
+
+    // Reset state to allow restart
+    this.resetState();
+  }
+
+  /**
+   * Reset node state to allow restart after stop
+   * Called at the end of teardown()
+   */
+  protected resetState(): void {
+    // Reset state tracking
+    this.errors = [];
+    this.metrics = new oMetrics();
+    this.requestManager = new oRequestManager();
+
+    // Clear heartbeat
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
+
+    // Reset address to config address with no transports
+    this.address = new oAddress(
+      this.config.address.toStaticAddress().value,
+      [],
+    );
+
+    // Reset hierarchy manager to initial state
+    this.hierarchyManager.clear();
   }
 
   get dependencies(): oDependency[] {

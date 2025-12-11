@@ -2,26 +2,25 @@ import {
   oAddress,
   oError,
   oErrorCodes,
-  NodeState,
   oObject,
-  RestrictedAddresses,
   oResponse,
 } from '@olane/o-core';
 import { oLaneConfig } from './interfaces/o-lane.config.js';
 import { CID } from 'multiformats';
-import * as json from 'multiformats/codecs/json';
-import { sha256 } from 'multiformats/hashes/sha2';
 import { v4 as uuidv4 } from 'uuid';
 import { oIntent } from './intent/index.js';
 import { oIntentEncoder } from './intent-encoder/index.js';
 import { oLaneStatus } from './enum/o-lane.status-enum.js';
 import {
-  oCapabilityConfig,
+  oCapability,
   oCapabilityResult,
   oCapabilityType,
 } from './capabilities/index.js';
 import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
 import { MarkdownBuilder } from './formatters/index.js';
+import { PromptLoader } from './storage/prompt-loader.js';
+import { oCapabilityConfig } from './capabilities/o-capability.config.js';
+import { oLaneStorageManager } from './storage/o-lane.storage-manager.js';
 
 export class oLane extends oObject {
   public sequence: oCapabilityResult[] = [];
@@ -33,6 +32,8 @@ export class oLane extends oObject {
   public status: oLaneStatus = oLaneStatus.PENDING;
   public result: oCapabilityResult | undefined;
   public onChunk?: (chunk: any) => void;
+  private promptLoader: PromptLoader;
+  public storageManager: oLaneStorageManager;
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent.value}]`);
@@ -40,11 +41,13 @@ export class oLane extends oObject {
     this.parentLaneId = this.config.parentLaneId;
     this.intentEncoder = new oIntentEncoder();
     this.onChunk = this.config.onChunk;
+    this.storageManager = new oLaneStorageManager(this);
     // set a max cycles if one is not provided
     if (!!process.env.MAX_CYCLES) {
       this.MAX_CYCLES = parseInt(process.env.MAX_CYCLES);
     }
     this.MAX_CYCLES = this.config.maxCycles || this.MAX_CYCLES;
+    this.promptLoader = config.promptLoader;
   }
 
   get intent(): oIntent {
@@ -52,74 +55,27 @@ export class oLane extends oObject {
   }
 
   toCIDInput(): any {
-    return {
-      intent: this.config.intent.toString(),
-      address: this.config.caller?.toString(),
-      context: this.config.context?.toString() || '',
-    };
+    return this.storageManager.generateCIDInput();
   }
 
   toJSON() {
-    return {
-      config: this.toCIDInput(),
-      sequence: this.sequence,
-      result: this.result,
-    };
+    return this.storageManager.serialize();
   }
 
   addSequence(result: oCapabilityResult) {
     this.sequence.push(result);
-    if (this.config.streamTo) {
-      this.node
-        .use(this.config.streamTo, {
-          method: 'receive_stream',
-          params: {
-            data: result.result || result.error || '',
-          },
-        })
-        .catch((error: any) => {
-          this.logger.error('Error sending agent stream: ', error);
-        });
-    }
   }
 
   async toCID(): Promise<CID> {
-    if (this.cid) {
-      return this.cid;
-    }
-    const bytes = json.encode(this.toCIDInput());
-    const hash = await sha256.digest(bytes);
-    const cid = CID.create(1, json.code, hash);
-    return cid;
+    return this.storageManager.generateCID();
   }
 
   async store(): Promise<CID> {
-    this.logger.debug('Storing plan...');
-    const cid = await this.toCID();
-
-    if (this.node.state !== NodeState.RUNNING) {
-      throw new oError(
-        oErrorCodes.INVALID_STATE,
-        'Node is not in a valid state to store a lane',
-      );
-    }
-
-    const params = {
-      key: cid.toString(),
-      value: JSON.stringify(this.toJSON()),
-    };
-    this.logger.debug('Storing plan params: ', params);
-    await this.node.use(oAddress.lane(), {
-      method: 'put',
-      params: params,
-    });
-    return cid;
+    return this.storageManager.save();
   }
 
   get agentHistory() {
     const added: { [key: string]: boolean } = {};
-    const MAX_RESULT_LENGTH = 1000; // Truncate large results
-    const KEEP_FULL_DETAIL_COUNT = 3; // Keep full detail for last N cycles
 
     const filteredSequence = this.sequence?.filter((s) => {
       if (added[s.id]) {
@@ -132,49 +88,7 @@ export class oLane extends oObject {
     return (
       filteredSequence
         ?.map((s, index) => {
-          const isRecent =
-            index >= filteredSequence.length - KEEP_FULL_DETAIL_COUNT;
-          const result = s.result || s.error;
-          const params = s.config?.params || {};
-
-          // Extract summary and reasoning if available
-          const summary = params.summary || '';
-          const reasoning = params.reasoning || '';
-
-          // Format result, truncating if not a recent cycle
-          let formattedResult: string;
-          if (typeof result === 'string') {
-            formattedResult =
-              isRecent || result.length <= MAX_RESULT_LENGTH
-                ? result
-                : result.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
-          } else {
-            const jsonStr = JSON.stringify(result, null, 2);
-            formattedResult =
-              isRecent || jsonStr.length <= MAX_RESULT_LENGTH
-                ? jsonStr
-                : jsonStr.substring(0, MAX_RESULT_LENGTH) + '... (truncated)';
-          }
-
-          // Build formatted history entry
-          let entry = `[Cycle ${index + 1}: ${s.type}]\n`;
-          entry += `Intent: ${s.config?.intent.toString()}\n`;
-
-          if (summary) {
-            entry += `Summary: ${summary}\n`;
-          }
-
-          if (reasoning) {
-            entry += `Reasoning: ${reasoning}\n`;
-          }
-
-          if (s.error) {
-            entry += `Error: ${s.error}\n`;
-          } else {
-            entry += `Result: ${formattedResult}\n`;
-          }
-
-          return entry;
+          return `\n<cycle_${index}>\n${JSON.stringify(s)}\n</cycle_${index}>`;
         })
         .join('\n') || ''
     );
@@ -265,7 +179,7 @@ export class oLane extends oObject {
         this.logger.error('Error in preflight: ', error);
 
         this.result = new oCapabilityResult({
-          type: oCapabilityType.ERROR,
+          type: oCapabilityType.STOP,
           result: null,
           error: 'Intelligence services are not available. Try again later.',
         });
@@ -286,8 +200,41 @@ export class oLane extends oObject {
     return this.result;
   }
 
+  /**
+   * Filter capabilities by type from ALL_CAPABILITIES
+   * @param types Array of capability types to include
+   * @returns Array of instantiated capabilities matching the specified types
+   */
+  private filterCapabilitiesByType(types: oCapabilityType[]): oCapability[] {
+    return ALL_CAPABILITIES.map((CapabilityClass) => {
+      const instance = new CapabilityClass({
+        promptLoader: this.promptLoader,
+        node: this.node,
+      });
+      return instance;
+    }).filter((capability) => types.includes(capability.type));
+  }
+
   get capabilities() {
-    return this.config.capabilities || ALL_CAPABILITIES.map((c) => new c());
+    // Priority order:
+    // 1. If config.capabilities exists, use it (full backward compatibility)
+    // 2. If config.enabledCapabilityTypes exists, filter ALL_CAPABILITIES
+    // 3. Otherwise, use ALL_CAPABILITIES (default behavior)
+    if (this.config.capabilities) {
+      return this.config.capabilities;
+    }
+
+    if (this.config.enabledCapabilityTypes) {
+      return this.filterCapabilitiesByType(this.config.enabledCapabilityTypes);
+    }
+
+    return ALL_CAPABILITIES.map(
+      (c) =>
+        new c({
+          promptLoader: this.promptLoader,
+          node: this.node,
+        }),
+    );
   }
 
   resultToConfig(result: any): oCapabilityConfig {
@@ -301,6 +248,9 @@ export class oLane extends oObject {
         sequence: this.sequence, // pass the full sequence to the next capability
       },
       useStream: this.config.useStream || false,
+      intent: this.intent,
+      node: this.node,
+      chatHistory: this.config.chatHistory,
     };
   }
 
@@ -314,22 +264,34 @@ export class oLane extends oObject {
           const capabilityConfig: oCapabilityConfig =
             this.resultToConfig(currentStep);
           this.logger.debug('Executing capability: ', capabilityType);
-          const result = await capability.execute({
-            ...capabilityConfig,
-          } as oCapabilityConfig);
+          const result = await capability.execute(
+            oCapabilityConfig.fromJSON({
+              ...capabilityConfig,
+            }),
+          );
           return result;
         }
       }
     } catch (error) {
       this.logger.error('Error in doCapability: ', error);
       const errorResult = new oCapabilityResult({
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         result: null,
         error: error instanceof Error ? error.message : 'Unknown error',
+        config: oCapabilityConfig.fromJSON({
+          laneConfig: this.config,
+          intent: this.intent,
+          node: this.node,
+          history: this.agentHistory,
+          chatHistory: this.config.chatHistory,
+        }),
       });
       return errorResult;
     }
-    throw new oError(oErrorCodes.INVALID_CAPABILITY, 'Unknown capability');
+    throw new oError(
+      oErrorCodes.INVALID_CAPABILITY,
+      'Unknown capability:' + currentStep.type,
+    );
   }
 
   async loop(): Promise<oCapabilityResult> {
@@ -341,12 +303,13 @@ export class oLane extends oObject {
     let currentStep = new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       result: null,
-      config: {
+      config: oCapabilityConfig.fromJSON({
         laneConfig: this.config,
         intent: this.intent,
         node: this.node,
         history: this.agentHistory,
-      },
+        chatHistory: this.config.chatHistory,
+      }),
     });
 
     while (
@@ -416,37 +379,8 @@ export class oLane extends oObject {
 
       // If this lane is marked for persistence to config, store it directly in os-config storage
       if (this.config.persistToConfig && this.cid) {
-        this.logger.debug(
-          'Lane marked for persistence (auto-triggered by tool response or explicitly set), saving to config...',
-        );
         try {
-          // Get the OS instance name from the node's system name
-          const systemName =
-            (this.node.config as any).systemName || 'default-os';
-          await this.node.use(new oAddress('o://os-config'), {
-            method: 'add_lane_to_config',
-            params: {
-              osName: systemName,
-              cid: this.cid.toString(),
-            },
-          });
-          const data = response?.result;
-          if (data.addresses_to_index) {
-            for (const address of data.addresses_to_index) {
-              this.logger.debug('Indexing address: ', address.toString());
-              await this.node
-                .use(new oAddress(address), {
-                  method: 'index_network',
-                  params: {},
-                })
-                .catch((error: any) => {
-                  this.logger.error('Error indexing address: ', error);
-                });
-            }
-          }
-          this.logger.debug(
-            'Lane CID added to startup config via o://os-config',
-          );
+          await this.storageManager.persistToConfig(this.cid, response);
         } catch (error) {
           this.logger.error('Failed to add lane to startup config: ', error);
         }
@@ -471,89 +405,18 @@ export class oLane extends oObject {
    * This method loads a lane's execution sequence and replays it to restore network state
    */
   async replay(cid: string): Promise<oCapabilityResult | undefined> {
-    this.logger.debug('Replaying lane from CID: ', cid);
     this.status = oLaneStatus.RUNNING;
 
     try {
-      // Load the lane data from storage
-      const laneData = await this.node.use(oAddress.lane(), {
-        method: 'get',
-        params: { key: cid },
-      });
-
-      if (!laneData || !laneData.result) {
-        throw new Error(`Lane not found in storage for CID: ${cid}`);
-      }
-
-      const data = laneData.result.data as any;
-      const storedLane = JSON.parse(data.value);
-
-      // Replay the sequence
-      if (!storedLane.sequence || !Array.isArray(storedLane.sequence)) {
-        throw new Error('Invalid lane data: missing or invalid sequence');
-      }
-
-      // Iterate through the stored sequence and replay capabilities
-      for (const sequenceItem of storedLane.sequence) {
-        const capabilityType = sequenceItem.type;
-
-        // Determine if this capability should be replayed
-        if (this.shouldReplayCapability(capabilityType)) {
-          this.logger.debug(`Replaying capability: ${capabilityType}`);
-
-          // Create a capability result with replay flag
-          const replayStep = new oCapabilityResult({
-            type: capabilityType,
-            config: {
-              ...sequenceItem.config,
-              isReplay: true,
-              node: this.node,
-              history: this.agentHistory,
-            },
-            result: sequenceItem.result,
-            error: sequenceItem.error,
-          });
-
-          // Execute the capability in replay mode
-          const result = await this.doCapability(replayStep);
-          this.addSequence(result);
-
-          // If the capability is STOP, end replay
-          if (result.type === oCapabilityType.STOP) {
-            this.result = result;
-            break;
-          }
-        } else {
-          this.logger.debug(
-            `Skipping capability (using cached result): ${capabilityType}`,
-          );
-          // Add the cached result to sequence without re-executing
-          this.addSequence(sequenceItem);
-        }
-      }
-
+      const result = await this.storageManager.replay(cid);
+      this.result = result;
       this.status = oLaneStatus.COMPLETED;
-      this.logger.debug('Lane replay completed successfully');
-      return this.result;
+      return result;
     } catch (error) {
       this.logger.error('Error during lane replay: ', error);
       this.status = oLaneStatus.FAILED;
       throw error;
     }
-  }
-
-  /**
-   * Determine if a capability should be re-executed during replay
-   * Task and Configure capabilities are re-executed as they modify network state
-   * Other capabilities use cached results
-   */
-  private shouldReplayCapability(capabilityType: oCapabilityType): boolean {
-    const replayTypes = [
-      oCapabilityType.TASK,
-      oCapabilityType.CONFIGURE,
-      oCapabilityType.MULTIPLE_STEP,
-    ];
-    return replayTypes.includes(capabilityType);
   }
 
   get node() {

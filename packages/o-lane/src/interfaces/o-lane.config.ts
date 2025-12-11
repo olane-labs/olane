@@ -2,18 +2,30 @@ import { oAddress, oCore } from '@olane/o-core';
 import { oToolBase } from '@olane/o-tool';
 import { oLaneContext } from '../o-lane.context.js';
 import { oCapability } from '../capabilities/o-capability.js';
+import { oCapabilityType } from '../capabilities/index.js';
 import { oIntent } from '../intent/o-intent.js';
+import { PromptLoader } from '../storage/prompt-loader.js';
 
 export interface oLaneConfig {
   // an oAddress that contains the config for the plan
   intent: oIntent;
   caller: oAddress;
 
+  // prompt loader
+  promptLoader: PromptLoader;
+
+  // additional context
   context?: oLaneContext;
+  chatHistory?: string;
+
   sequence?: any[];
 
   streamTo?: oAddress;
   capabilities?: oCapability[];
+
+  // Filter which capability types to enable from ALL_CAPABILITIES
+  // Note: If 'capabilities' is provided, it takes precedence and this property is ignored
+  enabledCapabilityTypes?: oCapabilityType[];
 
   // o-networking information
   // Using oToolBase to allow any tool that extends it (oLaneTool, or other mixin-based tools)

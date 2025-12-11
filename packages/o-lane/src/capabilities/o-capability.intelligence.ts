@@ -7,18 +7,12 @@ import {
 import { oCapabilityIntelligenceResult } from './interfaces/o-capability.intelligence-result.js';
 import { oCapability } from './o-capability.js';
 import { oCapabilityType } from './enums/o-capability.type-enum.js';
-import { ResultStreamParser } from './utils/result-stream-parser.js';
 
 export abstract class oCapabilityIntelligence extends oCapability {
+
   async intelligence(prompt: string): Promise<oCapabilityIntelligenceResult> {
     try {
-      if (!this.node.isRunning) {
-        throw new Error(
-          'Node is not running, cannot use intelligence capability',
-        );
-      }
-      const _isStreaming = this.config.useStream || false;
-      const parser = new ResultStreamParser('result');
+      const _isStreaming = this.config?.useStream || false;
 
       const response = await this.node.useStream(
         new oAddress(RestrictedAddresses.INTELLIGENCE),
@@ -26,6 +20,8 @@ export abstract class oCapabilityIntelligence extends oCapability {
           method: 'prompt',
           params: {
             prompt: prompt,
+            userMessage: `<intent>${this.config?.intent}</intent>`,
+            intent: this.config?.intent,
             _isStreaming: _isStreaming,
           },
         },
@@ -51,22 +47,12 @@ export abstract class oCapabilityIntelligence extends oCapability {
 
       // Extract structured fields from AI response
       // The AI returns JSON with fields like: type, summary, reasoning, result, etc.
-      const { type, summary, reasoning, ...rest } = processedResult;
+      const { type } = processedResult;
 
       return new oCapabilityIntelligenceResult({
         result: processedResult, // Keep full result for backwards compatibility
-        humanResult: processedResult.result, // AI-generated result is already human-readable
         type: type || oCapabilityType.EVALUATE,
-        config: {
-          ...this.config,
-          // Preserve summary and reasoning in params for access
-          params: {
-            ...this.config.params,
-            ...processedResult, // Store full AI response in params
-            summary,
-            reasoning,
-          },
-        },
+        config: this.config,
         error: undefined,
       });
     } catch (error: any) {

@@ -1,6 +1,6 @@
 import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
 import { OlaneOSConfig } from './interfaces/o-os.config.js';
-import * as touch from 'touch';
+import touch from 'touch';
 import { readFile } from 'fs/promises';
 import { oLeaderNode } from '@olane/o-leader';
 import { oAddress, oObject, oTransport } from '@olane/o-core';
@@ -8,7 +8,7 @@ import { NodeType } from '@olane/o-core';
 import { initCommonTools } from '@olane/o-tools-common';
 import { initRegistryTools } from '@olane/o-tool-registry';
 import { ConfigManager } from '../utils/config.js';
-import {  oLaneTool } from '@olane/o-lane';
+import { oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
@@ -58,7 +58,8 @@ export class OlaneOS extends oObject {
   }
 
   private async loadConfig() {
-    // TODO make this a promise based function
+    // Load config from filesystem first to get initial structure
+    // Then we'll migrate to using o://os-config for persistence
     if (this.config.configFilePath) {
       try {
         await touch(this.config.configFilePath);
@@ -94,6 +95,85 @@ export class OlaneOS extends oObject {
       }
     } else {
       this.logger.warn('No config file path provided, using default config');
+    }
+  }
+
+  /**
+   * Load config from o://os-config storage backend
+   * This is called after the leader is started and tools are initialized
+   */
+  private async loadConfigFromStorage() {
+    if (!this.rootLeader) {
+      this.logger.warn(
+        'No root leader available, skipping storage config load',
+      );
+      return;
+    }
+
+    try {
+      const osInstanceName = await this.getOSInstanceName();
+      if (!osInstanceName) {
+        this.logger.warn(
+          'No OS instance name available, skipping storage config load',
+        );
+        return;
+      }
+
+      this.logger.debug(
+        `Loading config from o://os-config for: ${osInstanceName}`,
+      );
+
+      // Try to load existing config from storage
+      const loadResult = await this.rootLeader.use(
+        new oAddress('o://os-config'),
+        {
+          method: 'load_config',
+          params: { osName: osInstanceName },
+        },
+      );
+
+      if (loadResult.result?.success) {
+        const loadedConfig = loadResult.result.data as any;
+        this.logger.debug('Loaded config from storage:', loadedConfig);
+
+        // Merge storage config with current config, prioritizing storage for lanes
+        if (loadedConfig.oNetworkConfig) {
+          this.config = {
+            ...this.config,
+            lanes: loadedConfig.oNetworkConfig.lanes || this.config.lanes || [],
+          };
+        }
+
+        this.logger.info(
+          `Loaded config from storage: ${this.config.lanes?.length || 0} saved lanes`,
+        );
+      } else {
+        this.logger.debug(
+          'No config found in storage, creating default:',
+          loadResult.result?.error,
+        );
+
+        // Create default config in storage
+        await this.rootLeader.use(new oAddress('o://os-config'), {
+          method: 'save_config',
+          params: {
+            osName: osInstanceName,
+            config: {
+              oNetworkConfig: {
+                lanes: this.config.lanes || [],
+              },
+            },
+          },
+        });
+
+        this.logger.info('Created default config in storage');
+      }
+    } catch (error) {
+      this.logger.error(
+        'Failed to load config from storage (non-fatal):',
+        error,
+      );
+      // Don't throw - allow OS to continue with filesystem config
     }
   }
 
@@ -141,18 +221,18 @@ export class OlaneOS extends oObject {
           leader: this.rootLeader?.address || null,
           parent: this.rootLeader?.address || null,
         });
-        (commonNode as any).hookInitializeFinished = () => {
+        (commonNode as any).onInitFinished(() => {
           this.rootLeader?.addChildNode(commonNode as any);
-        };
+        });
         await commonNode.start();
         const olaneStorage = new oLaneStorage({
           name: 'lane-storage',
           parent: commonNode.address,
           leader: this.rootLeader?.address || null,
         });
-        (olaneStorage as any).hookInitializeFinished = () => {
+        (olaneStorage as any).onInitFinished(() => {
           commonNode.addChildNode(olaneStorage as any);
-        };
+        });
         await olaneStorage.start();
         await initRegistryTools(commonNode);
         this.nodes.push(commonNode);
@@ -161,32 +241,75 @@ export class OlaneOS extends oObject {
   }
 
   async runSavedPlans() {
-    const laneCIDs = Array.from(new Set(this.config?.lanes || []));
-    if (laneCIDs.length === 0) {
-      this.logger.debug('No saved lanes to replay');
+    if (!this.rootLeader) {
+      this.logger.warn('No root leader available, skipping lane replay');
       return;
     }
 
-    this.logger.info(
-      `Replaying ${laneCIDs.length} saved lane(s) to restore network state...`,
-    );
-
-    for (const cid of laneCIDs) {
-      this.logger.debug('Replaying lane with CID: ' + cid);
-      try {
-        // Use the entry node's lane tool to replay the lane
-        const result = await this.use(this.entryNode().address, {
-          method: 'replay',
-          params: { cid },
-        });
-        this.logger.info('Lane replay completed successfully: ' + cid, result);
-      } catch (error) {
-        this.logger.error('Failed to replay lane: ' + cid, error);
-        // Continue with other lanes even if one fails
+    try {
+      const osInstanceName = await this.getOSInstanceName();
+      if (!osInstanceName) {
+        this.logger.warn('No OS instance name available, skipping lane replay');
+        return;
       }
-    }
 
-    this.logger.info('All saved lanes replayed');
+      this.logger.debug(`Loading saved lanes for OS: ${osInstanceName}`);
+
+      // Get lanes from o://os-config storage (same as cloud pattern)
+      const lanesResult = await this.rootLeader.use(
+        new oAddress('o://os-config'),
+        {
+          method: 'get_lanes',
+          params: { osName: osInstanceName },
+        },
+      );
+
+      const lanes = (lanesResult.result?.data as any)?.lanes || [];
+
+      if (!Array.isArray(lanes) || lanes.length === 0) {
+        this.logger.debug('No saved lanes found to replay');
+        return;
+      }
+
+      this.logger.info(
+        `Found ${lanes.length} saved lane(s) to replay: ${lanes.join(', ')}`,
+      );
+
+      const replayedLanes: string[] = [];
+
+      // Replay each lane
+      for (const cid of lanes) {
+        try {
+          this.logger.debug(`Replaying lane: ${cid}`);
+
+          // Use the entry node's lane tool to replay the lane
+          const replayResult = await this.use(this.entryNode().address, {
+            method: 'replay',
+            params: { cid },
+          });
+
+          if (replayResult.result?.success !== false) {
+            replayedLanes.push(cid);
+            this.logger.info(`Successfully replayed lane: ${cid}`);
+          } else {
+            this.logger.warn(
+              `Failed to replay lane ${cid}:`,
+              replayResult.result?.error,
+            );
+          }
+        } catch (error) {
+          this.logger.error(`Error replaying lane ${cid}:`, error);
+          // Continue with other lanes even if one fails
+        }
+      }
+
+      this.logger.info(
+        `Replayed ${replayedLanes.length} of ${lanes.length} lane(s)`,
+      );
+    } catch (error) {
+      this.logger.error('Error loading and replaying saved lanes:', error);
+      // Don't throw - allow OS to continue even if replay fails
+    }
   }
 
   async use(oAddress: oAddress, params: any) {
@@ -212,6 +335,12 @@ export class OlaneOS extends oObject {
     await this.startNodes(NodeType.NODE);
     this.logger.debug('Nodes started...');
 
+    // Load config from o://os-config storage backend (after tools are initialized)
+    // This merges any saved lanes from persistent storage
+    await this.loadConfigFromStorage();
+    this.logger.debug('Config loaded from storage...');
+
+    // Replay saved lanes from storage
     await this.runSavedPlans();
     this.logger.debug('Saved plans run...');
     this.logger.debug('OS instance started...');

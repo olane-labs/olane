@@ -3,6 +3,102 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.31 (2025-12-10)</small>
+
+- minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
+- minor change ([4325f48](https://github.com/olane-labs/olane/commit/4325f48))
+- minor change ([e835a1c](https://github.com/olane-labs/olane/commit/e835a1c))
+- minor change ([378008a](https://github.com/olane-labs/olane/commit/378008a))
+- minor change ([6be2758](https://github.com/olane-labs/olane/commit/6be2758))
+- minor change ([01a6f75](https://github.com/olane-labs/olane/commit/01a6f75))
+
+## <small>0.7.30 (2025-12-10)</small>
+
+- clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
+
+## <small>0.7.29 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.28 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.27 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.26 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.25 (2025-12-07)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.24 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.23 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.22 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.21 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.20 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.19 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.18 (2025-12-05)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.17 (2025-12-04)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.16 (2025-12-04)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.15 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.14 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.13 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-test
+
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- fix dependency mismatch ([4ad6ede](https://github.com/olane-labs/olane/commit/4ad6ede))
+- mid refactor cyclical test depenencies ([1946261](https://github.com/olane-labs/olane/commit/1946261))
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+- remove o-lane package dependencies ([03bd12e](https://github.com/olane-labs/olane/commit/03bd12e))
+
 ## <small>0.7.12 (2025-11-30)</small>
 
 - correction around testing ([62f8845](https://github.com/olane-labs/o-node-template/commit/62f8845))

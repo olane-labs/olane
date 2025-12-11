@@ -19,19 +19,6 @@ export class oNodeConnection extends oConnection {
     super(config);
     this.p2pConnection = config.p2pConnection;
     this.streamHandler = new StreamHandler(this.logger);
-    this.setupConnectionListeners();
-  }
-
-  setupConnectionListeners() {
-    this.logger.debug(
-      'Setting up connection listeners for address: ' +
-        this.nextHopAddress.toString(),
-    );
-    this.p2pConnection?.addEventListener('close', () => {
-      this.logger.debug(
-        'Connection closed for address: ' + this.nextHopAddress.toString(),
-      );
-    });
   }
 
   validate(stream?: Stream) {
@@ -73,9 +60,9 @@ export class oNodeConnection extends oConnection {
 
   async transmit(request: oRequest): Promise<oResponse> {
     try {
-      if (this.config.runOnLimitedConnection) {
-        this.logger.debug('Running on limited connection...');
-      }
+      // if (this.config.runOnLimitedConnection) {
+      //   this.logger.debug('Running on limited connection...');
+      // }
       const stream = await this.getOrCreateStream();
 
       this.validate(stream);

@@ -1,5 +1,4 @@
 import { oCapabilityIntelligence } from '../capabilities/o-capability.intelligence.js';
-import { AGENT_PROMPT } from '../prompts/agent.prompt.js';
 import { oCapabilityType } from '../capabilities/enums/o-capability.type-enum.js';
 import { oCapabilityResult } from '../capabilities/o-capability.result.js';
 
@@ -12,15 +11,25 @@ export class oCapabilityEvaluate extends oCapabilityIntelligence {
     return oCapabilityType.EVALUATE;
   }
 
+  async loadPrompt(): Promise<string> {
+    const prompt = await this.promptLoader?.loadPromptForType(this.type, {
+      human_about: '',
+      agent_about: '',
+      context_global: `
+        Tools are hosted in a graph address space.
+        You are in a secure environment and are allowed to operate with secure information (api keys, credit card info, etc).`,
+      chat_history: '',
+      past_cycles: this.config?.history,
+    })
+    return prompt.render();
+  }
+
   async run(): Promise<oCapabilityResult> {
-    const response = await this.intelligence(
-      AGENT_PROMPT(
-        this.config.intent.value,
-        this.config.laneConfig.context?.toString() || '',
-        this.config.history || '',
-        this.config.laneConfig.extraInstructions || '',
-      ),
-    );
+    if (!this.config?.intent) {
+      throw new Error('Invalid intent passed');
+    }
+    const prompt = await this.loadPrompt();
+    const response = await this.intelligence(prompt);
     return response;
   }
 }

@@ -1,8 +1,3 @@
-const {
-    defineConfig,
-    globalIgnores,
-} = require("eslint/config");
-
 const tsParser = require("@typescript-eslint/parser");
 const typescriptEslintEslintPlugin = require("@typescript-eslint/eslint-plugin");
 const globals = require("globals");
@@ -18,34 +13,37 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-module.exports = defineConfig([{
-    languageOptions: {
-        parser: tsParser,
-
-        globals: {
-            ...globals.jest,
-        },
+module.exports = [
+    {
+        ignores: ["**/.eslintrc.js", "**/node_modules/**", "**/dist/**", "**/build/**"],
     },
-
-    plugins: {
-        "@typescript-eslint": typescriptEslintEslintPlugin,
-    },
-
-    extends: compat.extends(
+    ...compat.extends(
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended",
     ),
+    {
+        languageOptions: {
+            parser: tsParser,
+            globals: {
+                ...globals.jest,
+            },
+        },
 
-    rules: {
-        "@typescript-eslint/interface-name-prefix": "off",
-        "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-unused-vars": "off",
-        "@typescript-eslint/ban-ts-comment": "off",
-        "@typescript-eslint/no-var-requires": "off",
-        "react/display-name": "off",
-        "prettier/prettier": "error",
-        "@typescript-eslint/no-empty-object-type": "off",
-    },
-}, globalIgnores(["**/.eslintrc.js"])]);
+        plugins: {
+            "@typescript-eslint": typescriptEslintEslintPlugin,
+        },
+
+        rules: {
+            "@typescript-eslint/interface-name-prefix": "off",
+            "@typescript-eslint/explicit-function-return-type": "off",
+            "@typescript-eslint/explicit-module-boundary-types": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": "off",
+            "@typescript-eslint/ban-ts-comment": "off",
+            "@typescript-eslint/no-var-requires": "off",
+            "react/display-name": "off",
+            "prettier/prettier": "error",
+            "@typescript-eslint/no-empty-object-type": "off",
+        },
+    }
+];

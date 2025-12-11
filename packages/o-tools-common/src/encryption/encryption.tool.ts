@@ -8,14 +8,14 @@ import { oNodeToolConfig } from '@olane/o-node';
 export class EncryptionTool extends oLaneTool {
   private encryptionService: EncryptionService;
 
-  constructor(config: oNodeToolConfig) {
+  constructor(config: oNodeToolConfig & { vaultKey?: string }) {
     super({
       ...config,
       address: new oAddress('o://encryption'),
       methods: ENCRYPTION_PARAMS,
       description: 'Tool to encrypt and decrypt sensitive data',
     });
-    this.encryptionService = new EncryptionService(process.env.VAULT_KEY);
+    this.encryptionService = new EncryptionService(config.vaultKey || process.env.VAULT_KEY);
   }
 
   async _tool_encrypt(request: oRequest): Promise<ToolResult> {

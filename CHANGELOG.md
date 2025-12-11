@@ -3,6 +3,138 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.31 (2025-12-10)</small>
+
+- minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
+- minor change ([4325f48](https://github.com/olane-labs/olane/commit/4325f48))
+- minor change ([e835a1c](https://github.com/olane-labs/olane/commit/e835a1c))
+- minor change ([378008a](https://github.com/olane-labs/olane/commit/378008a))
+- minor change ([6be2758](https://github.com/olane-labs/olane/commit/6be2758))
+- minor change ([01a6f75](https://github.com/olane-labs/olane/commit/01a6f75))
+- chore: update pnpm-lock.yaml after version bump ([cc328e1](https://github.com/olane-labs/olane/commit/cc328e1))
+
+## <small>0.7.30 (2025-12-10)</small>
+
+- clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
+- fixes for reconnection after parent / leader disconnect ([92bbe0c](https://github.com/olane-labs/olane/commit/92bbe0c))
+- refined hooks ([a7a7de7](https://github.com/olane-labs/olane/commit/a7a7de7))
+- chore: update pnpm-lock.yaml after version bump ([3aaf809](https://github.com/olane-labs/olane/commit/3aaf809))
+
+## <small>0.7.29 (2025-12-08)</small>
+
+- fixed the replay functionality ([400a66e](https://github.com/olane-labs/olane/commit/400a66e))
+- chore: update pnpm-lock.yaml after version bump ([7f24180](https://github.com/olane-labs/olane/commit/7f24180))
+
+## <small>0.7.28 (2025-12-08)</small>
+
+- minor change ([7b318a4](https://github.com/olane-labs/olane/commit/7b318a4))
+- chore: update pnpm-lock.yaml after version bump ([9914642](https://github.com/olane-labs/olane/commit/9914642))
+
+## <small>0.7.27 (2025-12-08)</small>
+
+- support for execute replay ([081fc7f](https://github.com/olane-labs/olane/commit/081fc7f))
+- chore: update pnpm-lock.yaml after version bump ([ded2493](https://github.com/olane-labs/olane/commit/ded2493))
+
+## <small>0.7.26 (2025-12-08)</small>
+
+- minor change ([c1a2c08](https://github.com/olane-labs/olane/commit/c1a2c08))
+- chore: update pnpm-lock.yaml after version bump ([42cd24f](https://github.com/olane-labs/olane/commit/42cd24f))
+
+## <small>0.7.25 (2025-12-07)</small>
+
+- minor change ([6bde93e](https://github.com/olane-labs/olane/commit/6bde93e))
+- chore: update pnpm-lock.yaml after version bump ([6f3520b](https://github.com/olane-labs/olane/commit/6f3520b))
+
+## <small>0.7.24 (2025-12-06)</small>
+
+- minor change ([1eec334](https://github.com/olane-labs/olane/commit/1eec334))
+- chore: update pnpm-lock.yaml after version bump ([a0c9876](https://github.com/olane-labs/olane/commit/a0c9876))
+
+## <small>0.7.23 (2025-12-06)</small>
+
+- minor change ([0f1d41a](https://github.com/olane-labs/olane/commit/0f1d41a))
+- chore: update pnpm-lock.yaml after version bump ([9cac875](https://github.com/olane-labs/olane/commit/9cac875))
+
+## <small>0.7.22 (2025-12-06)</small>
+
+- minor change ([9d3482c](https://github.com/olane-labs/olane/commit/9d3482c))
+- chore: update pnpm-lock.yaml after version bump ([71b5866](https://github.com/olane-labs/olane/commit/71b5866))
+
+## <small>0.7.21 (2025-12-06)</small>
+
+- minor change ([392bff7](https://github.com/olane-labs/olane/commit/392bff7))
+- chore: update pnpm-lock.yaml after version bump ([f950361](https://github.com/olane-labs/olane/commit/f950361))
+
+## <small>0.7.20 (2025-12-06)</small>
+
+- minor change ([0df1c39](https://github.com/olane-labs/olane/commit/0df1c39))
+- chore: update pnpm-lock.yaml after version bump ([956ef7a](https://github.com/olane-labs/olane/commit/956ef7a))
+
+## <small>0.7.19 (2025-12-06)</small>
+
+- in progress refactor ([63dd8d6](https://github.com/olane-labs/olane/commit/63dd8d6))
+- minor change ([5c77677](https://github.com/olane-labs/olane/commit/5c77677))
+- more work on lane refactor ([0e13b9a](https://github.com/olane-labs/olane/commit/0e13b9a))
+- refactor complete ([799d07a](https://github.com/olane-labs/olane/commit/799d07a))
+- chore: update pnpm-lock.yaml after version bump ([9c7cfe1](https://github.com/olane-labs/olane/commit/9c7cfe1))
+
+## <small>0.7.18 (2025-12-05)</small>
+
+- minor log reduction + bug fixes ([0b36728](https://github.com/olane-labs/olane/commit/0b36728))
+- chore: update pnpm-lock.yaml after version bump ([fee4fd4](https://github.com/olane-labs/olane/commit/fee4fd4))
+
+## <small>0.7.17 (2025-12-04)</small>
+
+- minor change ([622d7ff](https://github.com/olane-labs/olane/commit/622d7ff))
+- chore: update pnpm-lock.yaml after version bump ([e55f518](https://github.com/olane-labs/olane/commit/e55f518))
+
+## <small>0.7.16 (2025-12-04)</small>
+
+- minor change ([681eceb](https://github.com/olane-labs/olane/commit/681eceb))
+- chore: update pnpm-lock.yaml after version bump ([26cc661](https://github.com/olane-labs/olane/commit/26cc661))
+
+## <small>0.7.15 (2025-12-03)</small>
+
+- minor change ([158cc0e](https://github.com/olane-labs/olane/commit/158cc0e))
+- chore: update pnpm-lock.yaml after version bump ([86bbea8](https://github.com/olane-labs/olane/commit/86bbea8))
+
+## <small>0.7.14 (2025-12-03)</small>
+
+- minor change ([60e8472](https://github.com/olane-labs/olane/commit/60e8472))
+- minor change ([b0ed03e](https://github.com/olane-labs/olane/commit/b0ed03e))
+
+## <small>0.7.13 (2025-12-03)</small>
+
+- minor change ([12c2807](https://github.com/olane-labs/olane/commit/12c2807))
+
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+- added leader address validation ([c365513](https://github.com/olane-labs/olane/commit/c365513))
+- minor change ([24fef80](https://github.com/olane-labs/olane/commit/24fef80))
+
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- added WARP.md + fix for lane tests ([0bf560d](https://github.com/olane-labs/olane/commit/0bf560d))
+- base tests ([0b393ef](https://github.com/olane-labs/olane/commit/0b393ef))
+- fix ([222647e](https://github.com/olane-labs/olane/commit/222647e))
+- fix dependency mismatch ([4ad6ede](https://github.com/olane-labs/olane/commit/4ad6ede))
+- improved leader with testing ([73efe32](https://github.com/olane-labs/olane/commit/73efe32))
+- initial tests generated ([9cbaac2](https://github.com/olane-labs/olane/commit/9cbaac2))
+- mid refactor cyclical test depenencies ([1946261](https://github.com/olane-labs/olane/commit/1946261))
+- minor fixes to tests ([8661c5e](https://github.com/olane-labs/olane/commit/8661c5e))
+- network communication tests working ([cbe3b9d](https://github.com/olane-labs/olane/commit/cbe3b9d))
+- node reset funcitonality + connection-management unit tests ([ce65d3b](https://github.com/olane-labs/olane/commit/ce65d3b))
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+- prevent nested addresses during init ([9965696](https://github.com/olane-labs/olane/commit/9965696))
+- proper export of helper test tools ([ed4f539](https://github.com/olane-labs/olane/commit/ed4f539))
+- search resolver tests working ([a1f976b](https://github.com/olane-labs/olane/commit/a1f976b))
+- stability fixes ([c1fa204](https://github.com/olane-labs/olane/commit/c1fa204))
+
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+- remove o-lane package dependencies ([03bd12e](https://github.com/olane-labs/olane/commit/03bd12e))
+
 ## <small>0.7.12 (2025-11-30)</small>
 
 - correction around testing ([62f8845](https://github.com/olane-labs/olane/commit/62f8845))

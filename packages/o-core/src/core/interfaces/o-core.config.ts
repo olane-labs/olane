@@ -18,4 +18,11 @@ export interface oCoreConfig {
   cwd?: string;
   systemName?: string;
   joinToken?: string;
+
+  /**
+   * Internal flag - bypasses nested address validation.
+   * Should only be used by framework internals or tests.
+   * @internal
+   */
+  _allowNestedAddress?: boolean;
 }

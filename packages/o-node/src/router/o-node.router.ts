@@ -194,7 +194,8 @@ export class oNodeRouter extends oToolRouter {
       return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
-        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
+        this.logger.warn('Invalid protocol attempt. Ensure that you are trying to hit a supported protocol for the respective transport.');
+        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found: ' + address.value);
       }
       throw error;
     }
@@ -205,7 +206,8 @@ export class oNodeRouter extends oToolRouter {
    * First checks routing policy for external routing, then applies resolver chain.
    */
   async translate(address: oNodeAddress, node: oNode): Promise<RouteResponse> {
-    // Check if external routing is needed
+    // Apply resolver chain for internal routing
+    // Check if external routing is needed for leader routing
     const externalRoute = this.routingPolicy.getExternalRoutingStrategy(
       address,
       node,
@@ -213,8 +215,13 @@ export class oNodeRouter extends oToolRouter {
     if (externalRoute) {
       return externalRoute;
     }
-
-    // Apply resolver chain for internal routing
+    // if (!node.parent && !node.leader && address.transports?.length > 0) {
+    //   // independent node
+    //   return {
+    //     nextHopAddress: address,
+    //     targetAddress: address,
+    //   }
+    // }
     const { nextHopAddress, targetAddress, requestOverride } =
       await this.addressResolution.resolve({
         address,
