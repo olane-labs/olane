@@ -144,9 +144,6 @@ export class oNodeNotificationManager extends oNotificationManager {
       return;
     }
 
-    // All connections to this peer are now closed
-    this.logger.debug(`Last connection closed to ${remotePeerId}`);
-
     // Emit low-level peer disconnected event
     this.emit(
       new PeerDisconnectedEvent({
