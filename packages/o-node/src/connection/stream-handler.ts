@@ -292,7 +292,6 @@ export class StreamHandler {
         const decoded = new TextDecoder().decode(messageBytes.subarray());
 
         // Parse JSON (handles markdown blocks, mixed content, and JSON5)
-        this.logger.debug('handleOutgoing raw decoded:', decoded);
         const message = this.extractAndParseJSON(decoded);
 
         if (this.isResponse(message)) {
