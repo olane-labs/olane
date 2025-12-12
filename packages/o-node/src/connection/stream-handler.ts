@@ -67,24 +67,6 @@ export class StreamHandler {
 
     let jsonString = decoded.trim();
 
-    // Strip markdown code blocks (```json ... ``` or ``` ... ```)
-    if (jsonString.includes('```')) {
-      const codeBlockMatch = jsonString.match(
-        /```(?:json)?\s*\n?([\s\S]*?)\n?```/,
-      );
-      if (codeBlockMatch) {
-        jsonString = codeBlockMatch[1].trim();
-      }
-    }
-
-    // Extract JSON from mixed content (find first { to last })
-    const firstBrace = jsonString.indexOf('{');
-    const lastBrace = jsonString.lastIndexOf('}');
-
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      jsonString = jsonString.substring(firstBrace, lastBrace + 1);
-    }
-
     // Attempt standard JSON.parse first
     try {
       return JSON.parse(jsonString);
@@ -92,7 +74,7 @@ export class StreamHandler {
       this.logger.debug('Standard JSON parse failed, trying JSON5', {
         error: jsonError.message,
         position: jsonError.message.match(/position (\d+)/)?.[1],
-        preview: jsonString.substring(0, 200),
+        preview: jsonString,
       });
 
       // Fallback to JSON5 for more relaxed parsing
