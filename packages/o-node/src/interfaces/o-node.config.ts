@@ -36,12 +36,4 @@ export interface oNodeConfig extends oCoreConfig {
   };
 
   runOnLimitedConnection?: boolean;
-
-  /**
-   * Enable length-prefixed streaming (libp2p v3 best practice)
-   * When enabled, all messages are prefixed with a varint indicating message length
-   * This provides proper message boundaries and eliminates concatenation issues
-   * @default false (for backward compatibility)
-   */
-  useLengthPrefixing?: boolean;
 }

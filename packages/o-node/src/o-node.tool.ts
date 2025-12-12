@@ -43,8 +43,8 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
     // Use StreamHandler for consistent stream handling
-    // This follows libp2p v3 best practices for immediate message listener attachment
-    await this.streamHandler.handleIncomingStream(
+    // This follows libp2p v3 best practices for length-prefixed streaming
+    await this.streamHandler.handleIncomingStreamLP(
       stream,
       connection,
       async (request: oRequest, stream: Stream) => {
@@ -61,9 +61,6 @@ export class oNodeTool extends oTool(oServerNode) {
           );
           throw error; // StreamHandler will handle error response building
         }
-      },
-      {
-        useLengthPrefixing: this.config.useLengthPrefixing ?? true,
       },
     );
   }

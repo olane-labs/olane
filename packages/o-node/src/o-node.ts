@@ -474,7 +474,6 @@ export class oNode extends oToolBase {
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       originAddress: this.address?.value,
-      useLengthPrefixing: this.config.useLengthPrefixing ?? true,
     });
   }
 

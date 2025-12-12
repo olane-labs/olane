@@ -5,5 +5,4 @@ export interface oNodeConnectionManagerConfig extends oConnectionManagerConfig {
   p2pNode: Libp2p;
   runOnLimitedConnection?: boolean;
   originAddress?: string;
-  useLengthPrefixing?: boolean;
 }
