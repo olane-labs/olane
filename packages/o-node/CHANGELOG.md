@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.34 (2025-12-12)</small>
+
+- fix for length prefix config ([18ba5d4](https://github.com/olane-labs/olane/commit/18ba5d4))
+- minor change ([a1a218c](https://github.com/olane-labs/olane/commit/a1a218c))
+- minor change ([adaa790](https://github.com/olane-labs/olane/commit/adaa790))
+
 ## <small>0.7.33 (2025-12-11)</small>
 
 - minor change ([8cd3eec](https://github.com/olane-labs/olane/commit/8cd3eec))
