@@ -3,6 +3,43 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.37 (2025-12-12)</small>
+
+- minor change ([b02059b](https://github.com/olane-labs/olane/commit/b02059b))
+- chore: update pnpm-lock.yaml after version bump ([26de81c](https://github.com/olane-labs/olane/commit/26de81c))
+
+## <small>0.7.36 (2025-12-12)</small>
+
+- key fix for json parse issue ([d9ad229](https://github.com/olane-labs/olane/commit/d9ad229))
+- chore: update pnpm-lock.yaml after version bump ([4969788](https://github.com/olane-labs/olane/commit/4969788))
+
+## <small>0.7.35 (2025-12-12)</small>
+
+- minor change ([f5c2e65](https://github.com/olane-labs/olane/commit/f5c2e65))
+- more changes around prefix enforcement ([f4eb971](https://github.com/olane-labs/olane/commit/f4eb971))
+- removed old transport-based messaging ([b17e001](https://github.com/olane-labs/olane/commit/b17e001))
+- snapshot of workign lpstream ([d86bf8a](https://github.com/olane-labs/olane/commit/d86bf8a))
+- chore: update pnpm-lock.yaml after version bump ([4ea4044](https://github.com/olane-labs/olane/commit/4ea4044))
+
+## <small>0.7.34 (2025-12-12)</small>
+
+- fix for length prefix config ([18ba5d4](https://github.com/olane-labs/olane/commit/18ba5d4))
+- minor change ([a1a218c](https://github.com/olane-labs/olane/commit/a1a218c))
+- minor change ([adaa790](https://github.com/olane-labs/olane/commit/adaa790))
+- chore: update pnpm-lock.yaml after version bump ([6c716a7](https://github.com/olane-labs/olane/commit/6c716a7))
+
+## <small>0.7.33 (2025-12-11)</small>
+
+- minor change ([8cd3eec](https://github.com/olane-labs/olane/commit/8cd3eec))
+- chore: update pnpm-lock.yaml after version bump ([7772a6e](https://github.com/olane-labs/olane/commit/7772a6e))
+
+## <small>0.7.32 (2025-12-11)</small>
+
+- lane refactor complete ([2321784](https://github.com/olane-labs/olane/commit/2321784))
+- minor change ([d3ecec4](https://github.com/olane-labs/olane/commit/d3ecec4))
+- minor change ([a17496f](https://github.com/olane-labs/olane/commit/a17496f))
+- chore: update pnpm-lock.yaml after version bump ([0fdac42](https://github.com/olane-labs/olane/commit/0fdac42))
+
 ## <small>0.7.31 (2025-12-10)</small>
 
 - minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))

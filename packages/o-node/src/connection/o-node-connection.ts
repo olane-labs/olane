@@ -46,7 +46,7 @@ export class oNodeConnection extends oConnection {
       maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
         ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
         : 1000,
-      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
       reusePolicy: 'none', // Default policy, can be overridden in subclasses
       drainTimeoutMs: this.config.drainTimeoutMs,
     };
@@ -75,7 +75,10 @@ export class oNodeConnection extends oConnection {
 
       // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
-      await this.streamHandler.send(stream, data, streamConfig);
+
+      // Send using length-prefixed encoding
+      this.logger.info('Sending length-prefixed message...');
+      await this.streamHandler.sendLengthPrefixed(stream, data, streamConfig);
 
       // Handle response using StreamHandler
       // Pass request handler if configured to enable bidirectional stream processing

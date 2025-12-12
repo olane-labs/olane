@@ -43,7 +43,7 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
     // Use StreamHandler for consistent stream handling
-    // This follows libp2p v3 best practices for immediate message listener attachment
+    // This follows libp2p v3 best practices for length-prefixed streaming
     await this.streamHandler.handleIncomingStream(
       stream,
       connection,

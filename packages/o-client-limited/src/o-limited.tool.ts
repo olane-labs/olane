@@ -37,7 +37,7 @@ export class oLimitedTool extends oNodeTool {
       p2pNode: this.p2pNode,
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
-      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      runOnLimitedConnection: true,
     });
   }
 }

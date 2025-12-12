@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.37 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.36 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.35 (2025-12-12)</small>
+
+- minor change ([f5c2e65](https://github.com/olane-labs/olane/commit/f5c2e65))
+- removed old transport-based messaging ([b17e001](https://github.com/olane-labs/olane/commit/b17e001))
+
+## <small>0.7.34 (2025-12-12)</small>
+
+- fix for length prefix config ([18ba5d4](https://github.com/olane-labs/olane/commit/18ba5d4))
+- minor change ([a1a218c](https://github.com/olane-labs/olane/commit/a1a218c))
+- minor change ([adaa790](https://github.com/olane-labs/olane/commit/adaa790))
+
+## <small>0.7.33 (2025-12-11)</small>
+
+- minor change ([8cd3eec](https://github.com/olane-labs/olane/commit/8cd3eec))
+
+## <small>0.7.32 (2025-12-11)</small>
+
+- minor change ([d3ecec4](https://github.com/olane-labs/olane/commit/d3ecec4))
+- minor change ([a17496f](https://github.com/olane-labs/olane/commit/a17496f))
+
 ## <small>0.7.31 (2025-12-10)</small>
 
 - minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
