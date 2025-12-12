@@ -185,7 +185,7 @@ export class oNodeRouter extends oToolRouter {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
         nodeConnection.onChunk(async (response) => {
-          CoreUtils.sendStreamResponse(response, routeRequest.stream as Stream);
+          CoreUtils.sendResponseLP(response, routeRequest.stream as Stream);
         });
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
       }
@@ -194,8 +194,13 @@ export class oNodeRouter extends oToolRouter {
       return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
-        this.logger.warn('Invalid protocol attempt. Ensure that you are trying to hit a supported protocol for the respective transport.');
-        throw new oError(oErrorCodes.NOT_FOUND, 'Address not found: ' + address.value);
+        this.logger.warn(
+          'Invalid protocol attempt. Ensure that you are trying to hit a supported protocol for the respective transport.',
+        );
+        throw new oError(
+          oErrorCodes.NOT_FOUND,
+          'Address not found: ' + address.value,
+        );
       }
       throw error;
     }

@@ -285,7 +285,11 @@ export class IntelligenceTool extends oLaneTool {
       {
         isStream: _isStreaming || false,
         onChunk: async (chunk) => {
-          await CoreUtils.sendStreamResponse(oResponse.fromJSON(chunk), stream);
+          if (this.config.useLengthPrefixing ?? true) {
+            await CoreUtils.sendResponseLP(oResponse.fromJSON(chunk), stream);
+          } else {
+            await CoreUtils.sendResponse(oResponse.fromJSON(chunk), stream);
+          }
         },
       },
     );

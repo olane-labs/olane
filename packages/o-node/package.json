@@ -43,6 +43,7 @@
     "@olane/o-test": "0.7.34",
     "@tsconfig/node20": "^20.1.6",
     "@types/jest": "^30.0.0",
+    "@types/json5": "^2.2.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
     "aegir": "^47.0.21",
@@ -64,7 +65,8 @@
     "@olane/o-protocol": "0.7.34",
     "@olane/o-tool": "0.7.34",
     "debug": "^4.4.1",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "json5": "^2.2.3"
   },
   "gitHead": "4ea4044471a8e5fe08cd8e1473dfa93781476b89"
 }

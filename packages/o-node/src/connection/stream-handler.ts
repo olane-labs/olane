@@ -14,6 +14,7 @@ import type { oConnection } from '@olane/o-core';
 import type { RunResult } from '@olane/o-tool';
 import type { StreamHandlerConfig } from './stream-handler.config.js';
 import { lpStream, Multiaddr } from '@olane/o-config';
+import JSON5 from 'json5';
 
 /**
  * StreamHandler centralizes all stream-related functionality including:
@@ -51,6 +52,73 @@ export class StreamHandler {
    */
   async decodeMessage(event: any): Promise<any> {
     return CoreUtils.processStream(event);
+  }
+
+  /**
+   * Extracts and parses JSON from various formats including:
+   * - Already parsed objects
+   * - Plain JSON
+   * - Markdown code blocks (```json ... ``` or ``` ... ```)
+   * - Mixed content with explanatory text
+   * - JSON5 format (trailing commas, comments, unquoted keys, etc.)
+   *
+   * @param decoded - The decoded string that may contain JSON, or an already parsed object
+   * @returns Parsed JSON object
+   * @throws Error if JSON parsing fails even with JSON5 fallback
+   */
+  private extractAndParseJSON(decoded: string | any): any {
+    // If already an object (not a string), return it directly
+    if (typeof decoded !== 'string') {
+      return decoded;
+    }
+
+    let jsonString = decoded.trim();
+
+    // Strip markdown code blocks (```json ... ``` or ``` ... ```)
+    if (jsonString.includes('```')) {
+      const codeBlockMatch = jsonString.match(
+        /```(?:json)?\s*\n?([\s\S]*?)\n?```/,
+      );
+      if (codeBlockMatch) {
+        jsonString = codeBlockMatch[1].trim();
+      }
+    }
+
+    // Extract JSON from mixed content (find first { to last })
+    const firstBrace = jsonString.indexOf('{');
+    const lastBrace = jsonString.lastIndexOf('}');
+
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonString = jsonString.substring(firstBrace, lastBrace + 1);
+    }
+
+    // Attempt standard JSON.parse first
+    try {
+      return JSON.parse(jsonString);
+    } catch (jsonError: any) {
+      this.logger.debug('Standard JSON parse failed, trying JSON5', {
+        error: jsonError.message,
+        position: jsonError.message.match(/position (\d+)/)?.[1],
+        preview: jsonString.substring(0, 200),
+      });
+
+      // Fallback to JSON5 for more relaxed parsing
+      try {
+        return JSON5.parse(jsonString);
+      } catch (json5Error: any) {
+        // Enhanced error with context
+        this.logger.error('JSON5 parse also failed', {
+          originalError: jsonError.message,
+          json5Error: json5Error.message,
+          preview: jsonString.substring(0, 200),
+          length: jsonString.length,
+        });
+
+        throw new Error(
+          `Failed to parse JSON: ${jsonError.message}\nJSON5 also failed: ${json5Error.message}\nPreview: ${jsonString.substring(0, 200)}${jsonString.length > 200 ? '...' : ''}`,
+        );
+      }
+    }
   }
 
   /**
@@ -191,12 +259,8 @@ export class StreamHandler {
         const messageBytes = await lp.read();
         const decoded = new TextDecoder().decode(messageBytes.subarray());
 
-        // Ignore non-JSON messages
-        if (!decoded.startsWith('{')) {
-          continue;
-        }
-
-        const message = JSON.parse(decoded);
+        // Parse JSON (handles markdown blocks, mixed content, and JSON5)
+        const message = this.extractAndParseJSON(decoded);
 
         if (this.isRequest(message)) {
           await this.handleRequestMessage(message, stream, toolExecutor, true);
@@ -347,16 +411,14 @@ export class StreamHandler {
 
     try {
       while (stream.status === 'open') {
+        this.logger.debug('Waiting for response...');
         // Read complete length-prefixed message
         const messageBytes = await lp.read({ signal: config.signal });
         const decoded = new TextDecoder().decode(messageBytes.subarray());
 
-        // Ignore non-JSON messages
-        if (!decoded.startsWith('{')) {
-          continue;
-        }
-
-        const message = JSON.parse(decoded);
+        // Parse JSON (handles markdown blocks, mixed content, and JSON5)
+        this.logger.debug('handleOutgoing raw decoded:', decoded);
+        const message = this.extractAndParseJSON(decoded);
 
         if (this.isResponse(message)) {
           const response = new oResponse({
@@ -386,7 +448,12 @@ export class StreamHandler {
               'Received router request on client-side stream, processing...',
               message,
             );
-            await this.handleRequestMessage(message, stream, requestHandler, true);
+            await this.handleRequestMessage(
+              message,
+              stream,
+              requestHandler,
+              true,
+            );
           } else {
             this.logger.warn(
               'Received request message on client-side stream, ignoring (no handler)',
@@ -569,7 +636,7 @@ export class StreamHandler {
       // Set up chunk relay - forward responses from next hop back to incoming stream
       nextHopConnection.onChunk(async (response: oResponse) => {
         try {
-          await CoreUtils.sendStreamResponse(response, incomingStream);
+          await CoreUtils.sendResponseLP(response, incomingStream);
         } catch (error: any) {
           this.logger.error('Error forwarding chunk:', error);
         }
@@ -583,7 +650,7 @@ export class StreamHandler {
       // Send error response back on incoming stream using ResponseBuilder
       const responseBuilder = ResponseBuilder.create();
       const errorResponse = await responseBuilder.buildError(request, error);
-      await CoreUtils.sendResponse(errorResponse, incomingStream);
+      await CoreUtils.sendResponseLP(errorResponse, incomingStream);
     }
   }
 }

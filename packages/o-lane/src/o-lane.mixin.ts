@@ -78,7 +78,13 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
      */
     async _tool_intent(request: oStreamRequest): Promise<any> {
       this.logger.debug('Intent resolution called: ', request.params);
-      const { intent, context, chatHistory, streamTo, _isStreaming = false } = request.params;
+      const {
+        intent,
+        context,
+        chatHistory,
+        streamTo,
+        _isStreaming = false,
+      } = request.params;
 
       const pc = await this.manager.createLane({
         intent: new oIntent({ intent: intent as string }),
@@ -105,15 +111,13 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
                   'Misbehaving client sent unexpected last chunk',
                 );
               }
-              await CoreUtils.sendStreamResponse(
+              await CoreUtils.sendResponseLP(
                 oResponse.fromJSON(chunk),
                 request.stream,
               );
             }
           : undefined,
-        context: context
-          ? new oLaneContext([])
-          : undefined,
+        context: context ? new oLaneContext([]) : undefined,
       });
 
       // TODO: brendon experiment review
