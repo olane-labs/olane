@@ -47,7 +47,6 @@ export class StreamHandler {
     return message?.result !== undefined && message.method === undefined;
   }
 
-
   /**
    * Extracts and parses JSON from various formats including:
    * - Already parsed objects
@@ -162,7 +161,6 @@ export class StreamHandler {
     return stream;
   }
 
-
   /**
    * Sends data through a stream using length-prefixed encoding (libp2p v3 best practice)
    * Each message is automatically prefixed with a varint indicating the message length
@@ -213,7 +211,7 @@ export class StreamHandler {
    * @param connection - The connection the stream belongs to
    * @param toolExecutor - Function to execute tools for requests
    */
-  async handleIncomingStreamLP(
+  async handleIncomingStream(
     stream: Stream,
     connection: Connection,
     toolExecutor: (request: oRequest, stream: Stream) => Promise<RunResult>,
@@ -248,7 +246,6 @@ export class StreamHandler {
     }
   }
 
-
   /**
    * Handles a request message by executing the tool and sending response
    *
@@ -270,7 +267,7 @@ export class StreamHandler {
       // );
       const result = await toolExecutor(request, stream);
       const response = await responseBuilder.build(request, result, null);
-      await CoreUtils.sendResponseLP(response, stream);
+      await CoreUtils.sendResponse(response, stream);
 
       this.logger.debug(
         `Successfully processed request: method=${request.method}, id=${request.id}`,
@@ -281,7 +278,7 @@ export class StreamHandler {
         error,
       );
       const errorResponse = await responseBuilder.buildError(request, error);
-      await CoreUtils.sendResponseLP(errorResponse, stream);
+      await CoreUtils.sendResponse(errorResponse, stream);
     }
   }
 
@@ -296,7 +293,7 @@ export class StreamHandler {
    * @param requestId - Optional request ID to filter responses (for stream reuse scenarios)
    * @returns Promise that resolves with the final response
    */
-  async handleOutgoingStreamLP(
+  async handleOutgoingStream(
     stream: Stream,
     emitter: EventEmitter,
     config: StreamHandlerConfig = {},
@@ -344,11 +341,7 @@ export class StreamHandler {
               'Received router request on client-side stream, processing...',
               message,
             );
-            await this.handleRequestMessage(
-              message,
-              stream,
-              requestHandler,
-            );
+            await this.handleRequestMessage(message, stream, requestHandler);
           } else {
             this.logger.warn(
               'Received request message on client-side stream, ignoring (no handler)',
@@ -372,7 +365,6 @@ export class StreamHandler {
     }
   }
 
-
   /**
    * Forwards a request to the next hop and relays response chunks back
    * This implements the middleware/proxy pattern for intermediate nodes
@@ -393,7 +385,7 @@ export class StreamHandler {
       // Set up chunk relay - forward responses from next hop back to incoming stream
       nextHopConnection.onChunk(async (response: oResponse) => {
         try {
-          await CoreUtils.sendResponseLP(response, incomingStream);
+          await CoreUtils.sendResponse(response, incomingStream);
         } catch (error: any) {
           this.logger.error('Error forwarding chunk:', error);
         }
@@ -407,7 +399,7 @@ export class StreamHandler {
       // Send error response back on incoming stream using ResponseBuilder
       const responseBuilder = ResponseBuilder.create();
       const errorResponse = await responseBuilder.buildError(request, error);
-      await CoreUtils.sendResponseLP(errorResponse, incomingStream);
+      await CoreUtils.sendResponse(errorResponse, incomingStream);
     }
   }
 }

@@ -185,7 +185,7 @@ export class oNodeRouter extends oToolRouter {
           throw new oError(oErrorCodes.INVALID_REQUEST, 'Stream is required');
         }
         nodeConnection.onChunk(async (response) => {
-          CoreUtils.sendResponseLP(response, routeRequest.stream as Stream);
+          CoreUtils.sendResponse(response, routeRequest.stream as Stream);
         });
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
       }

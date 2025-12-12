@@ -25,7 +25,7 @@ export class StreamUtils extends oObject {
           aggregatedResult += result.delta;
         }
         const chunkResponse = await responseBuilder.buildChunk(request, result);
-        await CoreUtils.sendResponseLP(chunkResponse, stream);
+        await CoreUtils.sendResponse(chunkResponse, stream);
       }
 
       return {
@@ -37,7 +37,7 @@ export class StreamUtils extends oObject {
         isStream: true,
         isLast: true,
       });
-      await CoreUtils.sendResponseLP(errorResponse, stream);
+      await CoreUtils.sendResponse(errorResponse, stream);
       throw error;
     }
   }

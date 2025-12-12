@@ -107,7 +107,6 @@ export class CoreUtils extends oObject {
     return new oAddress(parentAddress.toString() + '/' + childAddress.paths);
   }
 
-
   /**
    * Sends a response through a stream using length-prefixed encoding
    * Uses lpStream for proper message boundaries (libp2p v3 best practice)
@@ -115,7 +114,7 @@ export class CoreUtils extends oObject {
    * @param response - The response to send
    * @param stream - The stream to send the response through
    */
-  public static async sendResponseLP(response: oResponse, stream: Stream) {
+  public static async sendResponse(response: oResponse, stream: Stream) {
     const utils = new CoreUtils();
 
     if (!stream || stream.status !== 'open') {
@@ -133,10 +132,6 @@ export class CoreUtils extends oObject {
       utils.logger.error('Error sending length-prefixed response: ', error);
     }
   }
-
-
-
-
 
   public static async toCID(data: any): Promise<CID> {
     const bytes = json.encode(data);

@@ -285,7 +285,7 @@ export class IntelligenceTool extends oLaneTool {
       {
         isStream: _isStreaming || false,
         onChunk: async (chunk) => {
-          await CoreUtils.sendResponseLP(oResponse.fromJSON(chunk), stream);
+          await CoreUtils.sendResponse(oResponse.fromJSON(chunk), stream);
         },
       },
     );

@@ -111,7 +111,7 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
                   'Misbehaving client sent unexpected last chunk',
                 );
               }
-              await CoreUtils.sendResponseLP(
+              await CoreUtils.sendResponse(
                 oResponse.fromJSON(chunk),
                 request.stream,
               );
