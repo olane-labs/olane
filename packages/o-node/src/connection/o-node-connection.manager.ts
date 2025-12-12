@@ -210,6 +210,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      useLengthPrefixing: this.config.useLengthPrefixing,
       requestHandler: config.requestHandler ?? undefined,
     });
 

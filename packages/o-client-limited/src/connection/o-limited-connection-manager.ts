@@ -1,4 +1,4 @@
-import { oNodeConnectionManager } from '@olane/o-node';
+import { oNodeConnectionConfig, oNodeConnectionManager } from '@olane/o-node';
 import { oConnectionConfig } from '@olane/o-core';
 import { oLimitedConnection } from './o-limited-connection.js';
 
@@ -8,7 +8,7 @@ export class oLimitedConnectionManager extends oNodeConnectionManager {
   /**
    * Override connect to return oPrivateConnection with _token injected
    */
-  async connect(config: oConnectionConfig): Promise<oLimitedConnection> {
+  async connect(config: oNodeConnectionConfig): Promise<oLimitedConnection> {
     const { address, nextHopAddress, callerAddress } = config;
 
     // First time setup connection
@@ -22,7 +22,8 @@ export class oLimitedConnectionManager extends oNodeConnectionManager {
         address: address,
         p2pConnection: p2pConnection,
         callerAddress: callerAddress,
-        runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+        runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
+        useLengthPrefixing: this.config.useLengthPrefixing,
         requestHandler: config.requestHandler,
       });
       return connection;

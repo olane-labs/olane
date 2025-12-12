@@ -46,10 +46,10 @@ export class oNodeConnection extends oConnection {
       maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
         ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
         : 1000,
-      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
       reusePolicy: 'none', // Default policy, can be overridden in subclasses
       drainTimeoutMs: this.config.drainTimeoutMs,
-      useLengthPrefixing: true,
+      useLengthPrefixing: this.config.useLengthPrefixing ?? true,
     };
 
     return this.streamHandler.getOrCreateStream(
