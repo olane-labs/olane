@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.35 (2025-12-12)</small>
+
+- minor change ([f5c2e65](https://github.com/olane-labs/olane/commit/f5c2e65))
+- removed old transport-based messaging ([b17e001](https://github.com/olane-labs/olane/commit/b17e001))
+
 ## <small>0.7.34 (2025-12-12)</small>
 
 - fix for length prefix config ([18ba5d4](https://github.com/olane-labs/olane/commit/18ba5d4))
