@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.6",
-    "glob": "^11.0.0",
+    "glob": "^13.0.0",
     "mintlify": "^4.0.468",
     "prettier": "^3.4.2",
     "ts-loader": "^9.5.2",
