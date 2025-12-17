@@ -15,13 +15,10 @@ import type {
 } from './stream-handler.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnectionStream } from './o-node-connection-stream.js';
+import { ConnectionUtils } from '../utils/connection.utils.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
-  protected streams: Map<string, oNodeConnectionStream> = new Map<
-    string,
-    oNodeConnectionStream
-  >();
   protected streamHandler: StreamHandler;
   protected reusePolicy: StreamReusePolicy;
 
@@ -47,9 +44,9 @@ export class oNodeConnection extends oConnection {
   }
 
   async getOrCreateStream(): Promise<oNodeConnectionStream> {
-    if (this.reusePolicy === 'reuse') {
+    if (this.reusePolicy === 'reuse' && this.streams.length > 0) {
       // search for streams that allow re-use
-      throw new Error('Not implemented');
+      return this.streams[0];
     }
 
     return this.createStream();
@@ -69,14 +66,11 @@ export class oNodeConnection extends oConnection {
     const managedStream = new oNodeConnectionStream(stream, {
       direction: stream.direction,
       reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
+      remoteAddress: this.nextHopAddress,
     });
-    this.streams.set(stream.id, managedStream);
-
-    // setup the listeners for cleanup
-    this.listenForStreamClose(managedStream);
 
     // print the num streams
-    const numStreams = Array.from(this.streams.values()).map(
+    const numStreams = this.streams.map(
       (s: oNodeConnectionStream) => s.isValid,
     ).length;
     this.logger.debug(
@@ -86,18 +80,16 @@ export class oNodeConnection extends oConnection {
     return managedStream;
   }
 
-  listenForStreamClose(stream: oNodeConnectionStream) {
-    const id = stream.p2pStream.id;
-    stream.p2pStream.addEventListener('close', (evt) => {
-      this.logger.debug(`Stream closed: ${id}`, evt);
-      if (this.streams.has(id)) {
-        this.streams.delete(id);
-      } else {
-        this.logger.error(
-          'Stream close event did not match up with connection managed streams. This should not fire!',
-        );
-      }
-    });
+  get streams(): oNodeConnectionStream[] {
+    return (
+      this.p2pConnection?.streams?.map((s) => {
+        return new oNodeConnectionStream(s, {
+          direction: s.direction,
+          reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
+          remoteAddress: this.nextHopAddress,
+        });
+      }) || []
+    );
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
