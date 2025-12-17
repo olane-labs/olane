@@ -11,10 +11,15 @@ import {
 } from '@olane/o-core';
 import type { oRouterRequest } from '@olane/o-core';
 import type { oConnection } from '@olane/o-core';
+import type { oAddress } from '@olane/o-core';
 import type { RunResult } from '@olane/o-tool';
-import type { StreamHandlerConfig } from './stream-handler.config.js';
-import { lpStream, Multiaddr } from '@olane/o-config';
+import type {
+  StreamHandlerConfig,
+  StreamReusePolicy,
+} from './stream-handler.config.js';
+import { lpStream } from '@olane/o-config';
 import JSON5 from 'json5';
+import { oManagedStream } from './o-managed-stream.js';
 
 /**
  * StreamHandler centralizes all stream-related functionality including:
@@ -26,6 +31,7 @@ import JSON5 from 'json5';
  */
 export class StreamHandler {
   private logger: Logger;
+  private streamCache: Map<string, oManagedStream> = new Map();
 
   constructor(logger?: Logger) {
     this.logger = logger ?? new Logger('StreamHandler');
@@ -97,16 +103,138 @@ export class StreamHandler {
   }
 
   /**
+   * Builds a bidirectional cache key from caller and receiver addresses
+   * The key is symmetric: A↔B === B↔A
+   *
+   * @param callerAddress - The caller's address
+   * @param receiverAddress - The receiver's address
+   * @returns Cache key string
+   */
+  private buildCacheKey(
+    callerAddress: oAddress,
+    receiverAddress: oAddress,
+  ): string {
+    const addresses = [callerAddress.value, receiverAddress.value].sort();
+    return `${addresses[0]}↔${addresses[1]}`;
+  }
+
+  /**
+   * Caches a managed stream for reuse
+   *
+   * @param managedStream - The managed stream to cache
+   */
+  private cacheStream(managedStream: oManagedStream): void {
+    this.streamCache.set(managedStream.cacheKey, managedStream);
+    this.logger.debug('Cached stream', {
+      cacheKey: managedStream.cacheKey,
+      direction: managedStream.direction,
+      streamId: managedStream.stream.id,
+    });
+  }
+
+  /**
+   * Removes a stream from the cache
+   *
+   * @param stream - The stream to remove
+   */
+  private removeStreamFromCache(stream: Stream): void {
+    // Find and remove the stream from cache
+    for (const [key, managedStream] of this.streamCache.entries()) {
+      if (managedStream.stream.id === stream.id) {
+        this.streamCache.delete(key);
+        this.logger.debug('Removed stream from cache', {
+          cacheKey: key,
+          streamId: stream.id,
+        });
+        break;
+      }
+    }
+  }
+
+  /**
+   * Sets up cleanup listener for stream close events
+   *
+   * @param stream - The stream to monitor
+   */
+  private setupStreamCleanup(stream: Stream): void {
+    // Listen for stream close event
+    stream.addEventListener('close', () => {
+      this.removeStreamFromCache(stream);
+    });
+  }
+
+  /**
+   * Extracts the remote peer's address from a connection
+   * Falls back to creating an address from the peer ID if no address metadata is available
+   *
+   * @param connection - The libp2p connection
+   * @returns The remote peer's oAddress
+   */
+  extractRemotePeerAddress(connection: Connection): oAddress {
+    // Try to get address from connection metadata if available
+    // For now, create address from peer ID as fallback
+    const peerId = connection.remotePeer.toString();
+
+    // Import oAddress at runtime to avoid circular dependency
+    const { oAddress: oAddressClass } = require('@olane/o-core');
+    return new oAddressClass(`o://peer/${peerId}`);
+  }
+
+  /**
+   * Caches an inbound stream for bidirectional reuse
+   * This allows the same stream to be reused for responses
+   *
+   * @param stream - The inbound stream to cache
+   * @param callerAddress - The address of the caller
+   * @param receiverAddress - The address of the receiver (local node)
+   * @param reusePolicy - Whether to enable caching
+   */
+  cacheInboundStream(
+    stream: Stream,
+    callerAddress: oAddress,
+    receiverAddress: oAddress,
+    reusePolicy: StreamReusePolicy = 'none',
+  ): void {
+    if (reusePolicy !== 'reuse') {
+      return;
+    }
+
+    const cacheKey = this.buildCacheKey(callerAddress, receiverAddress);
+
+    // Check if already cached
+    if (this.streamCache.has(cacheKey)) {
+      this.logger.debug('Stream already cached', { cacheKey });
+      return;
+    }
+
+    const managedStream = new oManagedStream(
+      stream,
+      callerAddress,
+      receiverAddress,
+      'inbound',
+    );
+
+    this.cacheStream(managedStream);
+    this.setupStreamCleanup(stream);
+  }
+
+  /**
    * Gets an existing open stream or creates a new one based on reuse policy
    *
    * @param connection - The libp2p connection
    * @param protocol - The protocol to use for the stream
    * @param config - Stream handler configuration
+   * @param streamAddresses - Optional addresses for address-based stream reuse
    */
   async getOrCreateStream(
     connection: Connection,
     protocol: string,
     config: StreamHandlerConfig = {},
+    streamAddresses?: {
+      callerAddress: oAddress;
+      receiverAddress: oAddress;
+      direction: 'inbound' | 'outbound';
+    },
   ): Promise<Stream> {
     this.logger.debug(
       `Getting or creating stream for protocol: ${protocol}, connection`,
@@ -115,6 +243,7 @@ export class StreamHandler {
         remoteAddr: connection.remoteAddr.toString(),
         streamCount: connection.streams.length,
         reusePolicy: config.reusePolicy ?? 'none',
+        hasAddresses: !!streamAddresses,
       },
     );
     if (connection.status !== 'open') {
@@ -123,8 +252,34 @@ export class StreamHandler {
 
     const reusePolicy = config.reusePolicy ?? 'none';
 
+    // Check address-based cache if reuse is enabled and addresses provided
+    if (reusePolicy === 'reuse' && streamAddresses) {
+      const cacheKey = this.buildCacheKey(
+        streamAddresses.callerAddress,
+        streamAddresses.receiverAddress,
+      );
+
+      const cachedStream = this.streamCache.get(cacheKey);
+      if (cachedStream?.isReusable) {
+        this.logger.debug('Reusing cached stream by address', {
+          cacheKey,
+          streamId: cachedStream.stream.id,
+          direction: cachedStream.direction,
+        });
+        cachedStream.updateLastUsed();
+        return cachedStream.stream;
+      } else if (cachedStream) {
+        // Stream exists but not reusable, remove from cache
+        this.logger.debug('Removing non-reusable stream from cache', {
+          cacheKey,
+          status: cachedStream.stream.status,
+        });
+        this.streamCache.delete(cacheKey);
+      }
+    }
+
     this.logger.debug(
-      'Checking for existing reusable stream',
+      'No reusable cached stream found, checking connection streams',
       connection.streams.map((s) => ({
         status: s.status,
         protocol: s.protocol,
@@ -134,19 +289,19 @@ export class StreamHandler {
       })),
     );
 
-    // Check for existing stream if reuse is enabled
-    if (reusePolicy === 'reuse') {
+    // Fallback to protocol-based check (legacy behavior)
+    if (reusePolicy === 'reuse' && !streamAddresses) {
       const existingStream = connection.streams.find(
         (stream) =>
           stream.status === 'open' &&
           stream.protocol === protocol &&
           stream.writeStatus === 'writable' &&
-          stream.remoteReadStatus === 'readable', // protocol with 0 length seems to be a special state where connection has not made successful stream yet
+          stream.remoteReadStatus === 'readable',
       );
 
       if (existingStream) {
         this.logger.debug(
-          'Reusing existing stream',
+          'Reusing existing stream by protocol (legacy)',
           existingStream.id,
           existingStream.direction,
         );
@@ -155,11 +310,25 @@ export class StreamHandler {
     }
 
     // Create new stream
+    this.logger.debug('Creating new stream', { protocol });
     const stream = await connection.newStream(protocol, {
       signal: config.signal,
       maxOutboundStreams: config.maxOutboundStreams ?? 1000,
       runOnLimitedConnection: config.runOnLimitedConnection ?? false,
     });
+
+    // Cache the stream if reuse is enabled and addresses are provided
+    if (reusePolicy === 'reuse' && streamAddresses) {
+      const managedStream = new oManagedStream(
+        stream,
+        streamAddresses.callerAddress,
+        streamAddresses.receiverAddress,
+        streamAddresses.direction,
+      );
+      this.cacheStream(managedStream);
+      this.setupStreamCleanup(stream);
+    }
+
     return stream;
   }
 

@@ -39,6 +39,19 @@ export interface StreamHandlerConfig {
    * AbortSignal for cancellation
    */
   signal?: AbortSignal;
+
+  /**
+   * Maximum number of streams to cache
+   * Older streams will be evicted when limit is reached
+   * @default unlimited
+   */
+  maxCachedStreams?: number;
+
+  /**
+   * Time in milliseconds after which idle cached streams are closed
+   * @default unlimited (streams remain cached until closed by peer)
+   */
+  streamIdleTimeout?: number;
 }
 
 /**

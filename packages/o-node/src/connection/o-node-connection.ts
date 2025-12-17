@@ -56,10 +56,21 @@ export class oNodeConnection extends oConnection {
       drainTimeoutMs: this.config.drainTimeoutMs,
     };
 
+    // Build stream addresses for address-based caching
+    const streamAddresses =
+      this.callerAddress && this.nextHopAddress
+        ? {
+            callerAddress: this.callerAddress,
+            receiverAddress: this.nextHopAddress,
+            direction: 'outbound' as const,
+          }
+        : undefined;
+
     return this.streamHandler.getOrCreateStream(
       this.p2pConnection,
       this.nextHopAddress.protocol,
       streamConfig,
+      streamAddresses,
     );
   }
 

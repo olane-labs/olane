@@ -42,6 +42,18 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
+    // Extract caller address from connection
+    const callerAddress = this.streamHandler.extractRemotePeerAddress(connection);
+
+    // Cache inbound stream for bidirectional reuse (if reuse policy is enabled)
+    // The cacheInboundStream method will check the reuse policy
+    this.streamHandler.cacheInboundStream(
+      stream,
+      callerAddress,
+      this.address,
+      'reuse', // Enable reuse for inbound streams
+    );
+
     // Use StreamHandler for consistent stream handling
     // This follows libp2p v3 best practices for length-prefixed streaming
     await this.streamHandler.handleIncomingStream(
