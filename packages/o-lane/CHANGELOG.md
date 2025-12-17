@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.38 (2025-12-17)</small>
+
+- minor change ([b19f7ea](https://github.com/olane-labs/olane/commit/b19f7ea))
+
 ## <small>0.7.37 (2025-12-12)</small>
 
 **Note:** Version bump only for package @olane/o-lane
