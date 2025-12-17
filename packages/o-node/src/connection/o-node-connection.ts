@@ -9,16 +9,21 @@ import {
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 import { StreamHandler } from './stream-handler.js';
-import type { StreamHandlerConfig } from './stream-handler.config.js';
+import type {
+  StreamHandlerConfig,
+  StreamReusePolicy,
+} from './stream-handler.config.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
   protected streamHandler: StreamHandler;
+  protected reusePolicy: StreamReusePolicy;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
     this.streamHandler = new StreamHandler(this.logger);
+    this.reusePolicy = config.reusePolicy ?? 'none';
   }
 
   validate(stream?: Stream) {
@@ -47,7 +52,7 @@ export class oNodeConnection extends oConnection {
         ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
         : 1000,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
-      reusePolicy: 'none', // Default policy, can be overridden in subclasses
+      reusePolicy: this.reusePolicy,
       drainTimeoutMs: this.config.drainTimeoutMs,
     };
 
@@ -70,14 +75,12 @@ export class oNodeConnection extends oConnection {
       const streamConfig: StreamHandlerConfig = {
         signal: this.abortSignal,
         drainTimeoutMs: this.config.drainTimeoutMs,
-        reusePolicy: 'none', // Default policy
+        reusePolicy: this.reusePolicy,
       };
 
       // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
 
-      // Send using length-prefixed encoding
-      this.logger.info('Sending length-prefixed message...');
       await this.streamHandler.sendLengthPrefixed(stream, data, streamConfig);
 
       // Handle response using StreamHandler
@@ -105,7 +108,7 @@ export class oNodeConnection extends oConnection {
 
   async postTransmit(stream: Stream) {
     const streamConfig: StreamHandlerConfig = {
-      reusePolicy: 'none', // Default policy, can be overridden in subclasses
+      reusePolicy: this.reusePolicy,
     };
 
     await this.streamHandler.close(stream, streamConfig);

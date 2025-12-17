@@ -108,11 +108,31 @@ export class StreamHandler {
     protocol: string,
     config: StreamHandlerConfig = {},
   ): Promise<Stream> {
+    this.logger.debug(
+      `Getting or creating stream for protocol: ${protocol}, connection`,
+      {
+        status: connection.status,
+        remoteAddr: connection.remoteAddr.toString(),
+        streamCount: connection.streams.length,
+        reusePolicy: config.reusePolicy ?? 'none',
+      },
+    );
     if (connection.status !== 'open') {
       throw new oError(oErrorCodes.INVALID_STATE, 'Connection not open');
     }
 
     const reusePolicy = config.reusePolicy ?? 'none';
+
+    this.logger.debug(
+      'Checking for existing reusable stream',
+      connection.streams.map((s) => ({
+        status: s.status,
+        protocol: s.protocol,
+        writeStatus: s.writeStatus,
+        remoteReadStatus: s.remoteReadStatus,
+        id: s.id,
+      })),
+    );
 
     // Check for existing stream if reuse is enabled
     if (reusePolicy === 'reuse') {
