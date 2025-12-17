@@ -469,7 +469,7 @@ export abstract class oCore extends oObject {
    * and resource allocation from occurring.
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  protected async validate(): Promise<void> {}
+  protected async validate(data?: any): Promise<void> {}
 
   /**
    * Stops the node by performing cleanup and transitioning to a stopped state.
