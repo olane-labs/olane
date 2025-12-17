@@ -1,7 +1,6 @@
 import { Multiaddr, multiaddr } from '@olane/o-config';
-import { CID } from 'multiformats';
 import { oNodeTransport } from './o-node.transport.js';
-import { CoreUtils, Logger, oAddress, TransportType } from '@olane/o-core';
+import { oAddress, TransportType } from '@olane/o-core';
 
 export class oNodeAddress extends oAddress {
   public transports: oNodeTransport[] = [];
@@ -44,5 +43,10 @@ export class oNodeAddress extends oAddress {
 
   static fromMultiaddr(ma: Multiaddr): oAddress {
     return new oAddress(ma.toString().replace('/o/', 'o://'));
+  }
+
+  static fromProtocol(protocol: string): oAddress {
+    const addressInput = protocol.replace('/o/', 'o://');
+    return new oAddress(addressInput);
   }
 }

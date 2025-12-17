@@ -22,6 +22,7 @@ describe('Connection Management', () => {
   describe('Connection Pooling', () => {
     it('should cache and reuse connections', async () => {
       builder = await NetworkTopologies.twoNode();
+      console.log('Built the 2 node network, starting test');
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;

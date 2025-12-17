@@ -181,6 +181,41 @@ export class oNodeConnectionManager extends oConnectionManager {
     return connection;
   }
 
+  async answer(
+    config: oConnectionConfig & { p2pConnection: Connection },
+  ): Promise<oNodeConnection> {
+    const {
+      address,
+      nextHopAddress,
+      callerAddress,
+      readTimeoutMs,
+      drainTimeoutMs,
+      p2pConnection,
+    } = config;
+    const connection = new oNodeConnection({
+      nextHopAddress: nextHopAddress,
+      address: address,
+      p2pConnection: p2pConnection,
+      callerAddress: callerAddress,
+      readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
+      drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
+      isStream: config.isStream ?? false,
+      abortSignal: config.abortSignal,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      requestHandler: config.requestHandler ?? undefined,
+    });
+    const transportKey = this.getTransportKeyFromAddress(nextHopAddress);
+    if (transportKey) {
+      this.connectionsByTransportKey.set(transportKey, p2pConnection);
+    } else {
+      this.logger.error(
+        'Should not happen! Failed to generate a transport key for address:',
+        nextHopAddress,
+      );
+    }
+    return connection;
+  }
+
   /**
    * Connect to a given address, reusing libp2p connections when possible
    * @param config - Connection configuration

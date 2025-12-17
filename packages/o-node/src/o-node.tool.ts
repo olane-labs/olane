@@ -5,6 +5,7 @@ import { Connection, Stream } from '@olane/o-config';
 import { oNodeTransport } from './router/o-node.transport.js';
 import { oNodeAddress } from './router/o-node.address.js';
 import { StreamHandler } from './connection/stream-handler.js';
+import { ConnectionUtils } from './utils/connection.utils.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -20,12 +21,16 @@ export class oNodeTool extends oTool(oServerNode) {
       // already handling
       return;
     }
-    this.logger.debug('Handling protocol: ' + address.protocol);
+    const maxOutboundsStreams = process.env.MAX_OUTBOUND_STREAMS
+      ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+      : 1000;
+    this.logger.debug('Handling protocol: ' + address.protocol, {
+      maxInboundStreams: 10_000,
+      maxOutboundStreams: maxOutboundsStreams,
+    });
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
       maxInboundStreams: 10_000,
-      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-        : 1000,
+      maxOutboundStreams: maxOutboundsStreams,
     });
   }
 
@@ -42,17 +47,17 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async handleStream(stream: Stream, connection: Connection): Promise<void> {
-    // Extract caller address from connection
-    const callerAddress = this.streamHandler.extractRemotePeerAddress(connection);
-
-    // Cache inbound stream for bidirectional reuse (if reuse policy is enabled)
-    // The cacheInboundStream method will check the reuse policy
-    this.streamHandler.cacheInboundStream(
-      stream,
-      callerAddress,
-      this.address,
-      'reuse', // Enable reuse for inbound streams
-    );
+    // record inbound connection to manager
+    const remoteAddress = await ConnectionUtils.addressFromConnection({
+      currentNode: this,
+      connection: connection,
+    });
+    this.connectionManager.answer({
+      nextHopAddress: remoteAddress,
+      address: remoteAddress,
+      callerAddress: this.address,
+      p2pConnection: connection,
+    });
 
     // Use StreamHandler for consistent stream handling
     // This follows libp2p v3 best practices for length-prefixed streaming
@@ -86,7 +91,6 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async _tool_child_register(request: oRequest): Promise<any> {
-    this.logger.debug('Child register: ', request.params);
     const { address, transports }: any = request.params;
     const childAddress = new oNodeAddress(
       address,
