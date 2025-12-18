@@ -71,7 +71,7 @@ describe('Error Handling & Resource Management', () => {
       // Should not throw
       const stream = await connection.getOrCreateStream();
       expect(stream).toBeDefined();
-      expect(stream.status).toBe('open');
+      expect(stream.p2pStream.status).toBe('open');
     });
   });
 
@@ -153,7 +153,7 @@ describe('Error Handling & Resource Management', () => {
       expect(streams.length).toBe(10);
       streams.forEach((stream) => {
         expect(stream).toBeDefined();
-        expect(stream.protocol).toBe(testProtocol);
+        expect(stream.p2pStream.protocol).toBe(testProtocol);
       });
 
       // With stream reuse, they should all get the same stream
@@ -218,7 +218,7 @@ describe('Error Handling & Resource Management', () => {
 
       // Should reuse the same stream
       expect(stream2).toBe(stream1);
-      expect(stream2.status).toBe('open');
+      expect(stream2.p2pStream.status).toBe('open');
     });
   });
 
@@ -256,7 +256,7 @@ describe('Error Handling & Resource Management', () => {
       // Next call should create a new stream (not reuse the reset one)
       const secondStream = await connection.getOrCreateStream();
       expect(secondStream).not.toBe(stream1);
-      expect(secondStream.status).toBe('open');
+      expect(secondStream.p2pStream.status).toBe('open');
     });
 
     it('should handle stream that becomes non-writable', async () => {
@@ -287,7 +287,7 @@ describe('Error Handling & Resource Management', () => {
       // Should create new stream instead of using non-writable one
       const newStream = await connection.getOrCreateStream();
       expect(newStream).not.toBe(stream);
-      expect(newStream.writeStatus).toBe('writable');
+      expect(newStream.p2pStream.writeStatus).toBe('writable');
     });
 
     it('should handle stream where remote side closes read', async () => {
@@ -318,7 +318,7 @@ describe('Error Handling & Resource Management', () => {
       // Should create new stream
       const newStream = await connection.getOrCreateStream();
       expect(newStream).not.toBe(stream);
-      expect(newStream.remoteReadStatus).toBe('readable');
+      expect(newStream.p2pStream.remoteReadStatus).toBe('readable');
     });
   });
 
@@ -414,9 +414,7 @@ describe('Error Handling & Resource Management', () => {
 
       // Verify close was called with reuse policy
       expect(mockStreamHandler.closeCalls.length).toBe(1);
-      expect(mockStreamHandler.getLastCloseConfig()?.reusePolicy).toBe(
-        'reuse',
-      );
+      expect(mockStreamHandler.getLastCloseConfig()?.reusePolicy).toBe('reuse');
     });
   });
 
