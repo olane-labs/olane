@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.45 (2025-12-18)</small>
+
+- minor change ([cb353ff](https://github.com/olane-labs/olane/commit/cb353ff))
+
 ## <small>0.7.44 (2025-12-18)</small>
 
 - minor change ([e4dfb4a](https://github.com/olane-labs/olane/commit/e4dfb4a))
