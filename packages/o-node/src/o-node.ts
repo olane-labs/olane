@@ -33,6 +33,8 @@ import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
 import { oNodeConnectionConfig } from './connection/index.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
+import { LockManager } from './utils/lock-manager.js';
+import { Synchronized } from './decorators/synchronized.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -46,6 +48,7 @@ export class oNode extends oToolBase {
   protected didRegister: boolean = false;
   protected hooksStartFinished: any[] = [];
   protected hooksInitFinished: any[] = [];
+  protected lockManager: LockManager = new LockManager();
 
   constructor(config: oNodeConfig) {
     super(config);
@@ -196,6 +199,7 @@ export class oNode extends oToolBase {
     }
   }
 
+  @Synchronized('register:parent')
   async registerParent(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping parent registration, node is leader');
@@ -241,6 +245,7 @@ export class oNode extends oToolBase {
     }
   }
 
+  @Synchronized('register:leader')
   async registerLeader(): Promise<void> {
     this.logger.info('Register leader called...');
     if (!this.leader) {
@@ -676,6 +681,9 @@ export class oNode extends oToolBase {
   protected resetState(): void {
     // Reset registration flag
     this.didRegister = false;
+
+    // Clear all locks
+    this.lockManager.clearAll();
 
     // Clear peer references
     this.peerId = undefined as any;

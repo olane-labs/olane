@@ -1,5 +1,6 @@
 export * from './o-node.js';
 export * from './utils/index.js';
+export * from './decorators/index.js';
 export * from './o-node.hierarchy-manager.js';
 export * from './interfaces/o-node.config.js';
 export * from './connection/index.js';

@@ -17,6 +17,7 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async handleProtocolReuse(address: oAddress) {
     const reuseProtocol = address.protocol + '/reuse';
+    this.logger.debug('Handling protocol reuse: ' + reuseProtocol);
     const protocols = this.p2pNode.getProtocols();
     if (protocols.find((p) => p === reuseProtocol)) {
       // already handling
@@ -25,10 +26,15 @@ export class oNodeTool extends oTool(oServerNode) {
     const maxOutboundsStreams = process.env.MAX_OUTBOUND_STREAMS
       ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
       : 1000;
-    await this.p2pNode.handle(reuseProtocol, this.handleStream.bind(this), {
-      maxInboundStreams: 10_000,
-      maxOutboundStreams: maxOutboundsStreams,
-    });
+    await this.p2pNode.handle(
+      reuseProtocol,
+      this.handleStreamReuse.bind(this),
+      {
+        maxInboundStreams: 10_000,
+        maxOutboundStreams: maxOutboundsStreams,
+      },
+    );
+    this.logger.debug('Handled protocol reuse: ' + reuseProtocol);
   }
 
   async handleProtocol(address: oAddress) {
@@ -89,6 +95,7 @@ export class oNodeTool extends oTool(oServerNode) {
       callerAddress: this.address,
       p2pConnection: connection,
       reuse,
+      // requestHandler: this.execute.bind(this), TODO: do we need this?
     });
 
     // Use StreamHandler for consistent stream handling
@@ -144,6 +151,7 @@ export class oNodeTool extends oTool(oServerNode) {
     }
 
     // create downward direction connection
+    this.logger.debug('Pinging child to confirm access');
     await this.useChild(childAddress, {
       method: 'ping',
       params: {},

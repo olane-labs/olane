@@ -10,7 +10,9 @@ export class oNodeConnectionManager extends oConnectionManager {
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
   private connectionsByAddress: Map<string, Connection[]> = new Map();
-  private pendingDialsByAddress: Map<string, Promise<Connection>> =
+  private pendingDialsByAddress: Map<string, Promise<Connection>> = new Map();
+  /** Cache of oNodeConnection instances keyed by p2p connection ID */
+  private nodeConnectionByConnectionId: Map<string, oNodeConnection> =
     new Map();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
@@ -34,25 +36,36 @@ export class oNodeConnectionManager extends oConnectionManager {
         return;
       }
 
-      for (const [
-        addressKey,
-        cachedConnections,
-      ] of this.connectionsByAddress.entries()) {
-        const index = cachedConnections.indexOf(connection);
-        if (index !== -1) {
-          this.logger.debug(
-            'Connection closed, removing from cache for address:',
-            addressKey,
-          );
-          cachedConnections.splice(index, 1);
+      // Clean up libp2p connection cache
+      // for (const [
+      //   addressKey,
+      //   cachedConnections,
+      // ] of this.connectionsByAddress.entries()) {
+      //   const index = cachedConnections.indexOf(connection);
+      //   if (index !== -1) {
+      //     this.logger.debug(
+      //       'Connection closed, removing from cache for address:',
+      //       addressKey,
+      //     );
+      //     cachedConnections.splice(index, 1);
 
-          // Remove the address key entirely if no connections remain
-          if (cachedConnections.length === 0) {
-            this.connectionsByAddress.delete(addressKey);
-          } else {
-            this.connectionsByAddress.set(addressKey, cachedConnections);
-          }
-        }
+      //     // Remove the address key entirely if no connections remain
+      //     if (cachedConnections.length === 0) {
+      //       this.connectionsByAddress.delete(addressKey);
+      //     } else {
+      //       this.connectionsByAddress.set(addressKey, cachedConnections);
+      //     }
+      //   }
+      // }
+
+      // Clean up oNodeConnection cache by connection ID
+      const connectionId = connection.id;
+      if (this.nodeConnectionByConnectionId.has(connectionId)) {
+        this.logger.debug(
+          'Connection closed, removing oNodeConnection for connection ID:',
+          connectionId,
+        );
+        this.nodeConnectionByConnectionId.delete(connectionId);
       }
     });
   }
@@ -135,9 +148,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     if (reuseContext) {
       // Prefer inbound connections
       const inbound = openConnections.find(
-        (c) =>
-          (c as any).direction === 'inbound' ||
-          !(c as any).direction, // fallback if direction not available
+        (c) => (c as any).direction === 'inbound' || !(c as any).direction, // fallback if direction not available
       );
       if (inbound) {
         this.logger.debug('Selected inbound connection (reuse context)');
@@ -155,8 +166,38 @@ export class oNodeConnectionManager extends oConnectionManager {
     }
 
     // Priority 3: Return first open connection
-    this.logger.debug('Selected first available open connection');
+    this.logger.debug(
+      'Selected first available open connection',
+      connectionsWithStreams,
+    );
     return openConnections[0];
+  }
+
+  /**
+   * Get a cached oNodeConnection for the given p2p connection if it exists and is valid.
+   * @param p2pConnection - The p2p connection to look up
+   * @returns A valid oNodeConnection or null if none found
+   */
+  private getCachedNodeConnection(
+    p2pConnection: Connection,
+  ): oNodeConnection | null {
+    const cached = this.nodeConnectionByConnectionId.get(p2pConnection.id);
+    if (cached && cached.p2pConnection?.status === 'open') {
+      return cached;
+    }
+    // Clean up stale entry if connection is no longer open
+    if (cached) {
+      this.nodeConnectionByConnectionId.delete(p2pConnection.id);
+    }
+    return null;
+  }
+
+  /**
+   * Cache an oNodeConnection by its p2p connection ID for potential reuse.
+   * @param conn - The oNodeConnection to cache
+   */
+  private cacheNodeConnection(conn: oNodeConnection): void {
+    this.nodeConnectionByConnectionId.set(conn.p2pConnection.id, conn);
   }
 
   async getOrCreateConnection(
@@ -181,6 +222,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       this.logger.debug(
         'Reusing cached connection for address:',
         nextHopAddress?.value,
+        bestConnection.id,
       );
       return bestConnection;
     }
@@ -290,6 +332,9 @@ export class oNodeConnectionManager extends oConnectionManager {
       requestHandler: config.requestHandler ?? undefined,
       reusePolicy: reuse ? 'reuse' : 'none',
     });
+    // Cache the new connection by its p2p connection ID
+    this.cacheNodeConnection(connection);
+
     const addressKey = this.getAddressKey(nextHopAddress);
     if (addressKey) {
       const connections = this.connectionsByAddress.get(addressKey) || [];
@@ -308,7 +353,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   }
 
   /**
-   * Connect to a given address, reusing libp2p connections when possible
+   * Connect to a given address, reusing oNodeConnection and libp2p connections when possible
    * @param config - Connection configuration
    * @returns The connection object
    */
@@ -321,11 +366,23 @@ export class oNodeConnectionManager extends oConnectionManager {
       drainTimeoutMs,
     } = config;
 
+    // First get or create the underlying p2p connection
     const p2pConnection = await this.getOrCreateConnection(
       nextHopAddress,
       address,
     );
 
+    // Check for existing valid oNodeConnection for this p2p connection
+    const existingConnection = this.getCachedNodeConnection(p2pConnection);
+    if (existingConnection) {
+      this.logger.debug(
+        'Reusing cached oNodeConnection for connection ID:',
+        p2pConnection.id,
+      );
+      return existingConnection;
+    }
+
+    // No valid cached connection, create new one
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,
       address: address,
@@ -338,6 +395,9 @@ export class oNodeConnectionManager extends oConnectionManager {
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       requestHandler: config.requestHandler ?? undefined,
     });
+
+    // Cache the new connection by its p2p connection ID
+    this.cacheNodeConnection(connection);
 
     return connection;
   }
@@ -356,7 +416,10 @@ export class oNodeConnectionManager extends oConnectionManager {
 
       // Check our address-based cache first
       const cachedConnections = this.connectionsByAddress.get(addressKey) || [];
-      const bestConnection = this.selectBestConnection(cachedConnections, false);
+      const bestConnection = this.selectBestConnection(
+        cachedConnections,
+        false,
+      );
       if (bestConnection) {
         return true;
       }
@@ -407,7 +470,10 @@ export class oNodeConnectionManager extends oConnectionManager {
 
       // Check address-based cache first
       const cachedConnections = this.connectionsByAddress.get(addressKey) || [];
-      const bestConnection = this.selectBestConnection(cachedConnections, false);
+      const bestConnection = this.selectBestConnection(
+        cachedConnections,
+        false,
+      );
       if (bestConnection) {
         return bestConnection;
       }
@@ -464,6 +530,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     cachedAddresses: number;
     totalCachedConnections: number;
     pendingDials: number;
+    cachedNodeConnections: number;
     connectionsByPeer: Array<{
       peerId: string;
       status: string;
@@ -476,7 +543,10 @@ export class oNodeConnectionManager extends oConnectionManager {
       addressKey: string;
     }> = [];
 
-    for (const [addressKey, connections] of this.connectionsByAddress.entries()) {
+    for (const [
+      addressKey,
+      connections,
+    ] of this.connectionsByAddress.entries()) {
       for (const conn of connections) {
         allConnections.push({
           peerId: conn.remotePeer?.toString() ?? 'unknown',
@@ -490,6 +560,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       cachedAddresses: this.connectionsByAddress.size,
       totalCachedConnections: allConnections.length,
       pendingDials: this.pendingDialsByAddress.size,
+      cachedNodeConnections: this.nodeConnectionByConnectionId.size,
       connectionsByPeer: allConnections,
     };
   }
@@ -500,8 +571,13 @@ export class oNodeConnectionManager extends oConnectionManager {
    */
   cleanupStaleConnections(): number {
     let removed = 0;
-    for (const [addressKey, connections] of this.connectionsByAddress.entries()) {
-      const openConnections = connections.filter((conn) => conn.status === 'open');
+    for (const [
+      addressKey,
+      connections,
+    ] of this.connectionsByAddress.entries()) {
+      const openConnections = connections.filter(
+        (conn) => conn.status === 'open',
+      );
       const staleCount = connections.length - openConnections.length;
 
       if (staleCount > 0) {
@@ -518,6 +594,27 @@ export class oNodeConnectionManager extends oConnectionManager {
     }
     if (removed > 0) {
       this.logger.debug(`Cleaned up ${removed} stale connections`);
+    }
+    return removed;
+  }
+
+  /**
+   * Clean up all stale oNodeConnections from cache
+   * @returns Number of oNodeConnections removed
+   */
+  cleanupStaleNodeConnections(): number {
+    let removed = 0;
+    for (const [
+      connectionId,
+      conn,
+    ] of this.nodeConnectionByConnectionId.entries()) {
+      if (conn.p2pConnection?.status !== 'open') {
+        this.nodeConnectionByConnectionId.delete(connectionId);
+        removed++;
+      }
+    }
+    if (removed > 0) {
+      this.logger.debug(`Cleaned up ${removed} stale oNodeConnections`);
     }
     return removed;
   }

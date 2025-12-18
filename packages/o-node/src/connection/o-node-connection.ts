@@ -27,6 +27,7 @@ export class oNodeConnection extends oConnection {
     this.p2pConnection = config.p2pConnection;
     this.streamHandler = new StreamHandler(this.logger);
     this.reusePolicy = config.reusePolicy ?? 'none';
+    console.log('oNodeConnection constructor', this.reusePolicy);
   }
 
   get remotePeerId() {
@@ -37,6 +38,13 @@ export class oNodeConnection extends oConnection {
     return this.p2pConnection.remoteAddr;
   }
 
+  /**
+   * Get the connection configuration for compatibility checking.
+   */
+  get connectionConfig(): oNodeConnectionConfig {
+    return this.config;
+  }
+
   supportsAddress(address: oNodeAddress): boolean {
     return address.libp2pTransports.some((transport) => {
       return transport.toString() === this.remoteAddr.toString();
@@ -44,13 +52,18 @@ export class oNodeConnection extends oConnection {
   }
 
   async getOrCreateStream(): Promise<oNodeConnectionStream> {
-    if (this.reusePolicy === 'reuse' && this.streams.length > 0) {
-      this.logger.debug(
-        'Returning reuse stream: ',
-        this.streams[0].p2pStream.protocol,
-      );
+    console.log('getOrCreateStream', this.reusePolicy);
+    if (this.reusePolicy === 'reuse') {
+      this.logger.debug('Reusing stream...');
       // search for streams that allow re-use
-      return this.streams[0];
+      if (this.streams.length > 0) {
+        this.logger.debug(
+          'Returning reuse stream: ',
+          this.streams[0].p2pStream.protocol,
+        );
+        // search for streams that allow re-use
+        return this.streams[0];
+      }
     }
 
     return this.createStream();
