@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-intelligence",
-  "version": "0.7.40",
+  "version": "0.7.41",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -54,11 +54,11 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.40",
-    "@olane/o-core": "0.7.40",
-    "@olane/o-lane": "0.7.40",
-    "@olane/o-protocol": "0.7.40",
-    "@olane/o-tool": "0.7.40",
+    "@olane/o-config": "0.7.41",
+    "@olane/o-core": "0.7.41",
+    "@olane/o-lane": "0.7.41",
+    "@olane/o-protocol": "0.7.41",
+    "@olane/o-tool": "0.7.41",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   },

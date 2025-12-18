@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.41 (2025-12-18)</small>
+
+- minor change to support reuse streams ([7cd8449](https://github.com/olane-labs/olane/commit/7cd8449))
+- minor fixes around stream re-use ([ab11bc6](https://github.com/olane-labs/olane/commit/ab11bc6))
+- refactored the connection management flow ([dd0a6af](https://github.com/olane-labs/olane/commit/dd0a6af))
+- chore: update pnpm-lock.yaml after version bump ([d2d7cb6](https://github.com/olane-labs/olane/commit/d2d7cb6))
+
 ## <small>0.7.40 (2025-12-17)</small>
 
 - added stream primitive with explicit address cacheing ([48de6e4](https://github.com/olane-labs/olane/commit/48de6e4))
