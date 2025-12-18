@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.42 (2025-12-18)</small>
+
+- minor change ([f705ab1](https://github.com/olane-labs/olane/commit/f705ab1))
+
 ## <small>0.7.41 (2025-12-18)</small>
 
 **Note:** Version bump only for package @olane/os
