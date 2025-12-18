@@ -47,15 +47,15 @@ export class ConnectionUtils extends oObject {
 
       const address = oNodeAddress.fromProtocol(oProtocol);
       if (
-        remotePeer.addresses.length === 0 &&
-        address.value === currentNode.leader.value
+        remotePeer?.addresses?.length === 0 &&
+        address?.value === currentNode?.leader?.value
       ) {
         // leader - use known address
         return currentNode.leader;
       }
       if (
-        remotePeer.addresses.length === 0 &&
-        address.value === currentNode.parent.value
+        remotePeer?.addresses?.length === 0 &&
+        address?.value === currentNode?.parent?.value
       ) {
         // leader - use known address
         return currentNode.parent;
