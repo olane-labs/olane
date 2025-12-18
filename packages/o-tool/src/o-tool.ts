@@ -1,11 +1,9 @@
 import {
   oAddress,
-  oCustomTransport,
   oError,
   oErrorCodes,
   oRequest,
   oRouterRequest,
-  oTransport,
   oNotificationEvent,
 } from '@olane/o-core';
 import { oToolConfig } from './interfaces/tool.interface.js';

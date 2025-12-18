@@ -45,8 +45,8 @@ export class oNodeAddress extends oAddress {
     return new oAddress(ma.toString().replace('/o/', 'o://'));
   }
 
-  static fromProtocol(protocol: string): oAddress {
+  static fromProtocol(protocol: string): oNodeAddress {
     const addressInput = protocol.replace('/o/', 'o://');
-    return new oAddress(addressInput);
+    return new oNodeAddress(addressInput);
   }
 }
