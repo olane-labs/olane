@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.47 (2025-12-18)</small>
+
+- minor change ([6c32082](https://github.com/olane-labs/olane/commit/6c32082))
+
 ## <small>0.7.46 (2025-12-18)</small>
 
 - fix for re-use stream consume stream pattern ([e6bb31d](https://github.com/olane-labs/olane/commit/e6bb31d))
