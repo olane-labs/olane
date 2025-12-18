@@ -15,6 +15,22 @@ import { ConnectionUtils } from './utils/connection.utils.js';
 export class oNodeTool extends oTool(oServerNode) {
   private streamHandler!: StreamHandler;
 
+  async handleProtocolReuse(address: oAddress) {
+    const reuseProtocol = address.protocol + '/reuse';
+    const protocols = this.p2pNode.getProtocols();
+    if (protocols.find((p) => p === reuseProtocol)) {
+      // already handling
+      return;
+    }
+    const maxOutboundsStreams = process.env.MAX_OUTBOUND_STREAMS
+      ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+      : 1000;
+    await this.p2pNode.handle(reuseProtocol, this.handleStream.bind(this), {
+      maxInboundStreams: 10_000,
+      maxOutboundStreams: maxOutboundsStreams,
+    });
+  }
+
   async handleProtocol(address: oAddress) {
     const protocols = this.p2pNode.getProtocols();
     if (protocols.find((p) => p === address.protocol)) {
@@ -32,6 +48,7 @@ export class oNodeTool extends oTool(oServerNode) {
       maxInboundStreams: 10_000,
       maxOutboundStreams: maxOutboundsStreams,
     });
+    await this.handleProtocolReuse(address);
   }
 
   async initialize(): Promise<void> {
@@ -46,7 +63,21 @@ export class oNodeTool extends oTool(oServerNode) {
     }
   }
 
-  async handleStream(stream: Stream, connection: Connection): Promise<void> {
+  async handleStreamReuse(
+    stream: Stream,
+    connection: Connection,
+  ): Promise<void> {
+    return this.handleStream(stream, connection, true);
+  }
+
+  async handleStream(
+    stream: Stream,
+    connection: Connection,
+    reuse?: boolean,
+  ): Promise<void> {
+    if (reuse) {
+      this.logger.debug('Handle stream with reuse = true');
+    }
     // record inbound connection to manager
     const remoteAddress = await ConnectionUtils.addressFromConnection({
       currentNode: this,
@@ -57,6 +88,7 @@ export class oNodeTool extends oTool(oServerNode) {
       address: remoteAddress,
       callerAddress: this.address,
       p2pConnection: connection,
+      reuse,
     });
 
     // Use StreamHandler for consistent stream handling

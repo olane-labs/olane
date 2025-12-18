@@ -182,7 +182,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   }
 
   async answer(
-    config: oConnectionConfig & { p2pConnection: Connection },
+    config: oConnectionConfig & { p2pConnection: Connection; reuse?: boolean },
   ): Promise<oNodeConnection> {
     const {
       address,
@@ -191,6 +191,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       readTimeoutMs,
       drainTimeoutMs,
       p2pConnection,
+      reuse,
     } = config;
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,
@@ -203,6 +204,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       requestHandler: config.requestHandler ?? undefined,
+      reusePolicy: reuse ? 'reuse' : 'none',
     });
     const transportKey = this.getTransportKeyFromAddress(nextHopAddress);
     if (transportKey) {

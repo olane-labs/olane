@@ -45,6 +45,10 @@ export class oNodeConnection extends oConnection {
 
   async getOrCreateStream(): Promise<oNodeConnectionStream> {
     if (this.reusePolicy === 'reuse' && this.streams.length > 0) {
+      this.logger.debug(
+        'Returning reuse stream: ',
+        this.streams[0].p2pStream.protocol,
+      );
       // search for streams that allow re-use
       return this.streams[0];
     }
@@ -53,16 +57,17 @@ export class oNodeConnection extends oConnection {
   }
 
   async createStream(): Promise<oNodeConnectionStream> {
-    const stream = await this.p2pConnection.newStream(
-      this.nextHopAddress.protocol,
-      {
-        signal: this.abortSignal,
-        maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-          ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-          : 1000,
-        runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
-      },
-    );
+    const protocol =
+      this.nextHopAddress.protocol +
+      (this.reusePolicy === 'reuse' ? '/reuse' : ''); // connect specifically to the reuse protocol version if desired
+    this.logger.debug('Creating stream for protocol:', protocol);
+    const stream = await this.p2pConnection.newStream(protocol, {
+      signal: this.abortSignal,
+      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+        : 1000,
+      runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
+    });
     const managedStream = new oNodeConnectionStream(stream, {
       direction: stream.direction,
       reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
@@ -82,13 +87,17 @@ export class oNodeConnection extends oConnection {
 
   get streams(): oNodeConnectionStream[] {
     return (
-      this.p2pConnection?.streams?.map((s) => {
-        return new oNodeConnectionStream(s, {
-          direction: s.direction,
-          reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
-          remoteAddress: this.nextHopAddress,
-        });
-      }) || []
+      this.p2pConnection?.streams
+        ?.filter((s) => {
+          return s.protocol.includes('/o/');
+        })
+        .map((s) => {
+          return new oNodeConnectionStream(s, {
+            direction: s.direction,
+            reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
+            remoteAddress: this.nextHopAddress,
+          });
+        }) || []
     );
   }
 
