@@ -9,7 +9,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   protected p2pNode: Libp2p;
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
-  private connectionsByAddress: Map<string, Connection> = new Map();
+  private connectionsByAddress: Map<string, Connection[]> = new Map();
   private pendingDialsByAddress: Map<string, Promise<Connection>> =
     new Map();
 
@@ -36,14 +36,22 @@ export class oNodeConnectionManager extends oConnectionManager {
 
       for (const [
         addressKey,
-        cachedConnection,
+        cachedConnections,
       ] of this.connectionsByAddress.entries()) {
-        if (cachedConnection === connection) {
+        const index = cachedConnections.indexOf(connection);
+        if (index !== -1) {
           this.logger.debug(
             'Connection closed, removing from cache for address:',
             addressKey,
           );
-          this.connectionsByAddress.delete(addressKey);
+          cachedConnections.splice(index, 1);
+
+          // Remove the address key entirely if no connections remain
+          if (cachedConnections.length === 0) {
+            this.connectionsByAddress.delete(addressKey);
+          } else {
+            this.connectionsByAddress.set(addressKey, cachedConnections);
+          }
         }
       }
     });
@@ -82,6 +90,75 @@ export class oNodeConnectionManager extends oConnectionManager {
     }
   }
 
+  /**
+   * Select the best connection from an array of connections.
+   * Prioritizes connections with active streams, then by direction based on context.
+   *
+   * @param connections - Array of connections to choose from
+   * @param reuseContext - If true, prefer inbound connections; otherwise prefer outbound
+   * @returns The best connection or null if none are suitable
+   */
+  private selectBestConnection(
+    connections: Connection[],
+    reuseContext: boolean = false,
+  ): Connection | null {
+    // Filter to only open connections
+    const openConnections = connections.filter((c) => c.status === 'open');
+
+    if (openConnections.length === 0) {
+      return null;
+    }
+
+    // Priority 1: Connections with active o-protocol streams
+    const connectionsWithStreams = openConnections
+      .map((conn) => ({
+        conn,
+        activeStreamCount: conn.streams.filter(
+          (s) =>
+            s.protocol.includes('/o/') &&
+            s.status === 'open' &&
+            s.writeStatus === 'writable' &&
+            (s as any).remoteReadStatus === 'readable',
+        ).length,
+      }))
+      .filter((item) => item.activeStreamCount > 0)
+      .sort((a, b) => b.activeStreamCount - a.activeStreamCount);
+
+    if (connectionsWithStreams.length > 0) {
+      this.logger.debug('Selected connection with active streams', {
+        streamCount: connectionsWithStreams[0].activeStreamCount,
+      });
+      return connectionsWithStreams[0].conn;
+    }
+
+    // Priority 2: Based on reuse context
+    if (reuseContext) {
+      // Prefer inbound connections
+      const inbound = openConnections.find(
+        (c) =>
+          (c as any).direction === 'inbound' ||
+          !(c as any).direction, // fallback if direction not available
+      );
+      if (inbound) {
+        this.logger.debug('Selected inbound connection (reuse context)');
+        return inbound;
+      }
+    } else {
+      // Prefer outbound connections
+      const outbound = openConnections.find(
+        (c) => (c as any).direction === 'outbound',
+      );
+      if (outbound) {
+        this.logger.debug('Selected outbound connection (non-reuse context)');
+        return outbound;
+      }
+    }
+
+    // Priority 3: Return first open connection
+    this.logger.debug('Selected first available open connection');
+    return openConnections[0];
+  }
+
   async getOrCreateConnection(
     nextHopAddress: oAddress,
     address: oAddress,
@@ -97,23 +174,35 @@ export class oNodeConnectionManager extends oConnectionManager {
       );
     }
 
-    // Check if we have a cached connection by address key
-    const cachedConnection = this.connectionsByAddress.get(addressKey);
-    if (cachedConnection && cachedConnection.status === 'open') {
+    // Check if we have cached connections by address key
+    const cachedConnections = this.connectionsByAddress.get(addressKey) || [];
+    const bestConnection = this.selectBestConnection(cachedConnections, false);
+    if (bestConnection) {
       this.logger.debug(
         'Reusing cached connection for address:',
         nextHopAddress?.value,
       );
-      return cachedConnection;
+      return bestConnection;
     }
 
-    // Clean up stale connection if it exists but is not open
-    if (cachedConnection && cachedConnection.status !== 'open') {
-      this.logger.debug(
-        'Removing stale connection for address:',
-        addressKey,
+    // Clean up stale connections if they exist but are not open
+    if (cachedConnections.length > 0) {
+      const openConnections = cachedConnections.filter(
+        (c) => c.status === 'open',
       );
-      this.connectionsByAddress.delete(addressKey);
+      if (openConnections.length === 0) {
+        this.logger.debug(
+          'Removing all stale connections for address:',
+          addressKey,
+        );
+        this.connectionsByAddress.delete(addressKey);
+      } else if (openConnections.length < cachedConnections.length) {
+        this.logger.debug(
+          'Cleaning up some stale connections for address:',
+          addressKey,
+        );
+        this.connectionsByAddress.set(addressKey, openConnections);
+      }
     }
 
     // Check if libp2p has an active connection for this address
@@ -123,7 +212,9 @@ export class oNodeConnectionManager extends oConnectionManager {
         'Caching existing libp2p connection for address:',
         addressKey,
       );
-      this.connectionsByAddress.set(addressKey, libp2pConnection);
+      const connections = this.connectionsByAddress.get(addressKey) || [];
+      connections.push(libp2pConnection);
+      this.connectionsByAddress.set(addressKey, connections);
       return libp2pConnection;
     }
 
@@ -140,8 +231,10 @@ export class oNodeConnectionManager extends oConnectionManager {
 
     try {
       const connection = await dialPromise;
-      // Cache the established connection by address key
-      this.connectionsByAddress.set(addressKey, connection);
+      // Add the established connection to the cache array
+      const connections = this.connectionsByAddress.get(addressKey) || [];
+      connections.push(connection);
+      this.connectionsByAddress.set(addressKey, connections);
       return connection;
     } finally {
       this.pendingDialsByAddress.delete(addressKey);
@@ -199,7 +292,12 @@ export class oNodeConnectionManager extends oConnectionManager {
     });
     const addressKey = this.getAddressKey(nextHopAddress);
     if (addressKey) {
-      this.connectionsByAddress.set(addressKey, p2pConnection);
+      const connections = this.connectionsByAddress.get(addressKey) || [];
+      // Only add if not already in the cache
+      if (!connections.includes(p2pConnection)) {
+        connections.push(p2pConnection);
+        this.connectionsByAddress.set(addressKey, connections);
+      }
     } else {
       this.logger.error(
         'Should not happen! Failed to generate an address key for address:',
@@ -257,8 +355,9 @@ export class oNodeConnectionManager extends oConnectionManager {
       }
 
       // Check our address-based cache first
-      const cachedConnection = this.connectionsByAddress.get(addressKey);
-      if (cachedConnection?.status === 'open') {
+      const cachedConnections = this.connectionsByAddress.get(addressKey) || [];
+      const bestConnection = this.selectBestConnection(cachedConnections, false);
+      if (bestConnection) {
         return true;
       }
 
@@ -278,7 +377,12 @@ export class oNodeConnectionManager extends oConnectionManager {
           (conn) => conn.status === 'open',
         );
         if (openConnection) {
-          this.connectionsByAddress.set(addressKey, openConnection);
+          const existingConnections =
+            this.connectionsByAddress.get(addressKey) || [];
+          if (!existingConnections.includes(openConnection)) {
+            existingConnections.push(openConnection);
+            this.connectionsByAddress.set(addressKey, existingConnections);
+          }
         }
       }
 
@@ -302,9 +406,10 @@ export class oNodeConnectionManager extends oConnectionManager {
       }
 
       // Check address-based cache first
-      const cachedConnection = this.connectionsByAddress.get(addressKey);
-      if (cachedConnection?.status === 'open') {
-        return cachedConnection;
+      const cachedConnections = this.connectionsByAddress.get(addressKey) || [];
+      const bestConnection = this.selectBestConnection(cachedConnections, false);
+      if (bestConnection) {
+        return bestConnection;
       }
 
       const peerId = this.getPeerIdFromAddress(address);
@@ -318,19 +423,29 @@ export class oNodeConnectionManager extends oConnectionManager {
         (conn) => conn.remotePeer?.toString() === peerId,
       );
 
-      // Find the first open connection
-      const openConnection = filteredConnections.find(
+      // Find open connections
+      const openConnections = filteredConnections.filter(
         (conn) => conn.status === 'open',
       );
 
-      // If we found an open connection in libp2p, cache it by address key
-      if (openConnection) {
-        this.connectionsByAddress.set(addressKey, openConnection);
-        return openConnection;
+      // If we found open connections in libp2p, add them to cache and select best
+      if (openConnections.length > 0) {
+        const existingConnections =
+          this.connectionsByAddress.get(addressKey) || [];
+
+        // Add any new connections that aren't already cached
+        for (const conn of openConnections) {
+          if (!existingConnections.includes(conn)) {
+            existingConnections.push(conn);
+          }
+        }
+
+        this.connectionsByAddress.set(addressKey, existingConnections);
+        return this.selectBestConnection(existingConnections, false);
       }
 
-      // Clean up stale cache entry if connection is no longer open
-      if (cachedConnection) {
+      // Clean up stale cache entries if connections are no longer open
+      if (cachedConnections.length > 0) {
         this.connectionsByAddress.delete(addressKey);
       }
 
@@ -346,19 +461,36 @@ export class oNodeConnectionManager extends oConnectionManager {
    * @returns Object containing cache statistics
    */
   getCacheStats(): {
-    cachedConnections: number;
+    cachedAddresses: number;
+    totalCachedConnections: number;
     pendingDials: number;
-    connectionsByPeer: Array<{ peerId: string; status: string }>;
+    connectionsByPeer: Array<{
+      peerId: string;
+      status: string;
+      addressKey: string;
+    }>;
   } {
+    const allConnections: Array<{
+      peerId: string;
+      status: string;
+      addressKey: string;
+    }> = [];
+
+    for (const [addressKey, connections] of this.connectionsByAddress.entries()) {
+      for (const conn of connections) {
+        allConnections.push({
+          peerId: conn.remotePeer?.toString() ?? 'unknown',
+          status: conn.status,
+          addressKey,
+        });
+      }
+    }
+
     return {
-      cachedConnections: this.connectionsByAddress.size,
+      cachedAddresses: this.connectionsByAddress.size,
+      totalCachedConnections: allConnections.length,
       pendingDials: this.pendingDialsByAddress.size,
-      connectionsByPeer: Array.from(
-        this.connectionsByAddress.values(),
-      ).map((conn) => ({
-        peerId: conn.remotePeer?.toString() ?? 'unknown',
-        status: conn.status,
-      })),
+      connectionsByPeer: allConnections,
     };
   }
 
@@ -368,13 +500,20 @@ export class oNodeConnectionManager extends oConnectionManager {
    */
   cleanupStaleConnections(): number {
     let removed = 0;
-    for (const [
-      addressKey,
-      connection,
-    ] of this.connectionsByAddress.entries()) {
-      if (connection.status !== 'open') {
-        this.connectionsByAddress.delete(addressKey);
-        removed++;
+    for (const [addressKey, connections] of this.connectionsByAddress.entries()) {
+      const openConnections = connections.filter((conn) => conn.status === 'open');
+      const staleCount = connections.length - openConnections.length;
+
+      if (staleCount > 0) {
+        removed += staleCount;
+
+        if (openConnections.length === 0) {
+          // Remove the entire entry if no connections remain
+          this.connectionsByAddress.delete(addressKey);
+        } else {
+          // Keep only the open connections
+          this.connectionsByAddress.set(addressKey, openConnections);
+        }
       }
     }
     if (removed > 0) {
