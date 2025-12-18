@@ -9,8 +9,8 @@ export class oNodeConnectionManager extends oConnectionManager {
   protected p2pNode: Libp2p;
   private defaultReadTimeoutMs?: number;
   private defaultDrainTimeoutMs?: number;
-  private connectionsByTransportKey: Map<string, Connection> = new Map();
-  private pendingDialsByTransportKey: Map<string, Promise<Connection>> =
+  private connectionsByAddress: Map<string, Connection> = new Map();
+  private pendingDialsByAddress: Map<string, Promise<Connection>> =
     new Map();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
@@ -35,40 +35,31 @@ export class oNodeConnectionManager extends oConnectionManager {
       }
 
       for (const [
-        transportKey,
+        addressKey,
         cachedConnection,
-      ] of this.connectionsByTransportKey.entries()) {
+      ] of this.connectionsByAddress.entries()) {
         if (cachedConnection === connection) {
           this.logger.debug(
-            'Connection closed, removing from cache for transport key:',
-            transportKey,
+            'Connection closed, removing from cache for address:',
+            addressKey,
           );
-          this.connectionsByTransportKey.delete(transportKey);
+          this.connectionsByAddress.delete(addressKey);
         }
       }
     });
   }
 
   /**
-   * Build a stable cache key from the libp2p transports on an address.
+   * Build a stable cache key from an address.
    *
-   * We intentionally key the cache by transports (multiaddrs) instead of peer IDs
-   * to avoid ambiguity when multiple peers may share a peer ID or when addresses
-   * change but the libp2p transports are the true dial targets.
+   * We key the cache by address value (e.g., "o://my-tool") to maintain
+   * a simple one-to-one mapping between addresses and connections.
    */
-  private getTransportKeyFromAddress(address: oAddress): string | null {
+  private getAddressKey(address: oAddress): string | null {
     try {
-      const nodeAddress = address as oNodeAddress;
-      const transports = nodeAddress.libp2pTransports;
-      if (!transports?.length) {
-        return null;
-      }
-
-      // Sort to ensure deterministic keys regardless of transport ordering.
-      const parts = transports.map((t) => t.toString()).sort();
-      return parts.join('|');
+      return address.value || null;
     } catch (error) {
-      this.logger.debug('Error extracting transport key from address:', error);
+      this.logger.debug('Error extracting address key from address:', error);
       return null;
     }
   }
@@ -98,19 +89,19 @@ export class oNodeConnectionManager extends oConnectionManager {
     if (!nextHopAddress) {
       throw new Error('Invalid address passed');
     }
-    // Build a transport-based cache key from the next hop address
-    const transportKey = this.getTransportKeyFromAddress(nextHopAddress);
-    if (!transportKey) {
+    // Build an address-based cache key from the next hop address
+    const addressKey = this.getAddressKey(nextHopAddress);
+    if (!addressKey) {
       throw new Error(
-        `Unable to extract libp2p transports from address: ${nextHopAddress.toString()}`,
+        `Unable to extract address key from address: ${nextHopAddress.toString()}`,
       );
     }
 
-    // Check if we have a cached connection by transport key
-    const cachedConnection = this.connectionsByTransportKey.get(transportKey);
+    // Check if we have a cached connection by address key
+    const cachedConnection = this.connectionsByAddress.get(addressKey);
     if (cachedConnection && cachedConnection.status === 'open') {
       this.logger.debug(
-        'Reusing cached connection for transports:',
+        'Reusing cached connection for address:',
         nextHopAddress?.value,
       );
       return cachedConnection;
@@ -119,51 +110,51 @@ export class oNodeConnectionManager extends oConnectionManager {
     // Clean up stale connection if it exists but is not open
     if (cachedConnection && cachedConnection.status !== 'open') {
       this.logger.debug(
-        'Removing stale connection for transports:',
-        transportKey,
+        'Removing stale connection for address:',
+        addressKey,
       );
-      this.connectionsByTransportKey.delete(transportKey);
+      this.connectionsByAddress.delete(addressKey);
     }
 
     // Check if libp2p has an active connection for this address
     const libp2pConnection = this.getCachedLibp2pConnection(nextHopAddress);
     if (libp2pConnection && libp2pConnection.status === 'open') {
       this.logger.debug(
-        'Caching existing libp2p connection for transports:',
-        transportKey,
+        'Caching existing libp2p connection for address:',
+        addressKey,
       );
-      this.connectionsByTransportKey.set(transportKey, libp2pConnection);
+      this.connectionsByAddress.set(addressKey, libp2pConnection);
       return libp2pConnection;
     }
 
-    // Check if dial is already in progress for this transport key
-    const pendingDial = this.pendingDialsByTransportKey.get(transportKey);
+    // Check if dial is already in progress for this address key
+    const pendingDial = this.pendingDialsByAddress.get(addressKey);
     if (pendingDial) {
-      this.logger.debug('Awaiting existing dial for transports:', transportKey);
+      this.logger.debug('Awaiting existing dial for address:', addressKey);
       return pendingDial;
     }
 
-    // Start new dial and cache the promise by transport key
-    const dialPromise = this.performDial(nextHopAddress, transportKey);
-    this.pendingDialsByTransportKey.set(transportKey, dialPromise);
+    // Start new dial and cache the promise by address key
+    const dialPromise = this.performDial(nextHopAddress, addressKey);
+    this.pendingDialsByAddress.set(addressKey, dialPromise);
 
     try {
       const connection = await dialPromise;
-      // Cache the established connection by transport key
-      this.connectionsByTransportKey.set(transportKey, connection);
+      // Cache the established connection by address key
+      this.connectionsByAddress.set(addressKey, connection);
       return connection;
     } finally {
-      this.pendingDialsByTransportKey.delete(transportKey);
+      this.pendingDialsByAddress.delete(addressKey);
     }
   }
 
   private async performDial(
     nextHopAddress: oAddress,
-    transportKey: string,
+    addressKey: string,
   ): Promise<Connection> {
     this.logger.debug('Dialing new connection', {
       address: nextHopAddress.value,
-      transportKey,
+      addressKey,
     });
 
     const connection = await this.p2pNode.dial(
@@ -173,7 +164,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     );
 
     this.logger.debug('Successfully dialed connection', {
-      transportKey,
+      addressKey,
       status: connection.status,
       remotePeer: connection.remotePeer?.toString(),
     });
@@ -206,12 +197,12 @@ export class oNodeConnectionManager extends oConnectionManager {
       requestHandler: config.requestHandler ?? undefined,
       reusePolicy: reuse ? 'reuse' : 'none',
     });
-    const transportKey = this.getTransportKeyFromAddress(nextHopAddress);
-    if (transportKey) {
-      this.connectionsByTransportKey.set(transportKey, p2pConnection);
+    const addressKey = this.getAddressKey(nextHopAddress);
+    if (addressKey) {
+      this.connectionsByAddress.set(addressKey, p2pConnection);
     } else {
       this.logger.error(
-        'Should not happen! Failed to generate a transport key for address:',
+        'Should not happen! Failed to generate an address key for address:',
         nextHopAddress,
       );
     }
@@ -260,13 +251,13 @@ export class oNodeConnectionManager extends oConnectionManager {
    */
   isCached(address: oAddress): boolean {
     try {
-      const transportKey = this.getTransportKeyFromAddress(address);
-      if (!transportKey) {
+      const addressKey = this.getAddressKey(address);
+      if (!addressKey) {
         return false;
       }
 
-      // Check our transport-based cache first
-      const cachedConnection = this.connectionsByTransportKey.get(transportKey);
+      // Check our address-based cache first
+      const cachedConnection = this.connectionsByAddress.get(addressKey);
       if (cachedConnection?.status === 'open') {
         return true;
       }
@@ -287,7 +278,7 @@ export class oNodeConnectionManager extends oConnectionManager {
           (conn) => conn.status === 'open',
         );
         if (openConnection) {
-          this.connectionsByTransportKey.set(transportKey, openConnection);
+          this.connectionsByAddress.set(addressKey, openConnection);
         }
       }
 
@@ -305,13 +296,13 @@ export class oNodeConnectionManager extends oConnectionManager {
    */
   getCachedLibp2pConnection(address: oAddress): Connection | null {
     try {
-      const transportKey = this.getTransportKeyFromAddress(address);
-      if (!transportKey) {
+      const addressKey = this.getAddressKey(address);
+      if (!addressKey) {
         return null;
       }
 
-      // Check transport-based cache first
-      const cachedConnection = this.connectionsByTransportKey.get(transportKey);
+      // Check address-based cache first
+      const cachedConnection = this.connectionsByAddress.get(addressKey);
       if (cachedConnection?.status === 'open') {
         return cachedConnection;
       }
@@ -332,15 +323,15 @@ export class oNodeConnectionManager extends oConnectionManager {
         (conn) => conn.status === 'open',
       );
 
-      // If we found an open connection in libp2p, cache it by transport key
+      // If we found an open connection in libp2p, cache it by address key
       if (openConnection) {
-        this.connectionsByTransportKey.set(transportKey, openConnection);
+        this.connectionsByAddress.set(addressKey, openConnection);
         return openConnection;
       }
 
       // Clean up stale cache entry if connection is no longer open
       if (cachedConnection) {
-        this.connectionsByTransportKey.delete(transportKey);
+        this.connectionsByAddress.delete(addressKey);
       }
 
       return null;
@@ -360,10 +351,10 @@ export class oNodeConnectionManager extends oConnectionManager {
     connectionsByPeer: Array<{ peerId: string; status: string }>;
   } {
     return {
-      cachedConnections: this.connectionsByTransportKey.size,
-      pendingDials: this.pendingDialsByTransportKey.size,
+      cachedConnections: this.connectionsByAddress.size,
+      pendingDials: this.pendingDialsByAddress.size,
       connectionsByPeer: Array.from(
-        this.connectionsByTransportKey.values(),
+        this.connectionsByAddress.values(),
       ).map((conn) => ({
         peerId: conn.remotePeer?.toString() ?? 'unknown',
         status: conn.status,
@@ -378,11 +369,11 @@ export class oNodeConnectionManager extends oConnectionManager {
   cleanupStaleConnections(): number {
     let removed = 0;
     for (const [
-      transportKey,
+      addressKey,
       connection,
-    ] of this.connectionsByTransportKey.entries()) {
+    ] of this.connectionsByAddress.entries()) {
       if (connection.status !== 'open') {
-        this.connectionsByTransportKey.delete(transportKey);
+        this.connectionsByAddress.delete(addressKey);
         removed++;
       }
     }
