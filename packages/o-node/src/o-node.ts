@@ -34,7 +34,6 @@ import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.m
 import { oNodeConnectionConfig } from './connection/index.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 import { LockManager } from './utils/lock-manager.js';
-import { Synchronized } from './decorators/synchronized.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -199,7 +198,6 @@ export class oNode extends oToolBase {
     }
   }
 
-  @Synchronized('register:parent')
   async registerParent(): Promise<void> {
     if (this.type === NodeType.LEADER) {
       this.logger.debug('Skipping parent registration, node is leader');
@@ -245,7 +243,6 @@ export class oNode extends oToolBase {
     }
   }
 
-  @Synchronized('register:leader')
   async registerLeader(): Promise<void> {
     this.logger.info('Register leader called...');
     if (!this.leader) {
