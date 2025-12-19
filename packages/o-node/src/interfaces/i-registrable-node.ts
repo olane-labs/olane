@@ -5,6 +5,11 @@ import { oNodeConfig } from './o-node.config.js';
 import { oNodeTransport } from '../router/o-node.transport.js';
 import { oNodeHierarchyManager } from '../o-node.hierarchy-manager.js';
 
+// Forward declaration to avoid circular dependency
+export interface IReconnectionManager {
+  waitForParentAndReconnect(): Promise<void>;
+}
+
 /**
  * Interface for nodes that support registration management.
  * This interface defines the contract that oRegistrationManager needs
@@ -60,6 +65,11 @@ export interface IRegistrableNode {
    * Hierarchy manager for tracking parent/child/leader relationships
    */
   hierarchyManager: oNodeHierarchyManager;
+
+  /**
+   * Reconnection manager for handling parent discovery
+   */
+  reconnectionManager?: IReconnectionManager;
 
   /**
    * Execute a method on another node

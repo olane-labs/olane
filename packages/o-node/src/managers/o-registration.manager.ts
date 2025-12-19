@@ -176,7 +176,16 @@ export class oRegistrationManager extends oObject {
             this.node.leader?.libp2pTransports || [],
           );
         } else {
-          throw new Error('Parent has no transports available');
+          this.logger.debug('Waiting for parent and reconnecting...');
+          // Reset state since we're delegating to reconnection manager
+          this.parentState = 'not_registered';
+          if (this.node.reconnectionManager) {
+            await this.node.reconnectionManager.waitForParentAndReconnect();
+          } else {
+            throw new Error('Parent has no transports and no reconnection manager available');
+          }
+          // If we get here, reconnection was successful and registration is complete
+          return;
         }
       }
 

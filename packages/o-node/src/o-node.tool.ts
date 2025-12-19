@@ -32,6 +32,7 @@ export class oNodeTool extends oTool(oServerNode) {
       {
         maxInboundStreams: 10_000,
         maxOutboundStreams: maxOutboundsStreams,
+        runOnLimitedConnection: this.config.runOnLimitedConnection,
       },
     );
     this.logger.debug('Handled protocol reuse: ' + reuseProtocol);
@@ -49,10 +50,12 @@ export class oNodeTool extends oTool(oServerNode) {
     this.logger.debug('Handling protocol: ' + address.protocol, {
       maxInboundStreams: 10_000,
       maxOutboundStreams: maxOutboundsStreams,
+      runOnLimitedConnection: this.config.runOnLimitedConnection,
     });
     await this.p2pNode.handle(address.protocol, this.handleStream.bind(this), {
       maxInboundStreams: 10_000,
       maxOutboundStreams: maxOutboundsStreams,
+      runOnLimitedConnection: this.config.runOnLimitedConnection,
     });
     await this.handleProtocolReuse(address);
   }
@@ -88,20 +91,20 @@ export class oNodeTool extends oTool(oServerNode) {
   ): Promise<void> {
     if (reuse) {
       this.logger.debug('Handle stream with reuse = true');
+      // record inbound connection to manager
+      const remoteAddress = await ConnectionUtils.addressFromConnection({
+        currentNode: this,
+        connection: connection,
+      });
+      this.connectionManager.answer({
+        nextHopAddress: remoteAddress,
+        address: remoteAddress,
+        callerAddress: this.address,
+        p2pConnection: connection,
+        reuse,
+        // requestHandler: this.execute.bind(this), TODO: do we need this?
+      });
     }
-    // record inbound connection to manager
-    const remoteAddress = await ConnectionUtils.addressFromConnection({
-      currentNode: this,
-      connection: connection,
-    });
-    this.connectionManager.answer({
-      nextHopAddress: remoteAddress,
-      address: remoteAddress,
-      callerAddress: this.address,
-      p2pConnection: connection,
-      reuse,
-      // requestHandler: this.execute.bind(this), TODO: do we need this?
-    });
 
     // Use StreamHandler for consistent stream handling
     // This follows libp2p v3 best practices for length-prefixed streaming
