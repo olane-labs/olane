@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.48 (2025-12-19)</small>
+
+- improvement to connection caching ([2d75576](https://github.com/olane-labs/olane/commit/2d75576))
+
 ## <small>0.7.47 (2025-12-18)</small>
 
 - minor change ([6c32082](https://github.com/olane-labs/olane/commit/6c32082))
