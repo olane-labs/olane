@@ -33,6 +33,7 @@ import { oNodeNotificationManager } from './o-node.notification-manager.js';
 import { oConnectionHeartbeatManager } from './managers/o-connection-heartbeat.manager.js';
 import { oNodeConnectionConfig } from './connection/index.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
+import { oRegistrationManager } from './managers/o-registration.manager.js';
 import { LockManager } from './utils/lock-manager.js';
 
 export class oNode extends oToolBase {
@@ -44,7 +45,7 @@ export class oNode extends oToolBase {
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   protected reconnectionManager?: oReconnectionManager;
-  protected didRegister: boolean = false;
+  public registrationManager!: oRegistrationManager;
   protected hooksStartFinished: any[] = [];
   protected hooksInitFinished: any[] = [];
   protected lockManager: LockManager = new LockManager();
@@ -98,6 +99,10 @@ export class oNode extends oToolBase {
     return this.p2pNode
       .getMultiaddrs()
       .map((multiaddr) => new oNodeTransport(multiaddr.toString()));
+  }
+
+  get protocols(): string[] {
+    return this.p2pNode ? this.p2pNode.getProtocols() : [];
   }
 
   async unregister(): Promise<void> {
@@ -199,72 +204,11 @@ export class oNode extends oToolBase {
   }
 
   async registerParent(): Promise<void> {
-    if (this.type === NodeType.LEADER) {
-      this.logger.debug('Skipping parent registration, node is leader');
-      return;
-    }
-
-    if (!this.parent) {
-      this.logger.warn('no parent, skipping registration');
-      return;
-    }
-
-    if (!this.parent?.libp2pTransports?.length) {
-      this.logger.debug(
-        'Parent has no transports, waiting for reconnection & leader ack',
-      );
-      if (this.parent?.toString() === oAddress.leader().toString()) {
-        this.parent.setTransports(this.leader?.libp2pTransports || []);
-      } else {
-        this.logger.debug('Waiting for parent and reconnecting... hello');
-        await this.reconnectionManager?.waitForParentAndReconnect();
-      }
-    }
-
-    // if no parent transports, register with the parent to get them
-    // TODO: should we remove the transports check to make this more consistent?
-    if (this.config.parent) {
-      this.logger.debug(
-        'Registering node with parent...',
-        this.config.parent?.toString(),
-      );
-      // avoid transports to ensure we do not try direct connection, we need to route via the leader for proper access controls
-      await this.use(new oNodeAddress(this.config.parent.value), {
-        method: 'child_register',
-        params: {
-          address: this.address.toString(),
-          transports: this.transports.map((t) => t.toString()),
-          peerId: this.peerId.toString(),
-          _token: this.config.joinToken,
-        },
-      });
-      this.setKeepAliveTag(this.parent as oNodeAddress);
-      this.hierarchyManager.addParent(this.parent);
-    }
+    return await this.registrationManager.registerParent();
   }
 
   async registerLeader(): Promise<void> {
-    this.logger.info('Register leader called...');
-    if (!this.leader) {
-      this.logger.warn('No leader defined, skipping registration');
-      return;
-    }
-    const address = oAddress.registry();
-
-    const params = {
-      method: 'commit',
-      params: {
-        peerId: this.peerId.toString(),
-        address: this.address.toString(),
-        protocols: this.p2pNode.getProtocols(),
-        transports: this.transports,
-        staticAddress: this.staticAddress.toString(),
-      },
-    };
-
-    await this.use(address, params);
-
-    this.setKeepAliveTag(this.leader as oNodeAddress);
+    return await this.registrationManager.registerLeader();
   }
 
   async register(): Promise<void> {
@@ -273,11 +217,10 @@ export class oNode extends oToolBase {
       return;
     }
 
-    if (this.didRegister) {
+    if (this.registrationManager.isFullyRegistered()) {
       this.logger.debug('Node already registered, skipping registration');
       return;
     }
-    this.didRegister = true;
 
     this.logger.debug('Registering node...');
 
@@ -610,6 +553,8 @@ export class oNode extends oToolBase {
       parentDiscoveryMaxDelayMs: 20_000,
     });
 
+    this.registrationManager = new oRegistrationManager(this as any);
+
     // need to wait until our libpp2 node is initialized before calling super.initialize
     await super.initialize();
 
@@ -676,8 +621,10 @@ export class oNode extends oToolBase {
    * Called at the end of teardown()
    */
   protected resetState(): void {
-    // Reset registration flag
-    this.didRegister = false;
+    // Reset registration states
+    if (this.registrationManager) {
+      this.registrationManager.resetAll();
+    }
 
     // Clear all locks
     this.lockManager.clearAll();
@@ -690,6 +637,7 @@ export class oNode extends oToolBase {
     this.connectionManager = undefined as any;
     this.connectionHeartbeatManager = undefined;
     this.reconnectionManager = undefined;
+    this.registrationManager = undefined as any;
 
     // Reset address to staticAddress with no transports
     this.address = new oNodeAddress(this.staticAddress.value, []);

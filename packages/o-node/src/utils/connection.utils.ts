@@ -24,9 +24,6 @@ export class ConnectionUtils extends oObject {
 
       // Check if peer exists and has sufficient protocol information
       if (remotePeer && remotePeer.protocols.length > MIN_PROTOCOLS) {
-        console.log(
-          `Peer found in store after ${attempt} attempts (${attempt * RETRY_DELAY_MS}ms)`,
-        );
         return remotePeer;
       }
 
@@ -64,10 +61,6 @@ export class ConnectionUtils extends oObject {
         throw new Error('Origin address is not configured');
       }
 
-      console.log(
-        'Deriving address from connection protocols:',
-        remotePeer.protocols,
-      );
       const oProtocol = remotePeer.protocols.find(
         (p: string) =>
           p.startsWith('/o/') &&

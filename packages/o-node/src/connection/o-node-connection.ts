@@ -27,7 +27,6 @@ export class oNodeConnection extends oConnection {
     this.p2pConnection = config.p2pConnection;
     this.streamHandler = new StreamHandler(this.logger);
     this.reusePolicy = config.reusePolicy ?? 'none';
-    console.log('oNodeConnection constructor', this.reusePolicy);
   }
 
   get remotePeerId() {
@@ -52,7 +51,6 @@ export class oNodeConnection extends oConnection {
   }
 
   async getOrCreateStream(): Promise<oNodeConnectionStream> {
-    console.log('getOrCreateStream', this.reusePolicy);
     if (this.reusePolicy === 'reuse') {
       this.logger.debug('Reusing stream...');
       // search for streams that allow re-use
