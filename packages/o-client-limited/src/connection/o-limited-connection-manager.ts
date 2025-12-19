@@ -13,9 +13,15 @@ export class oLimitedConnectionManager extends oNodeConnectionManager {
 
     // First time setup connection
     try {
-      const p2pConnection = await this.getOrCreateConnection(
+      const addressKey = this.getAddressKey(nextHopAddress);
+      if (!addressKey) {
+        throw new Error(
+          `Unable to extract address key from address: ${nextHopAddress.toString()}`,
+        );
+      }
+      const p2pConnection = await this.getOrCreateP2pConnection(
         nextHopAddress,
-        address,
+        addressKey,
       );
       const connection = new oLimitedConnection({
         nextHopAddress: nextHopAddress,
