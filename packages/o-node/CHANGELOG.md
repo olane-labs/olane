@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.49 (2025-12-19)</small>
+
+- added registration manager ([349070d](https://github.com/olane-labs/olane/commit/349070d))
+- minor change ([1810818](https://github.com/olane-labs/olane/commit/1810818))
+
 ## <small>0.7.48 (2025-12-19)</small>
 
 - improvement to connection caching ([2d75576](https://github.com/olane-labs/olane/commit/2d75576))
