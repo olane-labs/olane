@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.50 (2025-12-19)</small>
+
+- minor change ([ee80d3c](https://github.com/olane-labs/olane/commit/ee80d3c))
+- chore: update pnpm-lock.yaml after version bump ([7103993](https://github.com/olane-labs/olane/commit/7103993))
+
 ## <small>0.7.49 (2025-12-19)</small>
 
 - added registration manager ([349070d](https://github.com/olane-labs/olane/commit/349070d))
