@@ -4,6 +4,45 @@ import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeTransport } from '../router/o-node.transport.js';
 
 export class ConnectionUtils extends oObject {
+  /**
+   * Waits for a peer to appear in the peer store with sufficient protocol information.
+   * Implements retry logic to handle race conditions where peer store is not immediately populated.
+   */
+  private static async waitForPeerInStore(
+    p2pNode: Libp2p,
+    remotePeerId: any,
+  ): Promise<Peer> {
+    const MAX_RETRIES = 100; // 5 seconds total (100 * 50ms)
+    const RETRY_DELAY_MS = 50;
+    const MIN_PROTOCOLS = 2;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const peers = await p2pNode.peerStore.all();
+      const remotePeer = peers.find((peer: any) => {
+        return peer.id.toString() === remotePeerId.toString();
+      });
+
+      // Check if peer exists and has sufficient protocol information
+      if (remotePeer && remotePeer.protocols.length > MIN_PROTOCOLS) {
+        console.log(
+          `Peer found in store after ${attempt} attempts (${attempt * RETRY_DELAY_MS}ms)`,
+        );
+        return remotePeer;
+      }
+
+      // Wait before next retry
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      }
+    }
+
+    // Timeout exceeded
+    throw new Error(
+      `Timeout waiting for peer ${remotePeerId.toString()} to appear in peer store with sufficient protocols (waited ${MAX_RETRIES * RETRY_DELAY_MS}ms)`,
+    );
+  }
+
+  // TODO: improve this logic (poor implementation for now)
   public static async addressFromConnection(options: {
     currentNode: any;
     connection: Connection;
@@ -12,19 +51,12 @@ export class ConnectionUtils extends oObject {
       const { currentNode, connection } = options;
       const p2pNode: Libp2p = currentNode.p2pNode;
 
-      // Extract the actual olane address from the peer store
-      const peers = await p2pNode.peerStore.all();
-
-      const remotePeer: Peer | undefined = peers.find((peer: any) => {
-        return peer.id.toString() === connection.remotePeer.toString();
-      });
-      if (!remotePeer) {
-        console.log('Failed to find peer:', remotePeer);
-
-        throw new Error(
-          `Failed to extract remote address, peer ${connection.remotePeer.toString()} not found in peer store.`,
-        );
-      }
+      // Wait for peer to appear in peer store with sufficient protocol information
+      // This handles race conditions where peer store is not immediately populated
+      const remotePeer: Peer = await this.waitForPeerInStore(
+        p2pNode,
+        connection.remotePeer,
+      );
 
       // Get origin address for comparison
       const originAddress = currentNode.address?.value;
@@ -32,8 +64,14 @@ export class ConnectionUtils extends oObject {
         throw new Error('Origin address is not configured');
       }
 
+      console.log(
+        'Deriving address from connection protocols:',
+        remotePeer.protocols,
+      );
       const oProtocol = remotePeer.protocols.find(
-        (p: string) => p.startsWith('/o/'), // avoid matching current protocol addresses
+        (p: string) =>
+          p.startsWith('/o/') &&
+          p.includes(currentNode?.address?.protocol) === false, // avoid matching current protocol addresses
       );
       if (!oProtocol) {
         throw new Error(

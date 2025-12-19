@@ -57,9 +57,8 @@ export class oNodeTool extends oTool(oServerNode) {
     await this.handleProtocolReuse(address);
   }
 
-  async initialize(): Promise<void> {
-    await super.initialize();
-    this.streamHandler = new StreamHandler(this.logger);
+  async initializeProtocols() {
+    this.logger.info('Initializing custom protocols for node...');
     await this.handleProtocol(this.address);
     if (
       this.staticAddress &&
@@ -67,6 +66,12 @@ export class oNodeTool extends oTool(oServerNode) {
     ) {
       await this.handleProtocol(this.staticAddress);
     }
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+    this.streamHandler = new StreamHandler(this.logger);
+    await this.initializeProtocols();
   }
 
   async handleStreamReuse(
