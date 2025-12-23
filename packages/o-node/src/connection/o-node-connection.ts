@@ -15,12 +15,13 @@ import type {
 } from './stream-handler.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnectionStream } from './o-node-connection-stream.js';
-import { ConnectionUtils } from '../utils/connection.utils.js';
+import { StreamManager } from './stream-manager.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
   protected streamHandler: StreamHandler;
   protected reusePolicy: StreamReusePolicy;
+  protected streamManager?: StreamManager;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);

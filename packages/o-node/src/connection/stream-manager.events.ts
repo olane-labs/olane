@@ -1,9 +1,9 @@
 /**
- * Events emitted by StreamPoolManager
+ * Events emitted by StreamManager
  */
-export enum StreamPoolEvent {
-  PoolInitialized = 'pool-initialized',
-  PoolClosed = 'pool-closed',
+export enum StreamManagerEvent {
+  ManagerInitialized = 'manager-initialized',
+  ManagerClosed = 'manager-closed',
   ReaderStarted = 'reader-started',
   ReaderFailed = 'reader-failed',
   ReaderRecovered = 'reader-recovered',
@@ -15,9 +15,7 @@ export enum StreamPoolEvent {
 /**
  * Event data interfaces
  */
-export interface PoolInitializedData {
-  poolSize: number;
-}
+export interface InitializedData {}
 
 export interface ReaderStartedData {
   streamId: string;
@@ -52,13 +50,13 @@ export interface StreamFailedData {
 /**
  * Mapped type for type-safe event listeners
  */
-export type StreamPoolEventData = {
-  [StreamPoolEvent.PoolInitialized]: PoolInitializedData;
-  [StreamPoolEvent.PoolClosed]: void;
-  [StreamPoolEvent.ReaderStarted]: ReaderStartedData;
-  [StreamPoolEvent.ReaderFailed]: ReaderFailedData;
-  [StreamPoolEvent.ReaderRecovered]: ReaderRecoveredData;
-  [StreamPoolEvent.RecoveryFailed]: RecoveryFailedData;
-  [StreamPoolEvent.StreamReplaced]: StreamReplacedData;
-  [StreamPoolEvent.StreamFailed]: StreamFailedData;
+export type StreamManagerEventData = {
+  [StreamManagerEvent.ManagerInitialized]: InitializedData;
+  [StreamManagerEvent.ManagerClosed]: void;
+  [StreamManagerEvent.ReaderStarted]: ReaderStartedData;
+  [StreamManagerEvent.ReaderFailed]: ReaderFailedData;
+  [StreamManagerEvent.ReaderRecovered]: ReaderRecoveredData;
+  [StreamManagerEvent.RecoveryFailed]: RecoveryFailedData;
+  [StreamManagerEvent.StreamReplaced]: StreamReplacedData;
+  [StreamManagerEvent.StreamFailed]: StreamFailedData;
 };
