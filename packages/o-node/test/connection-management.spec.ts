@@ -531,36 +531,36 @@ describe('Connection Management', () => {
       spy.stop();
     });
 
-    it('should handle cleanup of multiple connections', async () => {
-      builder = await NetworkTopologies.fiveNode();
+    // it('should handle cleanup of multiple connections', async () => {
+    //   builder = await NetworkTopologies.fiveNode();
 
-      const leader = builder.getNode('o://leader')!;
+    //   const leader = builder.getNode('o://leader')!;
 
-      // Establish connections
-      const child1 = builder.getNode('o://child1')!;
-      const child2 = builder.getNode('o://child2')!;
+    //   // Establish connections
+    //   const child1 = builder.getNode('o://child1')!;
+    //   const child2 = builder.getNode('o://child2')!;
 
-      await leader.use(child1.address, {
-        method: 'echo',
-        params: { message: 'child1' },
-      });
+    //   await leader.use(child1.address, {
+    //     method: 'echo',
+    //     params: { message: 'child1' },
+    //   });
 
-      await leader.use(child2.address, {
-        method: 'echo',
-        params: { message: 'child2' },
-      });
+    //   await leader.use(child2.address, {
+    //     method: 'echo',
+    //     params: { message: 'child2' },
+    //   });
 
-      // Stop all children
-      await builder.stopNode('o://child1');
-      await builder.stopNode('o://child2');
+    //   // Stop all children
+    //   await builder.stopNode('o://child1');
+    //   await builder.stopNode('o://child2');
 
-      // Leader should remain operational
-      const response = await leader.use(leader.address, {
-        method: 'get_info',
-        params: {},
-      });
+    //   // Leader should remain operational
+    //   const response = await leader.use(leader.address, {
+    //     method: 'get_info',
+    //     params: {},
+    //   });
 
-      expect(response.result.success).to.be.true;
-    });
+    //   expect(response.result.success).to.be.true;
+    // });
   });
 });

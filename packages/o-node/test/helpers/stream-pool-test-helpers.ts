@@ -2,8 +2,8 @@ import type { Connection } from '@libp2p/interface';
 import type { Stream } from '@olane/o-config';
 import { oRequest } from '@olane/o-core';
 import { StreamHandler } from '../../src/connection/stream-handler.js';
-import { StreamPoolManagerConfig } from '../../src/connection/stream-pool-manager.js';
 import { oNodeConnectionStream } from '../../src/connection/o-node-connection-stream.js';
+import { StreamPoolManagerConfig } from '../../src/index.js';
 
 /**
  * Create a mock stream for testing
@@ -174,7 +174,6 @@ export function createStreamPoolManagerConfig(
   const defaultConfig: StreamPoolManagerConfig = {
     poolSize: 10,
     readerStreamIndex: 0,
-    healthCheckIntervalMs: 100, // Fast for testing
     streamHandler: mockStreamHandler,
     p2pConnection: mockP2PConnection,
     requestHandler: async (request: oRequest, stream: Stream) => {
@@ -246,10 +245,7 @@ export class EventCapture {
   /**
    * Wait for specific event
    */
-  async waitForEvent(
-    type: string,
-    timeoutMs: number = 5000,
-  ): Promise<any> {
+  async waitForEvent(type: string, timeoutMs: number = 5000): Promise<any> {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeoutMs) {

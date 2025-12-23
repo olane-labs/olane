@@ -8,6 +8,7 @@ import {
   makeStreamInvalid,
   waitFor,
 } from './helpers/stream-pool-test-helpers.js';
+import { StreamPoolEvent } from '../src/index.js';
 
 describe('StreamPoolManager', () => {
   let poolManager: StreamPoolManager | undefined;
@@ -52,11 +53,11 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['reader-started']);
+      events.start([StreamPoolEvent.ReaderStarted]);
 
       await poolManager.initialize();
 
-      expect(events.hasEvent('reader-started')).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.ReaderStarted)).to.be.true;
     });
 
     it('should emit pool-initialized event', async () => {
@@ -64,12 +65,14 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['pool-initialized']);
+      events.start([StreamPoolEvent.PoolInitialized]);
 
       await poolManager.initialize();
 
-      expect(events.hasEvent('pool-initialized')).to.be.true;
-      const eventData = events.getEventsByType('pool-initialized')[0];
+      expect(events.hasEvent(StreamPoolEvent.PoolInitialized)).to.be.true;
+      const eventData = events.getEventsByType(
+        StreamPoolEvent.PoolInitialized,
+      )[0];
       expect(eventData.poolSize).to.equal(10);
     });
 
@@ -156,69 +159,6 @@ describe('StreamPoolManager', () => {
     });
   });
 
-  describe('Health Monitoring', () => {
-    it('should perform periodic health checks', async () => {
-      const config = createStreamPoolManagerConfig({
-        healthCheckIntervalMs: 50, // Very fast for testing
-      });
-      poolManager = new StreamPoolManager(config);
-
-      const events = new EventCapture(poolManager);
-      events.start(['health-check-completed']);
-
-      await poolManager.initialize();
-
-      // Wait for at least 2 health checks
-      await waitFor(() => events.getEventCount('health-check-completed') >= 2, 1000);
-
-      expect(events.getEventCount('health-check-completed')).to.be.at.least(2);
-    });
-
-    it('should emit health-check-completed event with stats', async () => {
-      const config = createStreamPoolManagerConfig({
-        healthCheckIntervalMs: 50,
-      });
-      poolManager = new StreamPoolManager(config);
-
-      const events = new EventCapture(poolManager);
-      events.start(['health-check-completed']);
-
-      await poolManager.initialize();
-
-      const eventData = await events.waitForEvent('health-check-completed', 1000);
-
-      expect(eventData).to.have.property('totalStreams');
-      expect(eventData).to.have.property('healthyStreams');
-      expect(eventData).to.have.property('readerStreamHealth');
-    });
-
-    it('should stop health checks after close', async () => {
-      const config = createStreamPoolManagerConfig({
-        healthCheckIntervalMs: 50,
-      });
-      poolManager = new StreamPoolManager(config);
-
-      const events = new EventCapture(poolManager);
-      events.start(['health-check-completed']);
-
-      await poolManager.initialize();
-
-      // Wait for first health check
-      await events.waitForEvent('health-check-completed', 1000);
-
-      const countBeforeClose = events.getEventCount('health-check-completed');
-      await poolManager.close();
-
-      // Wait a bit
-      await new Promise((resolve) => setTimeout(resolve, 150));
-
-      // No new health checks should have occurred
-      expect(events.getEventCount('health-check-completed')).to.equal(
-        countBeforeClose,
-      );
-    });
-  });
-
   describe('Stream Validation and Replacement', () => {
     it('should validate stream health before returning from getStream', async () => {
       let streamCounter = 0;
@@ -262,7 +202,6 @@ describe('StreamPoolManager', () => {
 
       const config = createStreamPoolManagerConfig({
         poolSize: 3,
-        healthCheckIntervalMs: 50,
         createStream: async () => {
           streamCounter++;
           if (streamCounter === 2) {
@@ -278,14 +217,14 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['stream-replaced']);
+      events.start([StreamPoolEvent.StreamReplaced]);
 
       await poolManager.initialize();
 
       // Trigger getStream to force validation
       await poolManager.getStream();
 
-      expect(events.hasEvent('stream-replaced')).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.StreamReplaced)).to.be.true;
     });
   });
 
@@ -306,12 +245,15 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['reader-failed']);
+      events.start([StreamPoolEvent.ReaderFailed]);
 
       await poolManager.initialize();
 
       // Wait for reader failure event
-      const failureEvent = await events.waitForEvent('reader-failed', 2000);
+      const failureEvent = await events.waitForEvent(
+        StreamPoolEvent.ReaderFailed,
+        2000,
+      );
 
       expect(failureEvent).to.have.property('failureCount');
       expect(failureEvent.failureCount).to.be.greaterThan(0);
@@ -339,14 +281,17 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['reader-failed', 'reader-recovered']);
+      events.start([
+        StreamPoolEvent.ReaderFailed,
+        StreamPoolEvent.ReaderRecovered,
+      ]);
 
       await poolManager.initialize();
 
       // Wait for recovery
-      await events.waitForEvent('reader-recovered', 2000);
+      await events.waitForEvent(StreamPoolEvent.ReaderRecovered, 2000);
 
-      expect(events.hasEvent('reader-recovered')).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.ReaderRecovered)).to.be.true;
     });
 
     it('should not attempt recovery during close', async () => {
@@ -366,7 +311,10 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['reader-failed', 'reader-recovered']);
+      events.start([
+        StreamPoolEvent.ReaderFailed,
+        StreamPoolEvent.ReaderRecovered,
+      ]);
 
       await poolManager.initialize();
 
@@ -377,7 +325,7 @@ describe('StreamPoolManager', () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Should not have attempted recovery
-      expect(events.hasEvent('reader-recovered')).to.be.false;
+      expect(events.hasEvent(StreamPoolEvent.ReaderRecovered)).to.be.false;
     });
   });
 
@@ -453,26 +401,6 @@ describe('StreamPoolManager', () => {
       const stats = poolManager.getStats();
       expect(stats.failureCount).to.be.at.least(2);
     });
-
-    it('should update lastHealthCheck timestamp', async () => {
-      const config = createStreamPoolManagerConfig({
-        healthCheckIntervalMs: 50,
-      });
-      poolManager = new StreamPoolManager(config);
-
-      await poolManager.initialize();
-
-      const statsBefore = poolManager.getStats();
-      const timestampBefore = statsBefore.lastHealthCheck;
-
-      // Wait for health check
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const statsAfter = poolManager.getStats();
-      const timestampAfter = statsAfter.lastHealthCheck;
-
-      expect(timestampAfter).to.be.greaterThan(timestampBefore);
-    });
   });
 
   describe('Event Emission', () => {
@@ -482,23 +410,17 @@ describe('StreamPoolManager', () => {
 
       const events = new EventCapture(poolManager);
       events.start([
-        'pool-initialized',
-        'reader-started',
-        'health-check-completed',
-        'pool-closed',
+        StreamPoolEvent.PoolInitialized,
+        StreamPoolEvent.ReaderStarted,
+        StreamPoolEvent.PoolClosed,
       ]);
 
       await poolManager.initialize();
-
-      // Wait for health check
-      await events.waitForEvent('health-check-completed', 1000);
-
       await poolManager.close();
 
-      expect(events.hasEvent('pool-initialized')).to.be.true;
-      expect(events.hasEvent('reader-started')).to.be.true;
-      expect(events.hasEvent('health-check-completed')).to.be.true;
-      expect(events.hasEvent('pool-closed')).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.PoolInitialized)).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.ReaderStarted)).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.PoolClosed)).to.be.true;
     });
 
     it('should support multiple listeners for same event', async () => {
@@ -508,10 +430,10 @@ describe('StreamPoolManager', () => {
       let listener1Called = false;
       let listener2Called = false;
 
-      poolManager.on('pool-initialized', () => {
+      poolManager.on(StreamPoolEvent.PoolInitialized, () => {
         listener1Called = true;
       });
-      poolManager.on('pool-initialized', () => {
+      poolManager.on(StreamPoolEvent.PoolInitialized, () => {
         listener2Called = true;
       });
 
@@ -530,16 +452,18 @@ describe('StreamPoolManager', () => {
         callCount++;
       };
 
-      poolManager.on('pool-initialized', listener);
+      poolManager.on(StreamPoolEvent.PoolInitialized, listener);
       await poolManager.initialize();
 
       expect(callCount).to.equal(1);
 
-      poolManager.off('pool-initialized', listener);
+      poolManager.off(StreamPoolEvent.PoolInitialized, listener);
 
       // Close and re-initialize (if we could)
       // Since we can't re-init easily, just verify off doesn't throw
-      expect(() => poolManager!.off('pool-initialized', listener)).to.not.throw();
+      expect(() =>
+        poolManager!.off(StreamPoolEvent.PoolInitialized, listener),
+      ).to.not.throw();
     });
   });
 
@@ -563,12 +487,12 @@ describe('StreamPoolManager', () => {
       poolManager = new StreamPoolManager(config);
 
       const events = new EventCapture(poolManager);
-      events.start(['pool-closed']);
+      events.start([StreamPoolEvent.PoolClosed]);
 
       await poolManager.initialize();
       await poolManager.close();
 
-      expect(events.hasEvent('pool-closed')).to.be.true;
+      expect(events.hasEvent(StreamPoolEvent.PoolClosed)).to.be.true;
     });
 
     it('should be safe to call close() multiple times', async () => {
@@ -597,33 +521,6 @@ describe('StreamPoolManager', () => {
       } catch (error: any) {
         expect(error.message).to.include('not initialized');
       }
-    });
-
-    it('should stop health monitoring on close()', async () => {
-      const config = createStreamPoolManagerConfig({
-        healthCheckIntervalMs: 50,
-      });
-      poolManager = new StreamPoolManager(config);
-
-      const events = new EventCapture(poolManager);
-      events.start(['health-check-completed']);
-
-      await poolManager.initialize();
-
-      // Wait for first health check
-      await events.waitForEvent('health-check-completed', 1000);
-
-      await poolManager.close();
-
-      const countAfterClose = events.getEventCount('health-check-completed');
-
-      // Wait for what would be another health check
-      await new Promise((resolve) => setTimeout(resolve, 150));
-
-      // Should not have increased
-      expect(events.getEventCount('health-check-completed')).to.equal(
-        countAfterClose,
-      );
     });
   });
 });

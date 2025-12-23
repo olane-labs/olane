@@ -1,58 +1,15 @@
 import { EventEmitter } from 'events';
-import type { Connection } from '@libp2p/interface';
 import { oObject, oRequest, oError, oErrorCodes } from '@olane/o-core';
 import type { Stream } from '@olane/o-config';
 import { oNodeConnectionStream } from './o-node-connection-stream.js';
-import { StreamHandler } from './stream-handler.js';
-
-export interface StreamPoolManagerConfig {
-  /**
-   * Pool size (total number of streams to maintain)
-   * Default: 10 (1 dedicated reader + 9 request-response)
-   */
-  poolSize?: number;
-
-  /**
-   * Index of the dedicated reader stream in the pool
-   * Default: 0
-   */
-  readerStreamIndex?: number;
-
-  /**
-   * Health check interval in milliseconds
-   * Default: 30000 (30 seconds)
-   */
-  healthCheckIntervalMs?: number;
-
-  /**
-   * Stream handler for managing stream communication
-   */
-  streamHandler: StreamHandler;
-
-  /**
-   * P2P connection for creating streams
-   */
-  p2pConnection: Connection;
-
-  /**
-   * Request handler for incoming requests on the dedicated reader
-   */
-  requestHandler?: (request: oRequest, stream: Stream) => Promise<any>;
-
-  /**
-   * Function to create a new stream
-   */
-  createStream: () => Promise<oNodeConnectionStream>;
-}
-
-export interface StreamPoolStats {
-  totalStreams: number;
-  healthyStreams: number;
-  readerStreamHealth: 'healthy' | 'unhealthy' | 'not-initialized';
-  requestResponseStreams: number;
-  failureCount: number;
-  lastHealthCheck: number;
-}
+import {
+  StreamPoolEvent,
+  StreamPoolEventData,
+} from './stream-pool-manager.events.js';
+import type {
+  StreamPoolManagerConfig,
+  StreamPoolStats,
+} from './interfaces/stream-pool-manager.config.js';
 
 /**
  * StreamPoolManager manages a pool of reusable streams with automatic recovery.
@@ -64,7 +21,7 @@ export interface StreamPoolStats {
  * Features:
  * - Automatic stream pool initialization
  * - Dedicated reader with automatic restart on failure
- * - Health monitoring with periodic validation
+ * - Event-based stream monitoring (listens to 'close' events)
  * - Automatic stream replacement when failures detected
  * - Event emission for monitoring and observability
  */
@@ -72,16 +29,13 @@ export class StreamPoolManager extends oObject {
   private streams: oNodeConnectionStream[] = [];
   private readonly POOL_SIZE: number;
   private readonly READER_STREAM_INDEX: number;
-  private readonly HEALTH_CHECK_INTERVAL_MS: number;
 
   private dedicatedReaderStream?: oNodeConnectionStream;
-  private backgroundReaderActive: boolean = false;
   private currentStreamIndex: number = 1; // Start from 1 (skip reader)
 
-  private healthCheckTimer?: NodeJS.Timeout;
   private failureCount: number = 0;
-  private lastHealthCheck: number = 0;
   private eventEmitter: EventEmitter = new EventEmitter();
+  private streamEventHandlers: Map<string, (event: any) => void> = new Map();
 
   private config: StreamPoolManagerConfig;
   private isInitialized: boolean = false;
@@ -92,13 +46,16 @@ export class StreamPoolManager extends oObject {
     this.config = config;
     this.POOL_SIZE = config.poolSize || 10;
     this.READER_STREAM_INDEX = config.readerStreamIndex ?? 0;
-    this.HEALTH_CHECK_INTERVAL_MS = config.healthCheckIntervalMs || 30000;
 
     if (this.POOL_SIZE < 2) {
       throw new Error(
         'Pool size must be at least 2 (1 reader + 1 request-response)',
       );
     }
+  }
+
+  get backgroundReaderActive() {
+    return this.dedicatedReaderStream?.isValid || false;
   }
 
   /**
@@ -124,7 +81,7 @@ export class StreamPoolManager extends oObject {
 
       this.streams = await Promise.all(streamPromises);
 
-      // Set stream types
+      // Set stream types and attach event listeners
       for (let i = 0; i < this.streams.length; i++) {
         const stream = this.streams[i];
         if (i === this.READER_STREAM_INDEX) {
@@ -132,16 +89,18 @@ export class StreamPoolManager extends oObject {
         } else {
           (stream.config as any).streamType = 'request-response';
         }
+
+        // Attach event listeners for monitoring
+        this.attachStreamListeners(stream, i);
       }
 
       // Initialize dedicated reader
       await this.initializeBackgroundReader();
 
-      // Start health monitoring
-      this.startHealthMonitoring();
-
       this.isInitialized = true;
-      this.emit('pool-initialized', { poolSize: this.streams.length });
+      this.emit(StreamPoolEvent.PoolInitialized, {
+        poolSize: this.streams.length,
+      });
       this.logger.info('Stream pool initialized successfully', {
         totalStreams: this.streams.length,
       });
@@ -217,7 +176,6 @@ export class StreamPoolManager extends oObject {
       readerStreamHealth,
       requestResponseStreams,
       failureCount: this.failureCount,
-      lastHealthCheck: this.lastHealthCheck,
     };
   }
 
@@ -234,45 +192,51 @@ export class StreamPoolManager extends oObject {
       totalStreams: this.streams.length,
     });
 
-    // Stop health monitoring
-    if (this.healthCheckTimer) {
-      clearInterval(this.healthCheckTimer);
-      this.healthCheckTimer = undefined;
+    // Remove all event listeners from streams
+    for (const stream of this.streams) {
+      this.removeStreamListeners(stream);
     }
-
-    // Mark background reader as inactive
-    this.backgroundReaderActive = false;
 
     // Close all streams (though they may not actually close due to reuse policy)
     await Promise.all(this.streams.map((s) => s.close()));
 
     this.streams = [];
     this.dedicatedReaderStream = undefined;
+    this.streamEventHandlers.clear();
     this.isInitialized = false;
     this.isClosing = false;
 
-    this.emit('pool-closed');
+    this.emit(StreamPoolEvent.PoolClosed);
     this.logger.info('Stream pool closed');
   }
 
   /**
    * Add event listener
    */
-  on(event: string, listener: (...args: any[]) => void): void {
-    this.eventEmitter.on(event, listener);
+  on<K extends StreamPoolEvent>(
+    event: K | string,
+    listener: (data: StreamPoolEventData[K]) => void,
+  ): void {
+    this.eventEmitter.on(event as string, listener);
   }
 
   /**
    * Remove event listener
    */
-  off(event: string, listener: (...args: any[]) => void): void {
-    this.eventEmitter.off(event, listener);
+  off<K extends StreamPoolEvent>(
+    event: K | string,
+    listener: (data: StreamPoolEventData[K]) => void,
+  ): void {
+    this.eventEmitter.off(event as string, listener);
   }
 
   /**
    * Emit event
    */
-  private emit(event: string, data?: any): void {
+  private emit<K extends StreamPoolEvent>(
+    event: K,
+    data?: StreamPoolEventData[K],
+  ): void {
     this.eventEmitter.emit(event, data);
   }
 
@@ -300,7 +264,6 @@ export class StreamPoolManager extends oObject {
     }
 
     this.dedicatedReaderStream = readerStream;
-    this.backgroundReaderActive = true;
 
     this.logger.info('Starting background reader', {
       streamId: readerStream.p2pStream.id,
@@ -334,9 +297,8 @@ export class StreamPoolManager extends oObject {
           'Background reader exited:',
           error?.message || 'stream closed',
         );
-        this.backgroundReaderActive = false;
         this.failureCount++;
-        this.emit('reader-failed', {
+        this.emit(StreamPoolEvent.ReaderFailed, {
           error: error?.message,
           failureCount: this.failureCount,
         });
@@ -350,7 +312,9 @@ export class StreamPoolManager extends oObject {
         });
       });
 
-    this.emit('reader-started', { streamId: readerStream.p2pStream.id });
+    this.emit(StreamPoolEvent.ReaderStarted, {
+      streamId: readerStream.p2pStream.id,
+    });
   }
 
   /**
@@ -372,10 +336,12 @@ export class StreamPoolManager extends oObject {
       await this.initializeBackgroundReader();
 
       this.logger.info('Successfully recovered from reader failure');
-      this.emit('reader-recovered', { failureCount: this.failureCount });
+      this.emit(StreamPoolEvent.ReaderRecovered, {
+        failureCount: this.failureCount,
+      });
     } catch (error: any) {
       this.logger.error('Failed to recover from reader failure:', error);
-      this.emit('recovery-failed', {
+      this.emit(StreamPoolEvent.RecoveryFailed, {
         error: error.message,
         failureCount: this.failureCount,
       });
@@ -393,12 +359,20 @@ export class StreamPoolManager extends oObject {
       const oldStream = this.streams[index];
       const streamType = oldStream?.streamType || 'general';
 
+      // Remove event listeners from old stream
+      if (oldStream) {
+        this.removeStreamListeners(oldStream);
+      }
+
       // Create new stream
       const newStream = await this.config.createStream();
       (newStream.config as any).streamType = streamType;
 
       // Replace in pool
       this.streams[index] = newStream;
+
+      // Attach event listeners to new stream
+      this.attachStreamListeners(newStream, index);
 
       // Close old stream (if it exists and is valid)
       if (oldStream) {
@@ -409,7 +383,7 @@ export class StreamPoolManager extends oObject {
         }
       }
 
-      this.emit('stream-replaced', { index, streamType });
+      this.emit(StreamPoolEvent.StreamReplaced, { index, streamType });
       this.logger.info('Stream replaced successfully', { index, streamType });
     } catch (error: any) {
       this.logger.error('Failed to replace stream:', error);
@@ -421,60 +395,89 @@ export class StreamPoolManager extends oObject {
   }
 
   /**
-   * Start periodic health monitoring
+   * Attach event listeners to a stream for monitoring
    */
-  private startHealthMonitoring(): void {
-    if (this.healthCheckTimer) {
-      return;
-    }
+  private attachStreamListeners(
+    stream: oNodeConnectionStream,
+    index: number,
+  ): void {
+    const streamId = stream.p2pStream.id;
 
-    this.logger.debug('Starting health monitoring', {
-      intervalMs: this.HEALTH_CHECK_INTERVAL_MS,
-    });
+    // Remove any existing listeners for this stream
+    this.removeStreamListeners(stream);
 
-    this.healthCheckTimer = setInterval(() => {
-      this.performHealthCheck().catch((error) => {
-        this.logger.error('Health check failed:', error);
-      });
-    }, this.HEALTH_CHECK_INTERVAL_MS);
+    // Create close event handler
+    const closeHandler = (event: any) => {
+      this.handleStreamClose(index, event);
+    };
+
+    // Attach listener to underlying p2p stream
+    stream.p2pStream.addEventListener('close', closeHandler);
+
+    // Store handler for cleanup
+    this.streamEventHandlers.set(streamId, closeHandler);
+
+    this.logger.debug('Attached stream listeners', { index, streamId });
   }
 
   /**
-   * Perform health check on all streams
+   * Remove event listeners from a stream
    */
-  private async performHealthCheck(): Promise<void> {
-    if (this.isClosing) {
-      return;
+  private removeStreamListeners(stream: oNodeConnectionStream): void {
+    const streamId = stream.p2pStream.id;
+    const handler = this.streamEventHandlers.get(streamId);
+
+    if (handler) {
+      stream.p2pStream.removeEventListener('close', handler);
+      this.streamEventHandlers.delete(streamId);
+      this.logger.debug('Removed stream listeners', { streamId });
     }
+  }
 
-    this.lastHealthCheck = Date.now();
-    const stats = this.getStats();
+  /**
+   * Handle stream close event - triggers immediate replacement
+   */
+  private handleStreamClose(index: number, event: any): void {
+    const stream = this.streams[index];
+    const streamId = stream?.p2pStream.id;
+    const isReaderStream = index === this.READER_STREAM_INDEX;
 
-    this.logger.debug('Performing health check', stats);
+    this.logger.warn('Stream closed event detected', {
+      index,
+      streamId,
+      isReaderStream,
+      error: event?.error?.message,
+    });
 
-    // Check dedicated reader
-    if (!this.backgroundReaderActive && this.isInitialized) {
-      this.logger.warn('Background reader is not active, attempting restart');
-      try {
-        await this.handleReaderFailure();
-      } catch (error: any) {
-        this.logger.error('Failed to restart background reader:', error);
-      }
+    this.failureCount++;
+
+    // Special handling for dedicated reader stream
+    if (isReaderStream) {
+      this.emit(StreamPoolEvent.ReaderFailed, {
+        error: event?.error?.message || 'stream closed',
+        failureCount: this.failureCount,
+      });
+
+      // Attempt automatic recovery
+      this.handleReaderFailure().catch((recoveryError) => {
+        this.logger.error(
+          'Failed to recover from reader failure:',
+          recoveryError,
+        );
+      });
+    } else {
+      // Request-response stream failure
+      this.emit(StreamPoolEvent.StreamFailed, {
+        index,
+        streamId,
+        error: event?.error?.message,
+        failureCount: this.failureCount,
+      });
+
+      // Attempt automatic replacement
+      this.replaceStream(index).catch((replaceError) => {
+        this.logger.error('Failed to replace stream:', replaceError);
+      });
     }
-
-    // Check request-response streams
-    for (let i = 1; i < this.streams.length; i++) {
-      const stream = this.streams[i];
-      if (!stream.isValid) {
-        this.logger.warn('Unhealthy stream detected', { index: i });
-        try {
-          await this.replaceStream(i);
-        } catch (error: any) {
-          this.logger.error('Failed to replace unhealthy stream:', error);
-        }
-      }
-    }
-
-    this.emit('health-check-completed', stats);
   }
 }
