@@ -47,7 +47,6 @@ export class oLimitedConnection extends oNodeConnection {
     this.streamPoolManager = new StreamPoolManager({
       poolSize: 10,
       readerStreamIndex: 0,
-      healthCheckIntervalMs: 30000,
       streamHandler: this.streamHandler,
       p2pConnection: this.p2pConnection,
       requestHandler: this.config.requestHandler,
