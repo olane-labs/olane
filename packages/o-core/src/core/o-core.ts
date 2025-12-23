@@ -259,9 +259,6 @@ export abstract class oCore extends oObject {
   }): Promise<oResponse> {
     this.validateRunning();
 
-    // let's call our own tool
-    this.logger.debug('Calling ourselves, skipping...', data);
-
     const request = new oRequest({
       method: data?.method as string,
       params: {

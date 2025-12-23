@@ -75,6 +75,27 @@ export class oNodeConnectionStream extends oObject {
     return Date.now() - this.createdAt;
   }
 
+  /**
+   * Returns the stream type (defaults to 'general' for backward compatibility)
+   */
+  get streamType(): string {
+    return this.config.streamType || 'general';
+  }
+
+  /**
+   * Checks if this stream is designated as a dedicated reader
+   */
+  get isDedicatedReader(): boolean {
+    return this.streamType === 'dedicated-reader';
+  }
+
+  /**
+   * Checks if this stream is designated for request-response cycles
+   */
+  get isRequestResponse(): boolean {
+    return this.streamType === 'request-response';
+  }
+
   async close(): Promise<void> {
     // Don't close if reuse policy is enabled
     if (this.config.reusePolicy === 'reuse') {
