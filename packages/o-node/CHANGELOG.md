@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.51 (2025-12-23)</small>
+
+- improved stream pool ([52cd6b7](https://github.com/olane-labs/olane/commit/52cd6b7))
+- minor change ([67320d1](https://github.com/olane-labs/olane/commit/67320d1))
+- stream pooling functionality added ([a33ab20](https://github.com/olane-labs/olane/commit/a33ab20))
+
 ## <small>0.7.50 (2025-12-19)</small>
 
 - minor change ([ee80d3c](https://github.com/olane-labs/olane/commit/ee80d3c))
