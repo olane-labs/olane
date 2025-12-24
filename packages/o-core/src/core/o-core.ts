@@ -281,6 +281,21 @@ export abstract class oCore extends oObject {
     }
   }
 
+  async useTool(
+    toolName: string,
+    data?: {
+      params?: { [key: string]: any };
+    },
+  ) {
+    const response = await this.useSelf({
+      method: toolName,
+      params: {
+        ...(data?.params || {}),
+      },
+    });
+    return response.result.data as any;
+  }
+
   async useChild(
     childAddress: oAddress,
     data?: {
