@@ -138,11 +138,13 @@ export class oNodeConnectionManager extends oConnectionManager {
    * @param p2pConnection - The libp2p connection to search for
    * @returns The oNodeConnection or undefined if not found
    */
-  getConnectionByP2pConnection(p2pConnection: Connection): oNodeConnection | undefined {
+  getConnectionByP2pConnection(
+    p2pConnection: Connection,
+  ): oNodeConnection | undefined {
     // Search through all cached connections
     for (const connections of this.cachedConnections.values()) {
       const found = connections.find(
-        (conn) => conn.p2pConnection === p2pConnection,
+        (conn) => conn.p2pConnection.id === p2pConnection.id,
       );
       if (found) {
         return found;
@@ -242,9 +244,17 @@ export class oNodeConnectionManager extends oConnectionManager {
       );
     }
 
-    // Check if we already have a cached connection for this address
-    const existingConnection = this.getValidConnection(addressKey);
-    if (existingConnection) {
+    // Check if we already have a cached connection for this address with the same connection id
+    const connections = this.cachedConnections.get(addressKey) || [];
+
+    // Filter to open connections
+    const validConnections = connections.filter(
+      (c) =>
+        c.p2pConnection?.id === p2pConnection.id &&
+        c.p2pConnection?.status === 'open',
+    );
+    if (validConnections.length > 0) {
+      const existingConnection = validConnections[0];
       this.logger.debug(
         'Reusing cached connection for answer:',
         addressKey,

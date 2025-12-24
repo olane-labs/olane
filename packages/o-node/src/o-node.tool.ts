@@ -14,7 +14,6 @@ import type { InboundRequestData } from './connection/stream-manager.events.js';
  * @returns A new class that extends the base class and implements the oTool interface
  */
 export class oNodeTool extends oTool(oServerNode) {
-
   async handleProtocolReuse(address: oAddress) {
     const reuseProtocol = address.protocol + '/reuse';
     this.logger.debug('Handling protocol reuse: ' + reuseProtocol);
@@ -91,21 +90,23 @@ export class oNodeTool extends oTool(oServerNode) {
     if (reuse) {
       this.logger.debug('Handle stream with reuse = true');
       // record inbound connection to manager
-      const remoteAddress = await ConnectionUtils.addressFromConnection({
-        currentNode: this,
-        connection: connection,
-      });
-      this.connectionManager.answer({
-        nextHopAddress: remoteAddress,
-        address: remoteAddress,
-        callerAddress: this.address,
-        p2pConnection: connection,
-        reuse,
-      });
     }
 
+    const remoteAddress = await ConnectionUtils.addressFromConnection({
+      currentNode: this,
+      connection: connection,
+    });
+    this.connectionManager.answer({
+      nextHopAddress: remoteAddress,
+      address: remoteAddress,
+      callerAddress: this.address,
+      p2pConnection: connection,
+      reuse,
+    });
+
     // Get the oNodeConnection for this libp2p connection
-    const oConnection = this.connectionManager.getConnectionByP2pConnection(connection);
+    const oConnection =
+      this.connectionManager.getConnectionByP2pConnection(connection);
 
     if (!oConnection) {
       this.logger.error('No oNodeConnection found for incoming stream', {
@@ -138,10 +139,7 @@ export class oNodeTool extends oTool(oServerNode) {
 
     // Use the connection's StreamManager for consistent stream handling
     // This follows libp2p v3 best practices for length-prefixed streaming
-    await oConnection.streamManager.handleIncomingStream(
-      stream,
-      connection,
-    );
+    await oConnection.streamManager.handleIncomingStream(stream, connection);
   }
 
   async _tool_identify(): Promise<any> {
