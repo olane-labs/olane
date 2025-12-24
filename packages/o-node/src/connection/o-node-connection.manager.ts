@@ -133,6 +133,25 @@ export class oNodeConnectionManager extends oConnectionManager {
   }
 
   /**
+   * Get oNodeConnection by libp2p Connection reference
+   * Used to find the correct oNodeConnection for incoming streams
+   * @param p2pConnection - The libp2p connection to search for
+   * @returns The oNodeConnection or undefined if not found
+   */
+  getConnectionByP2pConnection(p2pConnection: Connection): oNodeConnection | undefined {
+    // Search through all cached connections
+    for (const connections of this.cachedConnections.values()) {
+      const found = connections.find(
+        (conn) => conn.p2pConnection === p2pConnection,
+      );
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Get or create a raw p2p connection to the given address.
    * Subclasses can override connect() and use this method to get the underlying p2p connection.
    */
@@ -244,7 +263,6 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      requestHandler: config.requestHandler ?? undefined,
       reusePolicy: reuse ? 'reuse' : 'none',
     });
 
@@ -307,7 +325,6 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      requestHandler: config.requestHandler ?? undefined,
     });
 
     // Cache the new connection

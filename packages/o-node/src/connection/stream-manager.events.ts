@@ -10,6 +10,9 @@ export enum StreamManagerEvent {
   RecoveryFailed = 'recovery-failed',
   StreamReplaced = 'stream-replaced',
   StreamFailed = 'stream-failed',
+  InboundRequest = 'inbound-request',
+  InboundResponse = 'inbound-response',
+  StreamError = 'stream-error',
 }
 
 /**
@@ -47,6 +50,23 @@ export interface StreamFailedData {
   failureCount: number;
 }
 
+export interface InboundRequestData {
+  request: any; // oRequest from @olane/o-core
+  stream: any; // Stream from @libp2p/interface
+  connection: any; // Connection from @libp2p/interface
+}
+
+export interface InboundResponseData {
+  response: any; // oResponse from @olane/o-core
+  streamId: string;
+}
+
+export interface StreamErrorData {
+  streamId: string;
+  error: Error;
+  context: 'incoming' | 'outgoing' | 'general';
+}
+
 /**
  * Mapped type for type-safe event listeners
  */
@@ -59,4 +79,7 @@ export type StreamManagerEventData = {
   [StreamManagerEvent.RecoveryFailed]: RecoveryFailedData;
   [StreamManagerEvent.StreamReplaced]: StreamReplacedData;
   [StreamManagerEvent.StreamFailed]: StreamFailedData;
+  [StreamManagerEvent.InboundRequest]: InboundRequestData;
+  [StreamManagerEvent.InboundResponse]: InboundResponseData;
+  [StreamManagerEvent.StreamError]: StreamErrorData;
 };

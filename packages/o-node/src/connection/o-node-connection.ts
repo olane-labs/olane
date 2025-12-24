@@ -8,26 +8,28 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
-import { StreamHandler } from './stream-handler.js';
 import type {
   StreamHandlerConfig,
   StreamReusePolicy,
 } from './stream-handler.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
-import { oNodeConnectionStream } from './o-node-connection-stream.js';
-import { StreamManager } from './stream-manager.js';
+import { oNodeStream } from './o-node-stream.js';
+import { oNodeStreamManager } from './o-node-stream.manager.js';
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
-  protected streamHandler: StreamHandler;
   protected reusePolicy: StreamReusePolicy;
-  protected streamManager?: StreamManager;
+  public streamManager: oNodeStreamManager;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
-    this.streamHandler = new StreamHandler(this.logger);
     this.reusePolicy = config.reusePolicy ?? 'none';
+
+    // Initialize oNodeStreamManager (stream lifecycle and protocol management)
+    this.streamManager = new oNodeStreamManager({
+      p2pConnection: this.p2pConnection,
+    });
   }
 
   get remotePeerId() {
@@ -51,103 +53,59 @@ export class oNodeConnection extends oConnection {
     });
   }
 
-  async getOrCreateStream(): Promise<oNodeConnectionStream> {
-    if (this.reusePolicy === 'reuse') {
-      this.logger.debug('Reusing stream...');
-      // search for streams that allow re-use
-      if (this.streams.length > 0) {
-        this.logger.debug(
-          'Returning reuse stream: ',
-          this.streams[0].p2pStream.protocol,
-        );
-        // search for streams that allow re-use
-        return this.streams[0];
-      }
-    }
-
-    return this.createStream();
-  }
-
-  async createStream(): Promise<oNodeConnectionStream> {
-    const protocol =
-      this.nextHopAddress.protocol +
-      (this.reusePolicy === 'reuse' ? '/reuse' : ''); // connect specifically to the reuse protocol version if desired
-    this.logger.debug('Creating stream for protocol:', protocol);
-    const stream = await this.p2pConnection.newStream(protocol, {
-      signal: this.abortSignal,
-      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-        : 1000,
-      runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
-    });
-    const managedStream = new oNodeConnectionStream(stream, {
-      direction: stream.direction,
-      reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
-      remoteAddress: this.nextHopAddress,
-    });
-
-    // print the num streams
-    const numStreams = this.streams.map(
-      (s: oNodeConnectionStream) => s.isValid,
-    ).length;
-    this.logger.debug(
-      `Connection spawned new stream: ${stream.id}. Connection now has ${numStreams} total streams open`,
-    );
-
-    return managedStream;
-  }
-
-  get streams(): oNodeConnectionStream[] {
-    return (
-      this.p2pConnection?.streams
-        ?.filter((s) => {
-          return s.protocol.includes('/o/');
-        })
-        .map((s) => {
-          return new oNodeConnectionStream(s, {
-            direction: s.direction,
-            reusePolicy: this.config.reusePolicy ?? 'none', // default to no re-use stream
-            remoteAddress: this.nextHopAddress,
-          });
-        }) || []
-    );
+  get streams(): oNodeStream[] {
+    return this.streamManager.getAllStreams();
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
     try {
-      const stream = await this.getOrCreateStream();
-
-      // ensure stream is valid
-      stream.validate();
+      // Build protocol string
+      const protocol =
+        this.nextHopAddress.protocol +
+        (this.reusePolicy === 'reuse' ? '/reuse' : '');
 
       const streamConfig: StreamHandlerConfig = {
         signal: this.abortSignal,
         drainTimeoutMs: this.config.drainTimeoutMs,
         reusePolicy: this.reusePolicy,
+        maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
+          ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
+          : 1000,
+        runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
       };
+
+      // Get stream from StreamManager
+      const wrappedStream = await this.streamManager.getOrCreateStream(
+        protocol,
+        this.nextHopAddress,
+        streamConfig,
+      );
+
+      // Ensure stream is valid
+      wrappedStream.validate();
+
+      const stream = wrappedStream.p2pStream;
 
       // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
 
-      await this.streamHandler.sendLengthPrefixed(
-        stream.p2pStream,
+      await this.streamManager.sendLengthPrefixed(
+        stream,
         data,
         streamConfig,
       );
 
-      // Handle response using StreamHandler
-      // Pass request handler if configured to enable bidirectional stream processing
+      // Handle response using StreamManager
       // Pass request ID to enable proper response correlation on shared streams
-      const response = await this.streamHandler.handleOutgoingStream(
-        stream.p2pStream,
+      const response = await this.streamManager.handleOutgoingStream(
+        stream,
         this.emitter,
         streamConfig,
-        this.config.requestHandler,
         request.id,
       );
 
       // Handle cleanup of the stream
-      await this.postTransmit(stream);
+      await this.postTransmit(wrappedStream);
 
       return response;
     } catch (error: any) {
@@ -158,8 +116,9 @@ export class oNodeConnection extends oConnection {
     }
   }
 
-  async postTransmit(stream: oNodeConnectionStream) {
-    await stream.close();
+  async postTransmit(stream: oNodeStream): Promise<void> {
+    // Always cleanup streams (no reuse at base layer)
+    await this.streamManager.releaseStream(stream.p2pStream.id);
   }
 
   async abort(error: Error) {
@@ -170,6 +129,10 @@ export class oNodeConnection extends oConnection {
 
   async close() {
     this.logger.debug('Closing connection');
+
+    // Close stream manager (handles all stream cleanup)
+    await this.streamManager.close();
+
     await this.p2pConnection.close();
     this.logger.debug('Connection closed');
   }

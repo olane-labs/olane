@@ -4,8 +4,9 @@ import { oServerNode } from './nodes/server.node.js';
 import { Connection, Stream } from '@olane/o-config';
 import { oNodeTransport } from './router/o-node.transport.js';
 import { oNodeAddress } from './router/o-node.address.js';
-import { StreamHandler } from './connection/stream-handler.js';
 import { ConnectionUtils } from './utils/connection.utils.js';
+import { StreamManagerEvent } from './connection/stream-manager.events.js';
+import type { InboundRequestData } from './connection/stream-manager.events.js';
 
 /**
  * oTool is a mixin that extends the base class and implements the oTool interface
@@ -13,7 +14,6 @@ import { ConnectionUtils } from './utils/connection.utils.js';
  * @returns A new class that extends the base class and implements the oTool interface
  */
 export class oNodeTool extends oTool(oServerNode) {
-  private streamHandler!: StreamHandler;
 
   async handleProtocolReuse(address: oAddress) {
     const reuseProtocol = address.protocol + '/reuse';
@@ -73,7 +73,6 @@ export class oNodeTool extends oTool(oServerNode) {
 
   async initialize(): Promise<void> {
     await super.initialize();
-    this.streamHandler = new StreamHandler(this.logger);
     await this.initializeProtocols();
   }
 
@@ -102,30 +101,46 @@ export class oNodeTool extends oTool(oServerNode) {
         callerAddress: this.address,
         p2pConnection: connection,
         reuse,
-        // requestHandler: this.execute.bind(this), TODO: do we need this?
       });
     }
 
-    // Use StreamHandler for consistent stream handling
-    // This follows libp2p v3 best practices for length-prefixed streaming
-    await this.streamHandler.handleIncomingStream(
-      stream,
-      connection,
-      async (request: oRequest, stream: Stream) => {
+    // Get the oNodeConnection for this libp2p connection
+    const oConnection = this.connectionManager.getConnectionByP2pConnection(connection);
+
+    if (!oConnection) {
+      this.logger.error('No oNodeConnection found for incoming stream', {
+        remotePeer: connection.remotePeer.toString(),
+        connectionId: connection.id,
+      });
+      return;
+    }
+
+    // Subscribe to InboundRequest events from the stream manager
+    // This follows an event-driven pattern for handling incoming requests
+    oConnection.streamManager.on(
+      StreamManagerEvent.InboundRequest,
+      async (data: InboundRequestData) => {
         try {
-          const result = await this.execute(request, stream);
-          // Return the raw result - StreamHandler will build and send the response
+          const result = await this.execute(data.request, data.stream);
+          // Return the raw result - StreamManager will build and send the response
           return result;
         } catch (error: any) {
           this.logger.error(
             'Error executing tool: ',
-            request.toString(),
+            data.request.toString(),
             error,
             typeof error,
           );
-          throw error; // StreamHandler will handle error response building
+          throw error; // StreamManager will handle error response building
         }
       },
+    );
+
+    // Use the connection's StreamManager for consistent stream handling
+    // This follows libp2p v3 best practices for length-prefixed streaming
+    await oConnection.streamManager.handleIncomingStream(
+      stream,
+      connection,
     );
   }
 

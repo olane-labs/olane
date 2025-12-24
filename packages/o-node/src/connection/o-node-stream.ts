@@ -1,9 +1,9 @@
 import type { Stream } from '@libp2p/interface';
 import { oError, oErrorCodes, oObject, type oAddress } from '@olane/o-core';
-import { oNodeConnectionStreamConfig } from './interfaces/o-node-connection-stream.config.js';
+import { oNodeStreamConfig } from './interfaces/o-node-stream.config.js';
 
 /**
- * oNodeConnectionStream wraps a libp2p Stream with caller/receiver address metadata
+ * oNodeStream wraps a libp2p Stream with caller/receiver address metadata
  * to enable proper stream reuse based on address pairs rather than protocol only.
  *
  * Key features:
@@ -11,12 +11,12 @@ import { oNodeConnectionStreamConfig } from './interfaces/o-node-connection-stre
  * - Automatic reusability checking
  * - Idle time tracking for cleanup
  */
-export class oNodeConnectionStream extends oObject {
+export class oNodeStream extends oObject {
   public readonly createdAt: number;
 
   constructor(
     public readonly p2pStream: Stream,
-    public readonly config: oNodeConnectionStreamConfig,
+    public readonly config: oNodeStreamConfig,
   ) {
     super();
     this.createdAt = Date.now();

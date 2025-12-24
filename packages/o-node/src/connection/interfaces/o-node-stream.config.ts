@@ -10,7 +10,7 @@ import { StreamReusePolicy } from '../stream-handler.config';
  */
 export type StreamType = 'dedicated-reader' | 'request-response' | 'general';
 
-export interface oNodeConnectionStreamConfig {
+export interface oNodeStreamConfig {
   direction: 'inbound' | 'outbound';
   reusePolicy: StreamReusePolicy;
   remoteAddress: oAddress;
