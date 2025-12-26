@@ -19,7 +19,7 @@
     "test": "aegir test",
     "test:node": "aegir test -t node",
     "test:browser": "aegir test -t browser",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "deep:clean": "rm -rf node_modules && rm package-lock.json",
     "start:prod": "node dist/index.js",
     "prepublishOnly": "npm run build",

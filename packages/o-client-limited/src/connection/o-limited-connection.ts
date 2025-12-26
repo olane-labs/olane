@@ -1,114 +1,75 @@
-import { oNodeConnection, StreamPoolManager } from '@olane/o-node';
+import { oNodeConnection } from '@olane/o-node';
 import type { oNodeConnectionConfig } from '@olane/o-node';
+import {
+  oLimitedStreamManager,
+  oLimitedStreamManagerConfig,
+} from './o-limited.stream-manager.js';
+import { StreamManagerEvent } from '@olane/o-node';
 
 /**
- * oLimitedConnection extends oNodeConnection with stream reuse and pool management.
+ * oLimitedConnection extends oNodeConnection with stream reuse for limited connections.
  *
  * This is optimized for limited connections where creating new streams is expensive
  * (mobile clients, browsers, resource-constrained environments).
  *
- * Stream Pool Architecture (10 streams total):
- * - Stream 0: Dedicated background reader for incoming requests
- * - Streams 1-9: Round-robin pool for outgoing request-response cycles
+ * Stream Architecture:
+ * - 1 dedicated reader stream for receiving requests from receiver
+ * - Reuses outbound streams for multiple request-response cycles
  *
  * Features:
- * - Automatic recovery when dedicated reader fails
- * - Health monitoring of all pooled streams
- * - Automatic stream replacement on failure
- * - Event emission for monitoring (reader-failed, stream-replaced, etc.)
+ * - Automatic reader stream creation and maintenance
+ * - Single retry on reader failure
+ * - Stream reuse for outbound requests
+ * - Event emission for monitoring (reader-started, reader-failed, reader-recovered)
  *
  * Default Behavior:
  * - Uses 'reuse' stream policy by default
- * - Automatically initializes pool manager on first stream request
+ * - Automatically initializes dedicated reader on connection start
  */
 export class oLimitedConnection extends oNodeConnection {
-  private streamPoolManager?: StreamPoolManager;
-  private poolInitialized = false;
+  declare streamManager: oLimitedStreamManager;
 
   constructor(config: oNodeConnectionConfig) {
     const reusePolicy = config.reusePolicy ?? 'reuse';
     super({
       ...config,
-      reusePolicy: reusePolicy,
+      reusePolicy,
     });
-    this.reusePolicy = reusePolicy;
-  }
 
-  /**
-   * Initialize the stream pool manager
-   */
-  private async initializePoolManager(): Promise<void> {
-    if (this.poolInitialized || this.streamPoolManager) {
-      return;
-    }
+    // Replace the base streamManager with our limited version
+    const protocol =
+      this.nextHopAddress.protocol +
+      (reusePolicy === 'reuse' ? '/reuse' : '');
 
-    this.logger.debug('Initializing stream pool manager');
-
-    this.streamPoolManager = new StreamPoolManager({
-      poolSize: 10,
-      readerStreamIndex: 0,
-      streamHandler: this.streamHandler,
+    const limitedConfig: oLimitedStreamManagerConfig = {
       p2pConnection: this.p2pConnection,
-      requestHandler: this.config.requestHandler,
-      createStream: async () => {
-        return await super.getOrCreateStream();
-      },
-    });
+      protocol,
+      remoteAddress: this.nextHopAddress,
+      requestHandler: config.requestHandler,
+    };
+
+    this.streamManager = new oLimitedStreamManager(limitedConfig);
 
     // Set up event listeners for monitoring
-    this.streamPoolManager.on('reader-failed', (data: any) => {
-      this.logger.warn('Stream pool reader failed', data);
+    this.streamManager.on(StreamManagerEvent.ReaderStarted, (data: any) => {
+      this.logger.info('Reader stream started', data);
     });
 
-    this.streamPoolManager.on('reader-recovered', (data: any) => {
-      this.logger.info('Stream pool reader recovered', data);
+    this.streamManager.on(StreamManagerEvent.ReaderFailed, (data: any) => {
+      this.logger.warn('Reader stream failed', data);
     });
 
-    this.streamPoolManager.on('stream-replaced', (data: any) => {
-      this.logger.info('Stream replaced in pool', data);
+    this.streamManager.on(StreamManagerEvent.ReaderRecovered, (data: any) => {
+      this.logger.info('Reader stream recovered', data);
     });
-
-    await this.streamPoolManager.initialize();
-    this.poolInitialized = true;
-
-    this.logger.info('Stream pool manager initialized successfully');
-  }
-
-  async getOrCreateStream(): Promise<any> {
-    if (this.reusePolicy === 'reuse') {
-      // Initialize pool manager on first call
-      if (!this.poolInitialized) {
-        await this.initializePoolManager();
-      }
-
-      // Delegate to pool manager for stream selection
-      return await this.streamPoolManager!.getStream();
-    }
-
-    // Fallback to default behavior if reuse is not enabled
-    return super.getOrCreateStream();
   }
 
   /**
-   * Get stream pool statistics
-   */
-  getPoolStats() {
-    return this.streamPoolManager?.getStats();
-  }
-
-  /**
-   * Override close to cleanup pool manager
+   * Override close to cleanup stream manager properly
    */
   async close(): Promise<void> {
-    this.logger.debug('Closing connection and stream pool manager');
-
-    if (this.streamPoolManager) {
-      await this.streamPoolManager.close();
-      this.streamPoolManager = undefined;
-    }
-
-    this.poolInitialized = false;
-
+    this.logger.debug('Closing limited connection');
+    await this.streamManager.close();
     await super.close();
   }
 }

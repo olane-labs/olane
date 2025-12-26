@@ -18,6 +18,10 @@ import {
   StreamManagerEvent,
   StreamManagerEventData,
 } from './stream-manager.events.js';
+import {
+  StreamInitMessage,
+  isStreamInitMessage,
+} from './interfaces/stream-init-message.js';
 import { lpStream } from '@olane/o-config';
 import JSON5 from 'json5';
 
@@ -32,13 +36,14 @@ import JSON5 from 'json5';
  */
 export class oNodeStreamManager extends oObject {
   private streams: Map<string, oNodeStream> = new Map();
-  private eventEmitter: EventEmitter = new EventEmitter();
-  private isInitialized: boolean = false;
+  protected eventEmitter: EventEmitter = new EventEmitter();
+  protected isInitialized: boolean = false;
   private p2pConnection: Connection;
   private activeStreamHandlers: Map<
     string,
     { stream: Stream; abortController: AbortController }
   > = new Map();
+  protected callerReaderStream?: Stream; // Track reader stream from limited connection caller
 
   constructor(readonly config: StreamManagerConfig) {
     super();
@@ -74,6 +79,10 @@ export class oNodeStreamManager extends oObject {
    * Gets or creates a stream for the connection
    * Always creates a new stream (no reuse at base layer)
    *
+   * For limited connections (where caller has identified a reader stream):
+   * - If callerReaderStream exists, wrap and return it for sending requests
+   * - Otherwise, create new stream as normal
+   *
    * @param protocol - The protocol string for the stream
    * @param remoteAddress - The remote address for the stream
    * @param config - Stream handler configuration
@@ -84,6 +93,39 @@ export class oNodeStreamManager extends oObject {
     remoteAddress: any,
     config: StreamHandlerConfig = {},
   ): Promise<oNodeStream> {
+    this.logger.debug(
+      'Getting or creating stream',
+      this.callerReaderStream?.protocol,
+      'and status',
+      this.callerReaderStream?.status,
+    );
+    // If we have a caller's reader stream (from limited connection), use it for sending requests
+    if (this.callerReaderStream && this.callerReaderStream.status === 'open') {
+      this.logger.debug('Using caller reader stream for limited connection', {
+        streamId: this.callerReaderStream.id,
+      });
+
+      // Wrap the reader stream for use (if not already wrapped)
+      const existingWrapped = Array.from(this.streams.values()).find(
+        (s) => s.p2pStream.id === this.callerReaderStream!.id,
+      );
+
+      if (existingWrapped) {
+        return existingWrapped;
+      }
+
+      // Wrap the reader stream
+      const wrappedStream = new oNodeStream(this.callerReaderStream, {
+        direction: 'inbound', // It's inbound to us, we write to it
+        reusePolicy: 'reuse',
+        remoteAddress: remoteAddress,
+        streamType: 'request-response',
+      });
+
+      this.streams.set(this.callerReaderStream.id, wrappedStream);
+      return wrappedStream;
+    }
+
     // Always create new stream (no reuse at base layer)
     return await this.createStream(protocol, remoteAddress, config);
   }
@@ -182,10 +224,7 @@ export class oNodeStreamManager extends oObject {
    * Emits an async event and waits for the first listener to return a result
    * This enables event-based request handling with async responses
    */
-  private async emitAsync<T>(
-    event: StreamManagerEvent,
-    data: any,
-  ): Promise<T> {
+  private async emitAsync<T>(event: StreamManagerEvent, data: any): Promise<T> {
     const listeners = this.eventEmitter.listeners(event);
 
     if (listeners.length === 0) {
@@ -214,6 +253,40 @@ export class oNodeStreamManager extends oObject {
    */
   isResponse(message: any): boolean {
     return message?.result !== undefined && message.method === undefined;
+  }
+
+  /**
+   * Detects if a decoded message is a stream initialization message
+   * Uses the imported type guard from stream-init-message.ts
+   */
+  isStreamInit(message: any): message is StreamInitMessage {
+    return isStreamInitMessage(message);
+  }
+
+  /**
+   * Handles a stream initialization message
+   * Stores reference to caller's reader stream for bidirectional communication
+   *
+   * @param message - The decoded stream init message
+   * @param stream - The stream that sent the message
+   */
+  protected handleStreamInitMessage(
+    message: StreamInitMessage,
+    stream: Stream,
+  ): void {
+    if (message.role === 'reader') {
+      this.callerReaderStream = stream;
+      this.logger.info('Identified caller reader stream', {
+        streamId: stream.id,
+        connectionId: message.connectionId,
+      });
+
+      this.emit(StreamManagerEvent.StreamIdentified, {
+        streamId: stream.id,
+        role: message.role,
+        connectionId: message.connectionId,
+      });
+    }
   }
 
   /**
@@ -325,7 +398,10 @@ export class oNodeStreamManager extends oObject {
         // Parse JSON (handles markdown blocks, mixed content, and JSON5)
         const message = this.extractAndParseJSON(decoded);
 
-        if (this.isRequest(message)) {
+        if (this.isStreamInit(message)) {
+          this.handleStreamInitMessage(message, stream);
+          // Continue reading for subsequent messages on this stream
+        } else if (this.isRequest(message)) {
           await this.handleRequestMessage(message, stream, connection);
         } else if (this.isResponse(message)) {
           this.logger.warn(
@@ -457,14 +533,20 @@ export class oNodeStreamManager extends oObject {
           }
         } else if (this.isRequest(message)) {
           // Process incoming router requests via event emission
-          const hasListeners = this.eventEmitter.listenerCount(StreamManagerEvent.InboundRequest) > 0;
+          const hasListeners =
+            this.eventEmitter.listenerCount(StreamManagerEvent.InboundRequest) >
+            0;
           if (hasListeners) {
             this.logger.debug(
               'Received router request on client-side stream, processing...',
               message,
             );
             // Use handleRequestMessage which emits the InboundRequest event
-            await this.handleRequestMessage(message, stream, this.p2pConnection);
+            await this.handleRequestMessage(
+              message,
+              stream,
+              this.p2pConnection,
+            );
           } else {
             this.logger.warn(
               'Received request message on client-side stream, ignoring (no handler)',

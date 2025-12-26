@@ -4,6 +4,7 @@ export * from './interfaces/o-node-connection.config.js';
 export * from './interfaces/o-node-connection-manager.config.js';
 export * from './interfaces/o-node-stream.config.js';
 export * from './interfaces/stream-manager.config.js';
+export * from './interfaces/stream-init-message.js';
 export * from './o-node-stream.js';
 export * from './stream-handler.config.js';
 export * from './o-node-stream.manager.js';
