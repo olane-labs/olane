@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.52 (2025-12-27)</small>
+
+- milestone prior to fix for client limited ([f10f269](https://github.com/olane-labs/olane/commit/f10f269))
+- minor change ([6993252](https://github.com/olane-labs/olane/commit/6993252))
+- refactor stream manager ([e4db2f3](https://github.com/olane-labs/olane/commit/e4db2f3))
+
 ## <small>0.7.51 (2025-12-23)</small>
 
 - fix adoption of stream handler ([4a69242](https://github.com/olane-labs/olane/commit/4a69242))

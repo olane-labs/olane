@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.52 (2025-12-27)</small>
+
+- added utility function useTool ([8d00e05](https://github.com/olane-labs/olane/commit/8d00e05))
+
 ## <small>0.7.51 (2025-12-23)</small>
 
 - stream pooling functionality added ([a33ab20](https://github.com/olane-labs/olane/commit/a33ab20))
