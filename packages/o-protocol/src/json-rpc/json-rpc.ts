@@ -11,6 +11,8 @@ export interface RequestParams {
   _connectionId: ConnectionId;
   _requestMethod: string;
   _isStreaming?: boolean;
+  _streamId?: string;
+  _responseConnectionId?: string;
   [key: string]: any;
 }
 

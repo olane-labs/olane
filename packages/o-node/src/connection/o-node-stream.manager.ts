@@ -37,13 +37,14 @@ import JSON5 from 'json5';
 export class oNodeStreamManager extends oObject {
   private streams: Map<string, oNodeStream> = new Map();
   protected eventEmitter: EventEmitter = new EventEmitter();
-  protected isInitialized: boolean = false;
+  public isInitialized: boolean = false;
   private p2pConnection: Connection;
   private activeStreamHandlers: Map<
     string,
     { stream: Stream; abortController: AbortController }
   > = new Map();
   protected callerReaderStream?: Stream; // Track reader stream from limited connection caller
+  protected callerWriterStream?: Stream; // Track writer stream from limited connection caller
 
   constructor(readonly config: StreamManagerConfig) {
     super();
@@ -152,7 +153,7 @@ export class oNodeStreamManager extends oObject {
     const stream = await this.p2pConnection.newStream(protocol, {
       signal: config.signal,
       maxOutboundStreams: config.maxOutboundStreams ?? 1000,
-      runOnLimitedConnection: config.runOnLimitedConnection ?? false,
+      runOnLimitedConnection: config.runOnLimitedConnection ?? true,
     });
 
     // Wrap in oNodeStream with metadata
@@ -277,6 +278,18 @@ export class oNodeStreamManager extends oObject {
     if (message.role === 'reader') {
       this.callerReaderStream = stream;
       this.logger.info('Identified caller reader stream', {
+        streamId: stream.id,
+        connectionId: message.connectionId,
+      });
+
+      this.emit(StreamManagerEvent.StreamIdentified, {
+        streamId: stream.id,
+        role: message.role,
+        connectionId: message.connectionId,
+      });
+    } else if (message.role === 'writer') {
+      this.callerWriterStream = stream;
+      this.logger.info('Identified caller writer stream', {
         streamId: stream.id,
         connectionId: message.connectionId,
       });
@@ -428,6 +441,42 @@ export class oNodeStreamManager extends oObject {
   }
 
   /**
+   * Determines which stream to use for sending the response
+   * Checks for _streamId in request params and routes accordingly
+   *
+   * @param request - The incoming request
+   * @param defaultStream - The stream the request came on (fallback)
+   * @returns The stream to use for the response
+   */
+  private getResponseStream(request: oRequest, defaultStream: Stream): Stream {
+    const streamId = request.params._streamId;
+
+    // If no explicit response stream specified, use the request stream (backward compatibility)
+    if (!streamId) {
+      return defaultStream;
+    }
+
+    // Check if the response stream is the identified caller writer stream
+    if (this.callerWriterStream && this.callerWriterStream.id === streamId) {
+      this.logger.debug('Routing response to caller writer stream', {
+        requestId: request.id,
+        streamId,
+      });
+      return this.callerWriterStream;
+    }
+
+    // If specified stream not found, warn and fall back to request stream
+    this.logger.warn(
+      'Specified response stream not found, using request stream',
+      {
+        requestId: request.id,
+        streamId,
+      },
+    );
+    return defaultStream;
+  }
+
+  /**
    * Handles a request message by emitting an event and sending response
    *
    * @param message - The decoded request message
@@ -442,6 +491,9 @@ export class oNodeStreamManager extends oObject {
     const request = new oRequest(message);
     const responseBuilder = ResponseBuilder.create();
 
+    // Determine which stream to use for the response
+    const responseStream = this.getResponseStream(request, stream);
+
     try {
       // Emit InboundRequest event and wait for handler to process
       const result = await this.emitAsync<RunResult>(
@@ -454,7 +506,7 @@ export class oNodeStreamManager extends oObject {
       );
 
       const response = await responseBuilder.build(request, result, null);
-      await CoreUtils.sendResponse(response, stream);
+      await CoreUtils.sendResponse(response, responseStream);
 
       this.logger.debug(
         `Successfully processed request: method=${request.method}, id=${request.id}`,
@@ -465,7 +517,7 @@ export class oNodeStreamManager extends oObject {
         error,
       );
       const errorResponse = await responseBuilder.buildError(request, error);
-      await CoreUtils.sendResponse(errorResponse, stream);
+      await CoreUtils.sendResponse(errorResponse, responseStream);
 
       this.emit(StreamManagerEvent.StreamError, {
         streamId: stream.id,

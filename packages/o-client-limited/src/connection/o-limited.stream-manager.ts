@@ -34,15 +34,16 @@ export interface oLimitedStreamManagerConfig extends StreamManagerConfig {
  * Limited Stream Manager handles stream lifecycle for limited connections
  * Features:
  * - Maintains dedicated reader stream for receiving requests from receiver
- * - Reuses outbound streams (no close after use)
+ * - Maintains dedicated writer stream for sending responses back to receiver
+ * - Uses ephemeral streams for caller-originated requests (one request per stream)
  * - Single retry on reader failure
  * - No health checks (error handling on use)
  */
 export class oLimitedStreamManager extends oNodeStreamManager {
-  private readerStream?: oNodeStream;
+  public readerStream?: oNodeStream;
+  public writerStream?: oNodeStream; // Protected to allow access from oLimitedConnection
   private isReaderLoopActive: boolean = false;
   private readerLoopAbortController?: AbortController;
-  private outboundStream?: oNodeStream; // Single outbound stream for reuse
   private limitedConfig: oLimitedStreamManagerConfig;
   private closing: boolean = false;
 
@@ -91,8 +92,9 @@ export class oLimitedStreamManager extends oNodeStreamManager {
     }
 
     try {
-      // Create dedicated reader stream
+      // Create dedicated reader and writer streams
       await this.createReaderStream();
+      await this.createWriterStream();
 
       this.isInitialized = true;
 
@@ -121,7 +123,7 @@ export class oLimitedStreamManager extends oNodeStreamManager {
       );
 
       // Send self-identification message
-      await this.sendStreamInitMessage(this.readerStream.p2pStream);
+      await this.sendStreamInitMessage(this.readerStream.p2pStream, 'reader');
 
       // Start background reader loop
       await this.startReaderLoop();
@@ -140,12 +142,43 @@ export class oLimitedStreamManager extends oNodeStreamManager {
   }
 
   /**
-   * Sends stream initialization message to identify this as a reader stream
+   * Creates and initializes the dedicated writer stream
    */
-  private async sendStreamInitMessage(stream: Stream): Promise<void> {
+  private async createWriterStream(): Promise<void> {
+    try {
+      // Create writer stream using parent's createStream method
+      this.writerStream = await this.createStream(
+        this.limitedConfig.protocol,
+        this.limitedConfig.remoteAddress,
+        {},
+      );
+
+      // Send self-identification message
+      await this.sendStreamInitMessage(this.writerStream.p2pStream, 'writer');
+
+      this.eventEmitter.emit(StreamManagerEvent.WriterStarted, {
+        streamId: this.writerStream.p2pStream.id,
+      });
+
+      this.logger.info('Writer stream created', {
+        streamId: this.writerStream.p2pStream.id,
+      });
+    } catch (error: any) {
+      this.logger.error('Failed to create writer stream:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sends stream initialization message to identify the stream role
+   */
+  private async sendStreamInitMessage(
+    stream: Stream,
+    role: 'reader' | 'writer',
+  ): Promise<void> {
     const initMessage: StreamInitMessage = {
       type: 'stream-init',
-      role: 'reader',
+      role,
       timestamp: Date.now(),
       connectionId: this.limitedConfig.p2pConnection.id,
     };
@@ -155,7 +188,7 @@ export class oLimitedStreamManager extends oNodeStreamManager {
 
     this.logger.debug('Sent stream-init message', {
       streamId: stream.id,
-      role: 'reader',
+      role,
     });
   }
 
@@ -191,10 +224,7 @@ export class oLimitedStreamManager extends oNodeStreamManager {
     try {
       // Continuous read loop using parent's handleIncomingStream
       // This will process all incoming requests on the reader stream
-      await this.handleIncomingStream(
-        stream,
-        this.limitedConfig.p2pConnection,
-      );
+      await this.handleIncomingStream(stream, this.limitedConfig.p2pConnection);
     } catch (error: any) {
       if (!this.closing) {
         this.logger.error('Reader loop error, attempting recovery:', error);
@@ -241,8 +271,8 @@ export class oLimitedStreamManager extends oNodeStreamManager {
   }
 
   /**
-   * Override getOrCreateStream to reuse outbound streams
-   * Does not create new stream for every request
+   * Override getOrCreateStream to always create new ephemeral streams
+   * Each caller-originated request gets a dedicated stream
    * Auto-initializes on first use
    */
   async getOrCreateStream(
@@ -255,37 +285,30 @@ export class oLimitedStreamManager extends oNodeStreamManager {
       await this.initialize();
     }
 
-    // Check if we have an existing outbound stream that's still valid
-    if (
-      this.outboundStream &&
-      this.outboundStream.p2pStream.status === 'open' &&
-      this.outboundStream.p2pStream.writeStatus === 'writable'
-    ) {
-      this.logger.debug('Reusing existing outbound stream', {
-        streamId: this.outboundStream.p2pStream.id,
-      });
-      return this.outboundStream;
-    }
+    // Always create new ephemeral stream for each request
+    this.logger.debug('Creating new ephemeral stream for request');
+    const stream = await this.createStream(protocol, remoteAddress, config);
 
-    // Create new outbound stream if none exists or current is invalid
-    this.logger.debug('Creating new outbound stream (no valid stream to reuse)');
-    this.outboundStream = await this.createStream(
-      protocol,
-      remoteAddress,
-      config,
-    );
-
-    return this.outboundStream;
+    return stream;
   }
 
   /**
-   * Override releaseStream to NOT close the stream
-   * Keep streams open for reuse
+   * Override releaseStream to close ephemeral streams after use
+   * Persistent streams (reader/writer) should not be released via this method
    */
   async releaseStream(streamId: string): Promise<void> {
-    // Don't close the stream - just log that we're keeping it open
-    this.logger.debug('Keeping stream open for reuse', { streamId });
-    // Do NOT call super.releaseStream() as that would close the stream
+    // Check if this is a persistent stream - don't close those
+    if (
+      (this.readerStream && this.readerStream.p2pStream.id === streamId) ||
+      (this.writerStream && this.writerStream.p2pStream.id === streamId)
+    ) {
+      this.logger.debug('Skipping release of persistent stream', { streamId });
+      return;
+    }
+
+    // Close ephemeral streams
+    this.logger.debug('Releasing ephemeral stream', { streamId });
+    await super.releaseStream(streamId);
   }
 
   /**
@@ -316,14 +339,14 @@ export class oLimitedStreamManager extends oNodeStreamManager {
       this.readerStream = undefined;
     }
 
-    // Close outbound stream
-    if (this.outboundStream) {
+    // Close writer stream
+    if (this.writerStream) {
       try {
-        await this.outboundStream.p2pStream.close();
+        await this.writerStream.p2pStream.close();
       } catch (error) {
-        this.logger.warn('Error closing outbound stream:', error);
+        this.logger.warn('Error closing writer stream:', error);
       }
-      this.outboundStream = undefined;
+      this.writerStream = undefined;
     }
 
     this.eventEmitter.emit(StreamManagerEvent.ManagerClosed, undefined);

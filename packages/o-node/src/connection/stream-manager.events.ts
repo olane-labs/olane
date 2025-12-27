@@ -5,6 +5,7 @@ export enum StreamManagerEvent {
   ManagerInitialized = 'manager-initialized',
   ManagerClosed = 'manager-closed',
   ReaderStarted = 'reader-started',
+  WriterStarted = 'writer-started',
   ReaderFailed = 'reader-failed',
   ReaderRecovered = 'reader-recovered',
   RecoveryFailed = 'recovery-failed',
@@ -22,6 +23,10 @@ export enum StreamManagerEvent {
 export interface InitializedData {}
 
 export interface ReaderStartedData {
+  streamId: string;
+}
+
+export interface WriterStartedData {
   streamId: string;
 }
 
@@ -53,7 +58,7 @@ export interface StreamFailedData {
 
 export interface StreamIdentifiedData {
   streamId: string;
-  role: 'reader' | 'standard';
+  role: 'reader' | 'writer' | 'standard';
   connectionId?: string;
 }
 
@@ -81,6 +86,7 @@ export type StreamManagerEventData = {
   [StreamManagerEvent.ManagerInitialized]: InitializedData;
   [StreamManagerEvent.ManagerClosed]: void;
   [StreamManagerEvent.ReaderStarted]: ReaderStartedData;
+  [StreamManagerEvent.WriterStarted]: WriterStartedData;
   [StreamManagerEvent.ReaderFailed]: ReaderFailedData;
   [StreamManagerEvent.ReaderRecovered]: ReaderRecoveredData;
   [StreamManagerEvent.RecoveryFailed]: RecoveryFailedData;

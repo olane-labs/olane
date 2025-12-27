@@ -1,6 +1,6 @@
 /**
- * Message sent by limited connection clients to identify their dedicated reader stream
- * This allows the receiver to identify which stream to use for sending requests back to the caller
+ * Message sent by limited connection clients to identify their dedicated persistent streams
+ * This allows the receiver to identify which streams to use for bidirectional communication
  */
 export interface StreamInitMessage {
   /**
@@ -10,10 +10,11 @@ export interface StreamInitMessage {
 
   /**
    * Role of this stream
-   * - 'reader': Dedicated reader stream for receiving requests
+   * - 'reader': Dedicated reader stream for receiving requests from receiver
+   * - 'writer': Dedicated writer stream for sending responses back to receiver
    * - 'standard': Standard request-response stream
    */
-  role: 'reader' | 'standard';
+  role: 'reader' | 'writer' | 'standard';
 
   /**
    * Timestamp when the stream was created
@@ -32,7 +33,7 @@ export interface StreamInitMessage {
 export function isStreamInitMessage(message: any): message is StreamInitMessage {
   return (
     message?.type === 'stream-init' &&
-    (message.role === 'reader' || message.role === 'standard') &&
+    (message.role === 'reader' || message.role === 'writer' || message.role === 'standard') &&
     typeof message.timestamp === 'number'
   );
 }
