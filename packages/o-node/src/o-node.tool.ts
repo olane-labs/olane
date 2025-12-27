@@ -96,7 +96,7 @@ export class oNodeTool extends oTool(oServerNode) {
       currentNode: this,
       connection: connection,
     });
-    this.connectionManager.answer({
+    await this.connectionManager.answer({
       nextHopAddress: remoteAddress,
       address: remoteAddress,
       callerAddress: this.address,

@@ -27,7 +27,7 @@ describe('Parent-Child Registration', () => {
 
       // Verify child is in parent's hierarchy manager
       const children = leader.getChildren();
-      console.log('Leader status:', leader.state);
+      console.log('Children', children);
       expect(children).to.have.lengthOf(1);
       expect(children[0].toString()).to.include('child');
     });
