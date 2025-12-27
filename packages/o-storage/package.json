@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-storage",
-  "version": "0.7.52",
+  "version": "0.7.53",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -54,11 +54,11 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.52",
-    "@olane/o-core": "0.7.52",
-    "@olane/o-node": "0.7.52",
-    "@olane/o-protocol": "0.7.52",
-    "@olane/o-tool": "0.7.52",
+    "@olane/o-config": "0.7.53",
+    "@olane/o-core": "0.7.53",
+    "@olane/o-node": "0.7.53",
+    "@olane/o-protocol": "0.7.53",
+    "@olane/o-tool": "0.7.53",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0"
   },

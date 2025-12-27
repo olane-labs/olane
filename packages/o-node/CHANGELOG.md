@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.53 (2025-12-27)</small>
+
+- minor change ([fe5700d](https://github.com/olane-labs/olane/commit/fe5700d))
+
 ## <small>0.7.52 (2025-12-27)</small>
 
 - fix for connection answer caching & organization ([7141f88](https://github.com/olane-labs/olane/commit/7141f88))
