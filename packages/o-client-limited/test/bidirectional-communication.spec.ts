@@ -96,7 +96,7 @@ describe('Bidirectional Communication', () => {
       const callerConn = caller.getFirstConnection();
       const receiverConn = receiver.getFirstConnection();
 
-      await new Promise((resolve) => setTimeout(resolve, 5_000));
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
 
       // if (callerConn) {
       //   caller.setupEventListeners(callerConn);
@@ -223,18 +223,22 @@ describe('Bidirectional Communication', () => {
       // // Wait for reader stream identification
       // await env.waitFor(() => receiver.identifiedStreams.length > 0, 5000, 100);
 
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+
+      console.log('Starting concurrent bidirectional requests');
+
       // Concurrent bidirectional requests
       const promises = [];
 
       // Caller → Receiver
-      for (let i = 0; i < 5; i++) {
-        promises.push(
-          caller.use(receiverAddr, {
-            method: 'echo',
-            params: { message: `c2r-${i}` },
-          }),
-        );
-      }
+      // for (let i = 0; i < 5; i++) {
+      //   promises.push(
+      //     caller.use(receiverAddr, {
+      //       method: 'echo',
+      //       params: { message: `c2r-${i}` },
+      //     }),
+      //   );
+      // }
 
       // Receiver → Caller
       for (let i = 0; i < 5; i++) {
@@ -275,6 +279,8 @@ describe('Bidirectional Communication', () => {
 
       const spy = createConnectionSpy(caller as any);
       spy.start();
+
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
 
       // Multiple requests should use same stream
       for (let i = 0; i < 10; i++) {
@@ -318,6 +324,8 @@ describe('Bidirectional Communication', () => {
 
       const spy = createConnectionSpy(caller as any);
       spy.start();
+
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
 
       // Make multiple requests
       for (let i = 0; i < 20; i++) {

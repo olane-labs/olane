@@ -6,6 +6,7 @@ import {
   oNodeStream,
   StreamManagerConfig,
   StreamInitMessage,
+  InboundRequestData,
 } from '@olane/o-node';
 import type { StreamHandlerConfig } from '@olane/o-node';
 
@@ -60,6 +61,34 @@ export class oLimitedStreamManager extends oNodeStreamManager {
     }
 
     await super.initialize();
+
+    // Register InboundRequest listener if requestHandler provided
+    // This enables bidirectional communication - receiver can send requests to caller via reader stream
+    if (this.limitedConfig.requestHandler) {
+      this.eventEmitter.on(
+        StreamManagerEvent.InboundRequest,
+        async (data: InboundRequestData) => {
+          try {
+            const result = await this.limitedConfig.requestHandler!(
+              data.request,
+              data.stream,
+            );
+            return result;
+          } catch (error: any) {
+            this.logger.error(
+              'Error in requestHandler for inbound request:',
+              data.request.toString(),
+              error,
+            );
+            throw error; // StreamManager will handle error response
+          }
+        },
+      );
+
+      this.logger.debug(
+        'Registered InboundRequest handler for limited connection',
+      );
+    }
 
     try {
       // Create dedicated reader stream
