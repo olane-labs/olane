@@ -222,6 +222,29 @@ export class oNodeStreamManager extends oObject {
   }
 
   /**
+   * Gets a stream by its ID
+   * Checks persistent caller streams (reader/writer) and tracked streams
+   *
+   * @param streamId - The ID of the stream to retrieve
+   * @returns The libp2p Stream or undefined if not found
+   */
+  getStreamById(streamId: string): Stream | undefined {
+    // Check caller writer stream
+    if (this.callerWriterStream?.id === streamId) {
+      return this.callerWriterStream;
+    }
+
+    // Check caller reader stream
+    if (this.callerReaderStream?.id === streamId) {
+      return this.callerReaderStream;
+    }
+
+    // Check tracked streams
+    const wrappedStream = this.streams.get(streamId);
+    return wrappedStream?.p2pStream;
+  }
+
+  /**
    * Emits an async event and waits for the first listener to return a result
    * This enables event-based request handling with async responses
    */

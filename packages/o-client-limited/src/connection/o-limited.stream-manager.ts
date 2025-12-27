@@ -312,6 +312,27 @@ export class oLimitedStreamManager extends oNodeStreamManager {
   }
 
   /**
+   * Override getStreamById to check persistent streams first
+   * Provides access to reader and writer streams by ID
+   *
+   * @param streamId - The ID of the stream to retrieve
+   * @returns The libp2p Stream or undefined if not found
+   */
+  getStreamById(streamId: string): Stream | undefined {
+    // Check our persistent streams first
+    if (this.writerStream?.p2pStream.id === streamId) {
+      return this.writerStream.p2pStream;
+    }
+
+    if (this.readerStream?.p2pStream.id === streamId) {
+      return this.readerStream.p2pStream;
+    }
+
+    // Fall back to parent implementation (checks tracked ephemeral streams)
+    return super.getStreamById(streamId);
+  }
+
+  /**
    * Close the stream manager and cleanup all resources
    */
   async close(): Promise<void> {

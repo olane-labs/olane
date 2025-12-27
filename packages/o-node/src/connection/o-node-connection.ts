@@ -95,10 +95,33 @@ export class oNodeConnection extends oConnection {
         streamConfig,
       );
 
+      // Determine which stream to wait for response on
+      // If _streamId is specified, use that stream (for limited connections with persistent writer stream)
+      let responseStream = stream;
+      if (request.params._streamId) {
+        const specifiedStream = this.streamManager.getStreamById(
+          request.params._streamId,
+        );
+        if (specifiedStream) {
+          responseStream = specifiedStream;
+          this.logger.debug('Using specified stream for response', {
+            requestStreamId: stream.id,
+            responseStreamId: specifiedStream.id,
+          });
+        } else {
+          this.logger.warn(
+            'Specified response stream not found, using request stream',
+            {
+              streamId: request.params._streamId,
+            },
+          );
+        }
+      }
+
       // Handle response using StreamManager
       // Pass request ID to enable proper response correlation on shared streams
       const response = await this.streamManager.handleOutgoingStream(
-        stream,
+        responseStream,
         this.emitter,
         streamConfig,
         request.id,
