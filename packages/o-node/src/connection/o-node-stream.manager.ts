@@ -26,6 +26,7 @@ import {
 } from './interfaces/stream-init-message.js';
 import { lpStream } from '@olane/o-config';
 import JSON5 from 'json5';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * oNodeStreamManager handles the lifecycle and tracking of streams for a single connection.
@@ -47,9 +48,13 @@ export class oNodeStreamManager extends oObject {
   > = new Map();
   protected callerReaderStream?: Stream; // Track reader stream from limited connection caller
   protected callerWriterStream?: Stream; // Track writer stream from limited connection caller
+  private streamMonitoringIntervals: Map<string, NodeJS.Timeout> = new Map(); // Track monitoring intervals
+  private id: string;
 
   constructor(readonly config: StreamManagerConfig) {
-    super();
+    const id = uuidv4();
+    super('id:' + id);
+    this.id = id;
     this.p2pConnection = config.p2pConnection;
   }
 
@@ -247,6 +252,66 @@ export class oNodeStreamManager extends oObject {
   }
 
   /**
+   * Sets up monitoring for stream closure and emits events when detected
+   * Periodically checks stream status and cleans up when stream closes
+   *
+   * @param stream - The stream to monitor
+   * @param role - The role of the stream ('reader' or 'writer')
+   */
+  private setupStreamCloseMonitoring(
+    stream: Stream,
+    role: 'reader' | 'writer',
+  ): void {
+    const streamId = stream.id;
+
+    // Clear any existing monitoring for this stream
+    const existingInterval = this.streamMonitoringIntervals.get(streamId);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+    }
+
+    // Check stream status every 5 seconds
+    const interval = setInterval(() => {
+      if (stream.status !== 'open') {
+        this.logger.info(`Caller ${role} stream closed`, {
+          streamId,
+          status: stream.status,
+          role,
+        });
+
+        // Emit stream closed event
+        this.emit(StreamManagerEvent.StreamClosed, {
+          streamId,
+          role,
+          status: stream.status,
+        });
+
+        // Clear the stream reference
+        if (role === 'reader') {
+          this.callerReaderStream = undefined;
+          this.logger.info(
+            'Limited connection reader stream closed, will create new streams for requests',
+          );
+        } else if (role === 'writer') {
+          this.callerWriterStream = undefined;
+          this.logger.info(
+            'Limited connection writer stream closed, responses may be affected',
+          );
+        }
+
+        // Stop monitoring this stream
+        clearInterval(interval);
+        this.streamMonitoringIntervals.delete(streamId);
+      }
+    }, 5000);
+
+    // Track the interval for cleanup
+    this.streamMonitoringIntervals.set(streamId, interval);
+
+    this.logger.debug(`Started monitoring ${role} stream`, { streamId });
+  }
+
+  /**
    * Emits an async event and waits for the first listener to return a result
    * This enables event-based request handling with async responses
    */
@@ -314,6 +379,9 @@ export class oNodeStreamManager extends oObject {
           role: message.role,
           connectionId: message.connectionId,
         });
+
+        // Set up monitoring for reader stream closure
+        this.setupStreamCloseMonitoring(stream, 'reader');
       } else if (message.role === 'writer') {
         this.callerWriterStream = stream;
         this.logger.info('Identified caller writer stream', {
@@ -326,6 +394,9 @@ export class oNodeStreamManager extends oObject {
           role: message.role,
           connectionId: message.connectionId,
         });
+
+        // Set up monitoring for writer stream closure
+        this.setupStreamCloseMonitoring(stream, 'writer');
       }
 
       // Send acknowledgment back to caller
@@ -754,7 +825,18 @@ export class oNodeStreamManager extends oObject {
     this.logger.info('Closing stream manager', {
       activeStreams: this.streams.size,
       activeHandlers: this.activeStreamHandlers.size,
+      monitoringIntervals: this.streamMonitoringIntervals.size,
     });
+
+    // Clear all stream monitoring intervals
+    for (const [
+      streamId,
+      interval,
+    ] of this.streamMonitoringIntervals.entries()) {
+      clearInterval(interval);
+      this.logger.debug('Cleared monitoring interval', { streamId });
+    }
+    this.streamMonitoringIntervals.clear();
 
     // Abort all active stream handlers
     for (const [

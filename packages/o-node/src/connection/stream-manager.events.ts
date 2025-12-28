@@ -12,6 +12,7 @@ export enum StreamManagerEvent {
   StreamReplaced = 'stream-replaced',
   StreamFailed = 'stream-failed',
   StreamIdentified = 'stream-identified',
+  StreamClosed = 'stream-closed',
   InboundRequest = 'inbound-request',
   InboundResponse = 'inbound-response',
   StreamError = 'stream-error',
@@ -62,6 +63,12 @@ export interface StreamIdentifiedData {
   connectionId?: string;
 }
 
+export interface StreamClosedData {
+  streamId: string;
+  role: 'reader' | 'writer';
+  status: string;
+}
+
 export interface InboundRequestData {
   request: any; // oRequest from @olane/o-core
   stream: any; // Stream from @libp2p/interface
@@ -93,6 +100,7 @@ export type StreamManagerEventData = {
   [StreamManagerEvent.StreamReplaced]: StreamReplacedData;
   [StreamManagerEvent.StreamFailed]: StreamFailedData;
   [StreamManagerEvent.StreamIdentified]: StreamIdentifiedData;
+  [StreamManagerEvent.StreamClosed]: StreamClosedData;
   [StreamManagerEvent.InboundRequest]: InboundRequestData;
   [StreamManagerEvent.InboundResponse]: InboundResponseData;
   [StreamManagerEvent.StreamError]: StreamErrorData;

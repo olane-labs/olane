@@ -1,42 +1,90 @@
-import { Connection, Libp2p, Multiaddr, Peer } from '@olane/o-config';
+import {
+  Connection,
+  Libp2p,
+  Multiaddr,
+  Peer,
+  PeerStore,
+} from '@olane/o-config';
 import { oError, oErrorCodes, oObject } from '@olane/o-core';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeTransport } from '../router/o-node.transport.js';
 
 export class ConnectionUtils extends oObject {
   /**
-   * Waits for a peer to appear in the peer store with sufficient protocol information.
-   * Implements retry logic to handle race conditions where peer store is not immediately populated.
+   * Waits for a peer to be identified via the identify protocol.
+   * Uses event-driven approach listening to peer store protocol updates.
    */
-  private static async waitForPeerInStore(
+  private static async waitForPeerIdentify(
     p2pNode: Libp2p,
     remotePeerId: any,
+    nodeProtocol: string,
   ): Promise<Peer> {
-    const MAX_RETRIES = 100; // 5 seconds total (100 * 50ms)
-    const RETRY_DELAY_MS = 50;
-    const MIN_PROTOCOLS = 2;
+    const TIMEOUT_MS = 5000; // 5 seconds timeout
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    // Helper to check if peer has sufficient protocols
+    const checkPeerProtocols = async (): Promise<Peer | null> => {
       const peers = await p2pNode.peerStore.all();
       const remotePeer = peers.find((peer: any) => {
         return peer.id.toString() === remotePeerId.toString();
       });
 
-      // Check if peer exists and has sufficient protocol information
-      if (remotePeer && remotePeer.protocols.length > MIN_PROTOCOLS) {
-        return remotePeer;
+      if (remotePeer) {
+        const oProtocols =
+          remotePeer.protocols.filter(
+            (p: string) =>
+              p.startsWith('/o/') && p.startsWith(nodeProtocol) === false,
+          ) || [];
+        console.log(
+          'Found o-protocols for peer:',
+          oProtocols,
+          'with node address:',
+          nodeProtocol,
+        );
+        if (oProtocols.length > 0) {
+          return remotePeer;
+        }
       }
+      return null;
+    };
 
-      // Wait before next retry
-      if (attempt < MAX_RETRIES - 1) {
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-      }
+    // Check if peer already has sufficient protocols
+    const existingPeer = await checkPeerProtocols();
+    if (existingPeer) {
+      return existingPeer;
     }
 
-    // Timeout exceeded
-    throw new Error(
-      `Timeout waiting for peer ${remotePeerId.toString()} to appear in peer store with sufficient protocols (waited ${MAX_RETRIES * RETRY_DELAY_MS}ms)`,
-    );
+    // Wait for peer store protocol update event
+    return new Promise<Peer>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        // TypeScript doesn't have types for peerStore events, but they exist at runtime
+        p2pNode.removeEventListener('peer:identify', protocolChangeHandler);
+        reject(
+          new Error(
+            `Timeout waiting for peer ${remotePeerId.toString()} to be identified (waited ${TIMEOUT_MS}ms)`,
+          ),
+        );
+      }, TIMEOUT_MS);
+
+      const protocolChangeHandler = async (evt: any) => {
+        const { peerId } = evt.detail;
+        console.log('evt.detail:', evt.detail);
+
+        // Check if this is the peer we're waiting for
+        if (peerId?.toString() === remotePeerId.toString()) {
+          const peer = await checkPeerProtocols();
+          if (peer) {
+            clearTimeout(timeoutId);
+            // TypeScript doesn't have types for peerStore events, but they exist at runtime
+            p2pNode.removeEventListener('peer:identify', protocolChangeHandler);
+            resolve(peer);
+          }
+        }
+      };
+
+      // TypeScript doesn't have types for peerStore events, but they exist at runtime
+
+      p2pNode.addEventListener('peer:identify', protocolChangeHandler);
+    });
   }
 
   // TODO: improve this logic (poor implementation for now)
@@ -48,11 +96,12 @@ export class ConnectionUtils extends oObject {
       const { currentNode, connection } = options;
       const p2pNode: Libp2p = currentNode.p2pNode;
 
-      // Wait for peer to appear in peer store with sufficient protocol information
-      // This handles race conditions where peer store is not immediately populated
-      const remotePeer: Peer = await this.waitForPeerInStore(
+      // Wait for peer to be identified via the identify protocol
+      // This uses an event-driven approach to detect when the peer store is updated
+      const remotePeer: Peer = await this.waitForPeerIdentify(
         p2pNode,
         connection.remotePeer,
+        currentNode.address.protocol,
       );
 
       // Get origin address for comparison
@@ -67,6 +116,7 @@ export class ConnectionUtils extends oObject {
           p.includes(currentNode?.address?.protocol) === false, // avoid matching current protocol addresses
       );
       if (!oProtocol) {
+        console.log('Remote peer protocols:', remotePeer.protocols);
         throw new Error(
           'Failed to extract remote address, could not find o-protocol in peer protocols.',
         );
