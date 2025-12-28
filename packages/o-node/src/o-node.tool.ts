@@ -87,34 +87,20 @@ export class oNodeTool extends oTool(oServerNode) {
     connection: Connection,
     reuse?: boolean,
   ): Promise<void> {
-    let remoteAddress: oNodeAddress = new oNodeAddress('o://unknown', []);
-    if (reuse) {
-      this.logger.debug('Handle stream with reuse = true');
-      // record inbound connection to manager
-      remoteAddress = await ConnectionUtils.addressFromConnection({
-        currentNode: this,
-        connection: connection,
-      });
-    }
-
+    const unknown = new oNodeAddress('o://unknown', []);
     const oConnection = await this.connectionManager.answer({
-      nextHopAddress: remoteAddress,
-      address: remoteAddress,
+      nextHopAddress: unknown,
+      address: unknown,
       callerAddress: this.address,
       p2pConnection: connection,
       reuse,
     });
 
     // Get the oNodeConnection for this libp2p connection
-    // const oConnection =
-    //   this.connectionManager.getConnectionByP2pConnection(connection);
 
     if (!oConnection) {
-      this.logger.error('No oNodeConnection found for incoming stream', {
-        remotePeer: connection.remotePeer.toString(),
-        connectionId: connection.id,
-      });
-      return;
+      this.logger.error('Failed to process inbound connection');
+      throw new Error('Failed to process inbound connection');
     }
 
     // Subscribe to InboundRequest events from the stream manager

@@ -1,4 +1,4 @@
-import { Connection, Stream } from '@olane/o-config';
+import { Connection, Libp2p, Multiaddr, Stream } from '@olane/o-config';
 import {
   CoreUtils,
   oConnection,
@@ -16,20 +16,36 @@ import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeStream } from './o-node-stream.js';
 import { oNodeStreamManager } from './o-node-stream.manager.js';
 
+interface CachedIdentifyData {
+  protocols: string[];
+  agentVersion?: string;
+  protocolVersion?: string;
+  listenAddrs: Multiaddr[];
+  observedAddr?: Multiaddr;
+  timestamp: number;
+}
+
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
   protected reusePolicy: StreamReusePolicy;
   public streamManager: oNodeStreamManager;
+  protected p2pNode?: Libp2p;
+  protected identifyData?: CachedIdentifyData;
+  protected identifyListener?: (evt: any) => void;
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
     this.reusePolicy = config.reusePolicy ?? 'none';
+    this.p2pNode = config.p2pNode;
 
     // Initialize oNodeStreamManager (stream lifecycle and protocol management)
     this.streamManager = new oNodeStreamManager({
       p2pConnection: this.p2pConnection,
     });
+
+    // Set up persistent identify event listener
+    this.setupIdentifyListener();
   }
 
   get remotePeerId() {
@@ -55,6 +71,51 @@ export class oNodeConnection extends oConnection {
 
   get streams(): oNodeStream[] {
     return this.streamManager.getAllStreams();
+  }
+
+  /**
+   * Get cached identify data for the remote peer.
+   * Returns undefined if identify event hasn't been received yet.
+   */
+  get cachedIdentifyData(): CachedIdentifyData | undefined {
+    return this.identifyData;
+  }
+
+  /**
+   * Get protocols supported by the remote peer from cached identify data.
+   * Returns empty array if identify data not available yet.
+   */
+  get remoteProtocols(): string[] {
+    return this.identifyData?.protocols || [];
+  }
+
+  /**
+   * Get agent version of the remote peer from cached identify data.
+   */
+  get remoteAgentVersion(): string | undefined {
+    return this.identifyData?.agentVersion;
+  }
+
+  /**
+   * Get protocol version of the remote peer from cached identify data.
+   */
+  get remoteProtocolVersion(): string | undefined {
+    return this.identifyData?.protocolVersion;
+  }
+
+  /**
+   * Get listen addresses advertised by the remote peer.
+   * Returns empty array if identify data not available yet.
+   */
+  get remoteListenAddrs(): Multiaddr[] {
+    return this.identifyData?.listenAddrs || [];
+  }
+
+  /**
+   * Get our observed address as seen by the remote peer.
+   */
+  get observedAddress(): Multiaddr | undefined {
+    return this.identifyData?.observedAddr;
   }
 
   async transmit(request: oRequest): Promise<oResponse> {
@@ -144,6 +205,39 @@ export class oNodeConnection extends oConnection {
     await this.streamManager.releaseStream(stream.p2pStream.id);
   }
 
+  /**
+   * Set up persistent listener for identify events from the remote peer
+   */
+  protected setupIdentifyListener(): void {
+    if (!this.p2pNode) {
+      return;
+    }
+
+    this.identifyListener = (evt: any) => {
+      const { peerId, protocols, agentVersion, protocolVersion, listenAddrs, observedAddr } = evt.detail;
+
+      // Only cache if this event is for our remote peer
+      if (peerId?.toString() === this.remotePeerId.toString()) {
+        this.identifyData = {
+          protocols: protocols || [],
+          agentVersion,
+          protocolVersion,
+          listenAddrs: listenAddrs || [],
+          observedAddr,
+          timestamp: Date.now(),
+        };
+
+        this.logger.debug('Cached identify data for peer', {
+          peerId: peerId.toString(),
+          protocols: this.identifyData.protocols,
+          agentVersion: this.identifyData.agentVersion,
+        });
+      }
+    };
+
+    this.p2pNode.addEventListener('peer:identify', this.identifyListener);
+  }
+
   async abort(error: Error) {
     this.logger.debug('Aborting connection');
     await this.p2pConnection.abort(error);
@@ -152,6 +246,11 @@ export class oNodeConnection extends oConnection {
 
   async close() {
     this.logger.debug('Closing connection');
+
+    // Remove identify listener
+    if (this.p2pNode && this.identifyListener) {
+      this.p2pNode.removeEventListener('peer:identify', this.identifyListener);
+    }
 
     // Close stream manager (handles all stream cleanup)
     await this.streamManager.close();
