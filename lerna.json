@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
-  "version": "0.7.53",
+  "version": "0.7.54",
   "npmClient": "npm",
   "command": {
     "version": {

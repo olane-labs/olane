@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.54 (2025-12-28)</small>
+
+**Note:** Version bump only for package @olane/o-tool
+
 ## <small>0.7.53 (2025-12-27)</small>
 
 **Note:** Version bump only for package @olane/o-tool

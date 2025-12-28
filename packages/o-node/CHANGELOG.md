@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.54 (2025-12-28)</small>
+
+- 1. Added getStreamById() Method (o-node package) ([2add9d0](https://github.com/olane-labs/olane/commit/2add9d0))
+- 1. Protocol Layer (o-protocol) ([cc3e556](https://github.com/olane-labs/olane/commit/cc3e556))
+- experiment with dedicated read & write streams for limited clients ([5a1e15f](https://github.com/olane-labs/olane/commit/5a1e15f))
+
 ## <small>0.7.53 (2025-12-27)</small>
 
 - minor change ([fe5700d](https://github.com/olane-labs/olane/commit/fe5700d))
