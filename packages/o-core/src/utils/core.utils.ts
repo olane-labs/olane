@@ -125,6 +125,7 @@ export class CoreUtils extends oObject {
     }
 
     try {
+      utils.logger.debug('Sending response via stream', stream.id);
       const lp = lpStream(stream);
       const data = new TextEncoder().encode(response.toString());
       await lp.write(data);

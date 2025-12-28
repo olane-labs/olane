@@ -4,6 +4,15 @@ import { oNodeAddress } from '@olane/o-node';
 import { oLimitedConnectionManager } from '../../src/connection/o-limited-connection-manager.js';
 import { StreamManagerEvent } from '@olane/o-node';
 import { oLimitedTool } from '../../src/o-limited.tool.js';
+import {
+  identify,
+  Libp2pConfig,
+  memory,
+  ping,
+  webSockets,
+  webTransport,
+} from '@olane/o-config';
+import { circuitRelayTransport } from '@libp2p/circuit-relay-v2';
 
 /**
  * Test tool that uses limited connections
@@ -21,6 +30,37 @@ export class LimitedTestTool extends oLimitedTool {
       p2pNode: this.p2pNode,
       runOnLimitedConnection: true,
     });
+  }
+
+  async configure(): Promise<Libp2pConfig> {
+    const config = await super.configure();
+    config.transports = [
+      memory(),
+      webSockets(),
+      webTransport(),
+      circuitRelayTransport({
+        reservationCompletionTimeout: 30_000,
+      }),
+    ];
+    config.services = {
+      identify: identify(),
+      ping: ping({
+        maxOutboundStreams: 1000,
+        maxInboundStreams: 1000,
+      }),
+    };
+
+    config.connectionGater = {
+      ...config.connectionGater,
+      denyDialPeer: (peerId) => {
+        // as a leader, we can dial anything
+        return false;
+      },
+      denyDialMultiaddr: (multiaddr) => {
+        return false;
+      },
+    };
+    return config;
   }
 
   /**
@@ -122,6 +162,6 @@ export class LimitedTestTool extends oLimitedTool {
       (this.connectionManager as any)?.cachedConnections?.values() || [],
     );
 
-    return firstEntry?.[0];
+    return (firstEntry?.[0] as any)[0];
   }
 }

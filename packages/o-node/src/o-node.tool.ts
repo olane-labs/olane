@@ -31,7 +31,7 @@ export class oNodeTool extends oTool(oServerNode) {
       {
         maxInboundStreams: 10_000,
         maxOutboundStreams: maxOutboundsStreams,
-        runOnLimitedConnection: this.config.runOnLimitedConnection,
+        runOnLimitedConnection: true, // reuse is always on limited connections
       },
     );
     this.logger.debug('Handled protocol reuse: ' + reuseProtocol);

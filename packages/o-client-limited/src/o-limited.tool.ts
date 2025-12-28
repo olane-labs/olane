@@ -14,6 +14,7 @@ export class oLimitedTool extends oNodeTool {
         ...(config.network || {}),
         listeners: config.network?.listeners || [], // default to no listeners
       },
+      runOnLimitedConnection: true,
     });
   }
 

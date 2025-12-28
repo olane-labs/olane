@@ -14,14 +14,16 @@ import type { oRequest, oResponse } from '@olane/o-core';
  * (browser clients, mobile clients, resource-constrained environments).
  *
  * Stream Architecture:
- * - 1 dedicated reader stream for receiving requests from receiver
- * - 1 dedicated writer stream for sending responses back to receiver
- * - Ephemeral streams for caller-originated requests (one per request)
+ * - 1 dedicated reader stream for receiving ALL inbound data from receiver
+ *   (receiver-initiated requests AND responses to limited client's outbound requests)
+ * - 1 dedicated writer stream for sending ALL outbound data to receiver
+ *   (responses to receiver's requests AND limited client's outbound requests)
+ * - No ephemeral streams - all communication uses persistent streams for efficiency
  *
  * Features:
  * - Automatic reader/writer stream creation and maintenance
  * - Single retry on reader failure
- * - Ephemeral streams for outbound requests
+ * - Stream reuse for all outbound requests (no ephemeral streams)
  * - Response routing via _streamId and _responseConnectionId in request params
  * - Event emission for monitoring (reader-started, writer-started, reader-failed, reader-recovered)
  *
@@ -41,8 +43,7 @@ export class oLimitedConnection extends oNodeConnection {
 
     // Replace the base streamManager with our limited version
     const protocol =
-      this.nextHopAddress.protocol +
-      (reusePolicy === 'reuse' ? '/reuse' : '');
+      this.nextHopAddress.protocol + (reusePolicy === 'reuse' ? '/reuse' : '');
 
     const limitedConfig: oLimitedStreamManagerConfig = {
       p2pConnection: this.p2pConnection,
@@ -74,18 +75,22 @@ export class oLimitedConnection extends oNodeConnection {
   /**
    * Override transmit to inject response routing params
    * Adds _streamId and _responseConnectionId to enable receiver to route responses
-   * to the persistent writer stream
+   * to the persistent reader stream
    */
   async transmit(request: oRequest): Promise<oResponse> {
-    // Wait for stream manager initialization to ensure writer stream is available
+    // Wait for stream manager initialization to ensure streams are available
     if (!this.streamManager.isInitialized) {
       await this.streamManager.initialize();
     }
 
-    // Inject response routing params if writer stream exists
-    if (this.streamManager.writerStream) {
-      request.params._streamId = this.streamManager.writerStream.p2pStream.id;
+    // Inject response routing params to route responses to reader stream
+    // Writer stream sends the request, reader stream receives the response
+    if (this.streamManager.readerStream) {
+      request.params._streamId = this.streamManager.readerStream.p2pStream.id;
       request.params._responseConnectionId = this.p2pConnection.id;
+      if (request.params.payload) {
+        request.params.payload.params._streamId = request.params._streamId;
+      }
 
       this.logger.debug('Injected response routing params', {
         streamId: request.params._streamId,
@@ -93,7 +98,7 @@ export class oLimitedConnection extends oNodeConnection {
       });
     } else {
       this.logger.warn(
-        'Writer stream not available, response routing params not injected',
+        'Reader stream not available, response routing params not injected',
       );
     }
 

@@ -21,6 +21,8 @@ import {
 import {
   StreamInitMessage,
   isStreamInitMessage,
+  StreamInitAckMessage,
+  isStreamInitAckMessage,
 } from './interfaces/stream-init-message.js';
 import { lpStream } from '@olane/o-config';
 import JSON5 from 'json5';
@@ -290,38 +292,81 @@ export class oNodeStreamManager extends oObject {
   /**
    * Handles a stream initialization message
    * Stores reference to caller's reader stream for bidirectional communication
+   * Sends acknowledgment back to confirm stream registration
    *
    * @param message - The decoded stream init message
    * @param stream - The stream that sent the message
    */
-  protected handleStreamInitMessage(
+  protected async handleStreamInitMessage(
     message: StreamInitMessage,
     stream: Stream,
-  ): void {
-    if (message.role === 'reader') {
-      this.callerReaderStream = stream;
-      this.logger.info('Identified caller reader stream', {
-        streamId: stream.id,
-        connectionId: message.connectionId,
-      });
+  ): Promise<void> {
+    try {
+      if (message.role === 'reader') {
+        this.callerReaderStream = stream;
+        this.logger.info('Identified caller reader stream', {
+          streamId: stream.id,
+          connectionId: message.connectionId,
+        });
 
-      this.emit(StreamManagerEvent.StreamIdentified, {
+        this.emit(StreamManagerEvent.StreamIdentified, {
+          streamId: stream.id,
+          role: message.role,
+          connectionId: message.connectionId,
+        });
+      } else if (message.role === 'writer') {
+        this.callerWriterStream = stream;
+        this.logger.info('Identified caller writer stream', {
+          streamId: stream.id,
+          connectionId: message.connectionId,
+        });
+
+        this.emit(StreamManagerEvent.StreamIdentified, {
+          streamId: stream.id,
+          role: message.role,
+          connectionId: message.connectionId,
+        });
+      }
+
+      // Send acknowledgment back to caller
+      const ackMessage: StreamInitAckMessage = {
+        type: 'stream-init-ack',
+        status: 'success',
         streamId: stream.id,
         role: message.role,
-        connectionId: message.connectionId,
-      });
-    } else if (message.role === 'writer') {
-      this.callerWriterStream = stream;
-      this.logger.info('Identified caller writer stream', {
-        streamId: stream.id,
-        connectionId: message.connectionId,
-      });
+        timestamp: Date.now(),
+      };
 
-      this.emit(StreamManagerEvent.StreamIdentified, {
+      const ackBytes = new TextEncoder().encode(JSON.stringify(ackMessage));
+      await this.sendLengthPrefixed(stream, ackBytes, {});
+
+      this.logger.debug('Sent stream-init-ack', {
         streamId: stream.id,
         role: message.role,
-        connectionId: message.connectionId,
       });
+    } catch (error: any) {
+      this.logger.error('Failed to process stream-init message', error);
+
+      // Try to send error acknowledgment
+      try {
+        const errorAck: StreamInitAckMessage = {
+          type: 'stream-init-ack',
+          status: 'error',
+          streamId: stream.id,
+          role: message.role,
+          error: error.message,
+          timestamp: Date.now(),
+        };
+
+        const errorAckBytes = new TextEncoder().encode(
+          JSON.stringify(errorAck),
+        );
+        await this.sendLengthPrefixed(stream, errorAckBytes, {});
+      } catch (ackError) {
+        this.logger.error('Failed to send error acknowledgment', ackError);
+      }
+
+      throw error;
     }
   }
 
@@ -337,7 +382,7 @@ export class oNodeStreamManager extends oObject {
    * @returns Parsed JSON object
    * @throws Error if JSON parsing fails even with JSON5 fallback
    */
-  private extractAndParseJSON(decoded: string | any): any {
+  protected extractAndParseJSON(decoded: string | any): any {
     // If already an object (not a string), return it directly
     if (typeof decoded !== 'string') {
       return decoded;
@@ -435,7 +480,7 @@ export class oNodeStreamManager extends oObject {
         const message = this.extractAndParseJSON(decoded);
 
         if (this.isStreamInit(message)) {
-          this.handleStreamInitMessage(message, stream);
+          await this.handleStreamInitMessage(message, stream);
           // Continue reading for subsequent messages on this stream
         } else if (this.isRequest(message)) {
           await this.handleRequestMessage(message, stream, connection);
@@ -471,7 +516,10 @@ export class oNodeStreamManager extends oObject {
    * @param defaultStream - The stream the request came on (fallback)
    * @returns The stream to use for the response
    */
-  private getResponseStream(request: oRequest, defaultStream: Stream): Stream {
+  protected getResponseStream(
+    request: oRequest,
+    defaultStream: Stream,
+  ): Stream {
     const streamId = request.params._streamId;
 
     // If no explicit response stream specified, use the request stream (backward compatibility)
@@ -486,6 +534,14 @@ export class oNodeStreamManager extends oObject {
         streamId,
       });
       return this.callerWriterStream;
+    }
+
+    if (this.callerReaderStream && this.callerReaderStream.id === streamId) {
+      this.logger.debug('Routing response to caller reader stream', {
+        requestId: request.id,
+        streamId,
+      });
+      return this.callerReaderStream;
     }
 
     // If specified stream not found, warn and fall back to request stream
@@ -506,7 +562,7 @@ export class oNodeStreamManager extends oObject {
    * @param stream - The stream to send the response on
    * @param connection - The connection the stream belongs to
    */
-  private async handleRequestMessage(
+  protected async handleRequestMessage(
     message: any,
     stream: Stream,
     connection: Connection,

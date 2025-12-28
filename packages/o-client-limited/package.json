@@ -33,6 +33,7 @@
   "license": "(MIT OR Apache-2.0)",
   "description": "oLane client limited connection manager",
   "devDependencies": {
+    "@libp2p/circuit-relay-v2": "^4.0.5",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
     "@tsconfig/node20": "^20.1.6",

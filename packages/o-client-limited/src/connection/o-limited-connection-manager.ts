@@ -28,7 +28,7 @@ export class oLimitedConnectionManager extends oNodeConnectionManager {
         address: address,
         p2pConnection: p2pConnection,
         callerAddress: callerAddress,
-        runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
+        runOnLimitedConnection: true,
         requestHandler: config.requestHandler,
       });
       return connection;

@@ -6,9 +6,12 @@ import {
   oNodeStream,
   StreamManagerConfig,
   StreamInitMessage,
+  StreamInitAckMessage,
+  isStreamInitAckMessage,
   InboundRequestData,
 } from '@olane/o-node';
 import type { StreamHandlerConfig } from '@olane/o-node';
+import { lpStream } from '@olane/o-config';
 
 /**
  * Extended configuration for limited stream manager
@@ -33,9 +36,11 @@ export interface oLimitedStreamManagerConfig extends StreamManagerConfig {
 /**
  * Limited Stream Manager handles stream lifecycle for limited connections
  * Features:
- * - Maintains dedicated reader stream for receiving requests from receiver
- * - Maintains dedicated writer stream for sending responses back to receiver
- * - Uses ephemeral streams for caller-originated requests (one request per stream)
+ * - Maintains dedicated reader stream for receiving all inbound data from receiver
+ *   (both receiver-initiated requests and responses to limited client's outbound requests)
+ * - Maintains dedicated writer stream for sending all outbound data to receiver
+ *   (both responses to receiver's requests and limited client's outbound requests)
+ * - No ephemeral streams - all communication uses persistent streams
  * - Single retry on reader failure
  * - No health checks (error handling on use)
  */
@@ -171,6 +176,7 @@ export class oLimitedStreamManager extends oNodeStreamManager {
 
   /**
    * Sends stream initialization message to identify the stream role
+   * Waits for acknowledgment from receiver before proceeding
    */
   private async sendStreamInitMessage(
     stream: Stream,
@@ -186,10 +192,64 @@ export class oLimitedStreamManager extends oNodeStreamManager {
     const messageBytes = new TextEncoder().encode(JSON.stringify(initMessage));
     await this.sendLengthPrefixed(stream, messageBytes, {});
 
-    this.logger.debug('Sent stream-init message', {
+    this.logger.debug('Sent stream-init message, waiting for ack', {
       streamId: stream.id,
       role,
     });
+
+    // Wait for acknowledgment with timeout
+    const ackTimeout = 5000; // 5 seconds
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+    }, ackTimeout);
+
+    try {
+      const lp = lpStream(stream);
+
+      // Read acknowledgment message
+      const ackBytes = await lp.read({ signal: abortController.signal });
+      const ackDecoded = new TextDecoder().decode(ackBytes.subarray());
+      const ackMessage = this.extractAndParseJSON(ackDecoded);
+
+      // Validate acknowledgment
+      if (!isStreamInitAckMessage(ackMessage)) {
+        throw new oError(
+          oErrorCodes.INTERNAL_ERROR,
+          `Invalid stream-init-ack message received: ${JSON.stringify(ackMessage)}`,
+        );
+      }
+
+      if (ackMessage.status === 'error') {
+        throw new oError(
+          oErrorCodes.INTERNAL_ERROR,
+          `Stream initialization failed: ${ackMessage.error || 'Unknown error'}`,
+        );
+      }
+
+      if (ackMessage.role !== role) {
+        throw new oError(
+          oErrorCodes.INTERNAL_ERROR,
+          `Stream role mismatch: expected ${role}, got ${ackMessage.role}`,
+        );
+      }
+
+      this.logger.info('Received stream-init-ack', {
+        streamId: stream.id,
+        role,
+        ackStreamId: ackMessage.streamId,
+      });
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new oError(
+          oErrorCodes.TIMEOUT,
+          `Stream initialization acknowledgment timeout after ${ackTimeout}ms`,
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   /**
@@ -271,8 +331,8 @@ export class oLimitedStreamManager extends oNodeStreamManager {
   }
 
   /**
-   * Override getOrCreateStream to always create new ephemeral streams
-   * Each caller-originated request gets a dedicated stream
+   * Override getOrCreateStream to use persistent writer stream for outbound requests
+   * This eliminates ephemeral stream creation for limited connections
    * Auto-initializes on first use
    */
   async getOrCreateStream(
@@ -285,16 +345,25 @@ export class oLimitedStreamManager extends oNodeStreamManager {
       await this.initialize();
     }
 
-    // Always create new ephemeral stream for each request
-    this.logger.debug('Creating new ephemeral stream for request');
-    const stream = await this.createStream(protocol, remoteAddress, config);
+    // Use persistent writer stream for all outbound requests
+    if (this.writerStream && this.writerStream.p2pStream.status === 'open') {
+      this.logger.debug('Reusing writer stream for outbound request', {
+        streamId: this.writerStream.p2pStream.id,
+      });
+      return this.writerStream;
+    }
 
-    return stream;
+    // Writer stream should always be available after initialization
+    throw new oError(
+      oErrorCodes.INTERNAL_ERROR,
+      'Writer stream not available or not open',
+    );
   }
 
   /**
-   * Override releaseStream to close ephemeral streams after use
-   * Persistent streams (reader/writer) should not be released via this method
+   * Override releaseStream to protect persistent streams from being closed
+   * Persistent streams (reader/writer) should never be released via this method
+   * Only closes streams that are not the dedicated reader or writer streams
    */
   async releaseStream(streamId: string): Promise<void> {
     // Check if this is a persistent stream - don't close those
@@ -306,8 +375,8 @@ export class oLimitedStreamManager extends oNodeStreamManager {
       return;
     }
 
-    // Close ephemeral streams
-    this.logger.debug('Releasing ephemeral stream', { streamId });
+    // Close any other streams (should not occur in normal operation)
+    this.logger.debug('Releasing non-persistent stream', { streamId });
     await super.releaseStream(streamId);
   }
 

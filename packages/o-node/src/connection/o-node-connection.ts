@@ -64,6 +64,10 @@ export class oNodeConnection extends oConnection {
         this.nextHopAddress.protocol +
         (this.reusePolicy === 'reuse' ? '/reuse' : '');
 
+      this.logger.debug(
+        'Transmitting request on limited connection?',
+        this.config.runOnLimitedConnection,
+      );
       const streamConfig: StreamHandlerConfig = {
         signal: this.abortSignal,
         drainTimeoutMs: this.config.drainTimeoutMs,
@@ -71,7 +75,7 @@ export class oNodeConnection extends oConnection {
         maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
           ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
           : 1000,
-        runOnLimitedConnection: this.config.runOnLimitedConnection ?? true,
+        runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       };
 
       // Get stream from StreamManager
@@ -89,11 +93,7 @@ export class oNodeConnection extends oConnection {
       // Send the request with backpressure handling
       const data = new TextEncoder().encode(request.toString());
 
-      await this.streamManager.sendLengthPrefixed(
-        stream,
-        data,
-        streamConfig,
-      );
+      await this.streamManager.sendLengthPrefixed(stream, data, streamConfig);
 
       // Determine which stream to wait for response on
       // If _streamId is specified, use that stream (for limited connections with persistent writer stream)

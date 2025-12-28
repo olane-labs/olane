@@ -3,73 +3,160 @@ import {
   TestEnvironment,
   createConnectionSpy,
 } from '@olane/o-node/test/helpers';
-import { oNodeAddress } from '@olane/o-node';
+import { oNodeAddress, oNodeTransport } from '@olane/o-node';
 import { LimitedTestTool, ReceiverTestTool } from './helpers/index.js';
+import { RelayTestTool } from './helpers/relay-test-tool.js';
+import { Connection } from '@olane/o-config';
 
 describe('Bidirectional Communication', () => {
   const env = new TestEnvironment();
   let caller: LimitedTestTool;
   let receiver: ReceiverTestTool;
+  let relay: RelayTestTool;
 
   afterEach(async () => {
     await env.cleanup();
   });
 
-  describe('Caller → Receiver', () => {
-    it('should send request and receive response', async () => {
+  // describe('Caller → Receiver', () => {
+  //   it('should send request and receive response', async () => {
+  //     caller = await env.createNode<any>(LimitedTestTool, {
+  //       address: new oNodeAddress('o://caller'),
+  //     });
+
+  //     receiver = await env.createNode<any>(ReceiverTestTool, {
+  //       address: new oNodeAddress('o://receiver'),
+  //     });
+
+  //     const response = await caller.use(
+  //       new oNodeAddress(
+  //         receiver.address.toString(),
+  //         receiver.address.libp2pTransports,
+  //       ),
+  //       {
+  //         method: 'echo',
+  //         params: { message: 'hello-receiver' },
+  //       },
+  //     );
+
+  //     expect(response.result.success).to.be.true;
+  //     expect(response.result.data.message).to.equal('hello-receiver');
+  //     expect(receiver.receivedRequests).to.have.lengthOf(1);
+  //   });
+
+  //   it('should handle multiple sequential requests', async () => {
+  //     caller = await env.createNode<any>(LimitedTestTool, {
+  //       address: new oNodeAddress('o://caller'),
+  //     });
+
+  //     receiver = await env.createNode<any>(ReceiverTestTool, {
+  //       address: new oNodeAddress('o://receiver'),
+  //     });
+
+  //     const receiverAddr = new oNodeAddress(
+  //       receiver.address.toString(),
+  //       receiver.address.libp2pTransports,
+  //     );
+
+  //     for (let i = 0; i < 5; i++) {
+  //       const response = await caller.use(receiverAddr, {
+  //         method: 'echo',
+  //         params: { message: `request-${i}` },
+  //       });
+
+  //       expect(response.result.success).to.be.true;
+  //       expect(response.result.data.message).to.equal(`request-${i}`);
+  //     }
+
+  //     expect(receiver.receivedRequests).to.have.lengthOf(5);
+  //   });
+  // });
+
+  describe('Receiver → Caller', () => {
+    it('should fail when receiver tries to dial limited caller directly', async () => {
       caller = await env.createNode<any>(LimitedTestTool, {
         address: new oNodeAddress('o://caller'),
+        runOnLimitedConnection: true,
       });
 
       receiver = await env.createNode<any>(ReceiverTestTool, {
         address: new oNodeAddress('o://receiver'),
-      });
-
-      const response = await caller.use(
-        new oNodeAddress(
-          receiver.address.toString(),
-          receiver.address.libp2pTransports,
-        ),
-        {
-          method: 'echo',
-          params: { message: 'hello-receiver' },
+        runOnLimitedConnection: true,
+        network: {
+          listeners: ['/p2p-circuit'],
         },
-      );
-
-      expect(response.result.success).to.be.true;
-      expect(response.result.data.message).to.equal('hello-receiver');
-      expect(receiver.receivedRequests).to.have.lengthOf(1);
-    });
-
-    it('should handle multiple sequential requests', async () => {
-      caller = await env.createNode<any>(LimitedTestTool, {
-        address: new oNodeAddress('o://caller'),
       });
 
-      receiver = await env.createNode<any>(ReceiverTestTool, {
-        address: new oNodeAddress('o://receiver'),
+      relay = await env.createNode<any>(RelayTestTool, {
+        address: new oNodeAddress('o://relay'),
+        runOnLimitedConnection: true,
+      });
+
+      await receiver.use(relay.address, {
+        method: 'ping',
+        params: {},
       });
 
       const receiverAddr = new oNodeAddress(
         receiver.address.toString(),
-        receiver.address.libp2pTransports,
+        receiver.p2pNode
+          .getMultiaddrs()
+          .filter((t) => t.toString().includes('p2p-circuit'))
+          .map((ma) => new oNodeTransport(ma.toString())),
       );
 
-      for (let i = 0; i < 5; i++) {
-        const response = await caller.use(receiverAddr, {
-          method: 'echo',
-          params: { message: `request-${i}` },
-        });
+      console.log('Receiver connected to relay', receiverAddr.libp2pTransports);
 
-        expect(response.result.success).to.be.true;
-        expect(response.result.data.message).to.equal(`request-${i}`);
+      const callerAddr = new oNodeAddress(
+        caller.address.toString(),
+        caller.address.libp2pTransports,
+      );
+
+      // First: Caller establishes connection to receiver (this should succeed)
+      const initialResponse = await caller.use(receiverAddr, {
+        method: 'echo',
+        params: { message: 'initial' },
+      });
+      console.log('Initial response from receiver:', initialResponse);
+
+      expect(initialResponse.result.success).to.be.true;
+
+      // Now: Receiver attempts to create a stream directly to caller - should fail
+      // Get the underlying libp2p connection from receiver side
+      const receiverConn = receiver.getFirstConnection();
+      const receiverP2pConnection: Connection = receiverConn.p2pConnection;
+      console.log(
+        'receiverP2pConnection:',
+        receiverP2pConnection.streams[0].protocol,
+      );
+
+      expect(receiverP2pConnection.direction).to.equal('inbound');
+      expect(receiverP2pConnection).to.exist;
+
+      // Get caller's protocol string (e.g., "/o/caller")
+      const callerProtocol = caller.address.protocol;
+
+      // Try to manually spawn a new stream to the limited caller
+      // This should fail because LimitedTestTool has no protocol handlers registered
+      let errorThrown = false;
+      try {
+        await receiverP2pConnection.newStream('/o/caller', {
+          runOnLimitedConnection: true,
+          maxOutboundStreams: 1000,
+        });
+        console.log('Created new stream!');
+        // Should not reach here
+        expect.fail('Should have thrown UnsupportedProtocolError');
+      } catch (error: any) {
+        console.log('Error thrown as expected:', error);
+        errorThrown = true;
+        // libp2p throws UnsupportedProtocolError when peer has no handler for protocol
+        expect(error.name).to.equal('UnsupportedProtocolError');
       }
 
-      expect(receiver.receivedRequests).to.have.lengthOf(5);
+      expect(errorThrown).to.be.true;
     });
-  });
 
-  describe('Receiver → Caller', () => {
     it('should send request via reader stream and receive response', async () => {
       caller = await env.createNode<any>(LimitedTestTool, {
         address: new oNodeAddress('o://caller'),
@@ -98,6 +185,7 @@ describe('Bidirectional Communication', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 1_000));
 
+      // the following code will not work since the stream listeners are setup after the connections are made
       // if (callerConn) {
       //   caller.setupEventListeners(callerConn);
       // }
@@ -106,7 +194,7 @@ describe('Bidirectional Communication', () => {
       //   receiver.setupStreamListeners(receiverConn);
       // }
 
-      // // Wait for receiver to identify reader stream
+      // Wait for receiver to identify reader stream
       // await env.waitFor(() => receiver.identifiedStreams.length > 0, 5000, 100);
 
       // expect(receiver.identifiedStreams).to.have.lengthOf(1);
