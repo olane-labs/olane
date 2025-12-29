@@ -10,17 +10,11 @@ import { EventEmitter } from 'events';
 
 export abstract class oConnection extends oObject {
   public readonly id: string;
-  public readonly address: oAddress;
-  public readonly nextHopAddress: oAddress;
-  public readonly callerAddress: oAddress | undefined;
   protected readonly emitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oConnectionConfig) {
     super();
     this.id = uuidv4();
-    this.address = config.address;
-    this.nextHopAddress = config.nextHopAddress;
-    this.callerAddress = config.callerAddress;
     this.logger.setNamespace(
       'Connection:[' +
         (config.callerAddress?.value || 'unknown') +
@@ -33,6 +27,18 @@ export abstract class oConnection extends oObject {
 
   get abortSignal(): AbortSignal | undefined {
     return this.config.abortSignal;
+  }
+
+  get address(): oAddress {
+    return this.config.address;
+  }
+
+  get nextHopAddress(): oAddress {
+    return this.config.nextHopAddress;
+  }
+
+  get callerAddress(): oAddress | undefined {
+    return this.config.callerAddress;
   }
 
   onChunk(listener: (response: oResponse) => void) {

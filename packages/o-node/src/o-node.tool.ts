@@ -38,8 +38,11 @@ export class oNodeTool extends oTool(oServerNode) {
   }
 
   async handleProtocol(address: oAddress) {
+    if (!address || !address.protocol) {
+      throw new Error('Invalid address passed: ' + address);
+    }
     const protocols = this.p2pNode.getProtocols();
-    if (protocols.find((p) => p === address.protocol)) {
+    if (protocols.find((p) => p === address?.protocol)) {
       // already handling
       return;
     }
@@ -87,6 +90,10 @@ export class oNodeTool extends oTool(oServerNode) {
     connection: Connection,
     reuse?: boolean,
   ): Promise<void> {
+    this.logger.debug('Handling incoming stream on connection:', {
+      connectionId: connection.id,
+      direction: connection.direction,
+    });
     const unknown = new oNodeAddress('o://unknown', []);
     const oConnection = await this.connectionManager.answer({
       nextHopAddress: unknown,

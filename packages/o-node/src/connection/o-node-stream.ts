@@ -106,6 +106,7 @@ export class oNodeStream extends oObject {
     if (this.p2pStream.status === 'open') {
       try {
         // force the close for now until we can implement a proper close
+        this.logger.debug('Closing p2p stream');
         await this.p2pStream.abort(new Error('Stream closed'));
       } catch (error: any) {
         this.logger.debug('Error closing stream:', error.message);

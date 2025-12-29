@@ -106,6 +106,8 @@ export class oNodeStreamManager extends oObject {
       this.callerReaderStream?.protocol,
       'and status',
       this.callerReaderStream?.status,
+      'json:',
+      JSON.stringify(this.callerReaderStream),
     );
     // If we have a caller's reader stream (from limited connection), use it for sending requests
     if (this.callerReaderStream && this.callerReaderStream.status === 'open') {
@@ -113,14 +115,15 @@ export class oNodeStreamManager extends oObject {
         streamId: this.callerReaderStream.id,
       });
 
+      // TODO: figure out why this would cause the node stream to be closed?
       // Wrap the reader stream for use (if not already wrapped)
-      const existingWrapped = Array.from(this.streams.values()).find(
-        (s) => s.p2pStream.id === this.callerReaderStream!.id,
-      );
+      // const existingWrapped = Array.from(this.streams.values()).find(
+      //   (s) => s.p2pStream.id === this.callerReaderStream!.id,
+      // );
 
-      if (existingWrapped) {
-        return existingWrapped;
-      }
+      // if (existingWrapped) {
+      //   return existingWrapped;
+      // }
 
       // Wrap the reader stream
       const wrappedStream = new oNodeStream(this.callerReaderStream, {
@@ -130,7 +133,7 @@ export class oNodeStreamManager extends oObject {
         streamType: 'request-response',
       });
 
-      this.streams.set(this.callerReaderStream.id, wrappedStream);
+      // this.streams.set(this.callerReaderStream.id, wrappedStream);
       return wrappedStream;
     }
 
@@ -567,7 +570,6 @@ export class oNodeStreamManager extends oObject {
     } catch (error: any) {
       // Stream closed or error occurred
       if (stream.status === 'open') {
-        this.logger.error('Error in length-prefixed stream handler:', error);
         this.emit(StreamManagerEvent.StreamError, {
           streamId: stream.id,
           error,

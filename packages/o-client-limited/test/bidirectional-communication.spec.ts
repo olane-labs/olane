@@ -92,6 +92,9 @@ describe('Bidirectional Communication', () => {
         runOnLimitedConnection: true,
       });
 
+      console.log('Using relay at addresses:', relay.p2pNode.getMultiaddrs());
+
+      // Connect receiver to relay
       await receiver.use(relay.address, {
         method: 'ping',
         params: {},

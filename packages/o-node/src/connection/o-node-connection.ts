@@ -1,6 +1,7 @@
 import { Connection, Libp2p, Multiaddr, Stream } from '@olane/o-config';
 import {
   CoreUtils,
+  oAddress,
   oConnection,
   oError,
   oErrorCodes,
@@ -118,6 +119,37 @@ export class oNodeConnection extends oConnection {
     return this.identifyData?.observedAddr;
   }
 
+  get address(): oAddress {
+    if (
+      this.identifyData?.protocols &&
+      this.identifyData.protocols.length > 0
+    ) {
+      const filtered = this.identifyData.protocols.filter((p: string) =>
+        p.startsWith('/o/'),
+      );
+      if (filtered.length > 0) {
+        const remoteAddress = oNodeAddress.fromProtocol(filtered[0]);
+        return remoteAddress;
+      }
+    }
+    return this.config.address;
+  }
+
+  get nextHopAddress(): oAddress {
+    if (this.config.nextHopAddress.value === 'o://unknown') {
+      return this.address;
+    }
+    return this.config.nextHopAddress;
+  }
+
+  get callerAddress(): oAddress | undefined {
+    if (this.p2pConnection.direction === 'inbound') {
+      return this.address;
+    }
+
+    return this.config.callerAddress;
+  }
+
   async transmit(request: oRequest): Promise<oResponse> {
     try {
       // Build protocol string
@@ -214,7 +246,14 @@ export class oNodeConnection extends oConnection {
     }
 
     this.identifyListener = (evt: any) => {
-      const { peerId, protocols, agentVersion, protocolVersion, listenAddrs, observedAddr } = evt.detail;
+      const {
+        peerId,
+        protocols,
+        agentVersion,
+        protocolVersion,
+        listenAddrs,
+        observedAddr,
+      } = evt.detail;
 
       // Only cache if this event is for our remote peer
       if (peerId?.toString() === this.remotePeerId.toString()) {
@@ -236,6 +275,7 @@ export class oNodeConnection extends oConnection {
     };
 
     this.p2pNode.addEventListener('peer:identify', this.identifyListener);
+    this.logger.debug('Identify listener set up for connection');
   }
 
   async abort(error: Error) {

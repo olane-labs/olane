@@ -69,6 +69,8 @@ export class oNodeConnectionManager extends oConnectionManager {
       'Caching connection for address:',
       conn.p2pConnection.id,
       conn.p2pConnection.direction,
+      conn.nextHopAddress.value,
+      conn.p2pConnection.streams.map((s) => s.protocol).join(', '),
     );
     this.cachedConnections.set(conn.p2pConnection.id, conn);
   }
@@ -81,24 +83,8 @@ export class oNodeConnectionManager extends oConnectionManager {
     nextHopAddress: oAddress,
     addressKey: string,
   ): Promise<Connection> {
-    // Check if libp2p already has an active connection for this peer
-    const peerId = this.getPeerIdFromAddress(nextHopAddress);
-    if (peerId) {
-      const connections = this.p2pNode.getConnections();
-      const existingConnection = connections.find(
-        (conn) =>
-          conn.remotePeer?.toString() === peerId && conn.status === 'open',
-      );
-      if (existingConnection) {
-        this.logger.debug(
-          'Found existing libp2p connection for address:',
-          addressKey,
-        );
-        return existingConnection;
-      }
-    }
-
     // Check if dial is already in progress for this address key
+    this.logger.debug('Checking for pending dial for address:', addressKey);
     const pendingDial = this.pendingDialsByAddress.get(addressKey);
     if (pendingDial) {
       this.logger.debug('Awaiting existing dial for address:', addressKey);
@@ -152,6 +138,12 @@ export class oNodeConnectionManager extends oConnectionManager {
       p2pConnection,
       reuse,
     } = config;
+    this.logger.debug('Answering connection for address:', {
+      address: nextHopAddress?.value,
+      connectionId: p2pConnection.id,
+      direction: p2pConnection.direction,
+      reuse,
+    });
 
     // Check if we already have a cached connection for this address with the same connection id
     const existingConnection = this.cachedConnections.get(p2pConnection.id);
@@ -186,13 +178,16 @@ export class oNodeConnectionManager extends oConnectionManager {
 
   getConnectionFromAddress(address: oAddress): oNodeConnection | null {
     const protocol = address.protocol;
+    this.logger.debug('Searching cached connections for protocol:', protocol);
     for (const conn of this.cachedConnections.values()) {
       // if nextHopAddress protocol matches, return conn
       if (conn.nextHopAddress.protocol === protocol) {
+        this.logger.debug('local reuse cache found:', protocol);
         return conn;
       }
       // if remote protocols include protocol, return conn
       if (conn.remoteProtocols.includes(protocol)) {
+        this.logger.debug('remote reuse cache found', protocol);
         return conn;
       }
     }
@@ -225,6 +220,10 @@ export class oNodeConnectionManager extends oConnectionManager {
         existingConnection.p2pConnection.id,
       );
       return existingConnection;
+    } else {
+      this.logger.debug('No cached connection found for address:', {
+        address: nextHopAddress.value,
+      });
     }
 
     // Get or create the underlying p2p connection
@@ -245,6 +244,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
+      requestHandler: config.requestHandler,
     });
 
     // Cache the new connection
