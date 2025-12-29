@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.55 (2025-12-29)</small>
+
+- manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))
+
 ## <small>0.7.54 (2025-12-28)</small>
 
 - experiment with dedicated read & write streams for limited clients ([5a1e15f](https://github.com/olane-labs/olane/commit/5a1e15f))

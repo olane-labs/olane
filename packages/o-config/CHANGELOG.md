@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.55 (2025-12-29)</small>
+
+- minor changes for experiment with logging ([7a0963f](https://github.com/olane-labs/olane/commit/7a0963f))
+
 ## <small>0.7.54 (2025-12-28)</small>
 
 **Note:** Version bump only for package @olane/o-config

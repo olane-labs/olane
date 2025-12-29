@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.55 (2025-12-29)</small>
+
+- manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))
+- minor changes for experiment with logging ([7a0963f](https://github.com/olane-labs/olane/commit/7a0963f))
+- simplified the connection lifecycle ([3f00a2a](https://github.com/olane-labs/olane/commit/3f00a2a))
+
 ## <small>0.7.54 (2025-12-28)</small>
 
 - 1. Added getStreamById() Method (o-node package) ([2add9d0](https://github.com/olane-labs/olane/commit/2add9d0))
