@@ -48,6 +48,10 @@ export function withLeader<T extends new (...args: any[]) => oToolBase>(
       super(leaderConfig, ...args.slice(1));
     }
 
+    async initRequestManager() {
+      return super.initRequestManager();
+    }
+
     async configure(): Promise<Libp2pConfig> {
       // @ts-ignore
       const config = await super.configure();

@@ -42,6 +42,10 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
       this.manager = new oLaneManager();
     }
 
+    async initRequestManager() {
+      return super.initRequestManager();
+    }
+
     async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
       this.logger.debug(
         'Performing handshake with intent: ',

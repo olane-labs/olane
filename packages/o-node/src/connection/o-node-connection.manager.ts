@@ -130,6 +130,12 @@ export class oNodeConnectionManager extends oConnectionManager {
     return connection;
   }
 
+  async createConnection(
+    config: oNodeConnectionConfig,
+  ): Promise<oNodeConnection> {
+    return new oNodeConnection(config);
+  }
+
   async answer(
     config: oNodeConnectionConfig,
     stream: Stream,
@@ -171,7 +177,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       return existingConnection;
     }
 
-    const connection = new oNodeConnection({
+    const connection = await this.createConnection({
       nextHopAddress: nextHopAddress,
       targetAddress: targetAddress,
       callerAddress: callerAddress,
@@ -241,8 +247,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       nextHopAddress.value,
     );
 
-    // Create new oNodeConnection
-    const connection = new oNodeConnection({
+    const connection = await this.createConnection({
       nextHopAddress: nextHopAddress,
       targetAddress: targetAddress,
       p2pConnection: p2pConnection,

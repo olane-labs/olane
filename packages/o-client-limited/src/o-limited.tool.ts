@@ -18,30 +18,30 @@ export class oLimitedTool extends oNodeTool {
     });
   }
 
-  async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
-    this.handleProtocol(config.nextHopAddress).catch((error) => {
-      this.logger.error('Error handling protocol:', error);
-    });
+  // async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
+  //   this.handleProtocol(config.nextHopAddress).catch((error) => {
+  //     this.logger.error('Error handling protocol:', error);
+  //   });
 
-    // Inject requestHandler to enable bidirectional stream processing
-    // This allows incoming router requests to be processed through the tool's execute method
-    // The StreamPoolManager (in oLimitedConnection) will use this handler for the dedicated reader
-    const configWithHandler: oNodeConnectionConfig = {
-      ...config,
-      requestHandler: this.execute.bind(this),
-    };
+  //   // Inject requestHandler to enable bidirectional stream processing
+  //   // This allows incoming router requests to be processed through the tool's execute method
+  //   // The StreamPoolManager (in oLimitedConnection) will use this handler for the dedicated reader
+  //   const configWithHandler: oNodeConnectionConfig = {
+  //     ...config,
+  //     requestHandler: this.execute.bind(this),
+  //   };
 
-    const connection = await super.connect(configWithHandler);
+  //   const connection = await super.connect(configWithHandler);
 
-    return connection;
-  }
+  //   return connection;
+  // }
 
-  async initConnectionManager(): Promise<void> {
-    this.connectionManager = new oLimitedConnectionManager({
-      p2pNode: this.p2pNode,
-      defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
-      defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
-      runOnLimitedConnection: true,
-    });
-  }
+  // async initConnectionManager(): Promise<void> {
+  //   this.connectionManager = new oLimitedConnectionManager({
+  //     p2pNode: this.p2pNode,
+  //     defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
+  //     defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
+  //     runOnLimitedConnection: true,
+  //   });
+  // }
 }

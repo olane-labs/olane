@@ -182,23 +182,32 @@ export class oRegistrationManager extends oObject {
           if (this.node.reconnectionManager) {
             await this.node.reconnectionManager.waitForParentAndReconnect();
           } else {
-            throw new Error('Parent has no transports and no reconnection manager available');
+            throw new Error(
+              'Parent has no transports and no reconnection manager available',
+            );
           }
           // If we get here, reconnection was successful and registration is complete
           return;
         }
       }
 
-      // Register with parent via child_register call
-      await this.node.use(new oNodeAddress(this.node.config.parent!.value), {
-        method: 'child_register',
-        params: {
-          address: this.node.address.toString(),
-          transports: this.node.transports.map((t) => t.toString()),
-          peerId: this.node.peerId.toString(),
-          _token: this.node.config.joinToken,
+      // necessary hack to ensure that registry node and other leader->child relationships build accurately
+      const isParentLeader =
+        this.node?.config?.parent?.value === oAddress.leader().value;
+      await this.node.use(
+        isParentLeader
+          ? this.node.config.parent!
+          : new oNodeAddress(this.node.config.parent!.value),
+        {
+          method: 'child_register',
+          params: {
+            address: this.node.address.toString(),
+            transports: this.node.transports.map((t) => t.toString()),
+            peerId: this.node.peerId.toString(),
+            _token: this.node.config.joinToken,
+          },
         },
-      });
+      );
 
       // Set keep-alive tag for parent connection
       await this.node.setKeepAliveTag(this.node.parent as oNodeAddress);
@@ -214,7 +223,8 @@ export class oRegistrationManager extends oObject {
     } catch (error) {
       // Failure - transition to failed state
       this.parentState = 'failed';
-      this.parentError = error instanceof Error ? error : new Error(String(error));
+      this.parentError =
+        error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to register with parent:', {
         parent: this.node.parent?.toString(),
         error: this.parentError.message,
@@ -275,7 +285,8 @@ export class oRegistrationManager extends oObject {
     } catch (error) {
       // Failure - transition to failed state
       this.leaderState = 'failed';
-      this.leaderError = error instanceof Error ? error : new Error(String(error));
+      this.leaderError =
+        error instanceof Error ? error : new Error(String(error));
       this.logger.error('Failed to register with leader:', {
         leader: this.node.leader?.toString(),
         error: this.leaderError.message,

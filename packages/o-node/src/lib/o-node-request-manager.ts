@@ -38,7 +38,7 @@ export class oNodeRequestManager extends oRequestManager {
 
   constructor(readonly config: oNodeRequestManagerConfig) {
     super();
-    this.router = new oNodeRouter();
+    this.router = config.router;
     this.connectionManager = config.connectionManager;
   }
 
@@ -231,7 +231,6 @@ export class oNodeRequestManager extends oRequestManager {
         const responseBuilder = ResponseBuilder.create();
         const errorResponse = await responseBuilder.buildError(data, err);
         await CoreUtils.sendResponse(errorResponse, data.stream);
-        throw err;
       }
     });
   }

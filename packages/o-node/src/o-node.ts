@@ -41,6 +41,7 @@ export class oNode extends oToolBase {
   public p2pNode!: Libp2p;
   public address!: oNodeAddress;
   public config: oNodeConfig;
+  public router!: oNodeRouter;
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   public connectionManager!: oNodeConnectionManager;
@@ -256,6 +257,7 @@ export class oNode extends oToolBase {
     this.requestManager = new oNodeRequestManager({
       callerAddress: this.address,
       connectionManager: this.connectionManager,
+      router: this.router,
     });
     this.requestManager.on(
       oNodeMessageEvent.request,

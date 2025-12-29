@@ -164,7 +164,6 @@ export class oNodeStream extends oObject {
   async waitForResponse(requestId: string): Promise<oResponse> {
     return new Promise((resolve, reject) => {
       const handler = (data: oResponse) => {
-        console.log('Request id vs response id:', data.id, requestId);
         if (data.id === requestId) {
           this.off(oNodeMessageEvent.response, handler);
           this.logger.debug(

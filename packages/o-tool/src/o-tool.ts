@@ -89,7 +89,7 @@ export function oTool<T extends new (...args: any[]) => oToolBase>(Base: T): T {
         address: this.address.toString(),
         successCount: this.metrics.successCount,
         errorCount: this.metrics.errorCount,
-        activeRequests: this.requestManager.activeRequests.length,
+        activeRequests: this.requestManager?.activeRequests?.length || 0,
         state: this.state,
         uptime: 0,
         memoryUsage: process.memoryUsage(),
