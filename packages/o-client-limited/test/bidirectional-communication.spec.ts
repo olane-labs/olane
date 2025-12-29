@@ -72,6 +72,7 @@ describe('Bidirectional Communication', () => {
   //   });
   // });
 
+  // TODO: verify that the read only caller stream can receive requests from receiver
   describe('Receiver → Caller', () => {
     it('should fail when receiver tries to dial limited caller directly', async () => {
       caller = await env.createNode<any>(LimitedTestTool, {

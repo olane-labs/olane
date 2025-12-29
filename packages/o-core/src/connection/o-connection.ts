@@ -19,9 +19,9 @@ export abstract class oConnection extends oObject {
       'Connection:[' +
         (config.callerAddress?.value || 'unknown') +
         ']-->[' +
-        this.address.value +
-        ']:' +
-        this.id,
+        config.nextHopAddress.value +
+        ']' +
+        `-->[Target:${config.targetAddress.value}]`,
     );
   }
 
@@ -30,7 +30,7 @@ export abstract class oConnection extends oObject {
   }
 
   get address(): oAddress {
-    return this.config.address;
+    return this.config.targetAddress;
   }
 
   get nextHopAddress(): oAddress {
@@ -65,12 +65,12 @@ export abstract class oConnection extends oObject {
     });
   }
 
-  abstract transmit(request: oRequest): Promise<oResponse>;
+  abstract transmit(request: oRequest, options: any): Promise<void>;
 
-  async send(data: ConnectionSendParams): Promise<oResponse> {
+  async send(data: ConnectionSendParams, options: any): Promise<void> {
     // proxy through the router tool
     const request = this.createRequest(oProtocolMethods.ROUTE, data);
-    return this.transmit(request);
+    await this.transmit(request, options);
   }
 
   async close() {

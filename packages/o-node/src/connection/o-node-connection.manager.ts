@@ -3,6 +3,7 @@ import { Libp2p, Connection } from '@olane/o-config';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
+import { EventEmitter } from 'events';
 
 /**
  * Manages oNodeConnection instances, reusing connections when possible.
@@ -14,6 +15,7 @@ export class oNodeConnectionManager extends oConnectionManager {
   /** Single cache of oNodeConnection instances keyed by address */
   protected cachedConnections: Map<string, oNodeConnection> = new Map();
   protected pendingDialsByAddress: Map<string, Promise<Connection>> = new Map();
+  protected eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(readonly config: oNodeConnectionManagerConfig) {
     super(config);
@@ -25,6 +27,8 @@ export class oNodeConnectionManager extends oConnectionManager {
     // Set up connection lifecycle listeners for cache management
     this.setupConnectionListeners();
   }
+
+  onRequest(callback: Function) {}
 
   /**
    * Set up listeners to maintain connection cache state

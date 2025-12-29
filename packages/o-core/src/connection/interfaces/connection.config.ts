@@ -6,7 +6,7 @@ import type { RunResult } from '@olane/o-tool';
 export interface oConnectionConfig {
   nextHopAddress: oAddress;
   callerAddress?: oAddress;
-  address: oAddress;
+  targetAddress: oAddress;
   /**
    * Timeout in milliseconds for reading response data from a stream.
    * Default: 120000 (2 minutes)

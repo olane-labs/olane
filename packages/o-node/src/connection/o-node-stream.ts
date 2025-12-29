@@ -1,18 +1,28 @@
 import type { Stream } from '@libp2p/interface';
-import { oError, oErrorCodes, oObject, type oAddress } from '@olane/o-core';
+import {
+  oError,
+  oErrorCodes,
+  oObject,
+  oRequest,
+  oResponse,
+} from '@olane/o-core';
 import { oNodeStreamConfig } from './interfaces/o-node-stream.config.js';
+import { LengthPrefixedStream, lpStream } from '@olane/o-config';
+import { AbortSignalConfig } from './interfaces/abort-signal.config.js';
+import JSON5 from 'json5';
+import { EventEmitter } from 'events';
+import {
+  oNodeMessageEvent,
+  oNodeMessageEventData,
+} from './enums/o-node-message-event.js';
 
 /**
- * oNodeStream wraps a libp2p Stream with caller/receiver address metadata
- * to enable proper stream reuse based on address pairs rather than protocol only.
- *
- * Key features:
- * - Bidirectional cache keys: A↔B === B↔A
- * - Automatic reusability checking
- * - Idle time tracking for cleanup
+ * oNodeStream wraps a libp2p Stream and transmits or receives messages across the libp2p streams
  */
 export class oNodeStream extends oObject {
   public readonly createdAt: number;
+  protected readonly lp: LengthPrefixedStream;
+  protected readonly eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(
     public readonly p2pStream: Stream,
@@ -20,6 +30,14 @@ export class oNodeStream extends oObject {
   ) {
     super();
     this.createdAt = Date.now();
+    this.lp = lpStream(p2pStream);
+    this.listenForLibp2pEvents();
+  }
+
+  listenForLibp2pEvents() {
+    this.p2pStream.addEventListener('close', () => {
+      this.close();
+    });
   }
 
   // callable pattern to disrupt flow if not in valid state
@@ -53,6 +71,135 @@ export class oNodeStream extends oObject {
   }
 
   /**
+   * Extracts and parses JSON from various formats including:
+   * - Already parsed objects
+   * - Plain JSON
+   * - Markdown code blocks (```json ... ``` or ``` ... ```)
+   * - Mixed content with explanatory text
+   * - JSON5 format (trailing commas, comments, unquoted keys, etc.)
+   *
+   * @param decoded - The decoded string that may contain JSON, or an already parsed object
+   * @returns Parsed JSON object
+   * @throws Error if JSON parsing fails even with JSON5 fallback
+   */
+  protected extractAndParseJSON(decoded: string | any): any {
+    // If already an object (not a string), return it directly
+    if (typeof decoded !== 'string') {
+      return decoded;
+    }
+
+    let jsonString = decoded.trim();
+
+    // Attempt standard JSON.parse first
+    try {
+      return JSON.parse(jsonString);
+    } catch (jsonError: any) {
+      this.logger.debug('Standard JSON parse failed, trying JSON5', {
+        error: jsonError.message,
+        position: jsonError.message.match(/position (\d+)/)?.[1],
+        preview: jsonString,
+      });
+
+      // Fallback to JSON5 for more relaxed parsing
+      try {
+        return JSON5.parse(jsonString);
+      } catch (json5Error: any) {
+        // Enhanced error with context
+        this.logger.error('JSON5 parse also failed', {
+          originalError: jsonError.message,
+          json5Error: json5Error.message,
+          preview: jsonString.substring(0, 200),
+          length: jsonString.length,
+        });
+
+        throw new Error(
+          `Failed to parse JSON: ${jsonError.message}\nJSON5 also failed: ${json5Error.message}\nPreview: ${jsonString.substring(0, 200)}${jsonString.length > 200 ? '...' : ''}`,
+        );
+      }
+    }
+  }
+
+  async send(request: oRequest, options: AbortSignalConfig) {
+    // Ensure stream is valid
+    this.validate();
+
+    // Send the request with backpressure handling
+    const data = new TextEncoder().encode(request.toString());
+
+    await this.lp.write(data, { signal: options.abortSignal });
+  }
+
+  /**
+   * listen - process every message inbound on the stream and emit it for the connection to bubble up
+   * @param options
+   */
+  async listen(options: AbortSignalConfig): Promise<void> {
+    while (this.isValid && !options.abortSignal.aborted) {
+      const messageBytes = await this.lp.read({ signal: options.abortSignal });
+      const decoded = new TextDecoder().decode(messageBytes.subarray());
+      const message = this.extractAndParseJSON(decoded);
+
+      if (this.isRequest(message)) {
+        const request = new oRequest(message);
+        this.emit(oNodeMessageEvent.request, request);
+      } else if (this.isResponse(message)) {
+        const response = new oResponse({
+          ...message.result,
+          id: message.id,
+        });
+        this.emit(oNodeMessageEvent.response, response);
+      }
+    }
+  }
+
+  async waitForResponse(timeout?: number) {
+    return new Promise((resolve, reject) => {
+      let timer: any;
+      let failed: boolean = false;
+      if (timeout) {
+        timer = setTimeout(() => {
+          failed = true;
+          reject(new Error('Timed out waiting for response'));
+          timer = null;
+        }, timeout);
+      }
+      const handler = (data: oResponse) => {
+        if (failed) {
+          return;
+        }
+        // only listen once for this then stop
+        if (timer) {
+          clearTimeout(timer);
+        }
+        this.off(oNodeMessageEvent.response, handler);
+        this.logger.debug(
+          'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
+        );
+      };
+      this.on(oNodeMessageEvent.response, handler);
+    });
+  }
+
+  /**
+   * Detects if a decoded message is a request
+   * Requests have a 'method' field and no 'result' field
+   */
+  isRequest(message: any): boolean {
+    return (
+      typeof message?.method === 'string' &&
+      message.result === undefined &&
+      message.error === undefined
+    );
+  }
+
+  /**
+   * Detects if a decoded message is a response
+   */
+  isResponse(message: any): boolean {
+    return message?.result !== undefined || message?.error !== undefined;
+  }
+
+  /**
    * Checks if the stream is in a valid state:
    * - Stream status is 'open'
    * - Write status is 'writable'
@@ -75,34 +222,7 @@ export class oNodeStream extends oObject {
     return Date.now() - this.createdAt;
   }
 
-  /**
-   * Returns the stream type (defaults to 'general' for backward compatibility)
-   */
-  get streamType(): string {
-    return this.config.streamType || 'general';
-  }
-
-  /**
-   * Checks if this stream is designated as a dedicated reader
-   */
-  get isDedicatedReader(): boolean {
-    return this.streamType === 'dedicated-reader';
-  }
-
-  /**
-   * Checks if this stream is designated for request-response cycles
-   */
-  get isRequestResponse(): boolean {
-    return this.streamType === 'request-response';
-  }
-
   async close(): Promise<void> {
-    // Don't close if reuse policy is enabled
-    if (this.config.reusePolicy === 'reuse') {
-      this.logger.debug('Stream reuse enabled, not closing stream');
-      return;
-    }
-
     if (this.p2pStream.status === 'open') {
       try {
         // force the close for now until we can implement a proper close
@@ -112,5 +232,39 @@ export class oNodeStream extends oObject {
         this.logger.debug('Error closing stream:', error.message);
       }
     }
+  }
+
+  get id(): string {
+    return this.p2pStream?.id;
+  }
+
+  /**
+   * Add event listener
+   */
+  on<K extends oNodeMessageEvent>(
+    event: K,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.on(event as string, listener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  off<K extends oNodeMessageEvent>(
+    event: K,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.off(event as string, listener);
+  }
+
+  /**
+   * Emit event
+   */
+  private emit<K extends oNodeMessageEvent>(
+    event: K,
+    data?: oNodeMessageEventData[K],
+  ): void {
+    this.eventEmitter.emit(event, data);
   }
 }

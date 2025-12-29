@@ -9,13 +9,16 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
-import type {
-  StreamHandlerConfig,
-  StreamReusePolicy,
-} from './stream-handler.config.js';
+import type { StreamHandlerConfig } from './stream-handler.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeStream } from './o-node-stream.js';
-import { oNodeStreamManager } from './o-node-stream.manager.js';
+import { oNodeStreamConfig } from './interfaces/o-node-stream.config.js';
+import { AbortSignalConfig } from './interfaces/abort-signal.config.js';
+import { EventEmitter } from 'events';
+import {
+  oNodeMessageEvent,
+  oNodeMessageEventData,
+} from './enums/o-node-message-event.js';
 
 interface CachedIdentifyData {
   protocols: string[];
@@ -28,25 +31,22 @@ interface CachedIdentifyData {
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
-  protected reusePolicy: StreamReusePolicy;
-  public streamManager: oNodeStreamManager;
-  protected p2pNode?: Libp2p;
-  protected identifyData?: CachedIdentifyData;
-  protected identifyListener?: (evt: any) => void;
+  protected streams: Map<string, oNodeStream> = new Map<string, oNodeStream>();
+  protected runOnLimitedConnection: boolean;
+  protected eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
     this.p2pConnection = config.p2pConnection;
-    this.reusePolicy = config.reusePolicy ?? 'none';
-    this.p2pNode = config.p2pNode;
+    this.runOnLimitedConnection = config.runOnLimitedConnection ?? false;
 
-    // Initialize oNodeStreamManager (stream lifecycle and protocol management)
-    this.streamManager = new oNodeStreamManager({
-      p2pConnection: this.p2pConnection,
+    this.listenForClose();
+  }
+
+  listenForClose() {
+    this.p2pConnection.addEventListener('close', () => {
+      this.close();
     });
-
-    // Set up persistent identify event listener
-    this.setupIdentifyListener();
   }
 
   get remotePeerId() {
@@ -64,75 +64,8 @@ export class oNodeConnection extends oConnection {
     return this.config;
   }
 
-  supportsAddress(address: oNodeAddress): boolean {
-    return address.libp2pTransports.some((transport) => {
-      return transport.toString() === this.remoteAddr.toString();
-    });
-  }
-
-  get streams(): oNodeStream[] {
-    return this.streamManager.getAllStreams();
-  }
-
-  /**
-   * Get cached identify data for the remote peer.
-   * Returns undefined if identify event hasn't been received yet.
-   */
-  get cachedIdentifyData(): CachedIdentifyData | undefined {
-    return this.identifyData;
-  }
-
-  /**
-   * Get protocols supported by the remote peer from cached identify data.
-   * Returns empty array if identify data not available yet.
-   */
-  get remoteProtocols(): string[] {
-    return this.identifyData?.protocols || [];
-  }
-
-  /**
-   * Get agent version of the remote peer from cached identify data.
-   */
-  get remoteAgentVersion(): string | undefined {
-    return this.identifyData?.agentVersion;
-  }
-
-  /**
-   * Get protocol version of the remote peer from cached identify data.
-   */
-  get remoteProtocolVersion(): string | undefined {
-    return this.identifyData?.protocolVersion;
-  }
-
-  /**
-   * Get listen addresses advertised by the remote peer.
-   * Returns empty array if identify data not available yet.
-   */
-  get remoteListenAddrs(): Multiaddr[] {
-    return this.identifyData?.listenAddrs || [];
-  }
-
-  /**
-   * Get our observed address as seen by the remote peer.
-   */
-  get observedAddress(): Multiaddr | undefined {
-    return this.identifyData?.observedAddr;
-  }
-
   get address(): oAddress {
-    if (
-      this.identifyData?.protocols &&
-      this.identifyData.protocols.length > 0
-    ) {
-      const filtered = this.identifyData.protocols.filter((p: string) =>
-        p.startsWith('/o/'),
-      );
-      if (filtered.length > 0) {
-        const remoteAddress = oNodeAddress.fromProtocol(filtered[0]);
-        return remoteAddress;
-      }
-    }
-    return this.config.address;
+    return this.config.targetAddress;
   }
 
   get nextHopAddress(): oAddress {
@@ -150,80 +83,97 @@ export class oNodeConnection extends oConnection {
     return this.config.callerAddress;
   }
 
-  async transmit(request: oRequest): Promise<oResponse> {
-    try {
-      // Build protocol string
-      const protocol =
-        this.nextHopAddress.protocol +
-        (this.reusePolicy === 'reuse' ? '/reuse' : '');
+  async newStream(config: oNodeStreamConfig): Promise<oNodeStream> {
+    const protocol = config.remoteAddress.protocol;
+    this.logger.debug('Creating new stream', {
+      protocol,
+      currentStreamCount: this.streams.size,
+    });
 
+    // Create stream from libp2p connection
+    const stream = await this.p2pConnection.newStream(protocol, {
+      signal: config.abortSignal,
+      maxOutboundStreams: 1000,
+      runOnLimitedConnection: this.runOnLimitedConnection,
+    });
+
+    // Wrap in oNodeStream with metadata
+    const wrappedStream = new oNodeStream(stream, config);
+
+    this.logger.debug('Stream created', {
+      streamId: stream.id,
+      protocol,
+      totalStreams: this.streams.size,
+    });
+
+    return wrappedStream;
+  }
+
+  // bubble up the messages to the request handler
+  protected async listenForMessages(
+    stream: oNodeStream,
+    options: AbortSignalConfig,
+  ) {
+    try {
+      stream.on(oNodeMessageEvent.request, (data: oRequest) => {
+        this.eventEmitter.emit(oNodeMessageEvent.request, data);
+      });
+
+      stream.on(oNodeMessageEvent.response, (data: oResponse) => {
+        this.eventEmitter.emit(oNodeMessageEvent.response, data);
+      });
+
+      await stream.listen(options);
+    } catch (err) {
+      this.logger.error(
+        'Stream errored out when listening for key messages:',
+        err,
+      );
+    }
+  }
+
+  protected async doSend(
+    request: oRequest,
+    options: AbortSignalConfig,
+  ): Promise<oNodeStream> {
+    try {
+      // create a new stream and send the payload
+      const wrappedStream = await this.newStream({
+        remoteAddress: this.nextHopAddress,
+        limited: this.runOnLimitedConnection,
+        abortSignal: options.abortSignal,
+      });
+      this.streams.set(wrappedStream.id, wrappedStream);
+      await wrappedStream.send(request, options);
+      return wrappedStream;
+    } catch (err) {
+      this.logger.error('Failed to send request over stream.', err);
+      throw new oError(
+        oErrorCodes.SEND_FAILED,
+        'Failed to send request over stream.',
+        { request: request.toJSON() },
+      );
+    }
+  }
+
+  async transmit(
+    request: oRequest,
+    options: { abortSignal: AbortSignal },
+  ): Promise<void> {
+    try {
       this.logger.debug(
         'Transmitting request on limited connection?',
         this.config.runOnLimitedConnection,
       );
-      const streamConfig: StreamHandlerConfig = {
-        signal: this.abortSignal,
-        drainTimeoutMs: this.config.drainTimeoutMs,
-        reusePolicy: this.reusePolicy,
-        maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-          ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-          : 1000,
-        runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      };
 
-      // Get stream from StreamManager
-      const wrappedStream = await this.streamManager.getOrCreateStream(
-        protocol,
-        this.nextHopAddress,
-        streamConfig,
-      );
+      const stream = await this.doSend(request, options);
 
-      // Ensure stream is valid
-      wrappedStream.validate();
-
-      const stream = wrappedStream.p2pStream;
-
-      // Send the request with backpressure handling
-      const data = new TextEncoder().encode(request.toString());
-
-      await this.streamManager.sendLengthPrefixed(stream, data, streamConfig);
-
-      // Determine which stream to wait for response on
-      // If _streamId is specified, use that stream (for limited connections with persistent writer stream)
-      let responseStream = stream;
-      if (request.params._streamId) {
-        const specifiedStream = this.streamManager.getStreamById(
-          request.params._streamId,
-        );
-        if (specifiedStream) {
-          responseStream = specifiedStream;
-          this.logger.debug('Using specified stream for response', {
-            requestStreamId: stream.id,
-            responseStreamId: specifiedStream.id,
-          });
-        } else {
-          this.logger.warn(
-            'Specified response stream not found, using request stream',
-            {
-              streamId: request.params._streamId,
-            },
-          );
-        }
-      }
-
-      // Handle response using StreamManager
-      // Pass request ID to enable proper response correlation on shared streams
-      const response = await this.streamManager.handleOutgoingStream(
-        responseStream,
-        this.emitter,
-        streamConfig,
-        request.id,
-      );
+      // persistent listener
+      // this.listenForMessages(wrappedStream, config);
+      await stream.waitForResponse();
 
       // Handle cleanup of the stream
-      await this.postTransmit(wrappedStream);
-
-      return response;
+      await this.postTransmit(stream);
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
@@ -233,49 +183,7 @@ export class oNodeConnection extends oConnection {
   }
 
   async postTransmit(stream: oNodeStream): Promise<void> {
-    // Always cleanup streams (no reuse at base layer)
-    await this.streamManager.releaseStream(stream.p2pStream.id);
-  }
-
-  /**
-   * Set up persistent listener for identify events from the remote peer
-   */
-  protected setupIdentifyListener(): void {
-    if (!this.p2pNode) {
-      return;
-    }
-
-    this.identifyListener = (evt: any) => {
-      const {
-        peerId,
-        protocols,
-        agentVersion,
-        protocolVersion,
-        listenAddrs,
-        observedAddr,
-      } = evt.detail;
-
-      // Only cache if this event is for our remote peer
-      if (peerId?.toString() === this.remotePeerId.toString()) {
-        this.identifyData = {
-          protocols: protocols || [],
-          agentVersion,
-          protocolVersion,
-          listenAddrs: listenAddrs || [],
-          observedAddr,
-          timestamp: Date.now(),
-        };
-
-        this.logger.debug('Cached identify data for peer', {
-          peerId: peerId.toString(),
-          protocols: this.identifyData.protocols,
-          agentVersion: this.identifyData.agentVersion,
-        });
-      }
-    };
-
-    this.p2pNode.addEventListener('peer:identify', this.identifyListener);
-    this.logger.debug('Identify listener set up for connection');
+    // after transmit, let's just leave this connection open for now
   }
 
   async abort(error: Error) {
@@ -287,15 +195,37 @@ export class oNodeConnection extends oConnection {
   async close() {
     this.logger.debug('Closing connection');
 
-    // Remove identify listener
-    if (this.p2pNode && this.identifyListener) {
-      this.p2pNode.removeEventListener('peer:identify', this.identifyListener);
-    }
-
-    // Close stream manager (handles all stream cleanup)
-    await this.streamManager.close();
-
     await this.p2pConnection.close();
     this.logger.debug('Connection closed');
+  }
+
+  /**
+   * Add event listener
+   */
+  on<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.on(event as string, listener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  off<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.off(event as string, listener);
+  }
+
+  /**
+   * Emit event
+   */
+  private emit<K extends oNodeMessageEvent>(
+    event: K,
+    data?: oNodeMessageEventData[K],
+  ): void {
+    this.eventEmitter.emit(event, data);
   }
 }

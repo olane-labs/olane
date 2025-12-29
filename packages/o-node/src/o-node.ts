@@ -16,12 +16,9 @@ import {
   CoreUtils,
   NodeState,
   NodeType,
-  oAddress,
   oRequest,
   RestrictedAddresses,
   oNotificationManager,
-  oConnectionConfig,
-  UseOptions,
 } from '@olane/o-core';
 import { oNodeAddress } from './router/o-node.address.js';
 import { oNodeConnection } from './connection/o-node-connection.js';
@@ -35,13 +32,13 @@ import { oNodeConnectionConfig } from './connection/index.js';
 import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 import { oRegistrationManager } from './managers/o-registration.manager.js';
 import { LockManager } from './utils/lock-manager.js';
+import { oNodeRequestManager } from './lib/o-node-request-manager.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
   public p2pNode!: Libp2p;
   public address!: oNodeAddress;
   public config: oNodeConfig;
-  public connectionManager!: oNodeConnectionManager;
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
   protected reconnectionManager?: oReconnectionManager;
@@ -251,6 +248,10 @@ export class oNode extends oToolBase {
     }
   }
 
+  initRequestManager(): void {
+    this.requestManager = new oNodeRequestManager({});
+  }
+
   async validateJoinRequest(request: oRequest): Promise<any> {
     return true;
   }
@@ -388,28 +389,6 @@ export class oNode extends oToolBase {
     const params = await this.configure();
     this.p2pNode = await createNode(params);
     return this.p2pNode;
-  }
-
-  async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
-    if (!this.connectionManager) {
-      this.logger.error('Connection manager not initialized');
-      throw new Error('Node is not ready to connect to other nodes');
-    }
-    const connection = await this.connectionManager
-      .connect(config)
-      .catch((error) => {
-        // TODO: we need to handle this better and document
-        if (error.message === 'Can not dial self') {
-          this.logger.error(
-            'Make sure you are entering the network not directly through the leader node.',
-          );
-        }
-        throw error;
-      });
-    if (!connection) {
-      throw new Error('Connection failed');
-    }
-    return connection;
   }
 
   async initConnectionManager(): Promise<void> {
@@ -580,25 +559,6 @@ export class oNode extends oToolBase {
 
     await this.hookInitializeFinished();
   }
-
-  /**
-   * Override use() to wrap leader/registry requests with retry logic
-   */
-  // async use(
-  //   address: oAddress,
-  //   data?: {
-  //     method?: string;
-  //     params?: { [key: string]: any };
-  //     id?: string;
-  //   },
-  //   options?: UseOptions,
-  // ): Promise<any> {
-  //   // Wrap leader/registry requests with retry logic
-  //   return super.use(address, data, options),
-  //     address,
-  //     data?.method,
-
-  // }
 
   async teardown(): Promise<void> {
     // Stop heartbeat before parent teardown
