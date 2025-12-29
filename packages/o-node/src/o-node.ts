@@ -33,6 +33,8 @@ import { oReconnectionManager } from './managers/o-reconnection.manager.js';
 import { oRegistrationManager } from './managers/o-registration.manager.js';
 import { LockManager } from './utils/lock-manager.js';
 import { oNodeRequestManager } from './lib/o-node-request-manager.js';
+import { oNodeMessageEvent } from './connection/enums/o-node-message-event.js';
+import { oStreamRequest } from './connection/o-stream.request.js';
 
 export class oNode extends oToolBase {
   public peerId!: PeerId;
@@ -41,6 +43,8 @@ export class oNode extends oToolBase {
   public config: oNodeConfig;
   public hierarchyManager!: oNodeHierarchyManager;
   public connectionHeartbeatManager?: oConnectionHeartbeatManager;
+  public connectionManager!: oNodeConnectionManager;
+  public requestManager!: oNodeRequestManager;
   protected reconnectionManager?: oReconnectionManager;
   public registrationManager!: oRegistrationManager;
   protected hooksStartFinished: any[] = [];
@@ -249,7 +253,27 @@ export class oNode extends oToolBase {
   }
 
   initRequestManager(): void {
-    this.requestManager = new oNodeRequestManager({});
+    this.requestManager = new oNodeRequestManager({
+      callerAddress: this.address,
+      connectionManager: this.connectionManager,
+    });
+    this.requestManager.on(
+      oNodeMessageEvent.request,
+      async (data: oStreamRequest) => {
+        try {
+          const result = await this.execute(data, data.stream);
+          return result;
+        } catch (error: any) {
+          this.logger.error(
+            'Error executing tool: ',
+            data.toString(),
+            error,
+            typeof error,
+          );
+          throw error; // StreamManager will handle error response building
+        }
+      },
+    );
   }
 
   async validateJoinRequest(request: oRequest): Promise<any> {
@@ -397,7 +421,7 @@ export class oNode extends oToolBase {
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,
       defaultDrainTimeoutMs: this.config.connectionTimeouts?.drainTimeoutMs,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      originAddress: this.address?.value,
+      callerAddress: this.address?.value,
     });
   }
 
@@ -546,6 +570,9 @@ export class oNode extends oToolBase {
 
     // initialize connection manager
     await this.initConnectionManager();
+
+    // must come after connection manager
+    await this.initRequestManager();
 
     // initialize address resolution
     this.router.addResolver(new oMethodResolver(this.address));

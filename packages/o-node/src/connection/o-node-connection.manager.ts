@@ -4,6 +4,7 @@ import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-man
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
 import { EventEmitter } from 'events';
+import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 
 /**
  * Manages oNodeConnection instances, reusing connections when possible.
@@ -22,13 +23,11 @@ export class oNodeConnectionManager extends oConnectionManager {
     this.p2pNode = config.p2pNode;
     this.defaultReadTimeoutMs = config.defaultReadTimeoutMs;
     this.defaultDrainTimeoutMs = config.defaultDrainTimeoutMs;
-    this.logger.setNamespace(`oNodeConnectionManager[${config.originAddress}]`);
+    this.logger.setNamespace(`oNodeConnectionManager[${config.callerAddress}]`);
 
     // Set up connection lifecycle listeners for cache management
     this.setupConnectionListeners();
   }
-
-  onRequest(callback: Function) {}
 
   /**
    * Set up listeners to maintain connection cache state
@@ -130,23 +129,24 @@ export class oNodeConnectionManager extends oConnectionManager {
     return connection;
   }
 
-  async answer(
-    config: oConnectionConfig & { p2pConnection: Connection; reuse?: boolean },
-  ): Promise<oNodeConnection> {
+  async answer(config: oNodeConnectionConfig): Promise<oNodeConnection> {
     const {
-      address,
+      targetAddress,
       nextHopAddress,
       callerAddress,
       readTimeoutMs,
       drainTimeoutMs,
       p2pConnection,
-      reuse,
     } = config;
+    if (!p2pConnection) {
+      throw new Error(
+        'Failed to answer connection, p2pConnection is undefined',
+      );
+    }
     this.logger.debug('Answering connection for address:', {
       address: nextHopAddress?.value,
       connectionId: p2pConnection.id,
       direction: p2pConnection.direction,
-      reuse,
     });
 
     // Check if we already have a cached connection for this address with the same connection id
@@ -155,23 +155,21 @@ export class oNodeConnectionManager extends oConnectionManager {
     if (existingConnection) {
       this.logger.debug(
         'Reusing cached connection for answer:',
-        existingConnection.p2pConnection.id,
+        existingConnection.id,
       );
       return existingConnection;
     }
 
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,
-      address: address,
-      p2pConnection: p2pConnection,
-      p2pNode: this.p2pNode,
+      targetAddress: targetAddress,
       callerAddress: callerAddress,
       readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
       drainTimeoutMs: drainTimeoutMs ?? this.defaultDrainTimeoutMs,
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      reusePolicy: reuse ? 'reuse' : 'none',
+      p2pConnection: p2pConnection,
     });
 
     // Cache the new connection
@@ -180,32 +178,14 @@ export class oNodeConnectionManager extends oConnectionManager {
     return connection;
   }
 
-  getConnectionFromAddress(address: oAddress): oNodeConnection | null {
-    const protocol = address.protocol;
-    this.logger.debug('Searching cached connections for protocol:', protocol);
-    for (const conn of this.cachedConnections.values()) {
-      // if nextHopAddress protocol matches, return conn
-      if (conn.nextHopAddress.protocol === protocol) {
-        this.logger.debug('local reuse cache found:', protocol);
-        return conn;
-      }
-      // if remote protocols include protocol, return conn
-      if (conn.remoteProtocols.includes(protocol)) {
-        this.logger.debug('remote reuse cache found', protocol);
-        return conn;
-      }
-    }
-    return null;
-  }
-
   /**
    * Connect to a given address, reusing oNodeConnection when possible
    * @param config - Connection configuration
    * @returns The connection object
    */
-  async connect(config: oConnectionConfig): Promise<oNodeConnection> {
+  async connect(config: oNodeConnectionConfig): Promise<oNodeConnection> {
     const {
-      address,
+      targetAddress,
       nextHopAddress,
       callerAddress,
       readTimeoutMs,
@@ -216,8 +196,14 @@ export class oNodeConnectionManager extends oConnectionManager {
       throw new Error('Invalid address passed');
     }
 
+    if (nextHopAddress.libp2pTransports?.length === 0) {
+      throw new Error('No transports provided for the address, cannot connect');
+    }
+
     // Check for existing valid cached connection
-    const existingConnection = this.getConnectionFromAddress(nextHopAddress);
+    const existingConnection = this.getCachedConnectionFromAddress(
+      nextHopAddress as oNodeAddress,
+    );
     if (existingConnection) {
       this.logger.debug(
         'Reusing cached connection for address:',
@@ -239,8 +225,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     // Create new oNodeConnection
     const connection = new oNodeConnection({
       nextHopAddress: nextHopAddress,
-      address: address,
-      p2pNode: this.p2pNode,
+      targetAddress: targetAddress,
       p2pConnection: p2pConnection,
       callerAddress: callerAddress,
       readTimeoutMs: readTimeoutMs ?? this.defaultReadTimeoutMs,
@@ -248,12 +233,28 @@ export class oNodeConnectionManager extends oConnectionManager {
       isStream: config.isStream ?? false,
       abortSignal: config.abortSignal,
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      requestHandler: config.requestHandler,
     });
 
     // Cache the new connection
     this.cacheConnection(connection);
 
     return connection;
+  }
+
+  getCachedConnectionFromAddress(
+    address: oNodeAddress,
+  ): oNodeConnection | null {
+    const vals = Array.from(this.cachedConnections.values());
+    for (const c in vals) {
+      const connection: oNodeConnection = c as unknown as oNodeConnection;
+      const peerId = address.libp2pTransports?.[0].toPeerId();
+      if (
+        connection.p2pConnection.remotePeer.toString() === peerId &&
+        connection.isOpen
+      ) {
+        return connection;
+      }
+    }
+    return null;
   }
 }

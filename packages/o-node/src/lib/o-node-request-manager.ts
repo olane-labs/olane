@@ -1,10 +1,12 @@
 import {
-  oAddress,
+  CoreUtils,
   oConnectionConfig,
-  oConnectionManager,
+  oError,
+  oErrorCodes,
   oRequest,
   oRequestManager,
   oResponse,
+  ResponseBuilder,
   UseOptions,
 } from '@olane/o-core';
 import { oNodeRequestManagerConfig } from './interfaces/o-node-request-manager.config.js';
@@ -12,27 +14,46 @@ import {
   oNodeConnection,
   oNodeConnectionConfig,
   oNodeConnectionManager,
+  oNodeStream,
 } from '../connection/index.js';
 import { oNodeRouter } from '../router/o-node.router.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { UseDataConfig } from '@olane/o-core/dist/src/core/interfaces/use-data.config.js';
+import { oNode } from '../o-node.js';
+import { Connection, Stream } from '@olane/o-config';
+import {
+  oNodeMessageEvent,
+  oNodeMessageEventData,
+} from '../connection/enums/o-node-message-event.js';
+import { oStreamRequest } from '../connection/o-stream.request.js';
+import { EventEmitter } from 'events';
+import { AbortSignalConfig } from '../connection/interfaces/abort-signal.config.js';
+import { RunResult } from '@olane/o-tool';
 
 export class oNodeRequestManager extends oRequestManager {
-  connectionManager: oNodeConnectionManager | undefined;
+  connectionManager: oNodeConnectionManager;
   router: oNodeRouter;
+  protected eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(readonly config: oNodeRequestManagerConfig) {
     super();
     this.router = new oNodeRouter();
+    this.connectionManager = config.connectionManager;
   }
 
   async translateAddress(
     address: oNodeAddress,
     options?: UseOptions,
+    nodeRef?: oNode,
   ): Promise<{ nextHopAddress: oNodeAddress; targetAddress: oNodeAddress }> {
+    if (!nodeRef) {
+      throw new Error(
+        'Failed to translate address due to invalid node reference',
+      );
+    }
     const { nextHopAddress, targetAddress } = options?.noRouting
       ? { nextHopAddress: address, targetAddress: address }
-      : await this.router.translate(address);
+      : await this.router.translate(address, nodeRef);
     return {
       nextHopAddress: nextHopAddress as oNodeAddress,
       targetAddress: targetAddress as oNodeAddress,
@@ -40,15 +61,18 @@ export class oNodeRequestManager extends oRequestManager {
   }
 
   async connectToNode(
-    address: oNodeAddress,
-    options?: Omit<oConnectionConfig, 'nextHopAddress'>,
+    nextHopAddress: oNodeAddress,
+    options: Omit<oNodeConnectionConfig, 'nextHopAddress'>,
   ): Promise<oNodeConnection> {
     if (!this.connectionManager) {
       this.logger.error('Connection manager not initialized');
       throw new Error('Node is not ready to connect to other nodes');
     }
     const connection = await this.connectionManager
-      .connect(config)
+      .connect({
+        nextHopAddress: nextHopAddress,
+        ...options,
+      })
       .catch((error) => {
         // TODO: we need to handle this better and document
         if (error.message === 'Can not dial self') {
@@ -68,6 +92,7 @@ export class oNodeRequestManager extends oRequestManager {
     address: oNodeAddress,
     data: UseDataConfig,
     options?: UseOptions,
+    nodeRef?: oNode,
   ): Promise<oResponse> {
     if (!address.validate()) {
       throw new Error('Invalid address');
@@ -91,6 +116,7 @@ export class oNodeRequestManager extends oRequestManager {
     const { nextHopAddress, targetAddress } = await this.translateAddress(
       address,
       options,
+      nodeRef,
     );
 
     // if (
@@ -101,7 +127,7 @@ export class oNodeRequestManager extends oRequestManager {
 
     const connection = await this.connectToNode(nextHopAddress, {
       targetAddress: targetAddress,
-      callerAddress: this.address,
+      callerAddress: this.config.callerAddress,
       readTimeoutMs: options?.readTimeoutMs,
       drainTimeoutMs: options?.drainTimeoutMs,
       isStream: options?.isStream,
@@ -115,11 +141,15 @@ export class oNodeRequestManager extends oRequestManager {
     }
 
     // communicate the payload to the target node
-    const response = await connection.send({
-      address: targetAddress?.toString() || '',
-      payload: data || {},
-      id: data?.id,
-    });
+    const stream = await connection.send(
+      {
+        address: targetAddress?.toString() || '',
+        payload: data || {},
+        id: data?.id,
+      },
+      options,
+    );
+    const response = await this.waitForResponse(stream);
 
     // we handle streaming response differently
     if (options?.isStream) {
@@ -129,5 +159,122 @@ export class oNodeRequestManager extends oRequestManager {
     // if there is an error, throw it to continue to bubble up
     this.handleResponseError(response);
     return response;
+  }
+
+  async waitForResponse(stream: oNodeStream): Promise<oResponse> {
+    this.logger.info('Waiting for stream response');
+    return stream.waitForResponse();
+  }
+
+  async receiveStream({
+    connection,
+    stream,
+  }: {
+    connection: Connection;
+    stream: Stream;
+  }) {
+    const unknown = new oNodeAddress('o://unknown', []);
+    const oConnection = await this.connectionManager.answer({
+      nextHopAddress: unknown,
+      targetAddress: unknown,
+      callerAddress: unknown,
+      p2pConnection: connection,
+    });
+    // Get the oNodeConnection for this libp2p connection
+
+    if (!oConnection) {
+      this.logger.error('Failed to process inbound connection');
+      throw new Error('Failed to process inbound connection');
+    }
+
+    // listen for requests
+    this.listenForMessages(oConnection, {});
+  }
+
+  async sendResponse(request: oStreamRequest, result: RunResult) {
+    const responseBuilder = ResponseBuilder.create();
+    const responseStream = request.stream;
+    try {
+      // Emit InboundRequest event and wait for handler to process
+      const response = await responseBuilder.build(request, result, null);
+      await CoreUtils.sendResponse(response, request.stream);
+
+      this.logger.debug(
+        `Successfully processed request: method=${request.method}, id=${request.id}`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Error processing request: method=${request.method}, id=${request.id}`,
+        error,
+      );
+      const errorResponse = await responseBuilder.buildError(request, error);
+      await CoreUtils.sendResponse(errorResponse, responseStream);
+    }
+  }
+
+  // bubble up the messages to the request handler
+  protected async listenForMessages(
+    connection: oNodeConnection,
+    options: AbortSignalConfig,
+  ) {
+    try {
+      connection.on(oNodeMessageEvent.request, async (data: oStreamRequest) => {
+        const result = await this.emitAsync<RunResult>(
+          oNodeMessageEvent.request,
+          data,
+        );
+        this.sendResponse(data, result);
+      });
+    } catch (err) {
+      this.logger.error(
+        'Stream errored out when listening for key messages:',
+        err,
+      );
+    }
+  }
+
+  /**
+   * Add event listener
+   */
+  on<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.on(event as string, listener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  off<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.off(event as string, listener);
+  }
+
+  /**
+   * Emit event
+   */
+  // private emit<K extends oNodeMessageEvent>(
+  //   event: K,
+  //   data?: oNodeMessageEventData[K],
+  // ): void {
+  //   this.eventEmitter.emit(event, data);
+  // }
+
+  private async emitAsync<T>(event: oNodeMessageEvent, data: any): Promise<T> {
+    const listeners = this.eventEmitter.listeners(event);
+
+    if (listeners.length === 0) {
+      throw new oError(
+        oErrorCodes.INTERNAL_ERROR,
+        `No listener registered for event: ${event}`,
+      );
+    }
+
+    // Call the first listener and await its response
+    const listener = listeners[0] as (...args: any[]) => Promise<T>;
+    return await listener(data);
   }
 }

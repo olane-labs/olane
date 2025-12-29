@@ -15,6 +15,7 @@ import {
   oNodeMessageEvent,
   oNodeMessageEventData,
 } from './enums/o-node-message-event.js';
+import { oStreamRequest } from './o-stream.request.js';
 
 /**
  * oNodeStream wraps a libp2p Stream and transmits or receives messages across the libp2p streams
@@ -134,13 +135,17 @@ export class oNodeStream extends oObject {
    * @param options
    */
   async listen(options: AbortSignalConfig): Promise<void> {
-    while (this.isValid && !options.abortSignal.aborted) {
+    while (this.isValid && !options?.abortSignal?.aborted) {
       const messageBytes = await this.lp.read({ signal: options.abortSignal });
       const decoded = new TextDecoder().decode(messageBytes.subarray());
       const message = this.extractAndParseJSON(decoded);
 
       if (this.isRequest(message)) {
-        const request = new oRequest(message);
+        // package up the request + stream and emit
+        const request = new oStreamRequest({
+          ...message,
+          stream: this.p2pStream,
+        });
         this.emit(oNodeMessageEvent.request, request);
       } else if (this.isResponse(message)) {
         const response = new oResponse({
@@ -152,7 +157,7 @@ export class oNodeStream extends oObject {
     }
   }
 
-  async waitForResponse(timeout?: number) {
+  async waitForResponse(timeout?: number): Promise<oResponse> {
     return new Promise((resolve, reject) => {
       let timer: any;
       let failed: boolean = false;
@@ -175,6 +180,7 @@ export class oNodeStream extends oObject {
         this.logger.debug(
           'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
         );
+        resolve(data);
       };
       this.on(oNodeMessageEvent.response, handler);
     });

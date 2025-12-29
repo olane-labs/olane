@@ -452,7 +452,6 @@ export abstract class oCore extends oObject {
     // Reset state tracking
     this.errors = [];
     this.metrics = new oMetrics();
-    this.initRequestManager();
 
     // Clear heartbeat
     if (this.heartbeatInterval) {

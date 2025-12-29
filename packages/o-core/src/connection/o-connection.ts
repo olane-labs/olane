@@ -25,10 +25,6 @@ export abstract class oConnection extends oObject {
     );
   }
 
-  get abortSignal(): AbortSignal | undefined {
-    return this.config.abortSignal;
-  }
-
   get address(): oAddress {
     return this.config.targetAddress;
   }
@@ -65,12 +61,12 @@ export abstract class oConnection extends oObject {
     });
   }
 
-  abstract transmit(request: oRequest, options: any): Promise<void>;
+  abstract transmit(request: oRequest, options: any): Promise<any>;
 
-  async send(data: ConnectionSendParams, options: any): Promise<void> {
+  async send(data: ConnectionSendParams, options: any): Promise<any> {
     // proxy through the router tool
     const request = this.createRequest(oProtocolMethods.ROUTE, data);
-    await this.transmit(request, options);
+    return await this.transmit(request, options);
   }
 
   async close() {

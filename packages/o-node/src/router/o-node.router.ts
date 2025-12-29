@@ -174,7 +174,7 @@ export class oNodeRouter extends oToolRouter {
 
       const nodeConnection = await node.connectionManager.connect({
         nextHopAddress: address,
-        address: node.address,
+        targetAddress: node.address,
         callerAddress: node.address,
         isStream: isStream,
       });
@@ -190,7 +190,8 @@ export class oNodeRouter extends oToolRouter {
         // allow this to continue as we will tell the transmitter to stream the response and we will intercept via the above listener
       }
 
-      const response = await nodeConnection.transmit(request);
+      const stream = await nodeConnection.transmit(request, {});
+      const response = await stream.waitForResponse();
       return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {

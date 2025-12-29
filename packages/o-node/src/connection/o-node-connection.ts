@@ -19,6 +19,7 @@ import {
   oNodeMessageEvent,
   oNodeMessageEventData,
 } from './enums/o-node-message-event.js';
+import { oStreamRequest } from './o-stream.request.js';
 
 interface CachedIdentifyData {
   protocols: string[];
@@ -37,7 +38,7 @@ export class oNodeConnection extends oConnection {
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
-    this.p2pConnection = config.p2pConnection;
+    this.p2pConnection = config.p2pConnection as Connection;
     this.runOnLimitedConnection = config.runOnLimitedConnection ?? false;
 
     this.listenForClose();
@@ -47,6 +48,10 @@ export class oNodeConnection extends oConnection {
     this.p2pConnection.addEventListener('close', () => {
       this.close();
     });
+  }
+
+  get isOpen() {
+    return this.p2pConnection.status === 'open';
   }
 
   get remotePeerId() {
@@ -115,12 +120,12 @@ export class oNodeConnection extends oConnection {
     options: AbortSignalConfig,
   ) {
     try {
-      stream.on(oNodeMessageEvent.request, (data: oRequest) => {
-        this.eventEmitter.emit(oNodeMessageEvent.request, data);
+      stream.on(oNodeMessageEvent.request, (data: oStreamRequest) => {
+        this.emit(oNodeMessageEvent.request, data);
       });
 
       stream.on(oNodeMessageEvent.response, (data: oResponse) => {
-        this.eventEmitter.emit(oNodeMessageEvent.response, data);
+        this.emit(oNodeMessageEvent.response, data);
       });
 
       await stream.listen(options);
@@ -158,8 +163,8 @@ export class oNodeConnection extends oConnection {
 
   async transmit(
     request: oRequest,
-    options: { abortSignal: AbortSignal },
-  ): Promise<void> {
+    options: AbortSignalConfig,
+  ): Promise<oNodeStream> {
     try {
       this.logger.debug(
         'Transmitting request on limited connection?',
@@ -170,10 +175,10 @@ export class oNodeConnection extends oConnection {
 
       // persistent listener
       // this.listenForMessages(wrappedStream, config);
-      await stream.waitForResponse();
 
       // Handle cleanup of the stream
       await this.postTransmit(stream);
+      return stream;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
