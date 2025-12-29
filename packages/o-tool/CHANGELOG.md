@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.56 (2025-12-29)</small>
+
+- minor bug fixes ([42deb47](https://github.com/olane-labs/olane/commit/42deb47))
+- refactored node-stream + node-connection wrappers ([de94dfd](https://github.com/olane-labs/olane/commit/de94dfd))
+
 ## <small>0.7.55 (2025-12-29)</small>
 
 **Note:** Version bump only for package @olane/o-tool

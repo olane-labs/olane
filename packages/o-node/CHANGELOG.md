@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.56 (2025-12-29)</small>
+
+- all unit tests passing for o-node ([5b11155](https://github.com/olane-labs/olane/commit/5b11155))
+- further refactor for event bubbling up + message handling ([8b5a274](https://github.com/olane-labs/olane/commit/8b5a274))
+- minor bug fixes ([42deb47](https://github.com/olane-labs/olane/commit/42deb47))
+- refactored node-stream + node-connection wrappers ([de94dfd](https://github.com/olane-labs/olane/commit/de94dfd))
+
 ## <small>0.7.55 (2025-12-29)</small>
 
 - manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))

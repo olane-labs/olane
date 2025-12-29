@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.56 (2025-12-29)</small>
+
+- minor bug fixes ([42deb47](https://github.com/olane-labs/olane/commit/42deb47))
+
 ## <small>0.7.55 (2025-12-29)</small>
 
 - manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))
