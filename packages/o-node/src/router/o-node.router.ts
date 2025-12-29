@@ -191,7 +191,9 @@ export class oNodeRouter extends oToolRouter {
       }
 
       const stream = await nodeConnection.transmit(request, {});
-      const response = await stream.waitForResponse();
+
+      const response = await stream.waitForResponse(String(request.id));
+      stream.close();
       return response.result.data;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {

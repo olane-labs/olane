@@ -151,7 +151,11 @@ export abstract class oCore extends oObject {
       throw new Error('Request manager is not initialized');
     }
 
-    return this.requestManager.send(address, data, options);
+    if (address?.toStaticAddress().equals(this.address.toStaticAddress())) {
+      return this.useSelf(data);
+    }
+
+    return this.requestManager.send(address, data, options, this);
   }
 
   abstract execute(request: oRequest): Promise<any>;
@@ -236,7 +240,7 @@ export abstract class oCore extends oObject {
       }
     }
 
-    return this.requestManager.send(childAddress, data, options);
+    return this.requestManager.send(childAddress, data, options, this);
   }
 
   // hierarchy

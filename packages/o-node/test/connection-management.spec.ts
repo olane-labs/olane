@@ -20,12 +20,18 @@ describe('Connection Management', () => {
   });
 
   describe('Connection Pooling', () => {
+    // TODO: add more concurrency tests for first connection to a node since there is a race condition issue with 2 connections being possible (discovered when reviewing the event response mechanism for parent connection detected = retry register. Bandaid workaround currently working where we simply prevent trying in the reconnection manager)
     it('should cache and reuse connections', async () => {
       builder = await NetworkTopologies.twoNode();
       console.log('Built the 2 node network, starting test');
 
       const leader = builder.getNode('o://leader')!;
       const child = builder.getNode('o://child')!;
+
+      // at most there should only be 1 connection (the parent / leader shared)
+      expect(child.requestManager.connectionManager.connectionCount).to.equal(
+        1,
+      );
 
       const spy = createConnectionSpy(leader);
       spy.start();

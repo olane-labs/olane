@@ -75,6 +75,11 @@ export class oReconnectionManager extends oObject {
     const connectedEvent = event as NodeConnectedEvent;
     const nodeAddress = connectedEvent.nodeAddress;
 
+    if (this.node.state !== NodeState.RUNNING) {
+      this.logger.warn('Ignoring node connection events during startup');
+      return;
+    }
+
     // if leader is back online re-register
     if (nodeAddress.toString() === oAddress.leader().toString()) {
       // Check if we can register with leader (not already registering or registered)

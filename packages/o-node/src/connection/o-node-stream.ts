@@ -127,7 +127,7 @@ export class oNodeStream extends oObject {
     // Send the request with backpressure handling
     const data = new TextEncoder().encode(request.toString());
 
-    await this.lp.write(data, { signal: options.abortSignal });
+    await this.lp.write(data, { signal: options?.abortSignal });
   }
 
   /**
@@ -136,51 +136,42 @@ export class oNodeStream extends oObject {
    */
   async listen(options: AbortSignalConfig): Promise<void> {
     while (this.isValid && !options?.abortSignal?.aborted) {
-      const messageBytes = await this.lp.read({ signal: options.abortSignal });
-      const decoded = new TextDecoder().decode(messageBytes.subarray());
-      const message = this.extractAndParseJSON(decoded);
-
-      if (this.isRequest(message)) {
-        // package up the request + stream and emit
-        const request = new oStreamRequest({
-          ...message,
-          stream: this.p2pStream,
-        });
-        this.emit(oNodeMessageEvent.request, request);
-      } else if (this.isResponse(message)) {
-        const response = new oResponse({
-          ...message.result,
-          id: message.id,
-        });
-        this.emit(oNodeMessageEvent.response, response);
-      }
+      await this.listenOnce(options);
     }
   }
 
-  async waitForResponse(timeout?: number): Promise<oResponse> {
+  async listenOnce(options: AbortSignalConfig) {
+    const messageBytes = await this.lp.read({ signal: options?.abortSignal });
+    const decoded = new TextDecoder().decode(messageBytes.subarray());
+    const message = this.extractAndParseJSON(decoded);
+
+    if (this.isRequest(message)) {
+      // package up the request + stream and emit
+      const request = new oStreamRequest({
+        ...message,
+        stream: this.p2pStream,
+      });
+      this.emit(oNodeMessageEvent.request, request);
+    } else if (this.isResponse(message)) {
+      const response = new oResponse({
+        ...message.result,
+        id: message.id,
+      });
+      this.emit(oNodeMessageEvent.response, response);
+    }
+  }
+
+  async waitForResponse(requestId: string): Promise<oResponse> {
     return new Promise((resolve, reject) => {
-      let timer: any;
-      let failed: boolean = false;
-      if (timeout) {
-        timer = setTimeout(() => {
-          failed = true;
-          reject(new Error('Timed out waiting for response'));
-          timer = null;
-        }, timeout);
-      }
       const handler = (data: oResponse) => {
-        if (failed) {
-          return;
+        console.log('Request id vs response id:', data.id, requestId);
+        if (data.id === requestId) {
+          this.off(oNodeMessageEvent.response, handler);
+          this.logger.debug(
+            'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
+          );
+          resolve(data);
         }
-        // only listen once for this then stop
-        if (timer) {
-          clearTimeout(timer);
-        }
-        this.off(oNodeMessageEvent.response, handler);
-        this.logger.debug(
-          'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
-        );
-        resolve(data);
       };
       this.on(oNodeMessageEvent.response, handler);
     });

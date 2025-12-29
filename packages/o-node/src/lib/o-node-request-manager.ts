@@ -29,6 +29,7 @@ import { oStreamRequest } from '../connection/o-stream.request.js';
 import { EventEmitter } from 'events';
 import { AbortSignalConfig } from '../connection/interfaces/abort-signal.config.js';
 import { RunResult } from '@olane/o-tool';
+import { v4 } from 'uuid';
 
 export class oNodeRequestManager extends oRequestManager {
   connectionManager: oNodeConnectionManager;
@@ -102,7 +103,7 @@ export class oNodeRequestManager extends oRequestManager {
 
     // check for static match
     // TODO
-    // if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
+    // if (address.toStaticAddress().equals(this.config.callerAddress.toStaticAddress())) {
     //   return this.useSelf(data);
     // }
 
@@ -118,12 +119,6 @@ export class oNodeRequestManager extends oRequestManager {
       options,
       nodeRef,
     );
-
-    // if (
-    //   nextHopAddress?.toStaticAddress().equals(this.address.toStaticAddress())
-    // ) {
-    //   return this.useSelf(data);
-    // }
 
     const connection = await this.connectToNode(nextHopAddress, {
       targetAddress: targetAddress,
@@ -141,15 +136,17 @@ export class oNodeRequestManager extends oRequestManager {
     }
 
     // communicate the payload to the target node
+    const requestId = data?.id || v4();
     const stream = await connection.send(
       {
         address: targetAddress?.toString() || '',
         payload: data || {},
-        id: data?.id,
+        id: requestId,
       },
       options,
     );
-    const response = await this.waitForResponse(stream);
+    const response = await stream.waitForResponse(requestId);
+    stream.close();
 
     // we handle streaming response differently
     if (options?.isStream) {
@@ -161,11 +158,6 @@ export class oNodeRequestManager extends oRequestManager {
     return response;
   }
 
-  async waitForResponse(stream: oNodeStream): Promise<oResponse> {
-    this.logger.info('Waiting for stream response');
-    return stream.waitForResponse();
-  }
-
   async receiveStream({
     connection,
     stream,
@@ -174,12 +166,15 @@ export class oNodeRequestManager extends oRequestManager {
     stream: Stream;
   }) {
     const unknown = new oNodeAddress('o://unknown', []);
-    const oConnection = await this.connectionManager.answer({
-      nextHopAddress: unknown,
-      targetAddress: unknown,
-      callerAddress: unknown,
-      p2pConnection: connection,
-    });
+    const oConnection = await this.connectionManager.answer(
+      {
+        nextHopAddress: unknown,
+        targetAddress: unknown,
+        callerAddress: unknown,
+        p2pConnection: connection,
+      },
+      stream,
+    );
     // Get the oNodeConnection for this libp2p connection
 
     if (!oConnection) {
@@ -217,20 +212,28 @@ export class oNodeRequestManager extends oRequestManager {
     connection: oNodeConnection,
     options: AbortSignalConfig,
   ) {
-    try {
-      connection.on(oNodeMessageEvent.request, async (data: oStreamRequest) => {
+    if (connection.eventEmitter.listenerCount(oNodeMessageEvent.request) > 0) {
+      this.logger.warn(
+        'Already listening for this event on connection id:',
+        connection.id,
+      );
+      return;
+    }
+    connection.on(oNodeMessageEvent.request, async (data: oStreamRequest) => {
+      try {
         const result = await this.emitAsync<RunResult>(
           oNodeMessageEvent.request,
           data,
         );
         this.sendResponse(data, result);
-      });
-    } catch (err) {
-      this.logger.error(
-        'Stream errored out when listening for key messages:',
-        err,
-      );
-    }
+      } catch (err) {
+        this.logger.error('Error with request:', err);
+        const responseBuilder = ResponseBuilder.create();
+        const errorResponse = await responseBuilder.buildError(data, err);
+        await CoreUtils.sendResponse(errorResponse, data.stream);
+        throw err;
+      }
+    });
   }
 
   /**

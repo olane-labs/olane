@@ -1,10 +1,11 @@
 import { oAddress, oConnectionConfig, oConnectionManager } from '@olane/o-core';
-import { Libp2p, Connection } from '@olane/o-config';
+import { Libp2p, Connection, Stream } from '@olane/o-config';
 import { oNodeConnectionManagerConfig } from './interfaces/o-node-connection-manager.config.js';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConnection } from './o-node-connection.js';
 import { EventEmitter } from 'events';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
+import { oNodeStream } from './o-node-stream.js';
 
 /**
  * Manages oNodeConnection instances, reusing connections when possible.
@@ -129,7 +130,10 @@ export class oNodeConnectionManager extends oConnectionManager {
     return connection;
   }
 
-  async answer(config: oNodeConnectionConfig): Promise<oNodeConnection> {
+  async answer(
+    config: oNodeConnectionConfig,
+    stream: Stream,
+  ): Promise<oNodeConnection> {
     const {
       targetAddress,
       nextHopAddress,
@@ -157,6 +161,13 @@ export class oNodeConnectionManager extends oConnectionManager {
         'Reusing cached connection for answer:',
         existingConnection.id,
       );
+      existingConnection.trackStream(
+        new oNodeStream(stream, {
+          remoteAddress: nextHopAddress,
+          limited: this.config.runOnLimitedConnection,
+        }),
+        config,
+      );
       return existingConnection;
     }
 
@@ -171,6 +182,14 @@ export class oNodeConnectionManager extends oConnectionManager {
       runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
       p2pConnection: p2pConnection,
     });
+
+    connection.trackStream(
+      new oNodeStream(stream, {
+        remoteAddress: nextHopAddress,
+        limited: this.config.runOnLimitedConnection,
+      }),
+      config,
+    );
 
     // Cache the new connection
     this.cacheConnection(connection);
@@ -249,12 +268,16 @@ export class oNodeConnectionManager extends oConnectionManager {
       const connection: oNodeConnection = c as unknown as oNodeConnection;
       const peerId = address.libp2pTransports?.[0].toPeerId();
       if (
-        connection.p2pConnection.remotePeer.toString() === peerId &&
+        connection.p2pConnection?.remotePeer.toString() === peerId &&
         connection.isOpen
       ) {
         return connection;
       }
     }
     return null;
+  }
+
+  get connectionCount() {
+    return this.cachedConnections.size;
   }
 }

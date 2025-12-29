@@ -18,6 +18,7 @@ export abstract class oRequestManager extends oObject {
     address: oAddress,
     data?: UseDataConfig,
     options?: UseOptions,
+    node?: any,
   ): Promise<oResponse>;
 
   /**

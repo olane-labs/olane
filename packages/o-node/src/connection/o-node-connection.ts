@@ -34,7 +34,7 @@ export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
   protected streams: Map<string, oNodeStream> = new Map<string, oNodeStream>();
   protected runOnLimitedConnection: boolean;
-  protected eventEmitter: EventEmitter = new EventEmitter();
+  eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
@@ -115,10 +115,7 @@ export class oNodeConnection extends oConnection {
   }
 
   // bubble up the messages to the request handler
-  protected async listenForMessages(
-    stream: oNodeStream,
-    options: AbortSignalConfig,
-  ) {
+  async listenForMessages(stream: oNodeStream, options: AbortSignalConfig) {
     try {
       stream.on(oNodeMessageEvent.request, (data: oStreamRequest) => {
         this.emit(oNodeMessageEvent.request, data);
@@ -128,13 +125,26 @@ export class oNodeConnection extends oConnection {
         this.emit(oNodeMessageEvent.response, data);
       });
 
+      stream.p2pStream.addEventListener('close', () => {
+        if (this.streams.has(stream.id)) {
+          this.streams.delete(stream.id);
+        }
+      });
+
       await stream.listen(options);
-    } catch (err) {
-      this.logger.error(
+    } catch (err: any) {
+      this.logger.warn(
         'Stream errored out when listening for key messages:',
-        err,
+        err?.message,
       );
     }
+  }
+
+  trackStream(stream: oNodeStream, options: AbortSignalConfig) {
+    this.streams.set(stream.id, stream);
+    this.logger.debug('Stream count: ' + this.streams.size);
+    // persistent listener
+    this.listenForMessages(stream, options);
   }
 
   protected async doSend(
@@ -146,9 +156,10 @@ export class oNodeConnection extends oConnection {
       const wrappedStream = await this.newStream({
         remoteAddress: this.nextHopAddress,
         limited: this.runOnLimitedConnection,
-        abortSignal: options.abortSignal,
+        ...options,
       });
-      this.streams.set(wrappedStream.id, wrappedStream);
+
+      this.trackStream(wrappedStream, options);
       await wrappedStream.send(request, options);
       return wrappedStream;
     } catch (err) {
@@ -172,9 +183,6 @@ export class oNodeConnection extends oConnection {
       );
 
       const stream = await this.doSend(request, options);
-
-      // persistent listener
-      // this.listenForMessages(wrappedStream, config);
 
       // Handle cleanup of the stream
       await this.postTransmit(stream);
