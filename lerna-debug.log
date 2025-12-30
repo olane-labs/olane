@@ -10,391 +10,661 @@
 1 notice cli v9.0.3
 2 verbose packageConfigs Resolving packages based on package.json "workspaces" configuration.
 3 verbose rootPath /Users/brendon/Development/highway/olane
-4 verbose session c2859f4497f61c6b
+4 verbose session ecad83fcd5fd7655
 5 verbose user-agent lerna/9.0.3/node@v24.2.0+arm64 (darwin)
-6 verbose git-describe undefined => "v0.7.59-1-g71ab4347"
-7 silly git-describe parsed => {"lastTagName":"v0.7.59","lastVersion":"v0.7.59","refCount":"1","sha":"71ab4347","isDirty":false}
+6 verbose git-describe undefined => "v0.7.59-2-g4d7ed259"
+7 silly git-describe parsed => {"lastTagName":"v0.7.59","lastVersion":"v0.7.59","refCount":"2","sha":"4d7ed259","isDirty":false}
 8 silly getProjectsWithUnpublishedPackages
 9 info auto-confirmed
 10 info publish Publishing packages to npm...
 11 notice Skipping all user and access validation due to third-party registry
 12 notice Make sure you're authenticated properly ¯\_(ツ)_/¯
 13 silly getCurrentSHA
-14 verbose getCurrentSHA 71ab434731f907e32b6f640c949198b8f2d5398f
+14 verbose getCurrentSHA 4d7ed2592ca8cb2f8ba2773b81aec22cab355a78
 15 silly lifecycle No script for "prepublish" in "@olane/o-root", continuing
 16 silly lifecycle No script for "prepare" in "@olane/o-root", continuing
 17 silly lifecycle "prepublishOnly" starting in "@olane/o-root"
 18 info lifecycle @olane/o-root@0.7.5~prepublishOnly: @olane/o-root@0.7.5
 19 silly lifecycle "prepublishOnly" finished in "@olane/o-root"
 20 silly lifecycle No script for "prepack" in "@olane/o-root", continuing
-21 verbose pack-directory packages/o-config
-22 silly lifecycle No script for "prepublish" in "@olane/o-config", continuing
-23 verbose pack-directory packages/o-protocol
-24 silly lifecycle No script for "prepublish" in "@olane/o-protocol", continuing
-25 silly lifecycle No script for "prepare" in "@olane/o-config", continuing
-26 silly lifecycle No script for "prepare" in "@olane/o-protocol", continuing
-27 silly lifecycle "prepublishOnly" starting in "@olane/o-config"
-28 info lifecycle @olane/o-config@0.7.59~prepublishOnly: @olane/o-config@0.7.59
-29 silly lifecycle No script for "prepublishOnly" in "@olane/o-protocol", continuing
-30 silly lifecycle No script for "prepack" in "@olane/o-protocol", continuing
-31 silly lifecycle "prepublishOnly" finished in "@olane/o-config"
-32 silly lifecycle No script for "prepack" in "@olane/o-config", continuing
-33 silly lifecycle No script for "postpack" in "@olane/o-protocol", continuing
-34 verbose packed packages/o-protocol
-35 verbose pack-directory packages/o-core
-36 silly lifecycle No script for "prepublish" in "@olane/o-core", continuing
-37 silly lifecycle No script for "prepare" in "@olane/o-core", continuing
-38 silly lifecycle "prepublishOnly" starting in "@olane/o-core"
-39 info lifecycle @olane/o-core@0.7.59~prepublishOnly: @olane/o-core@0.7.59
-40 silly lifecycle No script for "postpack" in "@olane/o-config", continuing
-41 verbose packed packages/o-config
-42 silly lifecycle "prepublishOnly" finished in "@olane/o-core"
-43 silly lifecycle No script for "prepack" in "@olane/o-core", continuing
-44 silly lifecycle No script for "postpack" in "@olane/o-core", continuing
-45 verbose packed packages/o-core
-46 verbose pack-directory packages/o-server
-47 silly lifecycle No script for "prepublish" in "@olane/o-server", continuing
-48 verbose pack-directory packages/o-test
-49 silly lifecycle No script for "prepublish" in "@olane/o-test", continuing
-50 verbose pack-directory packages/o-tool
-51 silly lifecycle No script for "prepublish" in "@olane/o-tool", continuing
-52 silly lifecycle No script for "prepare" in "@olane/o-server", continuing
-53 silly lifecycle No script for "prepare" in "@olane/o-test", continuing
-54 silly lifecycle No script for "prepare" in "@olane/o-tool", continuing
-55 silly lifecycle "prepublishOnly" starting in "@olane/o-server"
-56 info lifecycle @olane/o-server@0.7.59~prepublishOnly: @olane/o-server@0.7.59
-57 silly lifecycle "prepublishOnly" starting in "@olane/o-test"
-58 info lifecycle @olane/o-test@0.7.59~prepublishOnly: @olane/o-test@0.7.59
-59 silly lifecycle "prepublishOnly" starting in "@olane/o-tool"
-60 info lifecycle @olane/o-tool@0.7.59~prepublishOnly: @olane/o-tool@0.7.59
-61 silly lifecycle "prepublishOnly" finished in "@olane/o-server"
-62 silly lifecycle No script for "prepack" in "@olane/o-server", continuing
-63 silly lifecycle "prepublishOnly" finished in "@olane/o-test"
-64 silly lifecycle No script for "prepack" in "@olane/o-test", continuing
-65 silly lifecycle "prepublishOnly" finished in "@olane/o-tool"
-66 silly lifecycle No script for "prepack" in "@olane/o-tool", continuing
-67 silly lifecycle No script for "postpack" in "@olane/o-server", continuing
-68 verbose packed packages/o-server
-69 silly lifecycle No script for "postpack" in "@olane/o-test", continuing
-70 verbose packed packages/o-test
-71 silly lifecycle No script for "postpack" in "@olane/o-tool", continuing
-72 verbose packed packages/o-tool
-73 verbose pack-directory packages/o-gateway-interface
-74 silly lifecycle No script for "prepublish" in "@olane/o-gateway-interface", continuing
-75 verbose pack-directory packages/o-node
-76 silly lifecycle No script for "prepublish" in "@olane/o-node", continuing
-77 silly lifecycle No script for "prepare" in "@olane/o-gateway-interface", continuing
-78 silly lifecycle No script for "prepare" in "@olane/o-node", continuing
-79 silly lifecycle "prepublishOnly" starting in "@olane/o-gateway-interface"
-80 info lifecycle @olane/o-gateway-interface@0.7.59~prepublishOnly: @olane/o-gateway-interface@0.7.59
-81 silly lifecycle "prepublishOnly" starting in "@olane/o-node"
-82 info lifecycle @olane/o-node@0.7.59~prepublishOnly: @olane/o-node@0.7.59
-83 silly lifecycle "prepublishOnly" finished in "@olane/o-gateway-interface"
-84 silly lifecycle No script for "prepack" in "@olane/o-gateway-interface", continuing
-85 silly lifecycle "prepublishOnly" finished in "@olane/o-node"
-86 silly lifecycle No script for "prepack" in "@olane/o-node", continuing
-87 silly lifecycle No script for "postpack" in "@olane/o-gateway-interface", continuing
-88 verbose packed packages/o-gateway-interface
-89 silly lifecycle No script for "postpack" in "@olane/o-node", continuing
-90 verbose packed packages/o-node
-91 verbose pack-directory packages/o-client-limited
-92 silly lifecycle No script for "prepublish" in "@olane/o-client-limited", continuing
-93 verbose pack-directory packages/o-gateway-olane
-94 silly lifecycle No script for "prepublish" in "@olane/o-gateway-olane", continuing
-95 verbose pack-directory packages/o-storage
-96 silly lifecycle No script for "prepublish" in "@olane/o-storage", continuing
-97 silly lifecycle No script for "prepare" in "@olane/o-client-limited", continuing
-98 silly lifecycle No script for "prepare" in "@olane/o-gateway-olane", continuing
-99 silly lifecycle No script for "prepare" in "@olane/o-storage", continuing
-100 silly lifecycle "prepublishOnly" starting in "@olane/o-client-limited"
-101 info lifecycle @olane/o-client-limited@0.7.59~prepublishOnly: @olane/o-client-limited@0.7.59
-102 silly lifecycle "prepublishOnly" starting in "@olane/o-gateway-olane"
-103 info lifecycle @olane/o-gateway-olane@0.7.59~prepublishOnly: @olane/o-gateway-olane@0.7.59
-104 silly lifecycle "prepublishOnly" starting in "@olane/o-storage"
-105 info lifecycle @olane/o-storage@0.7.59~prepublishOnly: @olane/o-storage@0.7.59
-106 silly lifecycle "prepublishOnly" finished in "@olane/o-client-limited"
-107 silly lifecycle No script for "prepack" in "@olane/o-client-limited", continuing
-108 silly lifecycle "prepublishOnly" finished in "@olane/o-gateway-olane"
-109 silly lifecycle No script for "prepack" in "@olane/o-gateway-olane", continuing
-110 silly lifecycle "prepublishOnly" finished in "@olane/o-storage"
-111 silly lifecycle No script for "prepack" in "@olane/o-storage", continuing
-112 silly lifecycle No script for "postpack" in "@olane/o-client-limited", continuing
-113 verbose packed packages/o-client-limited
-114 silly lifecycle No script for "postpack" in "@olane/o-gateway-olane", continuing
-115 verbose packed packages/o-gateway-olane
-116 silly lifecycle No script for "postpack" in "@olane/o-storage", continuing
-117 verbose packed packages/o-storage
-118 verbose pack-directory packages/o-lane
-119 silly lifecycle No script for "prepublish" in "@olane/o-lane", continuing
-120 silly lifecycle No script for "prepare" in "@olane/o-lane", continuing
-121 silly lifecycle "prepublishOnly" starting in "@olane/o-lane"
-122 info lifecycle @olane/o-lane@0.7.59~prepublishOnly: @olane/o-lane@0.7.59
-123 silly lifecycle "prepublishOnly" finished in "@olane/o-lane"
-124 silly lifecycle No script for "prepack" in "@olane/o-lane", continuing
-125 silly lifecycle No script for "postpack" in "@olane/o-lane", continuing
-126 verbose packed packages/o-lane
-127 verbose pack-directory packages/o-approval
-128 silly lifecycle No script for "prepublish" in "@olane/o-approval", continuing
-129 verbose pack-directory packages/o-intelligence
-130 silly lifecycle No script for "prepublish" in "@olane/o-intelligence", continuing
-131 verbose pack-directory packages/o-leader
-132 silly lifecycle No script for "prepublish" in "@olane/o-leader", continuing
-133 verbose pack-directory packages/o-login
-134 silly lifecycle No script for "prepublish" in "@olane/o-login", continuing
-135 silly lifecycle No script for "prepare" in "@olane/o-approval", continuing
-136 silly lifecycle No script for "prepare" in "@olane/o-intelligence", continuing
-137 silly lifecycle No script for "prepare" in "@olane/o-leader", continuing
-138 silly lifecycle No script for "prepare" in "@olane/o-login", continuing
-139 silly lifecycle "prepublishOnly" starting in "@olane/o-approval"
-140 info lifecycle @olane/o-approval@0.7.59~prepublishOnly: @olane/o-approval@0.7.59
-141 silly lifecycle "prepublishOnly" starting in "@olane/o-intelligence"
-142 info lifecycle @olane/o-intelligence@0.7.59~prepublishOnly: @olane/o-intelligence@0.7.59
-143 silly lifecycle "prepublishOnly" starting in "@olane/o-leader"
-144 info lifecycle @olane/o-leader@0.7.59~prepublishOnly: @olane/o-leader@0.7.59
-145 silly lifecycle "prepublishOnly" starting in "@olane/o-login"
-146 info lifecycle @olane/o-login@0.7.59~prepublishOnly: @olane/o-login@0.7.59
-147 silly lifecycle "prepublishOnly" finished in "@olane/o-approval"
-148 silly lifecycle No script for "prepack" in "@olane/o-approval", continuing
-149 silly lifecycle "prepublishOnly" finished in "@olane/o-intelligence"
-150 silly lifecycle No script for "prepack" in "@olane/o-intelligence", continuing
-151 silly lifecycle "prepublishOnly" finished in "@olane/o-leader"
-152 silly lifecycle No script for "prepack" in "@olane/o-leader", continuing
-153 silly lifecycle "prepublishOnly" finished in "@olane/o-login"
-154 silly lifecycle No script for "prepack" in "@olane/o-login", continuing
-155 silly lifecycle No script for "postpack" in "@olane/o-approval", continuing
-156 verbose packed packages/o-approval
-157 silly lifecycle No script for "postpack" in "@olane/o-intelligence", continuing
-158 verbose packed packages/o-intelligence
-159 silly lifecycle No script for "postpack" in "@olane/o-leader", continuing
-160 verbose packed packages/o-leader
-161 verbose pack-directory packages/o-mcp
-162 silly lifecycle No script for "prepublish" in "@olane/o-mcp", continuing
-163 verbose pack-directory packages/o-monitor
-164 silly lifecycle No script for "prepublish" in "@olane/o-monitor", continuing
-165 verbose pack-directory packages/o-tools-common
-166 silly lifecycle No script for "prepublish" in "@olane/o-tools-common", continuing
-167 silly lifecycle No script for "prepare" in "@olane/o-mcp", continuing
-168 silly lifecycle No script for "prepare" in "@olane/o-monitor", continuing
-169 silly lifecycle No script for "prepare" in "@olane/o-tools-common", continuing
-170 silly lifecycle "prepublishOnly" starting in "@olane/o-mcp"
-171 info lifecycle @olane/o-mcp@0.7.59~prepublishOnly: @olane/o-mcp@0.7.59
-172 silly lifecycle "prepublishOnly" starting in "@olane/o-tools-common"
-173 info lifecycle @olane/o-tools-common@0.7.59~prepublishOnly: @olane/o-tools-common@0.7.59
-174 silly lifecycle "prepublishOnly" starting in "@olane/o-monitor"
-175 info lifecycle @olane/o-monitor@0.7.59~prepublishOnly: @olane/o-monitor@0.7.59
-176 silly lifecycle No script for "postpack" in "@olane/o-login", continuing
-177 verbose packed packages/o-login
-178 silly lifecycle "prepublishOnly" finished in "@olane/o-mcp"
-179 silly lifecycle No script for "prepack" in "@olane/o-mcp", continuing
-180 silly lifecycle "prepublishOnly" finished in "@olane/o-tools-common"
-181 silly lifecycle No script for "prepack" in "@olane/o-tools-common", continuing
-182 silly lifecycle "prepublishOnly" finished in "@olane/o-monitor"
-183 silly lifecycle No script for "prepack" in "@olane/o-monitor", continuing
-184 silly lifecycle No script for "postpack" in "@olane/o-mcp", continuing
-185 verbose packed packages/o-mcp
-186 silly lifecycle No script for "postpack" in "@olane/o-tools-common", continuing
-187 verbose packed packages/o-tools-common
-188 verbose pack-directory packages/o-tool-registry
-189 silly lifecycle No script for "prepublish" in "@olane/o-tool-registry", continuing
-190 silly lifecycle No script for "prepare" in "@olane/o-tool-registry", continuing
-191 silly lifecycle "prepublishOnly" starting in "@olane/o-tool-registry"
-192 info lifecycle @olane/o-tool-registry@0.7.59~prepublishOnly: @olane/o-tool-registry@0.7.59
-193 silly lifecycle No script for "postpack" in "@olane/o-monitor", continuing
-194 verbose packed packages/o-monitor
-195 silly lifecycle "prepublishOnly" finished in "@olane/o-tool-registry"
-196 silly lifecycle No script for "prepack" in "@olane/o-tool-registry", continuing
-197 silly lifecycle No script for "postpack" in "@olane/o-tool-registry", continuing
-198 verbose packed packages/o-tool-registry
-199 verbose pack-directory packages/o-os
-200 silly lifecycle No script for "prepublish" in "@olane/os", continuing
-201 silly lifecycle No script for "prepare" in "@olane/os", continuing
-202 silly lifecycle "prepublishOnly" starting in "@olane/os"
-203 info lifecycle @olane/os@0.7.59~prepublishOnly: @olane/os@0.7.59
-204 silly lifecycle "prepublishOnly" finished in "@olane/os"
-205 silly lifecycle No script for "prepack" in "@olane/os", continuing
-206 silly lifecycle No script for "postpack" in "@olane/os", continuing
-207 verbose packed packages/o-os
-208 silly lifecycle No script for "postpack" in "@olane/o-root", continuing
-209 verbose publish @olane/o-config
-210 verbose publish @olane/o-protocol
-211 silly lifecycle No script for "publish" in "@olane/o-protocol", continuing
-212 silly lifecycle No script for "postpublish" in "@olane/o-protocol", continuing
-213 success published @olane/o-protocol 0.7.59
-214 notice
-215 notice 📦  @olane/o-protocol@0.7.59
-216 notice === Tarball Contents ===
-217 notice 78B    .babelrc
-217 notice 1.6kB  LICENSE
-217 notice 162B   dist/config.js
-217 notice 804B   dist/address/index.js
-217 notice 807B   dist/dependency/index.js
-217 notice 818B   dist/enums/index.js
-217 notice 806B   dist/handshake/index.js
-217 notice 1.3kB  dist/index.js
-217 notice 803B   dist/json-rpc/index.js
-217 notice 803B   dist/method/index.js
-217 notice 806B   dist/parameter/index.js
-217 notice 805B   dist/register/index.js
-217 notice 803B   dist/router/index.js
-217 notice 467B   dist/json-rpc/json-rpc.js
-217 notice 77B    dist/address/o-address.js
-217 notice 77B    dist/dependency/o-dependency.js
-217 notice 77B    dist/handshake/o-handshake.js
-217 notice 77B    dist/method/o-method.js
-217 notice 77B    dist/parameter/o-parameter.js
-217 notice 563B   dist/enums/o-protocol-methods.enum.js
-217 notice 77B    dist/register/o-register.js
-217 notice 77B    dist/router/o-router.js
-217 notice 2.5kB  ts-aggregator-loader.js
-217 notice 545B   webpack.config.js
-217 notice 1.9kB  package.json
-217 notice 320B   tsconfig.json
-217 notice 137B   dist/config.d.ts.map
-217 notice 134B   dist/address/index.d.ts.map
-217 notice 139B   dist/dependency/index.d.ts.map
-217 notice 134B   dist/enums/index.d.ts.map
-217 notice 136B   dist/handshake/index.d.ts.map
-217 notice 330B   dist/index.d.ts.map
-217 notice 135B   dist/json-rpc/index.d.ts.map
-217 notice 133B   dist/method/index.d.ts.map
-217 notice 136B   dist/parameter/index.d.ts.map
-217 notice 135B   dist/register/index.d.ts.map
-217 notice 133B   dist/router/index.d.ts.map
-217 notice 1.8kB  dist/json-rpc/json-rpc.d.ts.map
-217 notice 205B   dist/address/o-address.d.ts.map
-217 notice 322B   dist/dependency/o-dependency.d.ts.map
-217 notice 694B   dist/handshake/o-handshake.d.ts.map
-217 notice 1.7kB  dist/method/o-method.d.ts.map
-217 notice 805B   dist/parameter/o-parameter.d.ts.map
-217 notice 273B   dist/enums/o-protocol-methods.enum.d.ts.map
-217 notice 535B   dist/register/o-register.d.ts.map
-217 notice 491B   dist/router/o-router.d.ts.map
-217 notice 13.8kB CHANGELOG.md
-217 notice 2.1kB  README.md
-217 notice 92B    dist/config.d.ts
-217 notice 48B    src/config.ts
-217 notice 64B    dist/address/index.d.ts
-217 notice 67B    dist/dependency/index.d.ts
-217 notice 78B    dist/enums/index.d.ts
-217 notice 66B    dist/handshake/index.d.ts
-217 notice 393B   dist/index.d.ts
-217 notice 63B    dist/json-rpc/index.d.ts
-217 notice 63B    dist/method/index.d.ts
-217 notice 66B    dist/parameter/index.d.ts
-217 notice 65B    dist/register/index.d.ts
-217 notice 63B    dist/router/index.d.ts
-217 notice 28B    src/address/index.ts
-217 notice 31B    src/dependency/index.ts
-217 notice 42B    src/enums/index.ts
-217 notice 30B    src/handshake/index.ts
-217 notice 358B   src/index.ts
-217 notice 27B    src/json-rpc/index.ts
-217 notice 28B    src/method/index.ts
-217 notice 31B    src/parameter/index.ts
-217 notice 30B    src/register/index.ts
-217 notice 27B    src/router/index.ts
-217 notice 2.5kB  dist/json-rpc/json-rpc.d.ts
-217 notice 2.3kB  src/json-rpc/json-rpc.ts
-217 notice 117B   dist/address/o-address.d.ts
-217 notice 73B    src/address/o-address.ts
-217 notice 213B   dist/dependency/o-dependency.d.ts
-217 notice 164B   src/dependency/o-dependency.ts
-217 notice 719B   dist/handshake/o-handshake.d.ts
-217 notice 649B   src/handshake/o-handshake.ts
-217 notice 1.6kB  dist/method/o-method.d.ts
-217 notice 1.4kB  src/method/o-method.ts
-217 notice 588B   dist/parameter/o-parameter.d.ts
-217 notice 510B   src/parameter/o-parameter.ts
-217 notice 295B   dist/enums/o-protocol-methods.enum.d.ts
-217 notice 223B   src/enums/o-protocol-methods.enum.ts
-217 notice 467B   dist/register/o-register.d.ts
-217 notice 413B   src/register/o-register.ts
-217 notice 439B   dist/router/o-router.d.ts
-217 notice 376B   src/router/o-router.ts
-217 notice 3.5kB  schema/v1.0.0/schema.ts
-218 notice === Tarball Details ===
-219 notice name:          @olane/o-protocol
-219 notice version:       0.7.59
-219 notice filename:      olane-o-protocol-0.7.59.tgz
-219 notice package size:  12.8 kB
-219 notice unpacked size: 59.8 kB
-219 notice shasum:        118ced1af9339c6d7ae7089dd2149438f134353b
-219 notice integrity:     sha512-xMAFU0YOJHztV[...]mYIrYj6jRVzRA==
-219 notice total files:   89
+21 verbose pack-directory packages/o-core
+22 silly lifecycle No script for "prepublish" in "@olane/o-core", continuing
+23 silly lifecycle No script for "prepare" in "@olane/o-core", continuing
+24 silly lifecycle "prepublishOnly" starting in "@olane/o-core"
+25 info lifecycle @olane/o-core@0.7.59~prepublishOnly: @olane/o-core@0.7.59
+26 silly lifecycle "prepublishOnly" finished in "@olane/o-core"
+27 silly lifecycle No script for "prepack" in "@olane/o-core", continuing
+28 silly lifecycle No script for "postpack" in "@olane/o-core", continuing
+29 verbose packed packages/o-core
+30 verbose pack-directory packages/o-server
+31 silly lifecycle No script for "prepublish" in "@olane/o-server", continuing
+32 verbose pack-directory packages/o-test
+33 silly lifecycle No script for "prepublish" in "@olane/o-test", continuing
+34 verbose pack-directory packages/o-tool
+35 silly lifecycle No script for "prepublish" in "@olane/o-tool", continuing
+36 silly lifecycle No script for "prepare" in "@olane/o-server", continuing
+37 silly lifecycle No script for "prepare" in "@olane/o-test", continuing
+38 silly lifecycle No script for "prepare" in "@olane/o-tool", continuing
+39 silly lifecycle "prepublishOnly" starting in "@olane/o-server"
+40 info lifecycle @olane/o-server@0.7.59~prepublishOnly: @olane/o-server@0.7.59
+41 silly lifecycle "prepublishOnly" starting in "@olane/o-tool"
+42 info lifecycle @olane/o-tool@0.7.59~prepublishOnly: @olane/o-tool@0.7.59
+43 silly lifecycle "prepublishOnly" starting in "@olane/o-test"
+44 info lifecycle @olane/o-test@0.7.59~prepublishOnly: @olane/o-test@0.7.59
+45 silly lifecycle "prepublishOnly" finished in "@olane/o-server"
+46 silly lifecycle No script for "prepack" in "@olane/o-server", continuing
+47 silly lifecycle "prepublishOnly" finished in "@olane/o-tool"
+48 silly lifecycle No script for "prepack" in "@olane/o-tool", continuing
+49 silly lifecycle "prepublishOnly" finished in "@olane/o-test"
+50 silly lifecycle No script for "prepack" in "@olane/o-test", continuing
+51 silly lifecycle No script for "postpack" in "@olane/o-server", continuing
+52 verbose packed packages/o-server
+53 silly lifecycle No script for "postpack" in "@olane/o-tool", continuing
+54 verbose packed packages/o-tool
+55 verbose pack-directory packages/o-gateway-interface
+56 silly lifecycle No script for "prepublish" in "@olane/o-gateway-interface", continuing
+57 silly lifecycle No script for "prepare" in "@olane/o-gateway-interface", continuing
+58 silly lifecycle "prepublishOnly" starting in "@olane/o-gateway-interface"
+59 info lifecycle @olane/o-gateway-interface@0.7.59~prepublishOnly: @olane/o-gateway-interface@0.7.59
+60 silly lifecycle No script for "postpack" in "@olane/o-test", continuing
+61 verbose packed packages/o-test
+62 verbose pack-directory packages/o-node
+63 silly lifecycle No script for "prepublish" in "@olane/o-node", continuing
+64 silly lifecycle No script for "prepare" in "@olane/o-node", continuing
+65 silly lifecycle "prepublishOnly" starting in "@olane/o-node"
+66 info lifecycle @olane/o-node@0.7.59~prepublishOnly: @olane/o-node@0.7.59
+67 silly lifecycle "prepublishOnly" finished in "@olane/o-gateway-interface"
+68 silly lifecycle No script for "prepack" in "@olane/o-gateway-interface", continuing
+69 silly lifecycle "prepublishOnly" finished in "@olane/o-node"
+70 silly lifecycle No script for "prepack" in "@olane/o-node", continuing
+71 silly lifecycle No script for "postpack" in "@olane/o-gateway-interface", continuing
+72 verbose packed packages/o-gateway-interface
+73 silly lifecycle No script for "postpack" in "@olane/o-node", continuing
+74 verbose packed packages/o-node
+75 verbose pack-directory packages/o-client-limited
+76 silly lifecycle No script for "prepublish" in "@olane/o-client-limited", continuing
+77 verbose pack-directory packages/o-gateway-olane
+78 silly lifecycle No script for "prepublish" in "@olane/o-gateway-olane", continuing
+79 verbose pack-directory packages/o-storage
+80 silly lifecycle No script for "prepublish" in "@olane/o-storage", continuing
+81 silly lifecycle No script for "prepare" in "@olane/o-client-limited", continuing
+82 silly lifecycle No script for "prepare" in "@olane/o-gateway-olane", continuing
+83 silly lifecycle No script for "prepare" in "@olane/o-storage", continuing
+84 silly lifecycle "prepublishOnly" starting in "@olane/o-client-limited"
+85 info lifecycle @olane/o-client-limited@0.7.59~prepublishOnly: @olane/o-client-limited@0.7.59
+86 silly lifecycle "prepublishOnly" starting in "@olane/o-gateway-olane"
+87 info lifecycle @olane/o-gateway-olane@0.7.59~prepublishOnly: @olane/o-gateway-olane@0.7.59
+88 silly lifecycle "prepublishOnly" starting in "@olane/o-storage"
+89 info lifecycle @olane/o-storage@0.7.59~prepublishOnly: @olane/o-storage@0.7.59
+90 silly lifecycle "prepublishOnly" finished in "@olane/o-client-limited"
+91 silly lifecycle No script for "prepack" in "@olane/o-client-limited", continuing
+92 silly lifecycle "prepublishOnly" finished in "@olane/o-gateway-olane"
+93 silly lifecycle No script for "prepack" in "@olane/o-gateway-olane", continuing
+94 silly lifecycle "prepublishOnly" finished in "@olane/o-storage"
+95 silly lifecycle No script for "prepack" in "@olane/o-storage", continuing
+96 silly lifecycle No script for "postpack" in "@olane/o-client-limited", continuing
+97 verbose packed packages/o-client-limited
+98 silly lifecycle No script for "postpack" in "@olane/o-gateway-olane", continuing
+99 verbose packed packages/o-gateway-olane
+100 silly lifecycle No script for "postpack" in "@olane/o-storage", continuing
+101 verbose packed packages/o-storage
+102 verbose pack-directory packages/o-lane
+103 silly lifecycle No script for "prepublish" in "@olane/o-lane", continuing
+104 silly lifecycle No script for "prepare" in "@olane/o-lane", continuing
+105 silly lifecycle "prepublishOnly" starting in "@olane/o-lane"
+106 info lifecycle @olane/o-lane@0.7.59~prepublishOnly: @olane/o-lane@0.7.59
+107 silly lifecycle "prepublishOnly" finished in "@olane/o-lane"
+108 silly lifecycle No script for "prepack" in "@olane/o-lane", continuing
+109 silly lifecycle No script for "postpack" in "@olane/o-lane", continuing
+110 verbose packed packages/o-lane
+111 verbose pack-directory packages/o-approval
+112 silly lifecycle No script for "prepublish" in "@olane/o-approval", continuing
+113 verbose pack-directory packages/o-intelligence
+114 silly lifecycle No script for "prepublish" in "@olane/o-intelligence", continuing
+115 verbose pack-directory packages/o-leader
+116 silly lifecycle No script for "prepublish" in "@olane/o-leader", continuing
+117 verbose pack-directory packages/o-login
+118 silly lifecycle No script for "prepublish" in "@olane/o-login", continuing
+119 silly lifecycle No script for "prepare" in "@olane/o-approval", continuing
+120 silly lifecycle No script for "prepare" in "@olane/o-intelligence", continuing
+121 silly lifecycle No script for "prepare" in "@olane/o-leader", continuing
+122 silly lifecycle No script for "prepare" in "@olane/o-login", continuing
+123 silly lifecycle "prepublishOnly" starting in "@olane/o-approval"
+124 info lifecycle @olane/o-approval@0.7.59~prepublishOnly: @olane/o-approval@0.7.59
+125 silly lifecycle "prepublishOnly" starting in "@olane/o-intelligence"
+126 info lifecycle @olane/o-intelligence@0.7.59~prepublishOnly: @olane/o-intelligence@0.7.59
+127 silly lifecycle "prepublishOnly" starting in "@olane/o-leader"
+128 info lifecycle @olane/o-leader@0.7.59~prepublishOnly: @olane/o-leader@0.7.59
+129 silly lifecycle "prepublishOnly" starting in "@olane/o-login"
+130 info lifecycle @olane/o-login@0.7.59~prepublishOnly: @olane/o-login@0.7.59
+131 silly lifecycle "prepublishOnly" finished in "@olane/o-approval"
+132 silly lifecycle No script for "prepack" in "@olane/o-approval", continuing
+133 silly lifecycle "prepublishOnly" finished in "@olane/o-intelligence"
+134 silly lifecycle No script for "prepack" in "@olane/o-intelligence", continuing
+135 silly lifecycle "prepublishOnly" finished in "@olane/o-leader"
+136 silly lifecycle No script for "prepack" in "@olane/o-leader", continuing
+137 silly lifecycle "prepublishOnly" finished in "@olane/o-login"
+138 silly lifecycle No script for "prepack" in "@olane/o-login", continuing
+139 silly lifecycle No script for "postpack" in "@olane/o-approval", continuing
+140 verbose packed packages/o-approval
+141 silly lifecycle No script for "postpack" in "@olane/o-intelligence", continuing
+142 verbose packed packages/o-intelligence
+143 silly lifecycle No script for "postpack" in "@olane/o-leader", continuing
+144 verbose packed packages/o-leader
+145 verbose pack-directory packages/o-mcp
+146 silly lifecycle No script for "prepublish" in "@olane/o-mcp", continuing
+147 verbose pack-directory packages/o-monitor
+148 silly lifecycle No script for "prepublish" in "@olane/o-monitor", continuing
+149 verbose pack-directory packages/o-tools-common
+150 silly lifecycle No script for "prepublish" in "@olane/o-tools-common", continuing
+151 silly lifecycle No script for "prepare" in "@olane/o-mcp", continuing
+152 silly lifecycle No script for "prepare" in "@olane/o-monitor", continuing
+153 silly lifecycle No script for "prepare" in "@olane/o-tools-common", continuing
+154 silly lifecycle "prepublishOnly" starting in "@olane/o-mcp"
+155 info lifecycle @olane/o-mcp@0.7.59~prepublishOnly: @olane/o-mcp@0.7.59
+156 silly lifecycle "prepublishOnly" starting in "@olane/o-monitor"
+157 info lifecycle @olane/o-monitor@0.7.59~prepublishOnly: @olane/o-monitor@0.7.59
+158 silly lifecycle "prepublishOnly" starting in "@olane/o-tools-common"
+159 info lifecycle @olane/o-tools-common@0.7.59~prepublishOnly: @olane/o-tools-common@0.7.59
+160 silly lifecycle No script for "postpack" in "@olane/o-login", continuing
+161 verbose packed packages/o-login
+162 silly lifecycle "prepublishOnly" finished in "@olane/o-mcp"
+163 silly lifecycle No script for "prepack" in "@olane/o-mcp", continuing
+164 silly lifecycle "prepublishOnly" finished in "@olane/o-monitor"
+165 silly lifecycle No script for "prepack" in "@olane/o-monitor", continuing
+166 silly lifecycle "prepublishOnly" finished in "@olane/o-tools-common"
+167 silly lifecycle No script for "prepack" in "@olane/o-tools-common", continuing
+168 silly lifecycle No script for "postpack" in "@olane/o-mcp", continuing
+169 verbose packed packages/o-mcp
+170 silly lifecycle No script for "postpack" in "@olane/o-monitor", continuing
+171 verbose packed packages/o-monitor
+172 silly lifecycle No script for "postpack" in "@olane/o-tools-common", continuing
+173 verbose packed packages/o-tools-common
+174 verbose pack-directory packages/o-tool-registry
+175 silly lifecycle No script for "prepublish" in "@olane/o-tool-registry", continuing
+176 silly lifecycle No script for "prepare" in "@olane/o-tool-registry", continuing
+177 silly lifecycle "prepublishOnly" starting in "@olane/o-tool-registry"
+178 info lifecycle @olane/o-tool-registry@0.7.59~prepublishOnly: @olane/o-tool-registry@0.7.59
+179 silly lifecycle "prepublishOnly" finished in "@olane/o-tool-registry"
+180 silly lifecycle No script for "prepack" in "@olane/o-tool-registry", continuing
+181 silly lifecycle No script for "postpack" in "@olane/o-tool-registry", continuing
+182 verbose packed packages/o-tool-registry
+183 verbose pack-directory packages/o-os
+184 silly lifecycle No script for "prepublish" in "@olane/os", continuing
+185 silly lifecycle No script for "prepare" in "@olane/os", continuing
+186 silly lifecycle "prepublishOnly" starting in "@olane/os"
+187 info lifecycle @olane/os@0.7.59~prepublishOnly: @olane/os@0.7.59
+188 silly lifecycle "prepublishOnly" finished in "@olane/os"
+189 silly lifecycle No script for "prepack" in "@olane/os", continuing
+190 silly lifecycle No script for "postpack" in "@olane/os", continuing
+191 verbose packed packages/o-os
+192 silly lifecycle No script for "postpack" in "@olane/o-root", continuing
+193 verbose publish @olane/o-core
+194 silly lifecycle No script for "publish" in "@olane/o-core", continuing
+195 silly lifecycle No script for "postpublish" in "@olane/o-core", continuing
+196 success published @olane/o-core 0.7.59
+197 notice
+198 notice 📦  @olane/o-core@0.7.59
+199 notice === Tarball Contents ===
+200 notice 1.6kB  LICENSE
+200 notice 1.6kB  dist/src/error/enums/codes.error.js
+200 notice 293B   dist/src/core/defaults/config.js
+200 notice 1.4kB  dist/src/core/lib/events/connection-events.js
+200 notice 11B    dist/src/connection/interfaces/connection-manager.config.js
+200 notice 11B    dist/src/connection/interfaces/connection-send-params.interface.js
+200 notice 11B    dist/src/connection/interfaces/connection.config.js
+200 notice 4.3kB  dist/src/utils/core.utils.js
+200 notice 305B   dist/src/transports/custom.transport.js
+200 notice 6.5kB  dist/src/core/lib/utils/event-filters.js
+200 notice 3.4kB  dist/src/core/graceful-shutdown.js
+200 notice 2.8kB  dist/src/core/lib/events/hierarchy-events.js
+200 notice 161B   dist/test/server/in-process.spec.js
+200 notice 292B   dist/src/connection/index.js
+200 notice 184B   dist/src/connection/interfaces/index.js
+200 notice 29B    dist/src/core/defaults/index.js
+200 notice 277B   dist/src/core/index.js
+200 notice 240B   dist/src/core/interfaces/index.js
+200 notice 243B   dist/src/core/lib/events/index.js
+200 notice 288B   dist/src/core/lib/index.js
+200 notice 70B    dist/src/error/index.js
+200 notice 251B   dist/src/index.js
+200 notice 81B    dist/src/response/index.js
+200 notice 416B   dist/src/router/index.js
+200 notice 126B   dist/src/transports/index.js
+200 notice 166B   dist/src/utils/index.js
+200 notice 854B   dist/src/utils/logger.js
+200 notice 1.6kB  dist/src/core/lib/events/node-events.js
+200 notice 308B   dist/src/core/interfaces/node-type.enum.js
+200 notice 11B    dist/src/core/lib/interfaces/notification-types.js
+200 notice 491B   dist/src/router/o-address-resolver.js
+200 notice 5.3kB  dist/src/router/o-address.js
+200 notice 21.3kB dist/test/router/o-address.spec.js
+200 notice 292B   dist/src/connection/o-connection-manager.js
+200 notice 1.8kB  dist/src/connection/o-connection.js
+200 notice 11B    dist/src/core/interfaces/o-core.config.js
+200 notice 11B    dist/src/core/interfaces/o-core.interface.js
+200 notice 15.6kB dist/src/core/o-core.js
+200 notice 327B   dist/src/core/o-dependency.js
+200 notice 11B    dist/src/error/interfaces/o-error.interface.js
+200 notice 1.0kB  dist/src/error/o-error.js
+200 notice 1.7kB  dist/src/core/lib/o-hierarchy.manager.js
+200 notice 112B   dist/src/core/lib/o-metrics.js
+200 notice 812B   dist/src/core/lib/events/o-notification-event.js
+200 notice 5.4kB  dist/src/core/lib/o-notification.manager.js
+200 notice 295B   dist/src/core/o-object.js
+200 notice 536B   dist/src/core/o-parameter.js
+200 notice 3.0kB  dist/src/router/o-request-preparation.js
+200 notice 1.4kB  dist/src/connection/o-request.js
+200 notice 992B   dist/src/core/lib/o-request.manager.js
+200 notice 393B   dist/src/router/o-request.router.js
+200 notice 2.5kB  dist/src/router/o-resolver-chain.js
+200 notice 728B   dist/src/connection/o-response.js
+200 notice 463B   dist/src/router/o-router.js
+200 notice 730B   dist/src/router/o-routing-policy.js
+200 notice 442B   dist/src/transports/o-transport.js
+200 notice 684B   dist/src/utils/object.utils.js
+200 notice 2.0kB  dist/src/core/lib/events/peer-events.js
+200 notice 427B   dist/src/utils/regex.utils.js
+200 notice 155B   dist/src/utils/remote.utils.js
+200 notice 265B   dist/src/connection/interfaces/request-state.enum.js
+200 notice 11B    dist/src/router/interfaces/resolve.request.js
+200 notice 6.1kB  dist/src/response/response-builder.js
+200 notice 511B   dist/src/router/enums/restricted-addresses.enum.js
+200 notice 11B    dist/src/router/interfaces/route.response.js
+200 notice 271B   dist/src/core/interfaces/state.enum.js
+200 notice 1.3kB  dist/src/utils/streaming.utils.js
+200 notice 177B   dist/src/transports/interfaces/transport-type.enum.js
+200 notice 11B    dist/src/core/interfaces/use-data.config.js
+200 notice 11B    dist/src/core/interfaces/use-options.interface.js
+200 notice 11B    dist/src/core/interfaces/use-stream-options.interface.js
+200 notice 2.1kB  package.json
+200 notice 492B   dist/src/error/enums/codes.error.d.ts.map
+200 notice 228B   dist/src/core/defaults/config.d.ts.map
+200 notice 900B   dist/src/core/lib/events/connection-events.d.ts.map
+200 notice 201B   dist/src/connection/interfaces/connection-manager.config.d.ts.map
+200 notice 369B   dist/src/connection/interfaces/connection-send-params.interface.d.ts.map
+200 notice 343B   dist/src/connection/interfaces/connection.config.d.ts.map
+200 notice 1.0kB  dist/src/utils/core.utils.d.ts.map
+200 notice 262B   dist/src/transports/custom.transport.d.ts.map
+200 notice 613B   dist/src/core/lib/utils/event-filters.d.ts.map
+200 notice 660B   dist/src/core/graceful-shutdown.d.ts.map
+200 notice 1.6kB  dist/src/core/lib/events/hierarchy-events.d.ts.map
+200 notice 138B   dist/test/server/in-process.spec.d.ts.map
+200 notice 280B   dist/src/connection/index.d.ts.map
+200 notice 225B   dist/src/connection/interfaces/index.d.ts.map
+200 notice 146B   dist/src/core/defaults/index.d.ts.map
+200 notice 293B   dist/src/core/index.d.ts.map
+200 notice 265B   dist/src/core/interfaces/index.d.ts.map
+200 notice 268B   dist/src/core/lib/events/index.d.ts.map
+200 notice 281B   dist/src/core/lib/index.d.ts.map
+200 notice 158B   dist/src/error/index.d.ts.map
+200 notice 266B   dist/src/index.d.ts.map
+200 notice 206B   dist/src/response/index.d.ts.map
+200 notice 343B   dist/src/router/index.d.ts.map
+200 notice 188B   dist/src/transports/index.d.ts.map
+200 notice 227B   dist/src/utils/index.d.ts.map
+200 notice 519B   dist/src/utils/logger.d.ts.map
+200 notice 1.1kB  dist/src/core/lib/events/node-events.d.ts.map
+200 notice 275B   dist/src/core/interfaces/node-type.enum.d.ts.map
+200 notice 733B   dist/src/core/lib/interfaces/notification-types.d.ts.map
+200 notice 628B   dist/src/router/o-address-resolver.d.ts.map
+200 notice 1.3kB  dist/src/router/o-address.d.ts.map
+200 notice 136B   dist/test/router/o-address.spec.d.ts.map
+200 notice 636B   dist/src/connection/o-connection-manager.d.ts.map
+200 notice 1.1kB  dist/src/connection/o-connection.d.ts.map
+200 notice 879B   dist/src/core/interfaces/o-core.config.d.ts.map
+200 notice 3.7kB  dist/src/core/o-core.d.ts.map
+200 notice 707B   dist/src/core/interfaces/o-core.interface.d.ts.map
+200 notice 333B   dist/src/core/o-dependency.d.ts.map
+200 notice 417B   dist/src/error/o-error.d.ts.map
+200 notice 260B   dist/src/error/interfaces/o-error.interface.d.ts.map
+200 notice 876B   dist/src/core/lib/o-hierarchy.manager.d.ts.map
+200 notice 202B   dist/src/core/lib/o-metrics.d.ts.map
+200 notice 693B   dist/src/core/lib/events/o-notification-event.d.ts.map
+200 notice 1.0kB  dist/src/core/lib/o-notification.manager.d.ts.map
+200 notice 287B   dist/src/core/o-object.d.ts.map
+200 notice 411B   dist/src/core/o-parameter.d.ts.map
+200 notice 679B   dist/src/router/o-request-preparation.d.ts.map
+200 notice 828B   dist/src/connection/o-request.d.ts.map
+200 notice 1.1kB  dist/src/core/lib/o-request.manager.d.ts.map
+200 notice 655B   dist/src/router/o-request.router.d.ts.map
+200 notice 627B   dist/src/router/o-resolver-chain.d.ts.map
+200 notice 476B   dist/src/connection/o-response.d.ts.map
+200 notice 1.0kB  dist/src/router/o-router.d.ts.map
+200 notice 625B   dist/src/router/o-routing-policy.d.ts.map
+200 notice 410B   dist/src/transports/o-transport.d.ts.map
+200 notice 341B   dist/src/utils/object.utils.d.ts.map
+200 notice 1.1kB  dist/src/core/lib/events/peer-events.d.ts.map
+200 notice 202B   dist/src/utils/regex.utils.d.ts.map
+200 notice 184B   dist/src/utils/remote.utils.d.ts.map
+200 notice 246B   dist/src/connection/interfaces/request-state.enum.d.ts.map
+200 notice 413B   dist/src/router/interfaces/resolve.request.d.ts.map
+200 notice 2.2kB  dist/src/response/response-builder.d.ts.map
+200 notice 291B   dist/src/router/enums/restricted-addresses.enum.d.ts.map
+200 notice 343B   dist/src/router/interfaces/route.response.d.ts.map
+200 notice 240B   dist/src/core/interfaces/state.enum.d.ts.map
+200 notice 561B   dist/src/utils/streaming.utils.d.ts.map
+200 notice 216B   dist/src/transports/interfaces/transport-type.enum.d.ts.map
+200 notice 300B   dist/src/core/interfaces/use-data.config.d.ts.map
+200 notice 440B   dist/src/core/interfaces/use-options.interface.d.ts.map
+200 notice 279B   dist/src/core/interfaces/use-stream-options.interface.d.ts.map
+200 notice 16.0kB README.md
+200 notice 640B   dist/src/error/enums/codes.error.d.ts
+200 notice 188B   dist/src/core/defaults/config.d.ts
+200 notice 1.0kB  dist/src/core/lib/events/connection-events.d.ts
+200 notice 101B   dist/src/connection/interfaces/connection-manager.config.d.ts
+200 notice 216B   dist/src/connection/interfaces/connection-send-params.interface.d.ts
+200 notice 253B   dist/src/connection/interfaces/connection.config.d.ts
+200 notice 1.6kB  dist/src/utils/core.utils.d.ts
+200 notice 210B   dist/src/transports/custom.transport.d.ts
+200 notice 1.7kB  dist/src/core/lib/utils/event-filters.d.ts
+200 notice 897B   dist/src/core/graceful-shutdown.d.ts
+200 notice 2.2kB  dist/src/core/lib/events/hierarchy-events.d.ts
+200 notice 56B    dist/test/server/in-process.spec.d.ts
+200 notice 327B   dist/src/connection/index.d.ts
+200 notice 219B   dist/src/connection/interfaces/index.d.ts
+200 notice 64B    dist/src/core/defaults/index.d.ts
+200 notice 312B   dist/src/core/index.d.ts
+200 notice 275B   dist/src/core/interfaces/index.d.ts
+200 notice 278B   dist/src/core/lib/events/index.d.ts
+200 notice 323B   dist/src/core/lib/index.d.ts
+200 notice 105B   dist/src/error/index.d.ts
+200 notice 286B   dist/src/index.d.ts
+200 notice 169B   dist/src/response/index.d.ts
+200 notice 451B   dist/src/router/index.d.ts
+200 notice 161B   dist/src/transports/index.d.ts
+200 notice 201B   dist/src/utils/index.d.ts
+200 notice 399B   dist/src/utils/logger.d.ts
+200 notice 1.3kB  dist/src/core/lib/events/node-events.d.ts
+200 notice 223B   dist/src/core/interfaces/node-type.enum.d.ts
+200 notice 1.1kB  dist/src/core/lib/interfaces/notification-types.d.ts
+200 notice 700B   dist/src/router/o-address-resolver.d.ts
+200 notice 1.6kB  dist/src/router/o-address.d.ts
+200 notice 55B    dist/test/router/o-address.spec.d.ts
+200 notice 836B   dist/src/connection/o-connection-manager.d.ts
+200 notice 1.1kB  dist/src/connection/o-connection.d.ts
+200 notice 844B   dist/src/core/interfaces/o-core.config.d.ts
+200 notice 9.2kB  dist/src/core/o-core.d.ts
+200 notice 651B   dist/src/core/interfaces/o-core.interface.d.ts
+200 notice 314B   dist/src/core/o-dependency.d.ts
+200 notice 456B   dist/src/error/o-error.d.ts
+200 notice 142B   dist/src/error/interfaces/o-error.interface.d.ts
+200 notice 826B   dist/src/core/lib/o-hierarchy.manager.d.ts
+200 notice 123B   dist/src/core/lib/o-metrics.d.ts
+200 notice 847B   dist/src/core/lib/events/o-notification-event.d.ts
+200 notice 2.1kB  dist/src/core/lib/o-notification.manager.d.ts
+200 notice 206B   dist/src/core/o-object.d.ts
+200 notice 366B   dist/src/core/o-parameter.d.ts
+200 notice 1.8kB  dist/src/router/o-request-preparation.d.ts
+200 notice 840B   dist/src/connection/o-request.d.ts
+200 notice 1.3kB  dist/src/core/lib/o-request.manager.d.ts
+200 notice 674B   dist/src/router/o-request.router.d.ts
+200 notice 1.5kB  dist/src/router/o-resolver-chain.d.ts
+200 notice 418B   dist/src/connection/o-response.d.ts
+200 notice 1.1kB  dist/src/router/o-router.d.ts
+200 notice 1.7kB  dist/src/router/o-routing-policy.d.ts
+200 notice 380B   dist/src/transports/o-transport.d.ts
+200 notice 221B   dist/src/utils/object.utils.d.ts
+200 notice 1.6kB  dist/src/core/lib/events/peer-events.d.ts
+200 notice 131B   dist/src/utils/regex.utils.d.ts
+200 notice 118B   dist/src/utils/remote.utils.d.ts
+200 notice 192B   dist/src/connection/interfaces/request-state.enum.d.ts
+200 notice 327B   dist/src/router/interfaces/resolve.request.d.ts
+200 notice 5.0kB  dist/src/response/response-builder.d.ts
+200 notice 287B   dist/src/router/enums/restricted-addresses.enum.d.ts
+200 notice 277B   dist/src/router/interfaces/route.response.d.ts
+200 notice 198B   dist/src/core/interfaces/state.enum.d.ts
+200 notice 1.1kB  dist/src/utils/streaming.utils.d.ts
+200 notice 132B   dist/src/transports/interfaces/transport-type.enum.d.ts
+200 notice 167B   dist/src/core/interfaces/use-data.config.d.ts
+200 notice 322B   dist/src/core/interfaces/use-options.interface.d.ts
+200 notice 187B   dist/src/core/interfaces/use-stream-options.interface.d.ts
+201 notice === Tarball Details ===
+202 notice name:          @olane/o-core
+202 notice version:       0.7.59
+202 notice filename:      olane-o-core-0.7.59.tgz
+202 notice package size:  54.6 kB
+202 notice unpacked size: 219.1 kB
+202 notice shasum:        907766f8ca028e758c7b1918c894194e8693597c
+202 notice integrity:     sha512-EpGX3yAShwSbN[...]yKmRFsBGvZTNQ==
+202 notice total files:   213
+203 notice
+204 verbose publish @olane/o-server
+205 verbose publish @olane/o-test
+206 verbose publish @olane/o-tool
+207 silly lifecycle No script for "publish" in "@olane/o-test", continuing
+208 silly lifecycle No script for "postpublish" in "@olane/o-test", continuing
+209 success published @olane/o-test 0.7.59
+210 notice
+211 notice 📦  @olane/o-test@0.7.59
+212 notice === Tarball Contents ===
+213 notice 1.6kB LICENSE
+213 notice 5.8kB dist/src/utils/assertions.js
+213 notice 4.2kB dist/src/utils/chunk-capture.js
+213 notice 2.8kB dist/src/example-tool.tool.js
+213 notice 1.7kB dist/src/methods/example.methods.js
+213 notice 428B  dist/src/builders/index.js
+213 notice 118B  dist/src/fixtures/index.js
+213 notice 1.4kB dist/src/index.js
+213 notice 248B  dist/src/utils/index.js
+213 notice 1.5kB dist/src/builders/leader-child-builder.js
+213 notice 2.5kB dist/src/builders/manager-worker-builder.js
+213 notice 4.5kB dist/src/fixtures/mock-data.js
+213 notice 4.7kB dist/src/utils/mock-factories.js
+213 notice 1.4kB dist/src/builders/simple-node-builder.js
+213 notice 7.3kB dist/src/test-environment.js
+213 notice 9.7kB dist/test/test-environment.spec.js
+213 notice 4.7kB dist/src/fixtures/test-methods.js
+213 notice 2.0kB dist/src/utils/wait-for.js
+213 notice 2.0kB package.json
+213 notice 1.6kB dist/src/utils/assertions.d.ts.map
+213 notice 906B  dist/src/utils/chunk-capture.d.ts.map
+213 notice 482B  dist/src/example-tool.tool.d.ts.map
+213 notice 269B  dist/src/methods/example.methods.d.ts.map
+213 notice 138B  dist/src/builders/index.d.ts.map
+213 notice 174B  dist/src/fixtures/index.d.ts.map
+213 notice 734B  dist/src/index.d.ts.map
+213 notice 275B  dist/src/utils/index.d.ts.map
+213 notice 1.0kB dist/src/builders/leader-child-builder.d.ts.map
+213 notice 1.1kB dist/src/builders/manager-worker-builder.d.ts.map
+213 notice 674B  dist/src/fixtures/mock-data.d.ts.map
+213 notice 1.4kB dist/src/utils/mock-factories.d.ts.map
+213 notice 898B  dist/src/builders/simple-node-builder.d.ts.map
+213 notice 1.7kB dist/src/test-environment.d.ts.map
+213 notice 179B  dist/test/test-environment.spec.d.ts.map
+213 notice 618B  dist/src/fixtures/test-methods.d.ts.map
+213 notice 498B  dist/src/utils/wait-for.d.ts.map
+213 notice 9.9kB README.md
+213 notice 4.6kB dist/src/utils/assertions.d.ts
+213 notice 2.8kB dist/src/utils/chunk-capture.d.ts
+213 notice 1.8kB dist/src/example-tool.tool.d.ts
+213 notice 294B  dist/src/methods/example.methods.d.ts
+213 notice 449B  dist/src/builders/index.d.ts
+213 notice 153B  dist/src/fixtures/index.d.ts
+213 notice 1.2kB dist/src/index.d.ts
+213 notice 283B  dist/src/utils/index.d.ts
+213 notice 1.5kB dist/src/builders/leader-child-builder.d.ts
+213 notice 1.5kB dist/src/builders/manager-worker-builder.d.ts
+213 notice 3.8kB dist/src/fixtures/mock-data.d.ts
+213 notice 4.4kB dist/src/utils/mock-factories.d.ts
+213 notice 1.3kB dist/src/builders/simple-node-builder.d.ts
+213 notice 5.3kB dist/src/test-environment.d.ts
+213 notice 472B  dist/test/test-environment.spec.d.ts
+213 notice 866B  dist/src/fixtures/test-methods.d.ts
+213 notice 1.5kB dist/src/utils/wait-for.d.ts
+214 notice === Tarball Details ===
+215 notice name:          @olane/o-test
+215 notice version:       0.7.59
+215 notice filename:      olane-o-test-0.7.59.tgz
+215 notice package size:  27.7 kB
+215 notice unpacked size: 113.5 kB
+215 notice shasum:        a853dfb25244154493c97743981560b6a43464d1
+215 notice integrity:     sha512-+UImdeEuJNQ+r[...]XOl6Uy2WgvHtQ==
+215 notice total files:   54
+216 notice
+217 silly lifecycle No script for "publish" in "@olane/o-server", continuing
+218 silly lifecycle No script for "postpublish" in "@olane/o-server", continuing
+219 success published @olane/o-server 0.7.59
 220 notice
-221 verbose publish @olane/o-core
-222 silly FetchError: request to https://registry.npmjs.org/@olane%2fo-core failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
-222 silly
-222 silly     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
-222 silly     at ClientRequest.emit (node:events:507:28)
-222 silly     at emitErrorEvent (node:_http_client:104:11)
-222 silly     at TLSSocket.socketErrorListener (node:_http_client:518:5)
-222 silly     at TLSSocket.emit (node:events:507:28)
-222 silly     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
-222 silly     at TLSWrap.onerror (node:_tls_wrap:474:11)
-222 silly  FetchError: request to https://registry.npmjs.org/@olane%2fo-core failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
-222 silly
-222 silly     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
-222 silly     at ClientRequest.emit (node:events:507:28)
-222 silly     at emitErrorEvent (node:_http_client:104:11)
-222 silly     at TLSSocket.socketErrorListener (node:_http_client:518:5)
-222 silly     at TLSSocket.emit (node:events:507:28)
-222 silly     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
-222 silly     at TLSWrap.onerror (node:_tls_wrap:474:11) {
-222 silly   code: 'ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC',
-222 silly   library: 'SSL routines',
-222 silly   reason: 'sslv3 alert bad record mac',
-222 silly   errno: 'ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC',
-222 silly   type: 'system'
-222 silly }
-223 warn notice Package failed to publish: @olane/o-core
-224 error ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC request to https://registry.npmjs.org/@olane%2fo-core failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
-225 error errno "ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC" is not a valid exit code - exiting with code 1
-226 silly lifecycle No script for "publish" in "@olane/o-config", continuing
-227 silly lifecycle No script for "postpublish" in "@olane/o-config", continuing
-228 success published @olane/o-config 0.7.59
-229 notice
-230 notice 📦  @olane/o-config@0.7.59
-231 notice === Tarball Contents ===
-232 notice 1.6kB  LICENSE
-232 notice 1.8kB  dist/src/config/config.js
-232 notice 2.4kB  dist/test/p2p/create-node.spec.js
-232 notice 29B    dist/src/config/index.js
-232 notice 1.1kB  dist/src/index.js
-232 notice 27B    dist/src/node/index.js
-232 notice 421B   dist/src/node/node.js
-232 notice 216B   dist/src/utils.js
-232 notice 2.3kB  package.json
-232 notice 436B   dist/src/config/config.d.ts.map
-232 notice 137B   dist/test/p2p/create-node.spec.d.ts.map
-232 notice 136B   dist/src/config/index.d.ts.map
-232 notice 1.2kB  dist/src/index.d.ts.map
-232 notice 134B   dist/src/node/index.d.ts.map
-232 notice 267B   dist/src/node/node.d.ts.map
-232 notice 157B   dist/src/utils.d.ts.map
-232 notice 16.3kB README.md
-232 notice 328B   dist/src/config/config.d.ts
-232 notice 57B    dist/test/p2p/create-node.spec.d.ts
-232 notice 64B    dist/src/config/index.d.ts
-232 notice 1.3kB  dist/src/index.d.ts
-232 notice 62B    dist/src/node/index.d.ts
-232 notice 195B   dist/src/node/node.d.ts
-232 notice 111B   dist/src/utils.d.ts
-233 notice === Tarball Details ===
-234 notice name:          @olane/o-config
-234 notice version:       0.7.59
-234 notice filename:      olane-o-config-0.7.59.tgz
-234 notice package size:  9.7 kB
-234 notice unpacked size: 30.6 kB
-234 notice shasum:        e5ae98cc395b6303fab44dbe796dea8264f7a767
-234 notice integrity:     sha512-QZsgVCB6ARViR[...]lgHlLzTWPg4dw==
-234 notice total files:   24
-235 notice
-236 error FetchError: request to https://registry.npmjs.org/@olane%2fo-core failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
-236 error
-236 error     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
-236 error     at ClientRequest.emit (node:events:507:28)
-236 error     at emitErrorEvent (node:_http_client:104:11)
-236 error     at TLSSocket.socketErrorListener (node:_http_client:518:5)
-236 error     at TLSSocket.emit (node:events:507:28)
-236 error     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
+221 notice 📦  @olane/o-server@0.7.59
+222 notice === Tarball Contents ===
+223 notice 1.6kB  LICENSE
+223 notice 731B   dist/test/ai.spec.js
+223 notice 492B   dist/src/middleware/auth.js
+223 notice 469B   dist/src/middleware/error-handler.js
+223 notice 41B    dist/src/index.js
+223 notice 365B   dist/src/utils/logger.js
+223 notice 6.8kB  dist/src/o-server.js
+223 notice 11B    dist/src/interfaces/response.interface.js
+223 notice 11B    dist/src/interfaces/server-config.interface.js
+223 notice 1.9kB  package.json
+223 notice 112B   dist/test/ai.spec.d.ts.map
+223 notice 419B   dist/src/middleware/auth.d.ts.map
+223 notice 428B   dist/src/middleware/error-handler.d.ts.map
+223 notice 266B   dist/src/index.d.ts.map
+223 notice 309B   dist/src/utils/logger.d.ts.map
+223 notice 219B   dist/src/o-server.d.ts.map
+223 notice 479B   dist/src/interfaces/response.interface.d.ts.map
+223 notice 912B   dist/src/interfaces/server-config.interface.d.ts.map
+223 notice 16.7kB README.md
+223 notice 48B    dist/test/ai.spec.d.ts
+223 notice 444B   dist/src/middleware/auth.d.ts
+223 notice 317B   dist/src/middleware/error-handler.d.ts
+223 notice 273B   dist/src/index.d.ts
+223 notice 227B   dist/src/utils/logger.d.ts
+223 notice 197B   dist/src/o-server.d.ts
+223 notice 342B   dist/src/interfaces/response.interface.d.ts
+223 notice 942B   dist/src/interfaces/server-config.interface.d.ts
+224 notice === Tarball Details ===
+225 notice name:          @olane/o-server
+225 notice version:       0.7.59
+225 notice filename:      olane-o-server-0.7.59.tgz
+225 notice package size:  10.4 kB
+225 notice unpacked size: 35.0 kB
+225 notice shasum:        8cafc517c232fb9715c4d46743ec753e07fcc341
+225 notice integrity:     sha512-ISwwyjGnRRX7V[...]wfPTXTxf0XqjQ==
+225 notice total files:   27
+226 notice
+227 silly lifecycle No script for "publish" in "@olane/o-tool", continuing
+228 silly lifecycle No script for "postpublish" in "@olane/o-tool", continuing
+229 success published @olane/o-tool 0.7.59
+230 notice
+231 notice 📦  @olane/o-tool@0.7.59
+232 notice === Tarball Contents ===
+233 notice 1.6kB  LICENSE
+233 notice 361B   dist/src/index.js
+233 notice 84B    dist/src/router/index.js
+233 notice 1.7kB  dist/src/router/resolvers/method.resolver.js
+233 notice 944B   dist/test/method.spec.js
+233 notice 1.1kB  dist/src/utils/method.utils.js
+233 notice 8.0kB  dist/src/o-tool.base.js
+233 notice 9.0kB  dist/src/o-tool.js
+233 notice 1.6kB  dist/src/router/o-tool.router.js
+233 notice 11B    dist/src/interfaces/run-params.interface.js
+233 notice 11B    dist/src/interfaces/run-result.interface.js
+233 notice 11B    dist/src/interfaces/run-tool.interface.js
+233 notice 11B    dist/src/interfaces/tool-result.interface.js
+233 notice 11B    dist/src/interfaces/tool.interface.js
+233 notice 1.7kB  package.json
+233 notice 287B   dist/src/index.d.ts.map
+233 notice 161B   dist/src/router/index.d.ts.map
+233 notice 426B   dist/src/router/resolvers/method.resolver.d.ts.map
+233 notice 120B   dist/test/method.spec.d.ts.map
+233 notice 402B   dist/src/utils/method.utils.d.ts.map
+233 notice 1.0kB  dist/src/o-tool.base.d.ts.map
+233 notice 273B   dist/src/o-tool.d.ts.map
+233 notice 522B   dist/src/router/o-tool.router.d.ts.map
+233 notice 217B   dist/src/interfaces/run-params.interface.d.ts.map
+233 notice 217B   dist/src/interfaces/run-result.interface.d.ts.map
+233 notice 291B   dist/src/interfaces/run-tool.interface.d.ts.map
+233 notice 219B   dist/src/interfaces/tool-result.interface.d.ts.map
+233 notice 239B   dist/src/interfaces/tool.interface.d.ts.map
+233 notice 10.3kB README.md
+233 notice 396B   dist/src/index.d.ts
+233 notice 119B   dist/src/router/index.d.ts
+233 notice 396B   dist/src/router/resolvers/method.resolver.d.ts
+233 notice 41B    dist/test/method.spec.d.ts
+233 notice 325B   dist/src/utils/method.utils.d.ts
+233 notice 1.4kB  dist/src/o-tool.base.d.ts
+233 notice 390B   dist/src/o-tool.d.ts
+233 notice 653B   dist/src/router/o-tool.router.d.ts
+233 notice 113B   dist/src/interfaces/run-params.interface.d.ts
+233 notice 109B   dist/src/interfaces/run-result.interface.d.ts
+233 notice 196B   dist/src/interfaces/run-tool.interface.d.ts
+233 notice 107B   dist/src/interfaces/tool-result.interface.d.ts
+233 notice 159B   dist/src/interfaces/tool.interface.d.ts
+234 notice === Tarball Details ===
+235 notice name:          @olane/o-tool
+235 notice version:       0.7.59
+235 notice filename:      olane-o-tool-0.7.59.tgz
+235 notice package size:  13.4 kB
+235 notice unpacked size: 45.3 kB
+235 notice shasum:        a8a7c0ab4daee0787db88a6651b912d4215610ee
+235 notice integrity:     sha512-VxcuBdhv/AlPn[...]+5HDIOYtjTMWA==
+235 notice total files:   42
+236 notice
+237 verbose publish @olane/o-gateway-interface
+238 verbose publish @olane/o-node
+239 silly FetchError: request to https://registry.npmjs.org/@olane%2fo-node failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
+239 silly
+239 silly     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
+239 silly     at ClientRequest.emit (node:events:507:28)
+239 silly     at emitErrorEvent (node:_http_client:104:11)
+239 silly     at TLSSocket.socketErrorListener (node:_http_client:518:5)
+239 silly     at TLSSocket.emit (node:events:507:28)
+239 silly     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
+239 silly     at TLSWrap.onerror (node:_tls_wrap:474:11)
+239 silly  FetchError: request to https://registry.npmjs.org/@olane%2fo-node failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
+239 silly
+239 silly     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
+239 silly     at ClientRequest.emit (node:events:507:28)
+239 silly     at emitErrorEvent (node:_http_client:104:11)
+239 silly     at TLSSocket.socketErrorListener (node:_http_client:518:5)
+239 silly     at TLSSocket.emit (node:events:507:28)
+239 silly     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
+239 silly     at TLSWrap.onerror (node:_tls_wrap:474:11) {
+239 silly   code: 'ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC',
+239 silly   library: 'SSL routines',
+239 silly   reason: 'sslv3 alert bad record mac',
+239 silly   errno: 'ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC',
+239 silly   type: 'system'
+239 silly }
+240 warn notice Package failed to publish: @olane/o-node
+241 error ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC request to https://registry.npmjs.org/@olane%2fo-node failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
+242 error errno "ERR_SSL_SSLV3_ALERT_BAD_RECORD_MAC" is not a valid exit code - exiting with code 1
+243 silly lifecycle No script for "publish" in "@olane/o-gateway-interface", continuing
+244 silly lifecycle No script for "postpublish" in "@olane/o-gateway-interface", continuing
+245 success published @olane/o-gateway-interface 0.7.59
+246 notice
+247 notice 📦  @olane/o-gateway-interface@0.7.59
+248 notice === Tarball Contents ===
+249 notice 1.6kB LICENSE
+249 notice 39B   dist/index.js
+249 notice 32B   dist/interfaces/index.js
+249 notice 11B   dist/interfaces/o-gateway.js
+249 notice 1.7kB package.json
+249 notice 125B  dist/index.d.ts.map
+249 notice 139B  dist/interfaces/index.d.ts.map
+249 notice 284B  dist/interfaces/o-gateway.d.ts.map
+249 notice 683B  README.md
+249 notice 74B   dist/index.d.ts
+249 notice 67B   dist/interfaces/index.d.ts
+249 notice 177B  dist/interfaces/o-gateway.d.ts
+250 notice === Tarball Details ===
+251 notice name:          @olane/o-gateway-interface
+251 notice version:       0.7.59
+251 notice filename:      olane-o-gateway-interface-0.7.59.tgz
+251 notice package size:  2.5 kB
+251 notice unpacked size: 4.9 kB
+251 notice shasum:        f5c01182a97376cb7f714b4261a0796f8dd19524
+251 notice integrity:     sha512-wWzEM1kt2uPB8[...]3UxZXKE7PITFA==
+251 notice total files:   12
+252 notice
+253 error FetchError: request to https://registry.npmjs.org/@olane%2fo-node failed, reason: 80608DED01000000:error:0A0003FC:SSL routines:ssl3_read_bytes:sslv3 alert bad record mac:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1605:SSL alert number 20
+253 error
+253 error     at ClientRequest.<anonymous> (/Users/brendon/Development/highway/olane/node_modules/.pnpm/minipass-fetch@4.0.1/node_modules/minipass-fetch/lib/index.js:130:14)
+253 error     at ClientRequest.emit (node:events:507:28)
+253 error     at emitErrorEvent (node:_http_client:104:11)
+253 error     at TLSSocket.socketErrorListener (node:_http_client:518:5)
+253 error     at TLSSocket.emit (node:events:507:28)
+253 error     at TLSSocket._emitTLSError (node:_tls_wrap:1033:10)
