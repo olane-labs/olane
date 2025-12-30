@@ -76,6 +76,7 @@ export class oNodeTool extends oTool(oServerNode) {
     ) {
       await this.handleProtocol(this.staticAddress);
     }
+    await this.handleProtocol(new oNodeAddress('o://reuse'));
   }
 
   async initialize(): Promise<void> {

@@ -75,6 +75,7 @@ export class oNodeConnectionManager extends oConnectionManager {
       conn.p2pConnection.direction,
       conn.nextHopAddress.value,
       conn.p2pConnection.streams.map((s) => s.protocol).join(', '),
+      conn.remotePeerId,
     );
     this.cachedConnections.set(conn.p2pConnection.id, conn);
   }
@@ -238,6 +239,7 @@ export class oNodeConnectionManager extends oConnectionManager {
     } else {
       this.logger.debug('No cached connection found for address:', {
         address: nextHopAddress.value,
+        peerId: nextHopAddress.libp2pTransports?.[0].toPeerId(),
       });
     }
 
@@ -269,8 +271,9 @@ export class oNodeConnectionManager extends oConnectionManager {
     address: oNodeAddress,
   ): oNodeConnection | null {
     const vals = Array.from(this.cachedConnections.values());
-    for (const c in vals) {
-      const connection: oNodeConnection = c as unknown as oNodeConnection;
+    for (let i = 0; i < vals.length; ++i) {
+      const c = vals[i];
+      const connection: oNodeConnection = c as oNodeConnection;
       const peerId = address.libp2pTransports?.[0].toPeerId();
       if (
         connection.p2pConnection?.remotePeer.toString() === peerId &&

@@ -165,12 +165,12 @@ export class oNodeRequestManager extends oRequestManager {
     connection: Connection;
     stream: Stream;
   }) {
-    const unknown = new oNodeAddress('o://unknown', []);
+    const streamAddress = oNodeAddress.fromProtocol('o://reuse');
     const oConnection = await this.connectionManager.answer(
       {
-        nextHopAddress: unknown,
-        targetAddress: unknown,
-        callerAddress: unknown,
+        nextHopAddress: streamAddress,
+        targetAddress: streamAddress,
+        callerAddress: streamAddress,
         p2pConnection: connection,
       },
       stream,

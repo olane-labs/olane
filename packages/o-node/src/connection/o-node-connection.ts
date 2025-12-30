@@ -74,9 +74,6 @@ export class oNodeConnection extends oConnection {
   }
 
   get nextHopAddress(): oAddress {
-    if (this.config.nextHopAddress.value === 'o://unknown') {
-      return this.address;
-    }
     return this.config.nextHopAddress;
   }
 
