@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.59 (2025-12-30)</small>
+
+- minor change ([2c89659](https://github.com/olane-labs/olane/commit/2c89659))
+- chore: update pnpm-lock.yaml after version bump ([3b5514d](https://github.com/olane-labs/olane/commit/3b5514d))
+
 ## <small>0.7.58 (2025-12-30)</small>
 
 - minor change ([725705b](https://github.com/olane-labs/olane/commit/725705b))
