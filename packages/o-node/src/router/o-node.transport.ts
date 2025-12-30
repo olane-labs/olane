@@ -18,11 +18,13 @@ export class oNodeTransport extends oTransport {
     return this.value.toString();
   }
 
+  // TODO: improve this to account for all variations of transport values from libp2p
   toPeerId(): string {
-    const peerId = this.value.toString().split('/p2p/')[1];
-    if (peerId?.indexOf('/') > -1) {
-      return peerId.split('/')[0]; // bandaid
+    // handle relayed addresses
+    if (this.value.toString()?.indexOf('/p2p-circuit') > -1) {
+      return this.value.toString().split('/p2p-circuit/p2p/')[1];
     }
+    const peerId = this.value.toString().split('/p2p/')[1];
     return peerId;
   }
 }
