@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.57 (2025-12-30)</small>
+
+- fix for reuse stream ([d0103f5](https://github.com/olane-labs/olane/commit/d0103f5))
+
 ## <small>0.7.56 (2025-12-29)</small>
 
 - all unit tests passing for o-node ([5b11155](https://github.com/olane-labs/olane/commit/5b11155))
