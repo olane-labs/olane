@@ -19,6 +19,10 @@ export class oNodeTransport extends oTransport {
   }
 
   toPeerId(): string {
-    return this.value.toString().split('/p2p/')[1];
+    const peerId = this.value.toString().split('/p2p/')[1];
+    if (peerId?.indexOf('/') > -1) {
+      return peerId.split('/')[0]; // bandaid
+    }
+    return peerId;
   }
 }
