@@ -6,6 +6,7 @@ import { oNodeConnection } from './o-node-connection.js';
 import { EventEmitter } from 'events';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
 import { oNodeStream } from './o-node-stream.js';
+import { v4 } from 'uuid';
 
 /**
  * Manages oNodeConnection instances, reusing connections when possible.
@@ -24,7 +25,9 @@ export class oNodeConnectionManager extends oConnectionManager {
     this.p2pNode = config.p2pNode;
     this.defaultReadTimeoutMs = config.defaultReadTimeoutMs;
     this.defaultDrainTimeoutMs = config.defaultDrainTimeoutMs;
-    this.logger.setNamespace(`oNodeConnectionManager[${config.callerAddress}]`);
+    this.logger.setNamespace(
+      `oNodeConnectionManager[${config.p2pNode.peerId}-${v4()}]`,
+    );
 
     // Set up connection lifecycle listeners for cache management
     this.setupConnectionListeners();

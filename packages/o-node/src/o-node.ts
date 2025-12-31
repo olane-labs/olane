@@ -418,6 +418,11 @@ export class oNode extends oToolBase {
   }
 
   async initConnectionManager(): Promise<void> {
+    if (this.connectionManager) {
+      this.logger.warn('Already loaded connection manager');
+      return;
+    }
+    this.logger.info('Initializing connection manager');
     this.connectionManager = new oNodeConnectionManager({
       p2pNode: this.p2pNode,
       defaultReadTimeoutMs: this.config.connectionTimeouts?.readTimeoutMs,

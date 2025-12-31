@@ -30,6 +30,7 @@ import { EventEmitter } from 'events';
 import { AbortSignalConfig } from '../connection/interfaces/abort-signal.config.js';
 import { RunResult } from '@olane/o-tool';
 import { v4 } from 'uuid';
+import { oProtocolMethods } from '@olane/o-protocol';
 
 export class oNodeRequestManager extends oRequestManager {
   connectionManager: oNodeConnectionManager;
@@ -137,25 +138,39 @@ export class oNodeRequestManager extends oRequestManager {
 
     // communicate the payload to the target node
     const requestId = data?.id || v4();
-    const stream = await connection.send(
-      {
-        address: targetAddress?.toString() || '',
-        payload: data || {},
-        id: requestId,
-      },
-      options,
-    );
-    const response = await stream.waitForResponse(requestId);
-    stream.close();
 
-    // we handle streaming response differently
-    if (options?.isStream) {
+    const requestMirror = connection.createRequest(oProtocolMethods.ROUTE, {
+      address: targetAddress?.toString() || '',
+      payload: data || {},
+      id: requestId,
+    });
+
+    this.addRequest(requestMirror);
+    try {
+      const stream = await connection.send(
+        {
+          address: targetAddress?.toString() || '',
+          payload: data || {},
+          id: requestId,
+        },
+        options,
+      );
+      const response = await stream.waitForResponse(requestId);
+      stream.close();
+      this.removeRequest(requestMirror);
+
+      // we handle streaming response differently
+      if (options?.isStream) {
+        return response;
+      }
+
+      // if there is an error, throw it to continue to bubble up
+      this.handleResponseError(response);
       return response;
+    } catch (e) {
+      this.removeRequest(requestMirror);
+      throw e;
     }
-
-    // if there is an error, throw it to continue to bubble up
-    this.handleResponseError(response);
-    return response;
   }
 
   async receiveStream({
@@ -221,11 +236,13 @@ export class oNodeRequestManager extends oRequestManager {
     }
     connection.on(oNodeMessageEvent.request, async (data: oStreamRequest) => {
       try {
+        this.addRequest(data);
         const result = await this.emitAsync<RunResult>(
           oNodeMessageEvent.request,
           data,
         );
         this.sendResponse(data, result);
+        this.removeRequest(data);
       } catch (err) {
         this.logger.error('Error with request:', err);
         const responseBuilder = ResponseBuilder.create();

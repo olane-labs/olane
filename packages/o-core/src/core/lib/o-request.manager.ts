@@ -33,16 +33,24 @@ export abstract class oRequestManager extends oObject {
   }
 
   protected addRequest(request: oRequest): void {
+    request.state = RequestState.PENDING;
     this.requests.push(request);
   }
 
   protected removeRequest(request: oRequest): void {
-    this.requests = this.requests.filter((r) => r !== request);
+    this.requests = this.requests.filter((r) => r.id !== request.id);
   }
 
   getRequest(id: string): oRequest | undefined {
     return this.requests.find((r) => r.id === id);
   }
+
+  isLoading(id: string) {
+    const request = this.getRequest(id);
+    return request?.state === RequestState.PENDING;
+  }
+
+  abstract cancelRequest(id: string): Promise<void>;
 
   get activeRequests(): oRequest[] {
     return this.requests.filter((r) => r.state === RequestState.PENDING);
