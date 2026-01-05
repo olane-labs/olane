@@ -142,6 +142,28 @@ interface OpenAIEmbeddingResponse {
   };
 }
 
+interface OpenAIImageData {
+  url?: string;
+  b64_json?: string;
+  revised_prompt?: string;
+}
+
+interface OpenAIImageGenerationRequest {
+  prompt: string;
+  model?: string;
+  n?: number;
+  quality?: 'standard' | 'hd';
+  response_format?: 'url' | 'b64_json';
+  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
+  style?: 'vivid' | 'natural';
+  user?: string;
+}
+
+interface OpenAIImageGenerationResponse {
+  created: number;
+  data: OpenAIImageData[];
+}
+
 export class OpenAIIntelligenceTool extends oLaneTool {
   private baseUrl: string = 'https://api.openai.com/v1';
   private defaultModel: string = 'gpt-5';
@@ -889,6 +911,113 @@ export class OpenAIIntelligenceTool extends oLaneTool {
       return {
         success: false,
         error: `Failed to generate embedding: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Generate images using DALL-E
+   */
+  async _tool_generate_image(request: oRequest): Promise<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        prompt,
+        model = 'dall-e-3',
+        apiKey = this.apiKey,
+        n = 1,
+        quality = 'standard',
+        response_format = 'url',
+        size = '1024x1024',
+        style = 'vivid',
+        ...options
+      } = params;
+
+      if (!apiKey) {
+        return {
+          success: false,
+          error: 'OpenAI API key is required',
+        };
+      }
+
+      if (!prompt || typeof prompt !== 'string') {
+        return {
+          success: false,
+          error: 'prompt is required and must be a string',
+        };
+      }
+
+      // Validate size based on model
+      const validSizesDalle2 = ['256x256', '512x512', '1024x1024'];
+      const validSizesDalle3 = ['1024x1024', '1792x1024', '1024x1792'];
+
+      if (model === 'dall-e-2' && !validSizesDalle2.includes(size)) {
+        return {
+          success: false,
+          error: `For dall-e-2, size must be one of: ${validSizesDalle2.join(', ')}`,
+        };
+      }
+
+      if (model === 'dall-e-3' && !validSizesDalle3.includes(size)) {
+        return {
+          success: false,
+          error: `For dall-e-3, size must be one of: ${validSizesDalle3.join(', ')}`,
+        };
+      }
+
+      // DALL-E 3 only supports n=1
+      if (model === 'dall-e-3' && n !== 1) {
+        return {
+          success: false,
+          error: 'dall-e-3 only supports n=1 (single image generation)',
+        };
+      }
+
+      const imageRequest: OpenAIImageGenerationRequest = {
+        prompt,
+        model: model as string,
+        n,
+        quality,
+        response_format,
+        size: size as any,
+        style,
+      };
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (this.organization) {
+        headers['OpenAI-Organization'] = this.organization;
+      }
+
+      const response = await fetch(`${this.baseUrl}/images/generations`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(imageRequest),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `OpenAI API error: ${response.status} - ${errorText}`,
+        };
+      }
+
+      const result: OpenAIImageGenerationResponse =
+        (await response.json()) as OpenAIImageGenerationResponse;
+
+      return {
+        success: true,
+        images: result.data,
+        created: result.created,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Failed to generate image: ${(error as Error).message}`,
       };
     }
   }

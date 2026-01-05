@@ -9,11 +9,9 @@ import { INTELLIGENCE_PARAMS } from './methods/intelligence.methods.js';
 import { IntelligenceStorageKeys } from './enums/intelligence-storage-keys.enum.js';
 import { LLMProviders } from './enums/llm-providers.enum.js';
 import { ConfigureRequest } from './interfaces/configure.request.js';
-import { HostModelProvider } from './enums/host-model-provider.enum.js';
-import { multiaddr, Stream } from '@olane/o-config';
 import { PromptRequest } from './interfaces/prompt.request.js';
 import { oLaneTool } from '@olane/o-lane';
-import { oNodeConfig, oNodeToolConfig } from '@olane/o-node';
+import { oNodeToolConfig } from '@olane/o-node';
 
 export class IntelligenceTool extends oLaneTool {
   private roundRobinIndex = 0;
@@ -292,9 +290,7 @@ export class IntelligenceTool extends oLaneTool {
     return response.result.data as ToolResult;
   }
 
-  async initialize(): Promise<void> {
-    await super.initialize();
-
+  async initializeProviders() {
     const config = this.config;
     const tools = [
       new AnthropicIntelligenceTool({
@@ -330,5 +326,10 @@ export class IntelligenceTool extends oLaneTool {
       });
       await tool.start();
     }
+  }
+
+  async initialize(): Promise<void> {
+    await super.initialize();
+    await this.initializeProviders();
   }
 }

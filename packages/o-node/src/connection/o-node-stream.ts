@@ -29,7 +29,7 @@ export class oNodeStream extends oObject {
     public readonly p2pStream: Stream,
     public readonly config: oNodeStreamConfig,
   ) {
-    super();
+    super(p2pStream.id);
     this.createdAt = Date.now();
     this.lp = lpStream(p2pStream);
     this.listenForLibp2pEvents();
@@ -164,7 +164,9 @@ export class oNodeStream extends oObject {
   async waitForResponse(requestId: string): Promise<oResponse> {
     return new Promise((resolve, reject) => {
       const handler = (data: oResponse) => {
-        if (data.id === requestId) {
+        // check if last chunk
+        // TODO: create unit tests around no "_last" scenario
+        if (data.id === requestId && data.result?._last === true) {
           this.off(oNodeMessageEvent.response, handler);
           this.logger.debug(
             'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
