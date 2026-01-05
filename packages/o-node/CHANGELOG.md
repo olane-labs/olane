@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.60 (2026-01-05)</small>
+
+- added support for vlm media gen ([8daf7de](https://github.com/olane-labs/olane/commit/8daf7de))
+- minor change ([547d0f4](https://github.com/olane-labs/olane/commit/547d0f4))
+- minor change ([4d7ed25](https://github.com/olane-labs/olane/commit/4d7ed25))
+- minor improvements ([a0a3ef8](https://github.com/olane-labs/olane/commit/a0a3ef8))
+
 ## <small>0.7.59 (2025-12-30)</small>
 
 - minor change ([2c89659](https://github.com/olane-labs/olane/commit/2c89659))
