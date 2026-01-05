@@ -43,6 +43,10 @@ export class oNodeRequestManager extends oRequestManager {
     this.connectionManager = config.connectionManager;
   }
 
+  cancelRequest(id: string): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   async translateAddress(
     address: oNodeAddress,
     options?: UseOptions,
