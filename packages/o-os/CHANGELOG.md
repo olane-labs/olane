@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.62 (2026-01-06)</small>
+
+**Note:** Version bump only for package @olane/os
+
 ## <small>0.7.61 (2026-01-06)</small>
 
 - updated versions ([bb32050](https://github.com/olane-labs/olane/commit/bb32050))
