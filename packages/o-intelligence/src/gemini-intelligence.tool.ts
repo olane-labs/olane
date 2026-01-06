@@ -126,7 +126,17 @@ interface GeminiInlineData {
 }
 
 interface GeminiImageConfig {
-  aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9';
+  aspectRatio?:
+    | '1:1'
+    | '2:3'
+    | '3:2'
+    | '3:4'
+    | '4:3'
+    | '4:5'
+    | '5:4'
+    | '9:16'
+    | '16:9'
+    | '21:9';
   imageSize?: '1K' | '2K' | '4K';
 }
 
@@ -153,9 +163,10 @@ interface GeminiImageGenerateRequest {
 }
 
 export class GeminiIntelligenceTool extends oLaneTool {
-  private apiKey: string = process.env.GEMINI_API_KEY || '';
-  private baseUrl!: string;
-  private defaultModel!: string;
+  protected apiKey: string = process.env.GEMINI_API_KEY || '';
+  protected baseUrl: string =
+    'https://generativelanguage.googleapis.com/v1beta';
+  protected defaultModel: string = 'gemini-3-pro-preview';
 
   constructor(config: oNodeToolConfig) {
     super({
@@ -219,11 +230,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -248,8 +260,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
       }
 
       return {
-        success: true,
-        response: result.candidates[0].content.parts[0]?.text || '',
+        message: result.candidates[0].content.parts[0]?.text || '',
         model: model,
         usage: result.usageMetadata,
         finish_reason: result.candidates[0].finishReason,
@@ -308,11 +319,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+        `${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -445,11 +457,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(generateRequest),
         },
@@ -474,8 +487,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
       }
 
       return {
-        success: true,
-        response: result.candidates[0].content.parts[0]?.text || '',
+        message: result.candidates[0].content.parts[0]?.text || '',
         model: model,
         usage: result.usageMetadata,
         finish_reason: result.candidates[0].finishReason,
@@ -535,11 +547,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+        `${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(generateRequest),
         },
@@ -631,15 +644,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -679,15 +690,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models/${model}?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models/${model}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -724,15 +733,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       return {
         success: response.ok,
@@ -797,11 +804,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(imageRequest),
         },
@@ -953,11 +961,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(imageRequest),
         },
@@ -1044,9 +1053,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
 
       return { data: base64, mimeType };
     } catch (error) {
-      throw new Error(
-        `Failed to read image file: ${(error as Error).message}`,
-      );
+      throw new Error(`Failed to read image file: ${(error as Error).message}`);
     }
   }
 }
