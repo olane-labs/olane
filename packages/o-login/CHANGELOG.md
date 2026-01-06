@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.61 (2026-01-06)</small>
+
+- updated versions ([bb32050](https://github.com/olane-labs/olane/commit/bb32050))
+
 ## <small>0.7.60 (2026-01-05)</small>
 
 - minor change ([547d0f4](https://github.com/olane-labs/olane/commit/547d0f4))

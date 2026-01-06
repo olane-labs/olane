@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.61 (2026-01-06)</small>
+
+- fix for gemini intellgience provider ([e1e62fa](https://github.com/olane-labs/olane/commit/e1e62fa))
+- updated versions ([bb32050](https://github.com/olane-labs/olane/commit/bb32050))
+- chore: update pnpm-lock.yaml after version bump ([aa4ba89](https://github.com/olane-labs/olane/commit/aa4ba89))
+
 ## <small>0.7.60 (2026-01-05)</small>
 
 - added support for vlm media gen ([8daf7de](https://github.com/olane-labs/olane/commit/8daf7de))
