@@ -31,7 +31,9 @@ export class oNodeStream extends oObject {
   ) {
     super(p2pStream.id);
     this.createdAt = Date.now();
-    this.lp = lpStream(p2pStream);
+    this.lp = lpStream(p2pStream, {
+      maxBufferSize: 100 * 1024 * 1024 * 5, // 500 MB
+    });
     this.listenForLibp2pEvents();
   }
 

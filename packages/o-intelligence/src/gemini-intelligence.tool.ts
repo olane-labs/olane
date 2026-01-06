@@ -794,13 +794,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
             parts: [{ text: fullPrompt }],
           },
         ],
-        generationConfig: {
-          responseModalities: ['TEXT', 'IMAGE'],
-          imageConfig: {
-            aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
-            imageSize: imageSize as GeminiImageConfig['imageSize'],
-          },
-        },
+        // generationConfig: {
+        //   responseModalities: ['TEXT', 'IMAGE'],
+        //   imageConfig: {
+        //     aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
+        //     imageSize: imageSize as GeminiImageConfig['imageSize'],
+        //   },
+        // },
       };
 
       const response = await fetch(
@@ -827,10 +827,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
         (await response.json()) as GeminiChatResponse;
 
       if (!result.candidates || result.candidates.length === 0) {
-        return {
-          success: false,
-          error: 'No response generated from Gemini',
-        };
+        throw new Error('No response generated from Gemini');
       }
 
       // Extract image and text from response parts
@@ -839,18 +836,16 @@ export class GeminiIntelligenceTool extends oLaneTool {
       let description: string | undefined;
 
       for (const part of parts) {
-        if ((part as any).inline_data) {
-          imageData = (part as any).inline_data.data;
+        console.log('part:', part);
+        if ((part as any).inlineData) {
+          imageData = (part as any).inlineData.data;
         } else if ((part as any).text) {
           description = (part as any).text;
         }
       }
 
       if (!imageData) {
-        return {
-          success: false,
-          error: 'No image data in response',
-        };
+        throw new Error('No image data in response');
       }
 
       return {
