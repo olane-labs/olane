@@ -25,7 +25,7 @@ export class oResponse implements Response {
   }
 
   toString(): string {
-    return JSON.stringify(this);
+    return JSON.stringify(this.toJSON());
   }
 
   static fromJSON(json: any): oResponse {

@@ -17,6 +17,7 @@ describe('Parent-Child Registration', () => {
 
   describe('Basic Registration', () => {
     it('should register child with parent during startup', async () => {
+      console.log('Starting Basic Registration Test');
       builder = new NetworkBuilder();
       const leader = await builder.addNode('o://leader');
       await builder.startNode('o://leader');
@@ -26,7 +27,7 @@ describe('Parent-Child Registration', () => {
 
       // Verify child is in parent's hierarchy manager
       const children = leader.getChildren();
-      console.log('Leader status:', leader.state);
+      console.log('Children', children);
       expect(children).to.have.lengthOf(1);
       expect(children[0].toString()).to.include('child');
     });
@@ -133,7 +134,6 @@ describe('Parent-Child Registration', () => {
         expect(conn.status).to.equal('open');
       });
     });
-
   });
 
   describe('Hierarchical Registration', () => {
@@ -151,7 +151,6 @@ describe('Parent-Child Registration', () => {
       await builder.startNode('o://child');
 
       await new Promise((resolve) => setTimeout(resolve, 100));
-
 
       // Child address should be fully nested
       expect(child.address.toString()).to.include('leader');
@@ -181,7 +180,6 @@ describe('Parent-Child Registration', () => {
       // Leader should have no parent
       expect(leader.parent).to.be.null;
     });
-
   });
 
   describe('Child Disconnection', () => {
@@ -235,5 +233,4 @@ describe('Parent-Child Registration', () => {
       expect(response.result.success).to.be.true;
     });
   });
-
 });

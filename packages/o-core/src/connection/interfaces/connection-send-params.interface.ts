@@ -1,7 +1,7 @@
 export interface ConnectionSendParams {
   address: string;
   payload: {
-    [key: string]: unknown;
+    [key: string]: any;
   };
   id?: string;
   isStream?: boolean;

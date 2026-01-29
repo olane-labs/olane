@@ -30,44 +30,43 @@ export class TestTool extends oNodeTool {
 
   // NEED TO OVERRIDE to ensure that we can test fully without a proper leader node
   async registerParent(): Promise<void> {
+    if (!this.parent) {
+      this.logger.warn('no parent, skipping registration');
+      return;
+    }
 
-      if (!this.parent) {
-        this.logger.warn('no parent, skipping registration');
-        return;
-      }
-  
-      if (!this.parent?.libp2pTransports?.length) {
-        this.logger.debug(
-          'Parent has no transports, waiting for reconnection & leader ack',
-        );
-        if (this.parent?.toString() === oAddress.leader().toString()) {
-          this.parent.setTransports(this.leader?.libp2pTransports || []);
-        } else {
-          this.logger.debug('Waiting for parent and reconnecting...');
-          await this.reconnectionManager?.waitForParentAndReconnect();
-        }
-      }
-  
-      // if no parent transports, register with the parent to get them
-      // TODO: should we remove the transports check to make this more consistent?
-      if (this.config.parent) {
-        this.logger.debug(
-          'Registering node with parent...',
-          this.config.parent?.toString(),
-        );
-        // avoid transports to ensure we do not try direct connection, we need to route via the leader for proper access controls
-        await this.use(this.config.parent, {
-          method: 'child_register',
-          params: {
-            address: this.address.toString(),
-            transports: this.transports.map((t) => t.toString()),
-            peerId: this.peerId.toString(),
-            _token: this.config.joinToken,
-          },
-        });
-        this.setKeepAliveTag(this.parent as oNodeAddress);
+    if (!this.parent?.libp2pTransports?.length) {
+      this.logger.debug(
+        'Parent has no transports, waiting for reconnection & leader ack',
+      );
+      if (this.parent?.toString() === oAddress.leader().toString()) {
+        this.parent.setTransports(this.leader?.libp2pTransports || []);
+      } else {
+        this.logger.debug('Waiting for parent and reconnecting...');
+        await this.reconnectionManager?.waitForParentAndReconnect();
       }
     }
+
+    // if no parent transports, register with the parent to get them
+    // TODO: should we remove the transports check to make this more consistent?
+    if (this.config.parent) {
+      this.logger.debug(
+        'Registering node with parent...',
+        this.config.parent?.toString(),
+      );
+      // avoid transports to ensure we do not try direct connection, we need to route via the leader for proper access controls
+      await this.use(this.config.parent, {
+        method: 'child_register',
+        params: {
+          address: this.address.toString(),
+          transports: this.transports.map((t) => t.toString()),
+          peerId: this.peerId.toString(),
+          _token: this.config.joinToken,
+        },
+      });
+      this.setKeepAliveTag(this.parent as oNodeAddress);
+    }
+  }
 
   async _tool_echo(request: oRequest): Promise<any> {
     this.callCount++;
@@ -183,7 +182,6 @@ export class NetworkBuilder {
     // Wait for transports to be available
     // await this.waitForTransports(node);
   }
-
 
   /**
    * Stop a specific node

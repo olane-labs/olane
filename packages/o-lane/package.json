@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-lane",
-  "version": "0.7.31",
+  "version": "0.7.62",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
-    "@olane/o-test": "0.7.31",
+    "@olane/o-test": "0.7.62",
     "@tsconfig/node20": "^20.1.6",
     "@types/handlebars": "^4.1.0",
     "@types/jest": "^30.0.0",
@@ -57,15 +57,15 @@
     "typescript": "5.4.5"
   },
   "dependencies": {
-    "@olane/o-config": "0.7.31",
-    "@olane/o-core": "0.7.31",
-    "@olane/o-node": "0.7.31",
-    "@olane/o-protocol": "0.7.31",
-    "@olane/o-storage": "0.7.31",
-    "@olane/o-tool": "0.7.31",
+    "@olane/o-config": "0.7.62",
+    "@olane/o-core": "0.7.62",
+    "@olane/o-node": "0.7.62",
+    "@olane/o-protocol": "0.7.62",
+    "@olane/o-storage": "0.7.62",
+    "@olane/o-tool": "0.7.62",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "handlebars": "^4.7.8"
   },
-  "gitHead": "0fdac42b4c586a759759c0dc2a43d821e71dd860"
+  "gitHead": "aa4ba891bbaab790593c9c88fe998dbb9f26196c"
 }

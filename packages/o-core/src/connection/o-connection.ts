@@ -10,29 +10,31 @@ import { EventEmitter } from 'events';
 
 export abstract class oConnection extends oObject {
   public readonly id: string;
-  public readonly address: oAddress;
-  public readonly nextHopAddress: oAddress;
-  public readonly callerAddress: oAddress | undefined;
   protected readonly emitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oConnectionConfig) {
     super();
     this.id = uuidv4();
-    this.address = config.address;
-    this.nextHopAddress = config.nextHopAddress;
-    this.callerAddress = config.callerAddress;
     this.logger.setNamespace(
       'Connection:[' +
         (config.callerAddress?.value || 'unknown') +
         ']-->[' +
-        this.address.value +
-        ']:' +
-        this.id,
+        config.nextHopAddress.value +
+        ']' +
+        `-->[Target:${config.targetAddress.value}]`,
     );
   }
 
-  get abortSignal(): AbortSignal | undefined {
-    return this.config.abortSignal;
+  get address(): oAddress {
+    return this.config.targetAddress;
+  }
+
+  get nextHopAddress(): oAddress {
+    return this.config.nextHopAddress;
+  }
+
+  get callerAddress(): oAddress | undefined {
+    return this.config.callerAddress;
   }
 
   onChunk(listener: (response: oResponse) => void) {
@@ -59,12 +61,12 @@ export abstract class oConnection extends oObject {
     });
   }
 
-  abstract transmit(request: oRequest): Promise<oResponse>;
+  abstract transmit(request: oRequest, options: any): Promise<any>;
 
-  async send(data: ConnectionSendParams): Promise<oResponse> {
+  async send(data: ConnectionSendParams, options: any): Promise<any> {
     // proxy through the router tool
     const request = this.createRequest(oProtocolMethods.ROUTE, data);
-    return this.transmit(request);
+    return await this.transmit(request, options);
   }
 
   async close() {

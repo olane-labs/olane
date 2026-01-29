@@ -6,6 +6,7 @@ import {
 } from '@olane/o-core';
 import { oNodeAddress } from '../router/o-node.address.js';
 import { oNodeConfig } from './o-node.config.js';
+import { oRegistrationManager } from '../managers/o-registration.manager.js';
 
 /**
  * Interface for nodes that support reconnection management.
@@ -34,9 +35,19 @@ export interface IReconnectableNode {
   notificationManager: oNotificationManager;
 
   /**
+   * The registration manager for tracking registration state
+   */
+  registrationManager: oRegistrationManager;
+
+  /**
    * Register with the parent node
    */
   registerParent(): Promise<void>;
+
+  /**
+   * Register with the leader's global registry
+   */
+  registerLeader(): Promise<void>;
 
   /**
    * Register with the leader's global registry

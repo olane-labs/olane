@@ -28,6 +28,9 @@ export {
   Libp2pEvents,
   PeerId,
   KEEP_ALIVE,
+  Peer,
+  Address,
+  PeerStore,
 } from '@libp2p/interface';
 export { Multiaddr, multiaddr } from '@multiformats/multiaddr';
 import all from 'it-all';

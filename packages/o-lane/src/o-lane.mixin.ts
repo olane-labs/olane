@@ -42,6 +42,10 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
       this.manager = new oLaneManager();
     }
 
+    async initRequestManager() {
+      return super.initRequestManager();
+    }
+
     async _tool_handshake(handshake: oRequest): Promise<oHandshakeResult> {
       this.logger.debug(
         'Performing handshake with intent: ',
@@ -78,7 +82,13 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
      */
     async _tool_intent(request: oStreamRequest): Promise<any> {
       this.logger.debug('Intent resolution called: ', request.params);
-      const { intent, context, chatHistory, streamTo, _isStreaming = false } = request.params;
+      const {
+        intent,
+        context,
+        chatHistory,
+        streamTo,
+        _isStreaming = false,
+      } = request.params;
 
       const pc = await this.manager.createLane({
         intent: new oIntent({ intent: intent as string }),
@@ -105,15 +115,13 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
                   'Misbehaving client sent unexpected last chunk',
                 );
               }
-              await CoreUtils.sendStreamResponse(
+              await CoreUtils.sendResponse(
                 oResponse.fromJSON(chunk),
                 request.stream,
               );
             }
           : undefined,
-        context: context
-          ? new oLaneContext([])
-          : undefined,
+        context: context ? new oLaneContext([]) : undefined,
       });
 
       // TODO: brendon experiment review
@@ -135,8 +143,6 @@ export function withLane<T extends new (...args: any[]) => oToolBase>(
           return s.result;
         }),
       };
-      await new Promise((resolve) => setTimeout(resolve, 3_000)); // TODO: fix this: wait for 3 seconds to let the stream send 2 messages lol
-      console.log('completeResponse', completeResponse);
       return completeResponse;
     }
 

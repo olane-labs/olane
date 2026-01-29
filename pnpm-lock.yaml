@@ -85,19 +85,19 @@ importers:
   packages/o-approval:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -164,19 +164,19 @@ importers:
   packages/o-client-limited:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -191,6 +191,9 @@ importers:
       '@eslint/js':
         specifier: ^9.29.0
         version: 9.39.1
+      '@libp2p/circuit-relay-v2':
+        specifier: ^4.0.5
+        version: 4.1.2
       '@tsconfig/node20':
         specifier: ^20.1.6
         version: 20.1.8
@@ -373,7 +376,7 @@ importers:
   packages/o-core:
     dependencies:
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       chalk:
         specifier: ^5.4.1
@@ -452,16 +455,16 @@ importers:
   packages/o-gateway-interface:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -525,19 +528,19 @@ importers:
   packages/o-gateway-olane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -601,19 +604,19 @@ importers:
   packages/o-intelligence:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -680,22 +683,22 @@ importers:
   packages/o-lane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -714,7 +717,7 @@ importers:
         specifier: ^9.29.0
         version: 9.39.1
       '@olane/o-test':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-test
       '@tsconfig/node20':
         specifier: ^20.1.6
@@ -774,25 +777,25 @@ importers:
   packages/o-leader:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-gateway-olane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-gateway-olane
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -856,19 +859,19 @@ importers:
   packages/o-login:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -938,31 +941,31 @@ importers:
         specifier: ^1.18.1
         version: 1.24.3(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-leader
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1041,31 +1044,31 @@ importers:
         specifier: ^5.0.7
         version: 5.0.9
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-leader
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1144,16 +1147,16 @@ importers:
   packages/o-node:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1161,6 +1164,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.1
@@ -1169,7 +1175,7 @@ importers:
         specifier: ^9.29.0
         version: 9.39.1
       '@olane/o-test':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-test
       '@tsconfig/node20':
         specifier: ^20.1.6
@@ -1177,6 +1183,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/json5':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.34.1
         version: 8.49.0(@typescript-eslint/parser@8.49.0(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5))(eslint@9.39.1(jiti@1.21.7))(typescript@5.4.5)
@@ -1223,40 +1232,40 @@ importers:
   packages/o-os:
     dependencies:
       '@olane/o-client-limited':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-client-limited
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-leader
       '@olane/o-login':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-login
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       '@olane/o-tool-registry':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool-registry
       '@olane/o-tools-common':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tools-common
       chalk:
         specifier: ^5.4.1
@@ -1365,7 +1374,7 @@ importers:
   packages/o-server:
     dependencies:
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       cors:
         specifier: ^2.8.5
@@ -1447,19 +1456,19 @@ importers:
   packages/o-storage:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1526,7 +1535,7 @@ importers:
   packages/o-test:
     dependencies:
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       chalk:
         specifier: ^5.4.1
@@ -1605,13 +1614,13 @@ importers:
   packages/o-tool:
     dependencies:
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       debug:
         specifier: ^4.4.1
@@ -1690,28 +1699,28 @@ importers:
         specifier: 0.3.61
         version: 0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.18.3)(zod@3.25.76))
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-mcp':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-mcp
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       '@olane/o-tools-common':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tools-common
       debug:
         specifier: ^4.4.1
@@ -1781,28 +1790,28 @@ importers:
   packages/o-tools-common:
     dependencies:
       '@olane/o-approval':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-approval
       '@olane/o-config':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-leader
       '@olane/o-protocol':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.7.31
+        specifier: 0.7.62
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -4148,6 +4157,9 @@ packages:
   '@libp2p/bootstrap@12.0.10':
     resolution: {integrity: sha512-TXU88UintWDolGjN183HSzMHdQRzyL95PYAY5TtKetYCd8Z6WFg92LlxjRvIpKb5w/1OMeeI3rZBzC9qivoTYA==}
 
+  '@libp2p/circuit-relay-v2@4.1.2':
+    resolution: {integrity: sha512-zGYIJUfqzddnxtrrsJE3K6sHxL65Gx8oIAaG90S6vPiL2KBuQUXjbkSShdN9QiK7HbdEY+LWCYVsH0ex7c+C9Q==}
+
   '@libp2p/crypto@4.1.9':
     resolution: {integrity: sha512-8Cf2VKh0uC/rQLvTLSloIOMqUvf4jsSTHXgjWQRf47lDNJlNNI0wSv2S6gakT72GZsRV/jCjYwKPqRlsa5S0iA==}
 
@@ -5268,6 +5280,10 @@ packages:
 
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+
+  '@types/json5@2.2.0':
+    resolution: {integrity: sha512-NrVug5woqbvNZ0WX+Gv4R+L4TGddtmFek2u8RtccAgFZWtS9QXF2xCXY22/M4nzkaKF0q9Fc6M/5rxLDhfwc/A==}
+    deprecated: This is a stub types definition. json5 provides its own type definitions, so you do not need this installed.
 
   '@types/jsonfile@6.1.4':
     resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
@@ -11534,6 +11550,9 @@ packages:
   retext@9.0.0:
     resolution: {integrity: sha512-sbMDcpHCNjvlheSgMfEcVrZko3cDzdbe1x/e7G66dFp0Ff7Mldvi2uv6JkJQzdRcvLYE8CA8Oe8siQx8ZOgTcA==}
 
+  retimeable-signal@1.0.1:
+    resolution: {integrity: sha512-Cy26CYfbWnYu8HMoJeDhaMpW/EYFIbne3vMf6G9RSrOyWYXbPehja/BEdzpqmM84uy2bfBD7NPZhoQ4GZEtgvg==}
+
   retry-axios@2.6.0:
     resolution: {integrity: sha512-pOLi+Gdll3JekwuFjXO3fTq+L9lzMQGcSq7M5gIjExcl3Gu1hd4XXuf5o3+LuSBsaULQH7DiNbsqPd1chVpQGQ==}
     engines: {node: '>=10.7.0'}
@@ -15255,6 +15274,27 @@ snapshots:
       '@multiformats/multiaddr-matcher': 3.0.1
       main-event: 1.0.1
 
+  '@libp2p/circuit-relay-v2@4.1.2':
+    dependencies:
+      '@libp2p/crypto': 5.1.13
+      '@libp2p/interface': 3.1.0
+      '@libp2p/interface-internal': 3.0.9
+      '@libp2p/peer-collections': 7.0.9
+      '@libp2p/peer-id': 6.0.4
+      '@libp2p/peer-record': 9.0.4
+      '@libp2p/utils': 7.0.9
+      '@multiformats/multiaddr': 13.0.1
+      '@multiformats/multiaddr-matcher': 3.0.1
+      any-signal: 4.1.1
+      main-event: 1.0.1
+      multiformats: 13.4.1
+      nanoid: 5.1.6
+      progress-events: 1.0.1
+      protons-runtime: 5.6.0
+      retimeable-signal: 1.0.1
+      uint8arraylist: 2.4.8
+      uint8arrays: 5.1.0
+
   '@libp2p/crypto@4.1.9':
     dependencies:
       '@libp2p/interface': 1.7.0
@@ -17150,6 +17190,10 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/json5@0.0.29': {}
+
+  '@types/json5@2.2.0':
+    dependencies:
+      json5: 2.2.3
 
   '@types/jsonfile@6.1.4':
     dependencies:
@@ -25728,6 +25772,8 @@ snapshots:
       retext-latin: 4.0.0
       retext-stringify: 4.0.0
       unified: 11.0.5
+
+  retimeable-signal@1.0.1: {}
 
   retry-axios@2.6.0(axios@1.13.2(debug@4.4.3)):
     dependencies:

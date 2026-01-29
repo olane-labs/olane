@@ -8,6 +8,7 @@ import {
   oStreamRequest,
   StreamUtils,
 } from '@olane/o-node';
+import { readFile } from 'fs/promises';
 
 interface GeminiContent {
   role: 'user' | 'model';
@@ -119,10 +120,53 @@ interface GeminiListModelsResponse {
   models: GeminiModel[];
 }
 
+interface GeminiInlineData {
+  mime_type: string;
+  data: string;
+}
+
+interface GeminiImageConfig {
+  aspectRatio?:
+    | '1:1'
+    | '2:3'
+    | '3:2'
+    | '3:4'
+    | '4:3'
+    | '4:5'
+    | '5:4'
+    | '9:16'
+    | '16:9'
+    | '21:9';
+  imageSize?: '1K' | '2K' | '4K';
+}
+
+interface GeminiImageGenerateRequest {
+  contents: Array<{
+    parts: Array<{
+      text?: string;
+      inline_data?: GeminiInlineData;
+    }>;
+  }>;
+  generationConfig?: {
+    responseModalities?: string[];
+    imageConfig?: GeminiImageConfig;
+    temperature?: number;
+    topK?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    stopSequences?: string[];
+  };
+  safetySettings?: Array<{
+    category: string;
+    threshold: string;
+  }>;
+}
+
 export class GeminiIntelligenceTool extends oLaneTool {
-  private apiKey: string = process.env.GEMINI_API_KEY || '';
-  private baseUrl!: string;
-  private defaultModel!: string;
+  protected apiKey: string = process.env.GEMINI_API_KEY || '';
+  protected baseUrl: string =
+    'https://generativelanguage.googleapis.com/v1beta';
+  protected defaultModel: string = 'gemini-3-pro-preview';
 
   constructor(config: oNodeToolConfig) {
     super({
@@ -186,11 +230,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -215,8 +260,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
       }
 
       return {
-        success: true,
-        response: result.candidates[0].content.parts[0]?.text || '',
+        message: result.candidates[0].content.parts[0]?.text || '',
         model: model,
         usage: result.usageMetadata,
         finish_reason: result.candidates[0].finishReason,
@@ -275,11 +319,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+        `${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -412,11 +457,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/${model}:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(generateRequest),
         },
@@ -441,8 +487,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
       }
 
       return {
-        success: true,
-        response: result.candidates[0].content.parts[0]?.text || '',
+        message: result.candidates[0].content.parts[0]?.text || '',
         model: model,
         usage: result.usageMetadata,
         finish_reason: result.candidates[0].finishReason,
@@ -502,11 +547,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+        `${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(generateRequest),
         },
@@ -598,15 +644,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -646,15 +690,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models/${model}?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models/${model}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -691,15 +733,13 @@ export class GeminiIntelligenceTool extends oLaneTool {
         };
       }
 
-      const response = await fetch(
-        `${this.baseUrl}/models?key=${this.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-      );
+      });
 
       return {
         success: response.ok,
@@ -712,6 +752,303 @@ export class GeminiIntelligenceTool extends oLaneTool {
         status: 'offline',
         error: `Connection failed: ${(error as Error).message}`,
       };
+    }
+  }
+
+  /**
+   * Generate image from text prompt using Gemini nano-banana models
+   */
+  async _tool_generate_image(request: oRequest): Promise<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = 'gemini-2.5-flash-image',
+        prompt,
+        aspectRatio = '1:1',
+        imageSize = '2K',
+        negativePrompt,
+      } = params;
+
+      if (!this.apiKey) {
+        return {
+          success: false,
+          error: 'Gemini API key is required',
+        };
+      }
+
+      if (!prompt) {
+        return {
+          success: false,
+          error: 'Prompt is required',
+        };
+      }
+
+      // Build the full prompt with negative prompt if provided
+      const fullPrompt = negativePrompt
+        ? `${prompt}\n\nAvoid: ${negativePrompt}`
+        : prompt;
+
+      const imageRequest: GeminiImageGenerateRequest = {
+        contents: [
+          {
+            parts: [{ text: fullPrompt }],
+          },
+        ],
+        // generationConfig: {
+        //   responseModalities: ['TEXT', 'IMAGE'],
+        //   imageConfig: {
+        //     aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
+        //     imageSize: imageSize as GeminiImageConfig['imageSize'],
+        //   },
+        // },
+      };
+
+      const response = await fetch(
+        `${this.baseUrl}/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
+          },
+          body: JSON.stringify(imageRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `Gemini API error: ${response.status} - ${errorText}`,
+        };
+      }
+
+      const result: GeminiChatResponse =
+        (await response.json()) as GeminiChatResponse;
+
+      if (!result.candidates || result.candidates.length === 0) {
+        throw new Error('No response generated from Gemini');
+      }
+
+      // Extract image and text from response parts
+      const parts = result.candidates[0].content.parts;
+      let imageData: string | undefined;
+      let description: string | undefined;
+
+      for (const part of parts) {
+        console.log('part:', part);
+        if ((part as any).inlineData) {
+          imageData = (part as any).inlineData.data;
+        } else if ((part as any).text) {
+          description = (part as any).text;
+        }
+      }
+
+      if (!imageData) {
+        throw new Error('No image data in response');
+      }
+
+      return {
+        success: true,
+        imageData,
+        description,
+        model,
+        aspectRatio,
+        imageSize,
+        usage: result.usageMetadata,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Failed to generate image: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Edit or transform an existing image using Gemini nano-banana models
+   */
+  async _tool_edit_image(request: oRequest): Promise<ToolResult> {
+    try {
+      const params = request.params as any;
+      const {
+        model = 'gemini-2.5-flash-image',
+        prompt,
+        image,
+        aspectRatio,
+        imageSize = '2K',
+      } = params;
+
+      if (!this.apiKey) {
+        return {
+          success: false,
+          error: 'Gemini API key is required',
+        };
+      }
+
+      if (!prompt) {
+        return {
+          success: false,
+          error: 'Prompt is required',
+        };
+      }
+
+      if (!image) {
+        return {
+          success: false,
+          error: 'Image is required',
+        };
+      }
+
+      // Process image input (base64 or file path)
+      let imageBase64: string;
+      let mimeType: string = 'image/jpeg';
+
+      if (image.startsWith('data:')) {
+        // Extract base64 from data URL
+        const matches = image.match(/^data:([^;]+);base64,(.+)$/);
+        if (matches) {
+          mimeType = matches[1];
+          imageBase64 = matches[2];
+        } else {
+          return {
+            success: false,
+            error: 'Invalid data URL format',
+          };
+        }
+      } else if (image.startsWith('/') || image.includes(':\\')) {
+        // File path - convert to base64
+        const result = await this.encodeImageToBase64(image);
+        imageBase64 = result.data;
+        mimeType = result.mimeType;
+      } else {
+        // Assume it's raw base64
+        imageBase64 = image;
+        // Try to detect mime type from base64 header
+        if (image.startsWith('/9j/')) {
+          mimeType = 'image/jpeg';
+        } else if (image.startsWith('iVBORw0KGgo')) {
+          mimeType = 'image/png';
+        }
+      }
+
+      const imageRequest: GeminiImageGenerateRequest = {
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: {
+            aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
+            imageSize: imageSize as GeminiImageConfig['imageSize'],
+          },
+        },
+      };
+
+      const response = await fetch(
+        `${this.baseUrl}/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
+          },
+          body: JSON.stringify(imageRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return {
+          success: false,
+          error: `Gemini API error: ${response.status} - ${errorText}`,
+        };
+      }
+
+      const result: GeminiChatResponse =
+        (await response.json()) as GeminiChatResponse;
+
+      if (!result.candidates || result.candidates.length === 0) {
+        return {
+          success: false,
+          error: 'No response generated from Gemini',
+        };
+      }
+
+      // Extract image and text from response parts
+      const parts = result.candidates[0].content.parts;
+      let outputImageData: string | undefined;
+      let description: string | undefined;
+
+      for (const part of parts) {
+        if ((part as any).inline_data) {
+          outputImageData = (part as any).inline_data.data;
+        } else if ((part as any).text) {
+          description = (part as any).text;
+        }
+      }
+
+      if (!outputImageData) {
+        return {
+          success: false,
+          error: 'No image data in response',
+        };
+      }
+
+      return {
+        success: true,
+        imageData: outputImageData,
+        description,
+        model,
+        aspectRatio,
+        imageSize,
+        usage: result.usageMetadata,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: `Failed to edit image: ${(error as Error).message}`,
+      };
+    }
+  }
+
+  /**
+   * Helper method to encode image file to base64
+   */
+  private async encodeImageToBase64(
+    filePath: string,
+  ): Promise<{ data: string; mimeType: string }> {
+    try {
+      const buffer = await readFile(filePath);
+      const base64 = buffer.toString('base64');
+
+      // Detect MIME type from file extension
+      let mimeType = 'image/jpeg';
+      const lowerPath = filePath.toLowerCase();
+
+      if (lowerPath.endsWith('.png')) {
+        mimeType = 'image/png';
+      } else if (lowerPath.endsWith('.jpg') || lowerPath.endsWith('.jpeg')) {
+        mimeType = 'image/jpeg';
+      } else if (lowerPath.endsWith('.gif')) {
+        mimeType = 'image/gif';
+      } else if (lowerPath.endsWith('.webp')) {
+        mimeType = 'image/webp';
+      }
+
+      return { data: base64, mimeType };
+    } catch (error) {
+      throw new Error(`Failed to read image file: ${(error as Error).message}`);
     }
   }
 }

@@ -3,6 +3,141 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.7.62 (2026-01-06)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.61 (2026-01-06)</small>
+
+- updated versions ([bb32050](https://github.com/olane-labs/olane/commit/bb32050))
+
+## <small>0.7.60 (2026-01-05)</small>
+
+- minor change ([547d0f4](https://github.com/olane-labs/olane/commit/547d0f4))
+- minor change ([4d7ed25](https://github.com/olane-labs/olane/commit/4d7ed25))
+
+## <small>0.7.59 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.58 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.57 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.56 (2025-12-29)</small>
+
+- minor bug fixes ([42deb47](https://github.com/olane-labs/olane/commit/42deb47))
+- refactored node-stream + node-connection wrappers ([de94dfd](https://github.com/olane-labs/olane/commit/de94dfd))
+
+## <small>0.7.55 (2025-12-29)</small>
+
+- manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))
+
+## <small>0.7.54 (2025-12-28)</small>
+
+- 1. Added getStreamById() Method (o-node package) ([2add9d0](https://github.com/olane-labs/olane/commit/2add9d0))
+- 1. Protocol Layer (o-protocol) ([cc3e556](https://github.com/olane-labs/olane/commit/cc3e556))
+- experiment with dedicated read & write streams for limited clients ([5a1e15f](https://github.com/olane-labs/olane/commit/5a1e15f))
+
+## <small>0.7.53 (2025-12-27)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.52 (2025-12-27)</small>
+
+- milestone prior to fix for client limited ([f10f269](https://github.com/olane-labs/olane/commit/f10f269))
+- minor change ([6993252](https://github.com/olane-labs/olane/commit/6993252))
+- refactor stream manager ([e4db2f3](https://github.com/olane-labs/olane/commit/e4db2f3))
+
+## <small>0.7.51 (2025-12-23)</small>
+
+- fix adoption of stream handler ([4a69242](https://github.com/olane-labs/olane/commit/4a69242))
+- stream pooling functionality added ([a33ab20](https://github.com/olane-labs/olane/commit/a33ab20))
+
+## <small>0.7.50 (2025-12-19)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.49 (2025-12-19)</small>
+
+- minor change ([1810818](https://github.com/olane-labs/olane/commit/1810818))
+
+## <small>0.7.48 (2025-12-19)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.47 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.46 (2025-12-18)</small>
+
+- fix for re-use stream consume stream pattern ([e6bb31d](https://github.com/olane-labs/olane/commit/e6bb31d))
+
+## <small>0.7.45 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.44 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.43 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.42 (2025-12-18)</small>
+
+- minor change ([f705ab1](https://github.com/olane-labs/olane/commit/f705ab1))
+
+## <small>0.7.41 (2025-12-18)</small>
+
+- minor fixes around stream re-use ([ab11bc6](https://github.com/olane-labs/olane/commit/ab11bc6))
+
+## <small>0.7.40 (2025-12-17)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.39 (2025-12-17)</small>
+
+- minor change ([36ea0c5](https://github.com/olane-labs/olane/commit/36ea0c5))
+
+## <small>0.7.38 (2025-12-17)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.37 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.36 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-client-limited
+
+## <small>0.7.35 (2025-12-12)</small>
+
+- minor change ([f5c2e65](https://github.com/olane-labs/olane/commit/f5c2e65))
+- removed old transport-based messaging ([b17e001](https://github.com/olane-labs/olane/commit/b17e001))
+
+## <small>0.7.34 (2025-12-12)</small>
+
+- fix for length prefix config ([18ba5d4](https://github.com/olane-labs/olane/commit/18ba5d4))
+- minor change ([a1a218c](https://github.com/olane-labs/olane/commit/a1a218c))
+- minor change ([adaa790](https://github.com/olane-labs/olane/commit/adaa790))
+
+## <small>0.7.33 (2025-12-11)</small>
+
+- minor change ([8cd3eec](https://github.com/olane-labs/olane/commit/8cd3eec))
+
+## <small>0.7.32 (2025-12-11)</small>
+
+- minor change ([d3ecec4](https://github.com/olane-labs/olane/commit/d3ecec4))
+- minor change ([a17496f](https://github.com/olane-labs/olane/commit/a17496f))
+
 ## <small>0.7.31 (2025-12-10)</small>
 
 - minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
