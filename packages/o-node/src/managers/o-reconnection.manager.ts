@@ -131,6 +131,9 @@ export class oReconnectionManager extends oObject {
       `Leader disconnected: ${disconnectEvent.leaderAddress} (reason: ${disconnectEvent.reason})`,
     );
 
+    // Reset leader registration state immediately on disconnect
+    this.node.registrationManager.resetLeaderState();
+
     // Don't attempt reconnection for leader - the LeaderRequestWrapper
     // will handle retries automatically when we make requests
     // Just log the event for observability
@@ -150,6 +153,9 @@ export class oReconnectionManager extends oObject {
     this.logger.warn(
       `Parent disconnected: ${disconnectEvent.parentAddress} (reason: ${disconnectEvent.reason})`,
     );
+
+    // Reset parent registration state immediately on disconnect
+    this.node.registrationManager.resetParentState();
 
     await this.attemptReconnection();
   }
