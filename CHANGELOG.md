@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.0 (2026-02-03)
+
+- fix for reconnect ([72a70c0](https://github.com/olane-labs/olane/commit/72a70c0))
+- chore: update pnpm-lock.yaml after version bump ([98ea272](https://github.com/olane-labs/olane/commit/98ea272))
+
 ## <small>0.7.62 (2026-01-06)</small>
 
 - minor change ([eb6b938](https://github.com/olane-labs/olane/commit/eb6b938))
