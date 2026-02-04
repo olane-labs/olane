@@ -73,21 +73,41 @@ export class oReconnectionManager extends oObject {
 
   async handleNodeConnected(event: any) {
     const connectedEvent = event as NodeConnectedEvent;
-    // if leader is back online re-register
-    if (
-      connectedEvent.nodeAddress.toString() === oAddress.leader().toString()
-    ) {
-      // the leader is back online, let's re-register & tell sub-graphs to re-register
-      await this.node.useSelf({
-        method: 'register_leader',
-        params: {},
-      });
+    const nodeAddress = connectedEvent.nodeAddress;
+
+    if (this.node.state !== NodeState.RUNNING) {
+      this.logger.warn('Ignoring node connection events during startup');
+      return;
     }
-    if (
-      connectedEvent.nodeAddress.toString() === this.node.config.parent?.value
-    ) {
-      // connect to the parent and register
-      await this.node.registerParent();
+
+    // if leader is back online re-register
+    if (nodeAddress.toString() === oAddress.leader().toString()) {
+      // Check if we can register with leader (not already registering or registered)
+      if (this.node.registrationManager.canRegisterLeader()) {
+        this.logger.info('Leader connected - registering with registry');
+        // the leader is back online, let's re-register & tell sub-graphs to re-register
+        await this.node.useSelf({
+          method: 'register_leader',
+          params: {},
+        });
+      } else {
+        this.logger.debug(
+          `Leader already ${this.node.registrationManager.getStatus().leader} - skipping re-registration`,
+        );
+      }
+    }
+
+    if (nodeAddress.toString() === this.node.config.parent?.value) {
+      // Check if we can register with parent (not already registering or registered)
+      if (this.node.registrationManager.canRegisterParent()) {
+        this.logger.info('Parent connected - registering with parent');
+        // connect to the parent and register
+        await this.node.registerParent();
+      } else {
+        this.logger.debug(
+          `Parent already ${this.node.registrationManager.getStatus().parent} - skipping re-registration`,
+        );
+      }
     }
   }
 
@@ -111,6 +131,9 @@ export class oReconnectionManager extends oObject {
       `Leader disconnected: ${disconnectEvent.leaderAddress} (reason: ${disconnectEvent.reason})`,
     );
 
+    // Reset leader registration state immediately on disconnect
+    this.node.registrationManager.resetLeaderState();
+
     // Don't attempt reconnection for leader - the LeaderRequestWrapper
     // will handle retries automatically when we make requests
     // Just log the event for observability
@@ -130,6 +153,9 @@ export class oReconnectionManager extends oObject {
     this.logger.warn(
       `Parent disconnected: ${disconnectEvent.parentAddress} (reason: ${disconnectEvent.reason})`,
     );
+
+    // Reset parent registration state immediately on disconnect
+    this.node.registrationManager.resetParentState();
 
     await this.attemptReconnection();
   }
@@ -249,12 +275,20 @@ export class oReconnectionManager extends oObject {
         );
 
         try {
+          // Reset registration states before re-registering
+          this.node.registrationManager.resetParentState();
+          this.node.registrationManager.resetLeaderState();
+
           // Register with parent (leader)
           await this.node.registerParent();
 
-          // Force re-registration with registry by resetting the flag
-          (this.node as any).didRegister = false;
-          await this.node.register();
+          // Register with registry
+          await this.node.registerLeader();
+
+          // Verify registration was successful
+          if (!this.node.registrationManager.isFullyRegistered()) {
+            throw new Error('Registration incomplete after reconnection');
+          }
 
           // Success!
           this.reconnecting = false;
@@ -355,11 +389,19 @@ export class oReconnectionManager extends oObject {
           );
           // Attempt to register with parent and re-register with registry
           try {
+            // Reset registration states before re-registering
+            this.node.registrationManager.resetParentState();
+            this.node.registrationManager.resetLeaderState();
+
             await this.tryDirectParentReconnection();
 
-            // Force re-registration with registry by resetting the flag
-            (this.node as any).didRegister = false;
-            await this.node.register();
+            // Register with registry
+            await this.node.registerLeader();
+
+            // Verify registration was successful
+            if (!this.node.registrationManager.isFullyRegistered()) {
+              throw new Error('Registration incomplete after reconnection');
+            }
 
             // Success!
             this.reconnecting = false;

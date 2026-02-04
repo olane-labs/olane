@@ -8,9 +8,18 @@ import {
 import { SuccessResponse } from './interfaces/response.interface.js';
 import { errorHandler, OlaneError } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
+import { createJwtMiddleware } from './middleware/jwt-auth.js';
 import { ServerLogger } from './utils/logger.js';
 import { oAddress } from '@olane/o-core';
 import { Server } from 'http';
+import {
+  validateAddress,
+  validateMethod,
+  sanitizeParams,
+  validateRequest,
+  useRequestSchema,
+  streamRequestSchema,
+} from './validation/index.js';
 
 export function oServer(config: ServerConfig): ServerInstance {
   const {
@@ -19,6 +28,7 @@ export function oServer(config: ServerConfig): ServerInstance {
     basePath = '/api/v1',
     cors: corsConfig,
     authenticate,
+    jwtAuth,
     debug = false,
   } = config;
 
@@ -33,8 +43,20 @@ export function oServer(config: ServerConfig): ServerInstance {
     app.use(cors(corsConfig));
   }
 
-  // Optional authentication
-  if (authenticate) {
+  // JWT authentication (mandatory, except for health endpoint)
+  if (jwtAuth) {
+    const jwtMiddleware = createJwtMiddleware(jwtAuth);
+
+    // Apply JWT middleware to all routes except health
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path === `${basePath}/health`) {
+        return next(); // Skip JWT for health check
+      }
+      return jwtMiddleware(req, res, next);
+    });
+  } else if (authenticate) {
+    // Deprecated: Legacy authentication support
+    logger.log('⚠️  WARNING: The "authenticate" parameter is deprecated. Please migrate to "jwtAuth".');
     app.use(basePath, authMiddleware(authenticate));
   }
 
@@ -53,14 +75,18 @@ export function oServer(config: ServerConfig): ServerInstance {
   // This is the main entrypoint that wraps the node's 'use' method
   app.post(`${basePath}/use`, async (req: Request, res: Response, next) => {
     try {
-      const { address: addressStr, method, params, id } = req.body;
+      // Validate request schema
+      const validated = validateRequest(req.body, useRequestSchema);
+      const { address: addressStr, method, params, id } = validated;
 
-      if (!addressStr) {
-        const error: OlaneError = new Error('Address is required');
-        error.code = 'INVALID_PARAMS';
-        error.status = 400;
-        throw error;
-      }
+      // Validate address
+      validateAddress(addressStr);
+
+      // Validate method
+      validateMethod(method);
+
+      // Sanitize params
+      const sanitizedParams = sanitizeParams(params);
 
       logger.debugLog(
         `Calling use with address ${addressStr}, method: ${method}`,
@@ -69,7 +95,7 @@ export function oServer(config: ServerConfig): ServerInstance {
       const address = new oAddress(addressStr);
       const result = await node.use(address, {
         method,
-        params,
+        params: sanitizedParams,
         id,
       });
 
@@ -93,15 +119,27 @@ export function oServer(config: ServerConfig): ServerInstance {
         const { address: addressParam, method } = req.params;
         const params = req.body;
 
+        // Construct full address
+        const addressStr = `o://${addressParam}`;
+
+        // Validate address
+        validateAddress(addressStr);
+
+        // Validate method
+        validateMethod(method);
+
+        // Sanitize params
+        const sanitizedParams = sanitizeParams(params);
+
         logger.debugLog(
           `Calling method ${method} on ${addressParam} with params:`,
-          params,
+          sanitizedParams,
         );
 
-        const address = new oAddress(`o://${addressParam}`);
+        const address = new oAddress(addressStr);
         const result = await node.use(address, {
           method,
-          params,
+          params: sanitizedParams,
         });
 
         const response: SuccessResponse = {
@@ -121,14 +159,18 @@ export function oServer(config: ServerConfig): ServerInstance {
     `${basePath}/use/stream`,
     async (req: Request, res: Response, next) => {
       try {
-        const { address: addressStr, method, params } = req.body;
+        // Validate request schema
+        const validated = validateRequest(req.body, streamRequestSchema);
+        const { address: addressStr, method, params } = validated;
 
-        if (!addressStr) {
-          const error: OlaneError = new Error('Address is required');
-          error.code = 'INVALID_PARAMS';
-          error.status = 400;
-          throw error;
-        }
+        // Validate address
+        validateAddress(addressStr);
+
+        // Validate method
+        validateMethod(method);
+
+        // Sanitize params
+        const sanitizedParams = sanitizeParams(params);
 
         logger.debugLog(
           `Streaming use call to ${addressStr}, method: ${method}`,
@@ -146,7 +188,7 @@ export function oServer(config: ServerConfig): ServerInstance {
           // For now, execute and return result
           const result = await node.use(address, {
             method,
-            params,
+            params: sanitizedParams,
           });
 
           res.write(
@@ -204,7 +246,11 @@ export function oServer(config: ServerConfig): ServerInstance {
       olaneError.status = 500;
     }
 
-    olaneError.details = error.details || error.stack;
+    // Only include stack traces and details in development mode
+    olaneError.details =
+      process.env.NODE_ENV === 'development'
+        ? error.details || error.stack
+        : undefined;
     next(olaneError);
   }
 

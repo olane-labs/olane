@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.7.31",
+  "version": "0.8.0",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -63,12 +63,12 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@olane/o-protocol": "0.7.31",
+    "@olane/o-protocol": "0.8.0",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "multiformats": "^13.3.7",
     "stream-json": "^1.9.1"
   },
-  "gitHead": "0fdac42b4c586a759759c0dc2a43d821e71dd860"
+  "gitHead": "aa4ba891bbaab790593c9c88fe998dbb9f26196c"
 }

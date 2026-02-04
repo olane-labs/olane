@@ -1,6 +1,7 @@
-import { Connection, Stream } from '@olane/o-config';
+import { Connection, Libp2p, Multiaddr, Stream } from '@olane/o-config';
 import {
   CoreUtils,
+  oAddress,
   oConnection,
   oError,
   oErrorCodes,
@@ -8,90 +9,181 @@ import {
   oResponse,
 } from '@olane/o-core';
 import { oNodeConnectionConfig } from './interfaces/o-node-connection.config.js';
-import { StreamHandler } from './stream-handler.js';
 import type { StreamHandlerConfig } from './stream-handler.config.js';
+import { oNodeAddress } from '../router/o-node.address.js';
+import { oNodeStream } from './o-node-stream.js';
+import { oNodeStreamConfig } from './interfaces/o-node-stream.config.js';
+import { AbortSignalConfig } from './interfaces/abort-signal.config.js';
+import { EventEmitter } from 'events';
+import {
+  oNodeMessageEvent,
+  oNodeMessageEventData,
+} from './enums/o-node-message-event.js';
+import { oStreamRequest } from './o-stream.request.js';
+
+interface CachedIdentifyData {
+  protocols: string[];
+  agentVersion?: string;
+  protocolVersion?: string;
+  listenAddrs: Multiaddr[];
+  observedAddr?: Multiaddr;
+  timestamp: number;
+}
 
 export class oNodeConnection extends oConnection {
   public p2pConnection: Connection;
-  protected streamHandler: StreamHandler;
+  protected streams: Map<string, oNodeStream> = new Map<string, oNodeStream>();
+  protected runOnLimitedConnection: boolean;
+  eventEmitter: EventEmitter = new EventEmitter();
 
   constructor(protected readonly config: oNodeConnectionConfig) {
     super(config);
-    this.p2pConnection = config.p2pConnection;
-    this.streamHandler = new StreamHandler(this.logger);
+    this.p2pConnection = config.p2pConnection as Connection;
+    this.runOnLimitedConnection = config.runOnLimitedConnection ?? false;
+
+    this.listenForClose();
   }
 
-  validate(stream?: Stream) {
-    if (this.config.p2pConnection.status !== 'open') {
-      throw new Error('Connection is not valid');
-    }
-    // do nothing
-    if (!stream || (stream.status !== 'open' && stream.status !== 'reset')) {
-      throw new oError(
-        oErrorCodes.FAILED_TO_DIAL_TARGET,
-        'Failed to dial target',
-      );
-    }
-    if (stream.status === 'reset') {
-      throw new oError(
-        oErrorCodes.CONNECTION_LIMIT_REACHED,
-        'Connection limit reached',
-      );
-    }
+  listenForClose() {
+    this.p2pConnection.addEventListener('close', () => {
+      this.close();
+    });
   }
 
-  async getOrCreateStream(): Promise<Stream> {
-    const streamConfig: StreamHandlerConfig = {
-      signal: this.abortSignal,
-      maxOutboundStreams: process.env.MAX_OUTBOUND_STREAMS
-        ? parseInt(process.env.MAX_OUTBOUND_STREAMS)
-        : 1000,
-      runOnLimitedConnection: this.config.runOnLimitedConnection ?? false,
-      reusePolicy: 'none', // Default policy, can be overridden in subclasses
-      drainTimeoutMs: this.config.drainTimeoutMs,
-    };
-
-    return this.streamHandler.getOrCreateStream(
-      this.p2pConnection,
-      this.nextHopAddress.protocol,
-      streamConfig,
-    );
+  get isOpen() {
+    return this.p2pConnection.status === 'open';
   }
 
-  async transmit(request: oRequest): Promise<oResponse> {
+  get remotePeerId() {
+    return this.p2pConnection.remotePeer;
+  }
+
+  get remoteAddr() {
+    return this.p2pConnection.remoteAddr;
+  }
+
+  /**
+   * Get the connection configuration for compatibility checking.
+   */
+  get connectionConfig(): oNodeConnectionConfig {
+    return this.config;
+  }
+
+  get address(): oAddress {
+    return this.config.targetAddress;
+  }
+
+  get nextHopAddress(): oAddress {
+    return this.config.nextHopAddress;
+  }
+
+  get callerAddress(): oAddress | undefined {
+    if (this.p2pConnection.direction === 'inbound') {
+      return this.address;
+    }
+
+    return this.config.callerAddress;
+  }
+
+  async newStream(config: oNodeStreamConfig): Promise<oNodeStream> {
+    const protocol = config.remoteAddress.protocol;
+    this.logger.debug('Creating new stream', {
+      protocol,
+      currentStreamCount: this.streams.size,
+    });
+
+    // Create stream from libp2p connection
+    const stream = await this.p2pConnection.newStream(protocol, {
+      signal: config.abortSignal,
+      maxOutboundStreams: 1000,
+      runOnLimitedConnection: this.runOnLimitedConnection,
+    });
+
+    // Wrap in oNodeStream with metadata
+    const wrappedStream = new oNodeStream(stream, config);
+
+    this.logger.debug('Stream created', {
+      streamId: stream.id,
+      protocol,
+      totalStreams: this.streams.size,
+    });
+
+    return wrappedStream;
+  }
+
+  // bubble up the messages to the request handler
+  async listenForMessages(stream: oNodeStream, options: AbortSignalConfig) {
     try {
-      // if (this.config.runOnLimitedConnection) {
-      //   this.logger.debug('Running on limited connection...');
-      // }
-      const stream = await this.getOrCreateStream();
+      stream.on(oNodeMessageEvent.request, (data: oStreamRequest) => {
+        this.emit(oNodeMessageEvent.request, data);
+      });
 
-      this.validate(stream);
+      stream.on(oNodeMessageEvent.response, (data: oResponse) => {
+        this.emit(oNodeMessageEvent.response, data);
+      });
 
-      const streamConfig: StreamHandlerConfig = {
-        signal: this.abortSignal,
-        drainTimeoutMs: this.config.drainTimeoutMs,
-        reusePolicy: 'none', // Default policy
-      };
+      stream.p2pStream.addEventListener('close', () => {
+        if (this.streams.has(stream.id)) {
+          this.streams.delete(stream.id);
+        }
+      });
 
-      // Send the request with backpressure handling
-      const data = new TextEncoder().encode(request.toString());
-      await this.streamHandler.send(stream, data, streamConfig);
-
-      // Handle response using StreamHandler
-      // Pass request handler if configured to enable bidirectional stream processing
-      // Pass request ID to enable proper response correlation on shared streams
-      const response = await this.streamHandler.handleOutgoingStream(
-        stream,
-        this.emitter,
-        streamConfig,
-        this.config.requestHandler,
-        request.id,
+      await stream.listen(options);
+    } catch (err: any) {
+      this.logger.warn(
+        'Stream errored out when listening for key messages:',
+        err?.message,
       );
+    }
+  }
+
+  trackStream(stream: oNodeStream, options: AbortSignalConfig) {
+    this.streams.set(stream.id, stream);
+    this.logger.debug('Stream count: ' + this.streams.size);
+    // persistent listener
+    this.listenForMessages(stream, options);
+  }
+
+  protected async doSend(
+    request: oRequest,
+    options: AbortSignalConfig,
+  ): Promise<oNodeStream> {
+    try {
+      // create a new stream and send the payload
+      const wrappedStream = await this.newStream({
+        remoteAddress: this.nextHopAddress,
+        limited: this.runOnLimitedConnection,
+        ...options,
+      });
+
+      this.trackStream(wrappedStream, options);
+      await wrappedStream.send(request, options);
+      return wrappedStream;
+    } catch (err) {
+      this.logger.error('Failed to send request over stream.', err);
+      throw new oError(
+        oErrorCodes.SEND_FAILED,
+        'Failed to send request over stream.',
+        { request: request.toJSON() },
+      );
+    }
+  }
+
+  async transmit(
+    request: oRequest,
+    options: AbortSignalConfig,
+  ): Promise<oNodeStream> {
+    try {
+      this.logger.debug(
+        'Transmitting request on limited connection?',
+        this.config.runOnLimitedConnection,
+      );
+
+      const stream = await this.doSend(request, options);
 
       // Handle cleanup of the stream
       await this.postTransmit(stream);
-
-      return response;
+      return stream;
     } catch (error: any) {
       if (error?.name === 'UnsupportedProtocolError') {
         throw new oError(oErrorCodes.NOT_FOUND, 'Address not found');
@@ -100,12 +192,8 @@ export class oNodeConnection extends oConnection {
     }
   }
 
-  async postTransmit(stream: Stream) {
-    const streamConfig: StreamHandlerConfig = {
-      reusePolicy: 'none', // Default policy, can be overridden in subclasses
-    };
-
-    await this.streamHandler.close(stream, streamConfig);
+  async postTransmit(stream: oNodeStream): Promise<void> {
+    // after transmit, let's just leave this connection open for now
   }
 
   async abort(error: Error) {
@@ -116,7 +204,38 @@ export class oNodeConnection extends oConnection {
 
   async close() {
     this.logger.debug('Closing connection');
+
     await this.p2pConnection.close();
     this.logger.debug('Connection closed');
+  }
+
+  /**
+   * Add event listener
+   */
+  on<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.on(event as string, listener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  off<K extends oNodeMessageEvent>(
+    event: K | string,
+    listener: (data: oNodeMessageEventData[K]) => void,
+  ): void {
+    this.eventEmitter.off(event as string, listener);
+  }
+
+  /**
+   * Emit event
+   */
+  private emit<K extends oNodeMessageEvent>(
+    event: K,
+    data?: oNodeMessageEventData[K],
+  ): void {
+    this.eventEmitter.emit(event, data);
   }
 }

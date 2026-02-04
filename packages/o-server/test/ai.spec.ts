@@ -1,3 +1,6 @@
+// Disabled: o-server should not depend on o-lane
+// This test was likely copied from another package
+/*
 import { NodeState, oAddress } from '@olane/o-core';
 import { oLaneTool } from '@olane/o-lane';
 import { expect } from 'chai';
@@ -19,3 +22,4 @@ describe('in-process @memory', () => {
     expect(node.state).to.equal(NodeState.STOPPED);
   });
 });
+*/

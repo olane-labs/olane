@@ -125,6 +125,10 @@ export class oAddress extends oObject {
     return await CoreUtils.toCID({ address: this.toString() });
   }
 
+  async hash(): Promise<string> {
+    return (await CoreUtils.toCID(this.toJSON())).toString();
+  }
+
   static equals(a: oAddress, b: oAddress): boolean {
     return a.value === b.value;
   }

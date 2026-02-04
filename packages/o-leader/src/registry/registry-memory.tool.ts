@@ -97,6 +97,7 @@ export class RegistryMemoryTool extends RegistryTool {
     }
 
     // let's run a ping using the o-protocol
+    this.logger.debug(`Pinging parent node at address: ${parentAddress}`);
     await this.use(new oNodeAddress(parentNode.address), {
       method: 'ping',
       params: {},

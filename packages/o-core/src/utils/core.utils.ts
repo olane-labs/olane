@@ -108,8 +108,8 @@ export class CoreUtils extends oObject {
   }
 
   /**
-   * Sends a response through a stream
-   * Consolidated method that handles both regular and streaming responses
+   * Sends a response through a stream using length-prefixed encoding
+   * Uses lpStream for proper message boundaries (libp2p v3 best practice)
    *
    * @param response - The response to send
    * @param stream - The stream to send the response through
@@ -125,61 +125,15 @@ export class CoreUtils extends oObject {
     }
 
     try {
-      await stream.send(new TextEncoder().encode(response.toString()));
+      utils.logger.debug('Sending response via stream', stream.id);
+      const lp = lpStream(stream, {
+        maxBufferSize: 100 * 1024 * 1024 * 5, // 500 MB
+      });
+      const data = new TextEncoder().encode(response.toString());
+      await lp.write(data);
     } catch (error) {
-      utils.logger.error('Error sending response: ', error);
+      utils.logger.error('Error sending length-prefixed response: ', error);
     }
-  }
-
-  /**
-   * @deprecated Use sendResponse instead - both methods are now identical
-   * Sends a streaming response through a stream
-   * This method is maintained for backward compatibility
-   */
-  public static async sendStreamResponse(response: oResponse, stream: Stream) {
-    return CoreUtils.sendResponse(response, stream);
-  }
-
-  public static async processStream(event: any): Promise<any> {
-    const bytes =
-      event.data instanceof Uint8ArrayList ? event.data.subarray() : event.data;
-    const decoded = new TextDecoder().decode(bytes);
-    const utils = new CoreUtils();
-    try {
-      if (decoded.indexOf('}{') > -1) {
-        const first = decoded.split('}{')[0] + '}';
-        utils.logger.warn(
-          'Received multiple responses in a single event, returning the first response',
-          first,
-        );
-        return JSON.parse(first);
-      }
-      if (decoded.startsWith('{')) {
-        return JSON.parse(decoded);
-      } else {
-        return decoded;
-      }
-    } catch (error) {
-      utils.logger.error(
-        '[ERROR] Error processing stream event: ',
-        error,
-        decoded,
-      );
-      return decoded;
-    }
-  }
-
-  public static async processStreamRequest(event: any): Promise<oRequest> {
-    const req = await CoreUtils.processStream(event);
-    return new oRequest(req);
-  }
-
-  public static async processStreamResponse(event: any): Promise<oResponse> {
-    const res = await CoreUtils.processStream(event);
-    return new oResponse({
-      ...res.result,
-      id: res.id, // Preserve request ID for proper request/response correlation
-    });
   }
 
   public static async toCID(data: any): Promise<CID> {

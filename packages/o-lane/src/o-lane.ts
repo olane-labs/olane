@@ -371,11 +371,7 @@ export class oLane extends oObject {
     this.status = oLaneStatus.POSTFLIGHT;
     try {
       this.cid = await this.store();
-      this.logger.debug(
-        'Saving plan with CID: ',
-        this.cid.toString(),
-        response,
-      );
+      this.logger.debug('Saving plan with CID: ', this.cid.toString());
 
       // If this lane is marked for persistence to config, store it directly in os-config storage
       if (this.config.persistToConfig && this.cid) {

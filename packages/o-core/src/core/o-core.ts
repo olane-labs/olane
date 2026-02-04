@@ -4,18 +4,14 @@ import { oAddress } from '../router/o-address.js';
 import { NodeType } from './interfaces/node-type.enum.js';
 import { oConnectionManager } from '../connection/o-connection-manager.js';
 import { oResponse } from '../connection/o-response.js';
-import { oConnection } from '../connection/o-connection.js';
 import { oMethod } from '@olane/o-protocol';
 import { oDependency } from './o-dependency.js';
-import { oError } from '../error/o-error.js';
 import { oObject } from './o-object.js';
 import { oMetrics } from './lib/o-metrics.js';
 import { oHierarchyManager } from './lib/o-hierarchy.manager.js';
 import { oRequestManager } from './lib/o-request.manager.js';
 import { oTransport } from '../transports/o-transport.js';
 import { oRouter } from '../router/o-router.js';
-import { CoreUtils } from '../utils/core.utils.js';
-import { oErrorCodes } from '../error/index.js';
 import { oRequest } from '../connection/o-request.js';
 import { ResponseBuilder } from '../response/response-builder.js';
 import { oNotificationManager } from './lib/o-notification.manager.js';
@@ -25,9 +21,9 @@ import {
   NotificationHandler,
   Subscription,
 } from './lib/events/index.js';
-import { oConnectionConfig } from '../connection/index.js';
 import { UseOptions } from './interfaces/use-options.interface.js';
 import { UseStreamOptions } from './interfaces/use-stream-options.interface.js';
+import { UseDataConfig } from './interfaces/use-data.config.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -36,7 +32,7 @@ export abstract class oCore extends oObject {
   public connectionManager!: oConnectionManager;
   public hierarchyManager!: oHierarchyManager;
   public metrics: oMetrics = new oMetrics();
-  public requestManager: oRequestManager = new oRequestManager();
+  public requestManager?: oRequestManager;
   public router!: oRouter;
   public notificationManager!: oNotificationManager;
   private heartbeatInterval?: NodeJS.Timeout;
@@ -68,11 +64,7 @@ export abstract class oCore extends oObject {
 
   async useStream(
     address: oAddress,
-    data: {
-      method?: string;
-      params?: { [key: string]: any };
-      id?: string;
-    },
+    data: UseDataConfig,
     options: UseStreamOptions,
   ): Promise<oResponse> {
     return this.use(
@@ -91,14 +83,7 @@ export abstract class oCore extends oObject {
     );
   }
 
-  async useDirect(
-    address: oAddress,
-    data?: {
-      method?: string;
-      params?: { [key: string]: any };
-      id?: string;
-    },
-  ): Promise<oResponse> {
+  async useDirect(address: oAddress, data?: UseDataConfig): Promise<oResponse> {
     return this.use(address, data, { noRouting: true });
   }
 
@@ -157,89 +142,23 @@ export abstract class oCore extends oObject {
    */
   async use(
     address: oAddress,
-    data?: {
-      method?: string;
-      params?: { [key: string]: any };
-      id?: string;
-    },
+    data?: UseDataConfig,
     options?: UseOptions,
   ): Promise<oResponse> {
     this.validateRunning();
 
-    if (!address.validate()) {
-      throw new Error('Invalid address');
+    if (!this.requestManager) {
+      throw new Error('Request manager is not initialized');
     }
 
-    this.logger.debug('Using address: ', address.toString());
-
-    // check for static match
-    if (address.toStaticAddress().equals(this.address.toStaticAddress())) {
+    if (address?.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(data);
     }
 
-    // if no routing is requested, use the address as is
-    if (options?.noRouting) {
-      this.logger.debug(
-        'No routing requested, using address as is',
-        address.toString(),
-      );
-    }
-    const { nextHopAddress, targetAddress } = options?.noRouting
-      ? { nextHopAddress: address, targetAddress: address }
-      : await this.router.translate(address, this);
-
-    if (
-      nextHopAddress?.toStaticAddress().equals(this.address.toStaticAddress())
-    ) {
-      return this.useSelf(data);
-    }
-
-    const connection = await this.connect({
-      nextHopAddress: nextHopAddress,
-      address: targetAddress,
-      callerAddress: this.address,
-      readTimeoutMs: options?.readTimeoutMs,
-      drainTimeoutMs: options?.drainTimeoutMs,
-      isStream: options?.isStream,
-      abortSignal: options?.abortSignal,
-    });
-
-    if (options?.isStream) {
-      connection.onChunk((response) => {
-        options.onChunk?.(response);
-      });
-    }
-
-    // communicate the payload to the target node
-    const response = await connection.send({
-      address: targetAddress?.toString() || '',
-      payload: data || {},
-      id: data?.id,
-    });
-
-    // we handle streaming response differently
-    if (options?.isStream) {
-      return response;
-    }
-
-    // if there is an error, throw it to continue to bubble up
-    this.handleResponseError(response);
-
-    return response;
+    return this.requestManager.send(address, data, options, this);
   }
 
   abstract execute(request: oRequest): Promise<any>;
-
-  /**
-   * Helper method to handle response errors
-   * @param response The response to check for errors
-   * @throws oError if the response contains an error
-   */
-  private handleResponseError(response: oResponse): void {
-    if (response.result.error) {
-      throw oError.fromJSON(response.result.error);
-    }
-  }
 
   /**
    * Helper method to validate node is running
@@ -258,9 +177,6 @@ export abstract class oCore extends oObject {
     id?: string;
   }): Promise<oResponse> {
     this.validateRunning();
-
-    // let's call our own tool
-    this.logger.debug('Calling ourselves, skipping...', data);
 
     const request = new oRequest({
       method: data?.method as string,
@@ -284,20 +200,33 @@ export abstract class oCore extends oObject {
     }
   }
 
+  async useTool(
+    toolName: string,
+    data?: {
+      params?: { [key: string]: any };
+    },
+  ) {
+    const response = await this.useSelf({
+      method: toolName,
+      params: {
+        ...(data?.params || {}),
+      },
+    });
+    return response.result.data as any;
+  }
+
   async useChild(
     childAddress: oAddress,
-    data?: {
-      method?: string;
-      params?: { [key: string]: any };
-      id?: string;
-    },
-    options?: {
-      isStream?: boolean;
-      onChunk?: (chunk: oResponse) => void;
-    },
+    data?: UseDataConfig,
+    options?: UseOptions,
   ): Promise<oResponse> {
     this.validateRunning();
 
+    if (!this.requestManager) {
+      throw new Error('Request manager is not initialized');
+    }
+
+    // extract child address with transports
     if (!childAddress.transports) {
       const child = this.hierarchyManager.getChild(childAddress);
       if (!child) {
@@ -311,30 +240,7 @@ export abstract class oCore extends oObject {
       }
     }
 
-    const connection = await this.connect({
-      nextHopAddress: childAddress,
-      address: childAddress,
-      callerAddress: this.address,
-      isStream: options?.isStream,
-    });
-
-    if (options?.isStream) {
-      connection.onChunk((response) => {
-        options.onChunk?.(response);
-      });
-    }
-
-    // communicate the payload to the target node
-    const response = await connection.send({
-      address: childAddress?.toString() || '',
-      payload: data || {},
-      id: data?.id,
-    });
-
-    // if there is an error, throw it to continue to bubble up
-    this.handleResponseError(response);
-
-    return response;
+    return this.requestManager.send(childAddress, data, options, this);
   }
 
   // hierarchy
@@ -345,9 +251,6 @@ export abstract class oCore extends oObject {
   removeChildNode(node: oCore): void {
     this.hierarchyManager.removeChild(node.address);
   }
-
-  // connection
-  abstract connect(config: oConnectionConfig): Promise<oConnection>;
 
   // router
   abstract initializeRouter(): void;
@@ -383,7 +286,9 @@ export abstract class oCore extends oObject {
   }
 
   // initialize
-  async initialize(): Promise<void> {}
+  async initialize(): Promise<void> {
+    this.initializeRouter();
+  }
 
   get isRunning(): boolean {
     return (
@@ -469,7 +374,7 @@ export abstract class oCore extends oObject {
    * and resource allocation from occurring.
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  protected async validate(): Promise<void> {}
+  protected async validate(data?: any): Promise<void> {}
 
   /**
    * Stops the node by performing cleanup and transitioning to a stopped state.
@@ -541,6 +446,8 @@ export abstract class oCore extends oObject {
     this.resetState();
   }
 
+  abstract initRequestManager(): void;
+
   /**
    * Reset node state to allow restart after stop
    * Called at the end of teardown()
@@ -549,7 +456,6 @@ export abstract class oCore extends oObject {
     // Reset state tracking
     this.errors = [];
     this.metrics = new oMetrics();
-    this.requestManager = new oRequestManager();
 
     // Clear heartbeat
     if (this.heartbeatInterval) {
@@ -593,7 +499,7 @@ export abstract class oCore extends oObject {
         const metrics: any = {
           successCount: this.metrics.successCount,
           errorCount: this.metrics.errorCount,
-          activeRequests: this.requestManager.activeRequests.length,
+          activeRequests: this.requestManager?.activeRequests?.length || 0,
           state: this.state,
         };
 

@@ -40,9 +40,13 @@ export class oToolBase extends oCore {
     return [];
   }
 
-  connect(config: oConnectionConfig): Promise<oConnection> {
-    throw new oError(oErrorCodes.NOT_IMPLEMENTED, 'Connect not implemented');
+  initRequestManager(): void {
+    throw new oError(
+      oErrorCodes.NOT_IMPLEMENTED,
+      'initRequestManager not implemented',
+    );
   }
+
   initializeRouter(): Promise<void> {
     throw new oError(
       oErrorCodes.NOT_IMPLEMENTED,
@@ -108,7 +112,8 @@ export class oToolBase extends oCore {
       );
       throw new oError(
         oErrorCodes.MISSING_PARAMETERS,
-        'Missing required parameters: ' + missingParams.map(({ name }) => name).join(','),
+        'Missing required parameters: ' +
+          missingParams.map(({ name }) => name).join(','),
         {
           parameters: missingParams,
           toolAddress: this.address.toString(),
@@ -142,7 +147,10 @@ export class oToolBase extends oCore {
     // this.requests[request.id] = request;
     // @ts-ignore
     if (!this[`_tool_${method}`]) {
-      throw new oError(oErrorCodes.INVALID_ACTION, 'Selected method does not exist');
+      throw new oError(
+        oErrorCodes.INVALID_ACTION,
+        'Selected method does not exist',
+      );
     }
     // @ts-ignore
     const result = await this[`_tool_${method}`]({
