@@ -20,6 +20,12 @@ const PRODUCTION_ERROR_MESSAGES: Record<string, string> = {
   INTERNAL_ERROR: 'An internal error occurred',
   UNAUTHORIZED: 'Unauthorized access',
   FORBIDDEN: 'Access forbidden',
+  // JWT-specific error codes
+  MISSING_TOKEN: 'Authentication required',
+  INVALID_TOKEN_FORMAT: 'Invalid authentication format',
+  TOKEN_EXPIRED: 'Authentication token has expired',
+  TOKEN_NOT_ACTIVE: 'Authentication token not yet valid',
+  INVALID_TOKEN: 'Invalid authentication token',
 };
 
 /**

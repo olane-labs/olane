@@ -8,6 +8,7 @@ import {
 import { SuccessResponse } from './interfaces/response.interface.js';
 import { errorHandler, OlaneError } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
+import { createJwtMiddleware } from './middleware/jwt-auth.js';
 import { ServerLogger } from './utils/logger.js';
 import { oAddress } from '@olane/o-core';
 import { Server } from 'http';
@@ -19,6 +20,7 @@ export function oServer(config: ServerConfig): ServerInstance {
     basePath = '/api/v1',
     cors: corsConfig,
     authenticate,
+    jwtAuth,
     debug = false,
   } = config;
 
@@ -33,8 +35,20 @@ export function oServer(config: ServerConfig): ServerInstance {
     app.use(cors(corsConfig));
   }
 
-  // Optional authentication
-  if (authenticate) {
+  // JWT authentication (mandatory, except for health endpoint)
+  if (jwtAuth) {
+    const jwtMiddleware = createJwtMiddleware(jwtAuth);
+
+    // Apply JWT middleware to all routes except health
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path === `${basePath}/health`) {
+        return next(); // Skip JWT for health check
+      }
+      return jwtMiddleware(req, res, next);
+    });
+  } else if (authenticate) {
+    // Deprecated: Legacy authentication support
+    logger.log('⚠️  WARNING: The "authenticate" parameter is deprecated. Please migrate to "jwtAuth".');
     app.use(basePath, authMiddleware(authenticate));
   }
 
