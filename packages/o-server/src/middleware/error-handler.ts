@@ -26,6 +26,9 @@ const PRODUCTION_ERROR_MESSAGES: Record<string, string> = {
   TOKEN_EXPIRED: 'Authentication token has expired',
   TOKEN_NOT_ACTIVE: 'Authentication token not yet valid',
   INVALID_TOKEN: 'Invalid authentication token',
+  // Input validation error codes
+  INVALID_ADDRESS: 'Invalid address format',
+  INVALID_METHOD: 'Invalid method name',
 };
 
 /**
