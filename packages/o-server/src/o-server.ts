@@ -204,7 +204,11 @@ export function oServer(config: ServerConfig): ServerInstance {
       olaneError.status = 500;
     }
 
-    olaneError.details = error.details || error.stack;
+    // Only include stack traces and details in development mode
+    olaneError.details =
+      process.env.NODE_ENV === 'development'
+        ? error.details || error.stack
+        : undefined;
     next(olaneError);
   }
 
