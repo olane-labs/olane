@@ -223,7 +223,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
           temperature: options.temperature,
           topK: options.topK,
           topP: options.topP,
-          maxOutputTokens: options.maxOutputTokens,
+          maxOutputTokens: process.env.MAX_TOKENS
+            ? parseInt(process.env.MAX_TOKENS as string, 10)
+            : options.maxOutputTokens,
           stopSequences: options.stopSequences,
         },
         safetySettings: options.safetySettings,
@@ -312,7 +314,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
           temperature: options.temperature,
           topK: options.topK,
           topP: options.topP,
-          maxOutputTokens: options.maxOutputTokens,
+          maxOutputTokens: process.env.MAX_TOKENS
+            ? parseInt(process.env.MAX_TOKENS as string, 10)
+            : options.maxOutputTokens,
           stopSequences: options.stopSequences,
         },
         safetySettings: options.safetySettings,
@@ -450,7 +454,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
           temperature: options.temperature,
           topK: options.topK,
           topP: options.topP,
-          maxOutputTokens: options.maxOutputTokens,
+          maxOutputTokens: process.env.MAX_TOKENS
+            ? parseInt(process.env.MAX_TOKENS as string, 10)
+            : options.maxOutputTokens,
           stopSequences: options.stopSequences,
         },
         safetySettings: options.safetySettings,
@@ -540,7 +546,9 @@ export class GeminiIntelligenceTool extends oLaneTool {
           temperature: options.temperature,
           topK: options.topK,
           topP: options.topP,
-          maxOutputTokens: options.maxOutputTokens,
+          maxOutputTokens: process.env.MAX_TOKENS
+            ? parseInt(process.env.MAX_TOKENS as string, 10)
+            : options.maxOutputTokens,
           stopSequences: options.stopSequences,
         },
         safetySettings: options.safetySettings,
