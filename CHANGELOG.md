@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.1 (2026-02-07)</small>
+
+- document o-server status ([99ed95d](https://github.com/olane-labs/olane/commit/99ed95d))
+- easier config for max_tokens ([dfc1ae2](https://github.com/olane-labs/olane/commit/dfc1ae2))
+- security: implement input validation and sanitization ([8205dd2](https://github.com/olane-labs/olane/commit/8205dd2))
+- security: implement mandatory JWT token verification ([596033c](https://github.com/olane-labs/olane/commit/596033c))
+- security: prevent information disclosure in error responses ([e2e1ac5](https://github.com/olane-labs/olane/commit/e2e1ac5))
+- security: update Express 4.18.2/4.19.2 → 4.22.1 to fix CVEs ([816e5cf](https://github.com/olane-labs/olane/commit/816e5cf))
+- chore: update pnpm-lock.yaml after version bump ([314bb7d](https://github.com/olane-labs/olane/commit/314bb7d))
+
+### Breaking Change
+
+- - Authentication is now mandatory (except /health endpoint)
+
+* Replaces optional authenticate parameter with JWT config
+
+Implementation details:
+
+- Created jwt-auth.ts middleware with signature verification
+- Updated ServerConfig interface with JwtAuthConfig
+- Added 5 JWT-specific error codes to error handler
+- Deprecated legacy authenticate parameter
+- Added @types/mocha and @types/jsonwebtoken dev dependencies
+
+Fixes: Security requirement from v0.8.0 Phase 1
+Part of: Wave 2 (JWT Verification)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## 0.8.0 (2026-02-03)
 
 - fix for reconnect ([72a70c0](https://github.com/olane-labs/olane/commit/72a70c0))

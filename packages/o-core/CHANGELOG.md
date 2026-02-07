@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.1 (2026-02-07)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
 ## 0.8.0 (2026-02-03)
 
 **Note:** Version bump only for package @olane/o-core
