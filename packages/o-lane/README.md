@@ -14,12 +14,12 @@ The execution layer that manages AI agent processes through capability-based loo
 - 📊 **Execution Tracking** - Complete sequence history with cycle-by-cycle audit trails
 - 🌊 **Streaming Support** - Real-time progress updates to calling agents
 - 💾 **Persistent State** - Content-addressed storage of lane execution history
-- 🎯 **Pre-built Capabilities** - Evaluate, Task, Search, Configure, Error handling included
+- 🎯 **Pre-built Capabilities** - Evaluate and Execute included, with Search, Configure, and Multiple Step planned
 
 ## Installation
 
 ```bash
-npm install @olane/o-lane
+pnpm install @olane/o-lane
 ```
 
 ## Quick Start
@@ -53,7 +53,7 @@ await agent.start();
 
 ```typescript
 // Agent receives an intent and autonomously determines how to execute it
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Analyze the sales data and create a summary report',
@@ -62,15 +62,15 @@ const response = await agent.use({
   }
 });
 
-console.log(response.result);
+console.log(response.result.data);
 // {
 //   result: "Analysis complete. Created summary report with key insights...",
 //   cycles: 5,
 //   sequence: [
 //     { type: 'EVALUATE', reasoning: '...' },
-//     { type: 'TASK', result: '...' },
-//     { type: 'SEARCH', result: '...' },
-//     { type: 'TASK', result: '...' },
+//     { type: 'EXECUTE', result: '...' },
+//     { type: 'EVALUATE', result: '...' },
+//     { type: 'EXECUTE', result: '...' },
 //     { type: 'STOP', result: '...' }
 //   ]
 // }
@@ -256,7 +256,7 @@ The heart of o-lane's emergent orchestration:
 - **Maximum Cycles**: Configurable limit (default: 20) prevents infinite loops
 - **State Accumulation**: Each cycle builds on previous results
 - **Emergent Patterns**: Optimal workflows discovered through execution
-- **Fault Tolerance**: Errors trigger ERROR capability for recovery
+- **Fault Tolerance**: Errors are handled within capability execution
 
 ```typescript
 // The loop runs automatically in lane.execute()
@@ -289,13 +289,13 @@ console.log(lane.sequence);
 //     id: 'cap-1',
 //     type: 'EVALUATE',
 //     config: { intent: '...', context: '...' },
-//     result: { reasoning: 'Need to search for information', next: 'SEARCH' }
+//     result: { reasoning: 'Need to fetch customer data', next: 'EXECUTE' }
 //   },
 //   {
 //     id: 'cap-2',
-//     type: 'SEARCH',
-//     config: { query: 'customer data' },
-//     result: { data: [...], next: 'TASK' }
+//     type: 'EXECUTE',
+//     config: { task: { address: 'o://data', method: 'get_customer' } },
+//     result: { data: [...], next: 'EVALUATE' }
 //   },
 //   // ... more cycles
 // ]
@@ -312,13 +312,15 @@ console.log(lane.agentHistory);
 
 ## Built-in Capabilities
 
-o-lane includes six core capabilities that handle most agentic workflows:
+o-lane includes two active capabilities, with three additional ones planned:
+
+### Active Capabilities
 
 ### 1. Evaluate (`EVALUATE`)
 
 **Purpose**: Analyze the intent and determine the next capability to use.
 
-**When Used**: 
+**When Used**:
 - Start of every lane
 - After completing any other capability
 - When agent needs to reassess approach
@@ -327,18 +329,20 @@ o-lane includes six core capabilities that handle most agentic workflows:
 import { oCapabilityEvaluate } from '@olane/o-lane';
 
 // Automatically uses AI to evaluate intent and choose next step
-// Returns: { type: 'TASK' | 'SEARCH' | 'CONFIGURE' | 'STOP', reasoning: '...' }
+// Returns: { type: 'EXECUTE' | 'STOP', reasoning: '...' }
 ```
 
-### 2. Task (`TASK`)
+### 2. Execute (`EXECUTE`)
 
-**Purpose**: Execute a specific tool method with parameters.
+**Purpose**: Execute a specific tool method with parameters determined by the AI agent.
 
 **When Used**: Agent needs to call a tool (API, database, computation, etc.)
 
 ```typescript
-// Agent decides to execute a task
-// Result: { type: 'TASK', config: { task: { address: 'o://tool', payload: {...} } } }
+import { oCapabilityExecute } from '@olane/o-lane';
+
+// Agent decides to execute a tool call
+// Result: { type: 'EXECUTE', config: { task: { address: 'o://tool', payload: {...} } } }
 
 // Capability executes:
 const response = await this.node.use(new oAddress('o://analytics'), {
@@ -347,7 +351,9 @@ const response = await this.node.use(new oAddress('o://analytics'), {
 });
 ```
 
-### 3. Search (`SEARCH`)
+### Planned Capabilities (not yet active)
+
+### 3. Search (`SEARCH`) *(planned)*
 
 **Purpose**: Query vector stores, registries, or knowledge bases for information.
 
@@ -358,7 +364,7 @@ const response = await this.node.use(new oAddress('o://analytics'), {
 // Can query vector stores, registries, or other search services
 ```
 
-### 4. Configure (`CONFIGURE`)
+### 4. Configure (`CONFIGURE`) *(planned)*
 
 **Purpose**: Set up tool parameters, establish connections, or prepare environment.
 
@@ -369,19 +375,7 @@ const response = await this.node.use(new oAddress('o://analytics'), {
 // Returns configuration result and proceeds to next capability
 ```
 
-### 5. Error (`ERROR`)
-
-**Purpose**: Handle errors gracefully and attempt recovery.
-
-**When Used**: Any capability encounters an error
-
-```typescript
-// Automatically triggered on errors
-// Analyzes error, determines recovery strategy
-// Can retry, use alternative approach, or escalate
-```
-
-### 6. Multiple Step (`MULTIPLE_STEP`)
+### 5. Multiple Step (`MULTIPLE_STEP`) *(planned)*
 
 **Purpose**: Coordinate complex multi-step operations.
 
@@ -398,25 +392,21 @@ const response = await this.node.use(new oAddress('o://analytics'), {
 ```
 Intent: "Analyze Q4 sales and create report"
          ↓
-Cycle 1: EVALUATE → "Need to search for sales data tool"
+Cycle 1: EVALUATE → "Need to fetch sales data"
          ↓
-Cycle 2: SEARCH → Found 'o://analytics/sales'
+Cycle 2: EXECUTE → Execute o://analytics/sales/fetch_q4_data
          ↓
-Cycle 3: EVALUATE → "Ready to fetch data"
+Cycle 3: EVALUATE → "Have data, need to analyze"
          ↓
-Cycle 4: TASK → Execute o://analytics/sales/fetch_q4_data
+Cycle 4: EXECUTE → Execute o://analytics/analyze
          ↓
-Cycle 5: EVALUATE → "Have data, need to analyze"
+Cycle 5: EVALUATE → "Analysis complete, create report"
          ↓
-Cycle 6: TASK → Execute o://analytics/analyze
+Cycle 6: EXECUTE → Execute o://reports/create
          ↓
-Cycle 7: EVALUATE → "Analysis complete, create report"
+Cycle 7: EVALUATE → "Report created, done"
          ↓
-Cycle 8: TASK → Execute o://reports/create
-         ↓
-Cycle 9: EVALUATE → "Report created, done"
-         ↓
-Cycle 10: STOP → Return final result
+Cycle 8: STOP → Return final result
 ```
 
 ## API Reference
@@ -434,12 +424,20 @@ new oLane(config: oLaneConfig)
 **Config Properties:**
 - `intent: oIntent` - The intent to resolve (required)
 - `caller: oAddress` - Address of the calling agent (required)
-- `currentNode: oLaneTool` - The agent tool executing the lane (required)
+- `currentNode: oToolBase` - The tool executing the lane (required)
+- `promptLoader: PromptLoader` - Prompt loader for capability prompts (required)
 - `context?: oLaneContext` - Historical or domain context
+- `chatHistory?: string` - Chat history string for context
 - `streamTo?: oAddress` - Address to stream progress updates
-- `capabilities?: oCapability[]` - Custom capability set
+- `capabilities?: oCapability[]` - Custom capability set (overrides `enabledCapabilityTypes`)
+- `enabledCapabilityTypes?: oCapabilityType[]` - Filter which capability types to enable from `ALL_CAPABILITIES`
+- `extraInstructions?: string` - Additional instructions for the AI agent
 - `maxCycles?: number` - Override default max cycles (20)
 - `parentLaneId?: string` - Parent lane for sub-lanes
+- `persistToConfig?: boolean` - Persist lane for replay on startup
+- `useStream?: boolean` - Enable streaming mode
+- `onChunk?: (chunk: any) => void` - Callback for streaming chunks
+- `requestId?: string | number` - Request ID for request/response correlation
 
 #### Properties
 
@@ -447,9 +445,11 @@ new oLane(config: oLaneConfig)
 - `sequence: oCapabilityResult[]` - Execution history
 - `status: oLaneStatus` - Current lifecycle state
 - `result: oCapabilityResult` - Final execution result
-- `id: string` - Unique lane identifier
+- `id: string` - Unique lane identifier (UUID)
 - `cid?: CID` - Content identifier for storage
 - `agentHistory: string` - Formatted execution history
+- `MAX_CYCLES: number` - Maximum capability loop iterations (default: 20)
+- `onChunk?: (chunk: any) => void` - Streaming chunk callback
 
 #### Methods
 
@@ -471,7 +471,7 @@ Internal capability loop execution (called by execute).
 Add a capability result to the execution sequence.
 
 ```typescript
-lane.addSequence(new oCapabilityResult({ type: 'TASK', result: data }));
+lane.addSequence(new oCapabilityResult({ type: oCapabilityType.EXECUTE, result: data }));
 ```
 
 **`async store(): Promise<void>`**
@@ -492,6 +492,23 @@ const cid = await lane.toCID();
 console.log(cid.toString()); // "bafyreib..."
 ```
 
+**`getExecutionTrace(): string`**
+
+Get a formatted trace of the lane execution for debugging.
+
+```typescript
+const trace = lane.getExecutionTrace();
+console.log(trace);
+```
+
+**`async replay(cid: string): Promise<oCapabilityResult | undefined>`**
+
+Replay a previously stored lane execution from its CID.
+
+```typescript
+const result = await lane.replay('bafyreib...');
+```
+
 **`cancel(): void`**
 
 Cancel lane execution.
@@ -505,7 +522,15 @@ console.log(lane.status); // CANCELLED
 
 ### `oLaneTool` Class
 
-Extends `oNodeTool` with lane execution capabilities.
+Extends `oNodeTool` with lane execution capabilities via the `withLane` mixin pattern:
+
+```typescript
+// oLaneTool is defined as:
+export class oLaneTool extends withLane(oNodeTool) { }
+
+// The withLane mixin can be applied to any tool base class:
+// class MyCustomLaneTool extends withLane(MyBaseClass) { }
+```
 
 #### Built-in Methods
 
@@ -514,7 +539,7 @@ Extends `oNodeTool` with lane execution capabilities.
 Perform capability negotiation with other agents.
 
 ```typescript
-const result = await agent.use({
+const result = await agent.use(agent.address, {
   method: 'handshake',
   params: { intent: 'Discover capabilities' }
 });
@@ -526,7 +551,7 @@ const result = await agent.use({
 Main entry point for intent resolution.
 
 ```typescript
-const result = await agent.use({
+const result = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Your natural language goal here',
@@ -535,6 +560,22 @@ const result = await agent.use({
   }
 });
 ```
+
+**`async _tool_replay(request: oRequest): Promise<any>`**
+
+Replay a stored lane execution from its CID.
+
+```typescript
+const result = await agent.use(agent.address, {
+  method: 'replay',
+  params: { cid: 'bafyreib...' }
+});
+// Returns: { result, error, cycles, cid }
+```
+
+#### Customization
+
+Override `getPromptLoader()` to provide a custom `PromptLoader` for controlling how prompts are loaded for each capability type.
 
 #### Usage Example
 
@@ -550,7 +591,7 @@ class CustomAgent extends oLaneTool {
   // Add domain-specific tool methods
   async _tool_domain_action(request: oRequest): Promise<any> {
     // Your custom logic
-    return { success: true };
+    return { result: 'done' };
   }
 }
 ```
@@ -619,11 +660,31 @@ const manager = new oLaneManager();
 const lane = await manager.createLane({
   intent: new oIntent({ intent: 'Your goal' }),
   currentNode: agentTool,
-  caller: callerAddress
+  caller: callerAddress,
+  promptLoader: myPromptLoader
 });
 
 // Lane is automatically tracked
 ```
+
+#### Properties
+
+- `lanes: oLane[]` - All tracked lanes
+- `activeLanes: oLane[]` - Currently running lanes
+- `staleLanes: oLane[]` - Lanes that are no longer active
+- `maxLanes: number` - Maximum concurrent lanes (default: 100)
+
+#### Methods
+
+**`async createLane(config: oLaneConfig): Promise<oLane>`** - Create and track a new lane.
+
+**`getLane(id: string): oLane | undefined`** - Retrieve a lane by its ID.
+
+**`cancelLane(lane: oLane): void`** - Cancel a running lane.
+
+**`cleanLanes(): void`** - Remove completed/stale lanes from tracking.
+
+**`async teardown(): Promise<void>`** - Cancel all active lanes and clean up.
 
 ---
 
@@ -643,10 +704,12 @@ const result = new oCapabilityResult({
 ```
 
 **Properties:**
+- `id: string` - Unique result identifier
 - `type: oCapabilityType` - Next capability to execute
-- `result: any` - Execution result data
-- `config?: any` - Configuration for next capability
+- `result?: any` - Execution result data
+- `config?: oCapabilityConfig` - Configuration for next capability
 - `error?: string` - Error message if failed
+- `shouldPersist?: boolean` - Whether this result should be persisted to storage
 
 ---
 
@@ -670,14 +733,14 @@ enum oLaneStatus {
 
 ```typescript
 enum oCapabilityType {
-  EVALUATE = 'evaluate',
   TASK = 'task',
   SEARCH = 'search',
-  CONFIGURE = 'configure',
-  ERROR = 'error',
   MULTIPLE_STEP = 'multiple_step',
+  CONFIGURE = 'configure',
+  EXECUTE = 'execute',
+  HANDSHAKE = 'handshake',
+  EVALUATE = 'evaluate',
   STOP = 'stop',
-  RESULT = 'result',
   UNKNOWN = 'unknown'
 }
 ```
@@ -699,17 +762,17 @@ const agent = new oLaneTool({
 await agent.start();
 
 // Resolve an intent
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Find the latest sales report and summarize key metrics'
   }
 });
 
-console.log('Result:', response.result);
-console.log('Cycles used:', response.cycles);
-console.log('Execution path:', response.sequence.map(s => s.type));
-// ['EVALUATE', 'SEARCH', 'TASK', 'EVALUATE', 'TASK', 'STOP']
+console.log('Result:', response.result.data);
+console.log('Cycles used:', response.result.data.cycles);
+console.log('Execution path:', response.result.data.sequence.map(s => s.type));
+// ['EVALUATE', 'EXECUTE', 'EVALUATE', 'EXECUTE', 'STOP']
 ```
 
 ### Custom Capability
@@ -741,9 +804,9 @@ class EmailCapability extends oCapability {
       });
     } catch (error) {
       return new oCapabilityResult({
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         error: error.message,
-        config: { intent: this.intent, originalError: error }
+        config: { intent: this.intent }
       });
     }
   }
@@ -758,10 +821,11 @@ const lane = await manager.createLane({
   intent: new oIntent({ intent: 'Send status update to team' }),
   currentNode: agentTool,
   caller: callerAddress,
+  promptLoader: myPromptLoader,
   capabilities: [
     new oCapabilityEvaluate(),
-    new EmailCapability(),
-    new oCapabilityError()
+    new oCapabilityExecute(),
+    new EmailCapability()
   ]
 });
 
@@ -787,7 +851,7 @@ const receiver = new StreamReceiver({
 await receiver.start();
 
 // Execute intent with streaming
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Process large dataset',
@@ -807,8 +871,10 @@ const response = await agent.use({
 ```typescript
 import { oLaneContext } from '@olane/o-lane';
 
-// Provide conversation history or domain context
-const context = new oLaneContext([
+// Create context and add entries
+const context = new oLaneContext({});
+
+context.addAll([
   '[Previous Conversation]',
   'User: What were our sales last quarter?',
   'Agent: Q3 sales were $1.2M, up 15% from Q2.',
@@ -816,7 +882,10 @@ const context = new oLaneContext([
   '[End Previous Conversation]'
 ]);
 
-const response = await agent.use({
+// Or add individual entries
+context.add('Additional context here');
+
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Calculate Q4 projections',
@@ -831,7 +900,7 @@ const response = await agent.use({
 
 ```typescript
 // Complex intent requiring multiple capabilities
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Analyze customer feedback from last month, identify common themes, and create action items'
@@ -839,8 +908,9 @@ const response = await agent.use({
 });
 
 // Analyze the execution path
+const data = response.result.data;
 console.log('Execution Analysis:');
-response.sequence.forEach((step, index) => {
+data.sequence.forEach((step, index) => {
   console.log(`\nCycle ${index + 1}:`);
   console.log(`  Type: ${step.type}`);
   console.log(`  Reasoning: ${step.reasoning}`);
@@ -850,15 +920,15 @@ response.sequence.forEach((step, index) => {
 });
 
 // Output might show:
-// Cycle 1: EVALUATE - "Need to search for feedback collection tool"
-// Cycle 2: SEARCH - Found o://feedback/collector
-// Cycle 3: TASK - Fetched 145 feedback items
-// Cycle 4: EVALUATE - "Have data, need sentiment analysis"
-// Cycle 5: TASK - Analyzed sentiment across feedback
-// Cycle 6: EVALUATE - "Need to identify themes"
-// Cycle 7: TASK - Extracted 5 common themes
-// Cycle 8: EVALUATE - "Ready to create action items"
-// Cycle 9: TASK - Generated 8 action items
+// Cycle 1: EVALUATE - "Need to fetch feedback data"
+// Cycle 2: EXECUTE - Fetched 145 feedback items from o://feedback/collector
+// Cycle 3: EVALUATE - "Have data, need sentiment analysis"
+// Cycle 4: EXECUTE - Analyzed sentiment across feedback
+// Cycle 5: EVALUATE - "Need to identify themes"
+// Cycle 6: EXECUTE - Extracted 5 common themes
+// Cycle 7: EVALUATE - "Ready to create action items"
+// Cycle 8: EXECUTE - Generated 8 action items
+// Cycle 9: EVALUATE - "All tasks complete"
 // Cycle 10: STOP - Completed successfully
 ```
 
@@ -902,7 +972,7 @@ class DatabaseQueryCapability extends oCapability {
       });
     } catch (error) {
       return new oCapabilityResult({
-        type: oCapabilityType.ERROR,
+        type: oCapabilityType.EVALUATE,
         error: error.message
       });
     }
@@ -920,6 +990,20 @@ class DatabaseQueryCapability extends oCapability {
 - Integration with external systems
 - Performance-critical operations requiring optimization
 
+### Prompt Loading
+
+Lanes require a `PromptLoader` to load prompts for each capability type. The `PromptLoader` abstract class provides a `loadPromptForType(type, params?, provider?)` method. A `PromptLoaderDefault` implementation is included for standard use cases.
+
+To customize prompt loading in your `oLaneTool`, override `getPromptLoader()`:
+
+```typescript
+class MyAgent extends oLaneTool {
+  getPromptLoader(): PromptLoader {
+    return new MyCustomPromptLoader();
+  }
+}
+```
+
 ### Lane Context
 
 Provide rich context to help agents make better decisions:
@@ -928,7 +1012,8 @@ Provide rich context to help agents make better decisions:
 import { oLaneContext } from '@olane/o-lane';
 
 // Conversation context
-const conversationContext = new oLaneContext([
+const conversationContext = new oLaneContext({});
+conversationContext.addAll([
   '[Chat History]',
   'User: Show me last quarter sales',
   'Agent: Q3 sales: $1.2M (↑15%)',
@@ -936,7 +1021,8 @@ const conversationContext = new oLaneContext([
 ]);
 
 // Domain knowledge context
-const domainContext = new oLaneContext([
+const domainContext = new oLaneContext({});
+domainContext.addAll([
   '[Business Rules]',
   '- Sales reports require manager approval',
   '- Sensitive data must be redacted',
@@ -945,12 +1031,13 @@ const domainContext = new oLaneContext([
 ]);
 
 // Combine contexts
-const combinedContext = new oLaneContext([
-  ...conversationContext.contexts,
-  ...domainContext.contexts
+const combinedContext = new oLaneContext({});
+combinedContext.addAll([
+  conversationContext.toString(),
+  domainContext.toString()
 ]);
 
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Generate Q4 sales report',
@@ -1027,7 +1114,7 @@ const tracker = new ProgressTracker({
 await tracker.start();
 
 // Long-running task with progress updates
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Process 10,000 customer records',
@@ -1044,7 +1131,7 @@ Access historical lane executions:
 import { oAddress } from '@olane/o-core';
 
 // Execute and store lane
-const response = await agent.use({
+const response = await agent.use(agent.address, {
   method: 'intent',
   params: { intent: 'Analyze sales data' }
 });
@@ -1059,7 +1146,7 @@ const storedLane = await agent.use(new oAddress('o://lane'), {
   params: { key: cid.toString() }
 });
 
-console.log('Historical execution:', storedLane.result);
+console.log('Historical execution:', storedLane.result.data);
 // {
 //   config: { intent: '...', caller: '...' },
 //   sequence: [...],
@@ -1419,10 +1506,9 @@ import { ALL_CAPABILITIES } from '@olane/o-lane';
 "Do analysis" → "Calculate average sales per region for Q4 2024"
 
 // 2. Provide context
-context: new oLaneContext([
-  'Available data: sales_q4.csv',
-  'Required format: JSON with region, avg_sales fields'
-])
+const ctx = new oLaneContext({});
+ctx.addAll(['Available data: sales_q4.csv', 'Required format: JSON with region, avg_sales fields']);
+// then pass: context: ctx
 
 // 3. Add specialized capabilities
 capabilities: [...ALL_CAPABILITIES, new DataAnalysisCapability()]
