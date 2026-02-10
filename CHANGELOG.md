@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.2 (2026-02-10)</small>
+
+- bug fix for websocket frame crash ([e358ed0](https://github.com/olane-labs/olane/commit/e358ed0))
+- Fix the readme for o-lane package ([b4d962d](https://github.com/olane-labs/olane/commit/b4d962d))
+- minor change ([87aca78](https://github.com/olane-labs/olane/commit/87aca78))
+- chore: update pnpm-lock.yaml after version bump ([b84ad7d](https://github.com/olane-labs/olane/commit/b84ad7d))
+
 ## <small>0.8.1 (2026-02-07)</small>
 
 - document o-server status ([99ed95d](https://github.com/olane-labs/olane/commit/99ed95d))

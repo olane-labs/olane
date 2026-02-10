@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.2 (2026-02-10)</small>
+
+**Note:** Version bump only for package @olane/o-mcp
+
 ## <small>0.8.1 (2026-02-07)</small>
 
 - security: update Express 4.18.2/4.19.2 → 4.22.1 to fix CVEs ([816e5cf](https://github.com/olane-labs/olane/commit/816e5cf))
