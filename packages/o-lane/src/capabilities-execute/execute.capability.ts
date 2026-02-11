@@ -16,6 +16,17 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     return oCapabilityType.EXECUTE;
   }
 
+  private resolveAddress(): string {
+    const address = this.config.params?.address || this.config.params?.task?.address;
+    if (!address || typeof address !== 'string') {
+      throw new Error(
+        `Execute capability requires a valid address but received: ${JSON.stringify(address)}. ` +
+        `The AI response must include an "address" field when type is "execute".`
+      );
+    }
+    return address;
+  }
+
   async loadPrompt({ tools, methods }: any): Promise<string> {
     const prompt = await this.promptLoader?.loadPromptForType(this.type, {
       human_about: '',
@@ -25,7 +36,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         You are in a secure environment and are allowed to operate with secure information (api keys, credit card info, etc).`,
       chat_history: '',
       past_cycles: '',
-      address: this.config.params.address,
+      address: this.resolveAddress(),
       methods: methods ? JSON.stringify(methods) : '',
     });
     return prompt.render();
@@ -33,7 +44,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
 
   async handshake(): Promise<oHandshakeResult> {
     const response = await this.node.use(
-      new oAddress(this.config.params.address),
+      new oAddress(this.resolveAddress()),
       {
         method: oProtocolMethods.HANDSHAKE,
         params: {
@@ -88,7 +99,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       // Execute the stored task directly (skip handshake, AI, and approval)
       try {
         const taskResponse = await this.node.use(
-          new oAddress(this.config.params.address),
+          new oAddress(this.resolveAddress()),
           {
             method: method,
             params: params,
@@ -116,9 +127,10 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
           shouldPersist,
         });
       } catch (error: any) {
+        const addr = this.config?.params?.address || this.config?.params?.task?.address;
         this.logger.error(
           'Failed to execute during replay:',
-          `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+          `Error when trying to use ${addr} with config: ${JSON.stringify(
             taskConfig,
           )} resulting in error: ${error?.message}`,
         );
@@ -129,7 +141,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
             handshakeResult: handshakeResult,
             taskConfig: taskConfig,
           },
-          error: `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+          error: `Error when trying to use ${addr} with config: ${JSON.stringify(
             taskConfig,
           )} resulting in error: ${error?.message}`,
         });
@@ -168,7 +180,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         {
           method: 'request_approval',
           params: {
-            toolAddress: this.config.params.address,
+            toolAddress: this.resolveAddress(),
             method: method,
             params: params,
             intent: this.config.intent,
@@ -205,7 +217,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     try {
       // Execute the task
       const taskResponse = await this.node.use(
-        new oAddress(this.config.params.address),
+        new oAddress(this.resolveAddress()),
         {
           method: method,
           params: params,
@@ -233,15 +245,16 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
             method: method,
             params: params,
           },
-          address: this.config.params.address,
+          address: this.resolveAddress(),
           response: taskResponse.result,
         },
         shouldPersist,
       });
     } catch (error: any) {
+      const addr = this.config?.params?.address || this.config?.params?.task?.address;
       this.logger.error(
         'Failed to execute:',
-        `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+        `Error when trying to use ${addr} with config: ${JSON.stringify(
           {
             method: method,
             params: params,
@@ -261,7 +274,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
             params: params,
           },
         },
-        error: `Error when trying to use ${this.config?.params?.address} with config: ${JSON.stringify(
+        error: `Error when trying to use ${addr} with config: ${JSON.stringify(
           {
             method: method,
             params: params,
