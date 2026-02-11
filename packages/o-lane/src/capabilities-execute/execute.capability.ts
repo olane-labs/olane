@@ -45,6 +45,10 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   async run(): Promise<oCapabilityResult> {
+    this.logger.debug(
+      'Starting execution capability with config:',
+      this.config,
+    );
     // Check if we're in replay mode
     if (this.config.isReplay) {
       this.logger.debug(
