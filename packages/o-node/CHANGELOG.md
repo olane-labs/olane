@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.3 (2026-02-11)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
 ## <small>0.8.2 (2026-02-10)</small>
 
 - bug fix for websocket frame crash ([e358ed0](https://github.com/olane-labs/olane/commit/e358ed0))

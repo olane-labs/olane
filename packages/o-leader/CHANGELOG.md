@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.3 (2026-02-11)</small>
+
+**Note:** Version bump only for package @olane/o-leader
+
 ## <small>0.8.2 (2026-02-10)</small>
 
 **Note:** Version bump only for package @olane/o-leader

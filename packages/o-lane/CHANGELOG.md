@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.3 (2026-02-11)</small>
+
+- minor change ([6ffbc6c](https://github.com/olane-labs/olane/commit/6ffbc6c))
+- minor change ([9c7b023](https://github.com/olane-labs/olane/commit/9c7b023))
+
 ## <small>0.8.2 (2026-02-10)</small>
 
 - Fix the readme for o-lane package ([b4d962d](https://github.com/olane-labs/olane/commit/b4d962d))
