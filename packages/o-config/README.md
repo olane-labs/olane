@@ -24,7 +24,7 @@ Pre-configured libp2p setup for Olane OS networking - batteries included, ready 
 ### Installation
 
 ```bash
-npm install @olane/o-config
+pnpm install @olane/o-config
 ```
 
 ### Create Your First libp2p Node
@@ -672,29 +672,29 @@ const node = await createNode({
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Node.js tests only
-npm run test:node
+pnpm run test:node
 
 # Browser tests only
-npm run test:browser
+pnpm run test:browser
 ```
 
 ## Development {#development}
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build the package
-npm run build
+pnpm run build
 
 # Run in development mode
-npm run dev
+pnpm run dev
 
 # Lint code
-npm run lint
+pnpm run lint
 ```
 
 ## Related Packages {#related-packages}

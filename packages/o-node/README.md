@@ -81,7 +81,7 @@ The production distribution layer of Olane OS - build tool nodes that AI agents 
 ## Installation
 
 ```bash
-npm install @olane/o-node @olane/o-core @olane/o-protocol @olane/o-config @olane/o-tool
+pnpm install @olane/o-node @olane/o-core @olane/o-protocol @olane/o-config @olane/o-tool
 ```
 
 ## Quick Start
@@ -141,8 +141,14 @@ const response = await toolNode.use(
   { method: 'greet', params: { name: 'World' } }
 );
 
-console.log(response.result);
-// { message: "Hello, World! I'm a tool node that AI agents can use.", peerId: "..." }
+// Responses are wrapped in a standard structure:
+// response.result.success - boolean indicating success/failure
+// response.result.data    - the raw data returned by the tool method
+// response.result.error   - error message if success is false
+if (response.result.success) {
+  console.log(response.result.data);
+  // { message: "Hello, World! I'm a tool node that AI agents can use.", peerId: "..." }
+}
 
 await toolNode.stop();
 ```
@@ -581,6 +587,118 @@ const response = await agent1.use(agent2.address, {
 
 ## API Reference
 
+### Class Hierarchy
+
+The o-node package provides several classes that build on each other through both inheritance and composition (mixins):
+
+```
+oCore (from @olane/o-core)
+  └─ oToolBase (from @olane/o-tool) [inheritance]
+       └─ oNode [inheritance]
+            └─ oServerNode [inheritance]
+                 └─ oNodeTool [composition via oTool mixin]
+```
+
+`oNodeTool` is the **recommended base class** for building tool nodes. It applies the `oTool` mixin to `oServerNode`, which adds protocol handling, tool method discovery (methods prefixed with `_tool_`), and the standard request/response pipeline. Use `oServerNode` directly only when you need low-level networking without the tool layer.
+
+### oNodeTool Class
+
+The primary base class for building tool nodes. Created by applying the `oTool` mixin to `oServerNode`, which adds protocol handling, `_tool_` method discovery, and the standard response wrapping pipeline.
+
+**Import:**
+```typescript
+import { oNodeTool, oNodeAddress } from '@olane/o-node';
+```
+
+**Usage:**
+```typescript
+import { oNodeTool, oNodeAddress } from '@olane/o-node';
+import { oRequest } from '@olane/o-core';
+
+class MyTool extends oNodeTool {
+  constructor(config: any) {
+    super({
+      ...config,
+      address: new oNodeAddress('o://my-tool'),
+      description: 'A tool node for AI agents',
+    });
+  }
+
+  // Initialize external services in this hook (not in start())
+  async hookInitializeFinished(): Promise<void> {
+    // Set up API clients, load resources, etc.
+    await super.hookInitializeFinished();
+  }
+
+  // Start background tasks in this hook
+  async hookStartFinished(): Promise<void> {
+    // Start monitoring, spawn children, etc.
+    await super.hookStartFinished();
+  }
+
+  // Methods prefixed with _tool_ are automatically discovered
+  async _tool_greet(request: oRequest): Promise<any> {
+    const { name } = request.params;
+    if (!name) {
+      throw new Error('name is required');
+    }
+    // Return raw data - base class wraps it automatically
+    return { message: `Hello, ${name}!` };
+  }
+
+  // Cleanup resources
+  async stop(): Promise<void> {
+    // Disconnect clients, clear timers, etc.
+    await super.stop();
+  }
+}
+```
+
+**Configuration** (`oNodeToolConfig`):
+
+Extends `oNodeConfig` (with `address` optional, since it can be set in the constructor):
+
+```typescript
+interface oNodeToolConfig extends Omit<oNodeConfig, 'address'> {}
+```
+
+See `oNodeConfig` below for the full set of configuration options.
+
+**Lifecycle Hooks:**
+
+| Hook | When | Use For |
+|------|------|---------|
+| `hookInitializeFinished()` | After `initialize()`, before `register()` | Initialize 3rd party services |
+| `hookStartFinished()` | After `register()`, fully started | Start background tasks, create children |
+| `stop()` | When stopping | Cleanup resources, disconnect services |
+
+> **Important**: Never override `start()`. It orchestrates the entire lifecycle. Use `hookInitializeFinished()` and `hookStartFinished()` instead.
+
+**Response Structure:**
+
+When calling tool methods via `node.use()`, responses follow the standard Olane response structure:
+
+```typescript
+const response = await node.use(
+  new oNodeAddress('o://some-tool'),
+  { method: 'some_method', params: { ... } }
+);
+
+// response.result.success - boolean indicating success or failure
+// response.result.data    - the return value on success
+// response.result.error   - error message on failure
+
+if (response.result.success) {
+  const data = response.result.data;
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Never access `response.success` or `response.data` directly. Always use `response.result.success` and `response.result.data`.
+
+---
+
 ### oNode Class
 
 Extends `oToolBase` from `@olane/o-tool`, which extends `oCore` from `@olane/o-core`.
@@ -852,39 +970,40 @@ describe('Agent Communication', () => {
 ```typescript
 class MonitoredNode extends oServerNode {
   private healthCheckInterval?: NodeJS.Timeout;
-  
-  async start(): Promise<void> {
-    await super.start();
-    
-    // Start health monitoring
+
+  // Use hookStartFinished() instead of overriding start()
+  async hookStartFinished(): Promise<void> {
+    // Start health monitoring after the node is fully started
     this.healthCheckInterval = setInterval(() => {
       const connections = this.p2pNode.getConnections();
       const peers = this.p2pNode.getPeers();
-      
+
       console.log('Health Check:', {
         connections: connections.length,
         peers: peers.length,
         protocols: this.p2pNode.getProtocols()
       });
-      
+
       // Alert if disconnected
       if (connections.length === 0 && this.leader) {
         console.warn('No active connections! Attempting reconnect...');
         this.reconnectToLeader();
       }
     }, 30000); // Every 30 seconds
+
+    await super.hookStartFinished();
   }
-  
+
   async stop(): Promise<void> {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
     }
     await super.stop();
   }
-  
+
   private async reconnectToLeader(): Promise<void> {
     if (!this.leader) return;
-    
+
     try {
       await this.register();
       console.log('Reconnected to leader');
@@ -961,32 +1080,32 @@ const agent = new oServerNode({
 
 ```bash
 # Run tests
-npm test
+pnpm test
 
 # Run tests in Node.js
-npm run test:node
+pnpm run test:node
 
 # Run tests in browser
-npm run test:browser
+pnpm run test:browser
 ```
 
 ## Development
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build the package
-npm run build
+pnpm run build
 
 # Run in development mode with debug output
-npm run dev
+pnpm run dev
 
 # Update o-core dependency
-npm run update:lib
+pnpm run update:lib
 
 # Lint the code
-npm run lint
+pnpm run lint
 ```
 
 ## Related Packages

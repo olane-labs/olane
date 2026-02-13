@@ -8,7 +8,7 @@ A unified storage application for Olane OS that provides multiple storage backen
 
 ```bash
 # Install
-npm install @olane/o-storage
+pnpm install @olane/o-storage
 ```
 
 ```typescript
@@ -40,7 +40,7 @@ console.log(result.result.data);
 
 ## Overview {#overview}
 
-`o-storage` is a **Level 3 Application** (multiple coordinated nodes) that provides a unified storage layer for Olane OS. It includes four specialized storage providers, each optimized for different use cases.
+`o-storage` is a **Level 3 Application** (multiple coordinated nodes) that provides a unified storage layer for Olane OS. It includes five specialized storage providers, each optimized for different use cases.
 
 ### What it does
 
@@ -53,20 +53,23 @@ console.log(result.result.data);
 ### Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  StorageTool (Application)                              │
-│  o://storage                                            │
-│  • Routes requests to providers                         │
-└─────────────────────────────────────────────────────────┘
-                        ⬇ manages
-    ┌──────────────┬──────────────┬──────────────┬──────────────┐
-    ⬇              ⬇              ⬇              ⬇              ⬇
-┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐
-│ Memory   │  │ Disk     │  │ Secure   │  │ Placeholder  │
-│ o://mem  │  │ o://disk │  │ o://sec  │  │ o://placehldr│
-│ Fast     │  │ Persist  │  │ Encrypt  │  │ AI-Powered   │
-└──────────┘  └──────────┘  └──────────┘  └──────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  StorageTool (Application)                                           │
+│  o://storage                                                         │
+│  • Routes requests to providers                                      │
+└──────────────────────────────────────────────────────────────────────┘
+                              ⬇ manages
+    ┌─────────────┬─────────────┬─────────────┬──────────────┬─────────────┐
+    ⬇             ⬇             ⬇             ⬇              ⬇             ⬇
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────┐ ┌─────────────┐
+│ Memory   │ │ Disk     │ │ Secure   │ │ Placeholder │ │ OS Config   │
+│ o://     │ │ o://disk │ │ o://     │ │ o://        │ │ o://        │
+│ memory   │ │          │ │ secure   │ │ placeholder │ │ os-config   │
+│ Fast     │ │ Persist  │ │ Encrypt  │ │ AI-Powered  │ │ OS Settings │
+└──────────┘ └──────────┘ └──────────┘ └─────────────┘ └─────────────┘
 ```
+
+Each child node uses a simple `o://` address (e.g., `new oAddress('o://disk')`) with `parent: this.address` set to `o://storage`. The system creates nested address paths during registration. See the [CLAUDE.md](../../CLAUDE.md) guide for details on address construction patterns.
 
 ## Storage Providers {#storage-providers}
 
@@ -101,7 +104,7 @@ const exists = await leader.use(new oAddress('o://memory'), {
   method: 'has',
   params: { key: 'session-token' }
 });
-console.log(exists.result.data.success); // true
+console.log(exists.result.data); // true
 
 // Delete from memory
 await leader.use(new oAddress('o://memory'), {
@@ -217,7 +220,7 @@ const result = await leader.use(new oAddress('o://placeholder'), {
   }
 });
 
-console.log(result);
+console.log(result.result.data);
 // {
 //   value: "[original 50,000 character document]",
 //   intent: "Find all API endpoints...",
@@ -357,12 +360,10 @@ Check if a key exists.
 **Parameters**:
 - `key` (string, required): Key to check
 
-**Returns**: 
+**Returns**:
 ```typescript
 {
-  success: boolean;
-  data?: boolean; // true if key exists, false otherwise
-  error?: string;
+  exists: boolean; // true if key exists, false otherwise
 }
 ```
 
@@ -373,7 +374,7 @@ const result = await leader.use(new oAddress('o://disk'), {
   params: { key: 'user-123' }
 });
 
-if (result.result.data.data) {
+if (result.result.data.exists) {
   console.log('Key exists!');
 }
 ```
@@ -398,6 +399,7 @@ await storage.start();
 // - o://disk (DiskStorageProvider)
 // - o://secure (SecureStorageProvider)
 // - o://placeholder (PlaceholderTool)
+// - o://os-config (OSConfigStorageTool)
 ```
 
 ---
@@ -500,6 +502,81 @@ const placeholder = new PlaceholderTool({
 await placeholder.start();
 ```
 
+### `OSConfigStorageTool` (`o://os-config`) {#osconfigstoragetool}
+
+OS instance configuration storage that delegates to a configurable storage backend.
+
+**Best for**: OS instance configuration, lane management, metadata tracking
+
+**Characteristics**:
+- Delegates to `o://disk` or `o://memory` (configurable)
+- Manages OS instance configurations with key prefix `os-config:`
+- Supports lane CID management for OS startup configuration
+- Supports metadata storage per OS instance
+
+**Configuration**:
+```typescript
+interface OSConfigStorageConfig {
+  storageBackend?: 'disk' | 'memory' | string; // Default: 'disk'
+}
+```
+
+Can also be configured via the `OS_CONFIG_STORAGE` environment variable.
+
+**Methods:**
+
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `save_config` | `osName` (string), `config` (object) | Save OS instance configuration |
+| `load_config` | `osName` (string) | Load OS instance configuration |
+| `list_configs` | (none) | List all OS instance configurations |
+| `delete_config` | `osName` (string) | Delete OS instance configuration |
+| `add_lane_to_config` | `osName` (string), `cid` (string) | Add a lane CID to OS startup config |
+| `remove_lane_from_config` | `osName` (string), `cid` (string) | Remove a lane CID from OS startup config |
+| `get_lanes` | `osName` (string) | Get all lane CIDs for an OS instance |
+| `update_metadata` | `osName` (string), `metadata` (object) | Update metadata for an OS instance |
+| `get_metadata` | `osName` (string) | Get metadata for an OS instance |
+
+**Example:**
+```typescript
+// Save OS configuration
+await leader.use(new oAddress('o://os-config'), {
+  method: 'save_config',
+  params: {
+    osName: 'my-os-instance',
+    config: {
+      oNetworkConfig: { lanes: [] },
+      metadata: { createdAt: Date.now() }
+    }
+  }
+});
+
+// Add a lane to the OS instance
+await leader.use(new oAddress('o://os-config'), {
+  method: 'add_lane_to_config',
+  params: {
+    osName: 'my-os-instance',
+    cid: 'bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi'
+  }
+});
+
+// Get lanes for an OS instance
+const result = await leader.use(new oAddress('o://os-config'), {
+  method: 'get_lanes',
+  params: { osName: 'my-os-instance' }
+});
+console.log(result.result.data.lanes);
+
+// Load configuration
+const config = await leader.use(new oAddress('o://os-config'), {
+  method: 'load_config',
+  params: { osName: 'my-os-instance' }
+});
+console.log(config.result.data);
+```
+
+---
+
 ## Common Use Cases {#common-use-cases}
 
 ### Use Case 1: Configuration Management {#config-management}
@@ -581,7 +658,7 @@ const cached = await leader.use(new oAddress('o://memory'), {
   params: { key: 'expensive-computation' }
 });
 
-if (cached.result.data.data) {
+if (cached.result.data.exists) {
   // Use cached value
   const result = await leader.use(
     new oAddress('o://memory/expensive-computation')
@@ -613,7 +690,7 @@ const sourceCode = await fs.readFile('src/app.ts', 'utf-8');
 // Assume sourceCode is 100KB
 
 // Store with intent
-const stored = await leader.use(new oAddress('o://placeholder'), {
+const response = await leader.use(new oAddress('o://placeholder'), {
   method: 'put',
   params: {
     key: 'source-app',
@@ -622,6 +699,7 @@ const stored = await leader.use(new oAddress('o://placeholder'), {
   }
 });
 
+const stored = response.result.data;
 console.log(stored.summary);
 // "This TypeScript application uses Express.js with session-based authentication.
 // The authentication logic is in the AuthController class (lines 45-123).
@@ -701,22 +779,32 @@ import { oAddress } from '@olane/o-core';
 class MyCustomNode extends oNodeTool {
   async _tool_save_config(request: oRequest) {
     const { configData } = request.params;
-    
+
     // Store configuration using disk storage
-    await this.use(new oAddress('o://disk'), {
+    const response = await this.use(new oAddress('o://disk'), {
       method: 'put',
       params: {
         key: 'my-node-config',
         value: JSON.stringify(configData)
       }
     });
-    
-    return { success: true };
+
+    if (!response.result.success) {
+      throw new Error(`Failed to save config: ${response.result.error}`);
+    }
+
+    // Return raw data - base class wraps it
+    return { saved: true };
   }
 
   async _tool_load_config(request: oRequest) {
-    // Retrieve configuration
+    // Retrieve configuration (response.result.data contains the storage value)
     const result = await this.use(new oAddress('o://disk/my-node-config'));
+
+    if (!result.result.success) {
+      throw new Error(`Failed to load config: ${result.result.error}`);
+    }
+
     return JSON.parse(result.result.data.value);
   }
 }
@@ -735,9 +823,9 @@ import { oAddress } from '@olane/o-core';
 class IntelligentDataNode extends oLaneTool {
   async _tool_analyze_document(request: oRequest) {
     const { documentContent, analysisGoal } = request.params;
-    
+
     // Store document with intent using placeholder
-    const stored = await this.use(new oAddress('o://placeholder'), {
+    const response = await this.use(new oAddress('o://placeholder'), {
       method: 'put',
       params: {
         key: `doc-${Date.now()}`,
@@ -745,7 +833,13 @@ class IntelligentDataNode extends oLaneTool {
         intent: analysisGoal
       }
     });
-    
+
+    if (!response.result.success) {
+      throw new Error(`Failed to store document: ${response.result.error}`);
+    }
+
+    const stored = response.result.data;
+
     // Return summary for further processing
     return {
       summary: stored.summary,
@@ -790,6 +884,44 @@ await leader.use(new oAddress('o://memory'), {
 const result = await leader.use(new oAddress('o://memory/test'));
 console.log(result.result.data.value); // 'data'
 ```
+
+## Response Structure {#response-structure}
+
+When calling storage methods via `node.use()`, responses follow the standard Olane response pattern:
+
+```typescript
+const response = await leader.use(new oAddress('o://disk'), {
+  method: 'put',
+  params: { key: 'my-key', value: 'my-value' }
+});
+
+// Always access data via response.result
+if (response.result.success) {
+  const data = response.result.data;
+  console.log(data);  // { success: true } for put operations
+} else {
+  console.error(response.result.error);
+}
+
+// For get operations:
+const getResponse = await leader.use(new oAddress('o://disk/my-key'));
+if (getResponse.result.success) {
+  console.log(getResponse.result.data.value);  // 'my-value'
+}
+
+// Full response shape:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,
+//     data: any,          // Present on success
+//     error?: string      // Present on failure
+//   }
+// }
+```
+
+> **Important**: Always check `response.result.success` before accessing `response.result.data`. Do not access `response.success` or `response.data` directly -- these properties do not exist at the top level of the response object.
 
 ## Troubleshooting {#troubleshooting}
 
@@ -904,7 +1036,7 @@ class PersistentCache {
       params: { key }
     });
     
-    if (memResult.result.data.data) {
+    if (memResult.result.data.exists) {
       return await leader.use(new oAddress('o://memory/') + key);
     }
     
@@ -984,16 +1116,16 @@ if (largeDoc.length > 50000) {
 
 ```bash
 # Install storage package
-npm install @olane/o-storage
+pnpm add @olane/o-storage
 
 # Install peer dependencies
-npm install @olane/o-core @olane/o-protocol @olane/o-tool @olane/o-node @olane/o-lane @olane/o-config
+pnpm add @olane/o-core @olane/o-protocol @olane/o-tool @olane/o-node @olane/o-lane @olane/o-config
 
 # Optional: For secure storage
-npm install @olane/o-encryption
+pnpm add @olane/o-encryption
 
 # Optional: For placeholder storage
-npm install @olane/o-intelligence
+pnpm add @olane/o-intelligence
 ```
 
 ## Related {#related}

@@ -18,9 +18,10 @@
 - ❌ **NEVER**: Wrap success responses in `{ success: true, result: ... }`
 
 **Response Structure (when calling other tools):**
-- When using `node.use()`, access data via `response.result.data`
-- Always check `response.success` before accessing data
-- Base class automatically wraps your returns
+- When using `node.use()`, responses follow: `response.result.success`, `response.result.data`, `response.result.error`
+- Always check `response.result.success` before accessing data
+- Access data via `response.result.data` and errors via `response.result.error`
+- Base class automatically wraps your returns in this structure
 
 **Package Management:**
 - ⚠️ **ALWAYS use `pnpm`, not `npm`**
@@ -285,9 +286,9 @@ async _tool_process_order(request: oRequest): Promise<any> {
     { method: 'get_customer', params: { customerId } }
   );
 
-  // ✅ Check success
-  if (!customerResponse.success) {
-    throw new Error(`Failed to get customer: ${customerResponse.error}`);
+  // ✅ Check success via result.success
+  if (!customerResponse.result.success) {
+    throw new Error(`Failed to get customer: ${customerResponse.result.error}`);
   }
 
   // ✅ Access data via result.data
@@ -744,8 +745,8 @@ describe('MyTool', () => {
         params: { param1: 'test' }
       });
 
-      expect(result.success).toBe(true);
-      expect(result.result).toBeDefined();
+      expect(result.result.success).toBe(true);
+      expect(result.result.data).toBeDefined();
     });
 
     it('should validate required parameters', async () => {
@@ -754,8 +755,8 @@ describe('MyTool', () => {
         params: {}
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('param1 is required');
+      expect(result.result.success).toBe(false);
+      expect(result.result.error).toContain('param1 is required');
     });
   });
 });
@@ -782,8 +783,8 @@ describe('Manager and Worker', () => {
       params: { workerId: 'test-1' }
     });
 
-    expect(result.success).toBe(true);
-    expect(result.workerId).toBe('test-1');
+    expect(result.result.success).toBe(true);
+    expect(result.result.data.workerId).toBe('test-1');
   });
 
   it('should route to worker', async () => {
@@ -801,7 +802,7 @@ describe('Manager and Worker', () => {
       }
     });
 
-    expect(result.success).toBe(true);
+    expect(result.result.success).toBe(true);
   });
 
   it('should enforce max instances', async () => {
@@ -817,8 +818,8 @@ describe('Manager and Worker', () => {
       params: { workerId: 'overflow' }
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error.code).toBe('MAX_INSTANCES_REACHED');
+    expect(result.result.success).toBe(false);
+    expect(result.result.error).toContain('Max instances');
   });
 });
 ```
@@ -1303,8 +1304,8 @@ const response = await this.otherTool.use(address, {
   params: { ... }
 });
 
-if (!response.success) {
-  throw new Error(response.error);
+if (!response.result.success) {
+  throw new Error(response.result.error);
 }
 
 const data = response.result.data;
@@ -1328,7 +1329,7 @@ You now have everything needed to build O-Network nodes:
 - ✅ Use `pnpm`, not npm
 - ✅ Never override `start()` - use hooks
 - ✅ Throw errors, return raw data
-- ✅ Access `response.result.data` when calling tools
+- ✅ Access responses via `response.result.success`, `response.result.data`, `response.result.error`
 - ✅ Inject hooks for child registration
 - ✅ Isolate state between children
 - ✅ Cascade cleanup from parent to children

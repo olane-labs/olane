@@ -2,7 +2,7 @@
 
 > ⚠️ **Deprecation Notice**: This package is being phased out. Tools should now be referenced and installed independently.
 
-A collection of pre-built tools for Olane OS including OAuth authentication, text embeddings, NER (Named Entity Recognition), and vector storage.
+A collection of pre-built tools for Olane OS including OAuth authentication, text embeddings, and vector storage.
 
 [![npm version](https://img.shields.io/npm/v/@olane/o-tool-registry.svg)](https://www.npmjs.com/package/@olane/o-tool-registry)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
@@ -20,26 +20,25 @@ This package was originally designed as a convenient registry for commonly-used 
 
 If you're using `o-tool-registry`, you should plan to migrate to individual tool packages:
 
-| Current Import | Future Package (Coming Soon) |
+| Current Import | Future Package |
 |---------------|------------------------------|
 | `OAuthTool` | `@olane/o-tool-oauth` |
 | `TextEmbeddingsTool` | `@olane/o-tool-embeddings` |
 | `HuggingfaceTextEmbeddingsTool` | `@olane/o-tool-embeddings-hf` |
-| `NERTool` | `@olane/o-tool-ner` |
 | `VectorMemoryStorageTool` | `@olane/o-tool-vector-store` |
 | `LangchainMemoryVectorStoreTool` | `@olane/o-tool-vector-store-langchain` |
 
-> **Timeline**: Individual packages will be released in version 0.8.0. This package will be deprecated in version 1.0.0.
+> **Timeline**: These tools are already deprecated as of v0.8.0. Individual tool packages are being released. This bundled package will be fully removed in version 1.0.0.
 
 ## Installation {#installation}
 
 ```bash
-npm install @olane/o-tool-registry
+pnpm add @olane/o-tool-registry
 ```
 
 **Peer Dependencies** (automatically installed):
 ```bash
-npm install @olane/o-core @olane/o-tool @olane/o-lane @olane/o-intelligence @olane/o-mcp
+pnpm add @olane/o-core @olane/o-tool @olane/o-lane @olane/o-intelligence @olane/o-mcp
 ```
 
 ## Quick Start {#quick-start}
@@ -65,7 +64,6 @@ await parentNode.start();
 await initRegistryTools(parentNode);
 
 // Now tools are available at:
-// - o://my-app/ner
 // - o://my-app/intelligence
 // - o://my-app/embeddings-text
 // - o://my-app/vector-store
@@ -82,7 +80,7 @@ import { oAddress } from '@olane/o-core';
 
 const oauthTool = new OAuthTool({
   name: 'oauth',
-  address: new oAddress('o://auth/oauth')
+  address: new oAddress('o://oauth')
 });
 
 await oauthTool.start();
@@ -130,7 +128,7 @@ await oauth.use({
 });
 
 // Get authorization URL
-const authUrl = await oauth.use({
+const authUrlResponse = await oauth.use({
   method: 'getAuthorizationUrl',
   params: {
     serviceName: 'github',
@@ -138,7 +136,7 @@ const authUrl = await oauth.use({
   }
 });
 
-console.log(authUrl.authorizationUrl);
+console.log(authUrlResponse.result.data.authorizationUrl);
 // https://github.com/login/oauth/authorize?client_id=...
 ```
 
@@ -176,7 +174,7 @@ await oauth.use({
 });
 
 // Step 2: Get authorization URL
-const { authorizationUrl } = await oauth.use({
+const authResponse = await oauth.use({
   method: 'getAuthorizationUrl',
   params: {
     serviceName: 'google',
@@ -184,10 +182,11 @@ const { authorizationUrl } = await oauth.use({
   }
 });
 
+const authorizationUrl = authResponse.result.data.authorizationUrl;
 // User visits authorizationUrl and is redirected back with code
 
 // Step 3: Exchange code for tokens
-const { tokens } = await oauth.use({
+const tokenResponse = await oauth.use({
   method: 'exchangeCode',
   params: {
     serviceName: 'google',
@@ -195,10 +194,11 @@ const { tokens } = await oauth.use({
   }
 });
 
+const tokens = tokenResponse.result.data.tokens;
 console.log(tokens.access_token); // Use for API calls
 
 // Step 4: Get user info
-const { userInfo } = await oauth.use({
+const userInfoResponse = await oauth.use({
   method: 'getUserInfo',
   params: {
     serviceName: 'google',
@@ -206,17 +206,19 @@ const { userInfo } = await oauth.use({
   }
 });
 
-console.log(userInfo); // { email: "...", name: "...", ... }
+console.log(userInfoResponse.result.data.userInfo); // { email: "...", name: "...", ... }
 ```
 
 #### Token Management
 
 ```typescript
 // Check stored tokens
-const { tokens } = await oauth.use({
+const storedResponse = await oauth.use({
   method: 'getStoredTokens',
   params: { serviceName: 'google' }
 });
+
+const tokens = storedResponse.result.data.tokens;
 
 // Refresh expired token
 if (tokens.expires_in < 300) { // Less than 5 minutes left
@@ -227,7 +229,7 @@ if (tokens.expires_in < 300) { // Less than 5 minutes left
       refreshToken: tokens.refresh_token
     }
   });
-  console.log(refreshed.tokens.access_token);
+  console.log(refreshed.result.data.tokens.access_token);
 }
 
 // Clear tokens on logout
@@ -291,7 +293,7 @@ const docEmbeddings = await embeddings.use({
   }
 });
 
-console.log(docEmbeddings.result); // [[0.1, -0.2, ...], [...], [...]]
+console.log(docEmbeddings.result.data); // [[0.1, -0.2, ...], [...], [...]]
 
 // Embed a search query
 const queryEmbedding = await embeddings.use({
@@ -301,7 +303,7 @@ const queryEmbedding = await embeddings.use({
   }
 });
 
-console.log(queryEmbedding.result); // [0.05, -0.15, ...]
+console.log(queryEmbedding.result.data); // [0.05, -0.15, ...]
 ```
 
 #### Available Methods
@@ -313,55 +315,7 @@ console.log(queryEmbedding.result); // [0.05, -0.15, ...]
 
 ---
 
-### 3. Named Entity Recognition (NER) Tool {#ner}
-
-Extract named entities (people, organizations, locations, etc.) from text.
-
-**Address**: `o://ner`
-
-#### Example
-
-```typescript
-import { NERTool } from '@olane/o-tool-registry';
-
-const ner = new NERTool({
-  name: 'ner',
-  parent: myNode.address,
-  leader: leaderAddress
-});
-await ner.start();
-
-// Extract entities
-const result = await ner.use({
-  method: 'extract',
-  params: {
-    text: 'Apple Inc. was founded by Steve Jobs in Cupertino, California on April 1, 1976.'
-  }
-});
-
-console.log(result);
-// {
-//   entities: [
-//     { text: 'Apple Inc.', type: 'ORGANIZATION' },
-//     { text: 'Steve Jobs', type: 'PERSON' },
-//     { text: 'Cupertino', type: 'LOCATION' },
-//     { text: 'California', type: 'LOCATION' },
-//     { text: 'April 1, 1976', type: 'DATE' }
-//   ]
-// }
-```
-
-#### Available Methods
-
-| Method | Description | Parameters | Returns |
-|--------|-------------|------------|---------|
-| **extract** | Extract named entities | `text: string` | Entity list with types |
-
-> **Note**: Uses `o-intelligence` for entity extraction via LLM prompting.
-
----
-
-### 4. Vector Storage Tools {#vector-store}
+### 3. Vector Storage Tools {#vector-store}
 
 Store and search document embeddings for semantic similarity search.
 
@@ -477,15 +431,13 @@ await app.start();
 await initRegistryTools(app);
 
 // All tools available as children:
-// - o://app/ner
-// - o://app/intelligence  
+// - o://app/intelligence
 // - o://app/embeddings-text
 // - o://app/vector-store
 // - o://app/mcp
 ```
 
-**Initialized Tools**:
-- `NERTool` at `o://parent/ner`
+**Initialized Tools** (4 tools):
 - `IntelligenceTool` at `o://parent/intelligence`
 - `HuggingfaceTextEmbeddingsTool` at `o://parent/embeddings-text`
 - `LangchainMemoryVectorStoreTool` at `o://parent/vector-store`
@@ -628,7 +580,7 @@ class RAGApplication extends oLaneTool {
       }
     );
 
-    const context = searchResult.result
+    const context = searchResult.result.data
       .map(doc => doc.pageContent)
       .join('\n\n');
 
@@ -645,8 +597,8 @@ class RAGApplication extends oLaneTool {
 
     return {
       question,
-      answer: answer.result,
-      sources: searchResult.result.map(doc => doc.metadata)
+      answer: answer.result.data,
+      sources: searchResult.result.data.map(doc => doc.metadata)
     };
   }
 }
@@ -685,7 +637,7 @@ Initialize all registry tools as child nodes of a parent.
 **Returns:** `Promise<void>`
 
 **Behavior:**
-- Creates 5 child nodes (NER, Intelligence, Embeddings, Vector Store, MCP)
+- Creates 4 child nodes (Intelligence, Embeddings, Vector Store, MCP)
 - Starts all tools automatically
 - Registers tools with parent's hierarchy
 
@@ -693,7 +645,6 @@ Initialize all registry tools as child nodes of a parent.
 ```typescript
 await initRegistryTools(myNode);
 // Tools now available at:
-// - o://my-node/ner
 // - o://my-node/intelligence
 // - o://my-node/embeddings-text
 // - o://my-node/vector-store
@@ -715,9 +666,9 @@ await initRegistryTools(myNode);
         ┌────────────┼────────────┬──────────┐
         ⬇            ⬇            ⬇          ⬇
 ┌──────────────┐ ┌──────────┐ ┌───────────┐ ┌────────────┐
-│ NER Tool     │ │ Embeddings│ │ Vector    │ │ Intelligence│
-│ o://app/ner  │ │ o://app/  │ │ Store     │ │ o://app/   │
-│              │ │ embeddings│ │ o://app/  │ │ intelligence│
+│ Intelligence │ │ Embeddings│ │ Vector    │ │ MCP Bridge │
+│ o://app/     │ │ o://app/  │ │ Store     │ │ o://app/   │
+│ intelligence │ │ embeddings│ │ o://app/  │ │ mcp        │
 └──────────────┘ └──────────┘ │ vector-   │ └────────────┘
                                │ store     │
                                └───────────┘
@@ -737,17 +688,39 @@ await initRegistryTools(myNode);
 └────────────────────────────────────────┘
 ```
 
+---
+
+## Response Structure {#response-structure}
+
+All `use()` calls return responses following the standard Olane response wrapping pattern:
+
+```typescript
+const response = await tool.use({
+  method: 'some_method',
+  params: { ... }
+});
+
+// Response structure:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+// Always check success before accessing data
+if (response.result.success) {
+  const data = response.result.data;
+  console.log(data);
+} else {
+  console.error('Error:', response.result.error);
+}
 ```
-┌────────────────────────────────────────┐
-│  NERTool                               │
-│  (extracts entities)                   │
-└────────────────────────────────────────┘
-                ⬇ uses for LLM
-┌────────────────────────────────────────┐
-│  IntelligenceTool                      │
-│  (from @olane/o-intelligence)          │
-└────────────────────────────────────────┘
-```
+
+> **Important**: Access data via `response.result.data`, not `response.result` directly. Always check `response.result.success` before accessing `response.result.data`.
 
 ---
 
@@ -759,7 +732,7 @@ await initRegistryTools(myNode);
 
 **Solution**: Install all peer dependencies:
 ```bash
-npm install @huggingface/transformers @langchain/community @langchain/core langchain
+pnpm add @huggingface/transformers @langchain/community @langchain/core langchain
 ```
 
 ---
@@ -862,15 +835,14 @@ await embeddings.use({
 
 ### From Bundled Registry to Individual Packages
 
-When individual packages are released (version 0.8.0+), follow this guide:
+This package is already deprecated as of v0.8.0. Follow this guide to migrate:
 
 #### Before (v0.7.x)
 
 ```typescript
-import { 
+import {
   OAuthTool,
-  HuggingfaceTextEmbeddingsTool,
-  NERTool 
+  HuggingfaceTextEmbeddingsTool
 } from '@olane/o-tool-registry';
 ```
 
@@ -879,7 +851,6 @@ import {
 ```typescript
 import { OAuthTool } from '@olane/o-tool-oauth';
 import { HuggingfaceEmbeddingsTool } from '@olane/o-tool-embeddings-hf';
-import { NERTool } from '@olane/o-tool-ner';
 ```
 
 #### Update package.json
@@ -898,8 +869,7 @@ import { NERTool } from '@olane/o-tool-ner';
 {
   "dependencies": {
     "@olane/o-tool-oauth": "^0.8.0",
-    "@olane/o-tool-embeddings-hf": "^0.8.0",
-    "@olane/o-tool-ner": "^0.8.0"
+    "@olane/o-tool-embeddings-hf": "^0.8.0"
   }
 }
 ```
@@ -962,9 +932,9 @@ ISC License - see LICENSE file for details.
 
 | Version | Status | Notes |
 |---------|--------|-------|
-| **0.7.2** | ✅ Current | Last bundled release |
-| **0.8.0** | 🔜 Planned | Individual packages |
-| **1.0.0** | 🔜 Future | Registry deprecated |
+| **0.7.2** | Legacy | Last bundled release |
+| **0.8.0** | Deprecated | Individual packages released, NER tool removed |
+| **1.0.0** | Planned | Registry fully removed |
 
 ---
 

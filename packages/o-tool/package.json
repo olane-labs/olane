@@ -22,7 +22,7 @@
     "test:browser": "aegir test -t browser",
     "build": "rm -rf dist && tsc",
     "start:prod": "node dist/index.js",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "pnpm run build",
     "lint": "aegir lint"
   },
   "repository": {

@@ -34,7 +34,7 @@ Think of OlaneOS as the orchestration layer that:
 ## Installation
 
 ```bash
-npm install @olane/os
+pnpm install @olane/os
 ```
 
 ### Peer Dependencies
@@ -42,7 +42,7 @@ npm install @olane/os
 OlaneOS requires the following peer dependencies:
 
 ```bash
-npm install @olane/o-core @olane/o-config @olane/o-protocol \
+pnpm install @olane/o-core @olane/o-config @olane/o-protocol \
   @olane/o-tool @olane/o-tools-common @olane/o-tool-registry \
   @olane/o-intelligence @olane/o-leader @olane/o-lane @olane/o-storage
 ```
@@ -77,13 +77,20 @@ const os = new OlaneOS({
 await os.start();
 
 // Use a node via the OS
-const result = await os.use(
+const response = await os.use(
   new oAddress('o://node'),
   {
     method: 'some_tool',
     params: { /* ... */ }
   }
 );
+
+// Check response using the standard wrapping structure
+if (response.result.success) {
+  console.log('Data:', response.result.data);
+} else {
+  console.error('Error:', response.result.error);
+}
 
 // Stop the OS gracefully
 await os.stop();
@@ -177,15 +184,50 @@ OlaneOS uses round-robin routing to distribute requests across nodes:
 
 ```typescript
 // Requests are automatically load-balanced
-const result1 = await os.use(address, params); // → Node 1
-const result2 = await os.use(address, params); // → Node 2
-const result3 = await os.use(address, params); // → Node 1
+const response1 = await os.use(address, params); // → Node 1
+const response2 = await os.use(address, params); // → Node 2
+const response3 = await os.use(address, params); // → Node 1
+// Access data via response.result.data on each response
 ```
 
 This provides:
 - **Load distribution** across worker nodes
 - **Fault tolerance** if nodes fail
 - **Scalability** by adding more node instances
+
+### Response Structure
+
+When calling tools via `os.use()`, responses follow a standard wrapped structure:
+
+```typescript
+{
+  jsonrpc: "2.0",
+  id: "request-id",
+  result: {
+    success: boolean,    // Whether the call succeeded
+    data: any,           // The return value on success
+    error?: string       // Error message on failure
+  }
+}
+```
+
+Always access response fields through the `result` property:
+
+```typescript
+const response = await os.use(address, {
+  method: 'some_method',
+  params: { /* ... */ }
+});
+
+// Check success
+if (response.result.success) {
+  const data = response.result.data;    // Access return value
+} else {
+  const error = response.result.error;  // Access error message
+}
+```
+
+> **Common mistake**: Accessing `response.success` or `response.data` directly will not work. Always use `response.result.success`, `response.result.data`, and `response.result.error`.
 
 ### Configuration Management
 
@@ -383,11 +425,22 @@ Routes a request to a node via the entry point router.
 - `address` - Target node address (e.g., `o://node/tool`)
 - `params` - Request parameters including method and params
 
-**Returns**: Result from the target node
+**Returns**: A wrapped response object with the following structure:
+```typescript
+{
+  jsonrpc: "2.0",
+  id: "request-id",
+  result: {
+    success: boolean,    // Whether the call succeeded
+    data: any,           // Response data on success
+    error?: string       // Error message on failure
+  }
+}
+```
 
 **Example**:
 ```typescript
-const result = await os.use(
+const response = await os.use(
   new oAddress('o://financial-analyst'),
   {
     method: 'intent',
@@ -396,6 +449,12 @@ const result = await os.use(
     }
   }
 );
+
+if (response.result.success) {
+  console.log('Analysis:', response.result.data);
+} else {
+  console.error('Failed:', response.result.error);
+}
 ```
 
 #### addNode()
@@ -941,7 +1000,6 @@ ISC © oLane Inc.
 
 ---
 
-**Package Version**: 0.6.12  
-**Last Updated**: October 1, 2025  
+**Package Version**: 0.8.3
 **Status**: Active development
 

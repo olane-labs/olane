@@ -6,7 +6,7 @@ Multi-provider AI intelligence router for Olane OS that provides a unified inter
 
 ```bash
 # Installation
-npm install @olane/o-intelligence
+pnpm install @olane/o-intelligence
 ```
 
 ```typescript
@@ -87,7 +87,7 @@ console.log(result.result.data.message);
 Configure which AI provider to use and store preferences securely.
 
 **Parameters:**
-- `modelProvider` (string, optional): Provider to use (`anthropic`, `openai`, `ollama`, `perplexity`, `grok`)
+- `modelProvider` (string, optional): Provider to use (`anthropic`, `openai`, `ollama`, `perplexity`, `grok`, `gemini`)
 - `hostingProvider` (string, optional): Where models are hosted (`olane`, `local`)
 - `accessToken` (string, optional): Access token for hosted models
 - `address` (string, optional): Custom address for hosted models
@@ -111,18 +111,17 @@ Each provider node (`o://anthropic`, `o://openai`, etc.) exposes these tools:
 
 #### `completion` - Multi-Turn Conversation
 
-Generate responses with conversation history and system prompts.
+Generate responses with conversation history. This is the primary method for interacting with provider nodes.
 
-**Parameters:**
+**Parameters (from `LLM_PARAMS`):**
+- `model` (string, optional): Specific model to use (defaults to provider's default model)
 - `messages` (array, required): Conversation history
   - `role` (string): `user` or `assistant`
   - `content` (string | array): Message content
-- `model` (string, optional): Specific model to use
-- `system` (string, optional): System message for behavior control
-- `max_tokens` (number, optional): Maximum tokens to generate (default: 1000)
-- `temperature` (number, optional): Randomness control (0-1)
-- `top_p` (number, optional): Nucleus sampling (0-1)
-- `apiKey` (string, optional): Override API key
+- `options` (object, optional): Provider-specific generation options (e.g., `temperature`, `max_tokens`, `top_p`, `system`). See note on two-tier architecture below.
+- `stream` (boolean, optional): Whether to stream the response
+
+> **Note**: Parameters like `system`, `max_tokens`, `temperature`, `apiKey` are not defined in the `LLM_PARAMS` method definition. However, providers destructure additional parameters from `request.params` at runtime. Pass provider-specific options via the `options` object or as top-level params depending on the provider. See [Two-Tier Architecture](#two-tier-architecture) for details.
 
 **Returns:** Response with message, model info, and token usage
 
@@ -154,13 +153,11 @@ console.log(response.result.data);
 
 Generate text from a single prompt (simpler than completion).
 
-**Parameters:**
-- `prompt` (string, required): Input prompt
-- `model` (string, optional): Model to use
-- `system` (string, optional): System message
-- `max_tokens` (number, optional): Token limit
-- `temperature` (number, optional): Randomness
-- `apiKey` (string, optional): Override API key
+**Parameters (from `LLM_PARAMS`):**
+- `model` (string, required): The model to use for generation
+- `stream` (boolean, optional): Whether to stream the response
+
+> **Note**: The `LLM_PARAMS` method definition only specifies `model` and `stream`. However, provider implementations accept additional runtime parameters like `prompt`, `system`, `max_tokens`, and `apiKey` via `request.params`. See [Two-Tier Architecture](#two-tier-architecture) for details.
 
 **Returns:** Generated text response
 
@@ -171,6 +168,7 @@ const result = await intelligence.use(new oAddress('o://openai'), {
   params: {
     apiKey: process.env.OPENAI_API_KEY,
     prompt: 'Explain REST APIs in one paragraph',
+    model: 'gpt-4-turbo-preview',
     max_tokens: 200
   }
 });
@@ -252,6 +250,242 @@ console.log(status.result.data);
 // { success: true, status: 'ok', response: 'Anthropic API is accessible' }
 ```
 
+#### `pull_model` - Pull Model (Ollama)
+
+Download a model from the Ollama library to the local machine.
+
+**Parameters:**
+- `model` (string, required): The model name to pull (e.g., `llama2`, `codellama`)
+- `insecure` (boolean, optional): Whether to allow insecure connections
+
+**Returns:** Success confirmation with pull details
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://ollama'), {
+  method: 'pull_model',
+  params: {
+    model: 'llama3.2:latest'
+  }
+});
+
+console.log(result.result.data);
+// { success: true, message: 'Model llama3.2:latest pulled successfully', details: '...' }
+```
+
+> **Note**: This method is only available on the Ollama provider (`o://ollama`).
+
+---
+
+#### `delete_model` - Delete Model (Ollama)
+
+Remove a model from the local Ollama installation.
+
+**Parameters:**
+- `model` (string, required): The model name to delete
+
+**Returns:** Success confirmation
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://ollama'), {
+  method: 'delete_model',
+  params: {
+    model: 'llama2'
+  }
+});
+
+console.log(result.result.data);
+// { success: true, message: 'Model llama2 deleted successfully' }
+```
+
+> **Note**: This method is only available on the Ollama provider (`o://ollama`).
+
+---
+
+#### `embed_documents` - Generate Document Embeddings
+
+Generate vector embeddings for multiple text documents. Useful for semantic search and RAG applications.
+
+**Parameters:**
+- `input` (array, required): Array of text strings to embed
+- `model` (string, optional): The embedding model to use
+- `apiKey` (string, optional): API key (falls back to environment variable)
+- `dimensions` (number, optional): Number of embedding dimensions (only for text-embedding-3 models)
+
+**Returns:** Array of embedding vectors
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://openai'), {
+  method: 'embed_documents',
+  params: {
+    input: ['First document text', 'Second document text'],
+    model: 'text-embedding-3-small',
+    apiKey: process.env.OPENAI_API_KEY
+  }
+});
+
+console.log(result.result.data);
+```
+
+> **Note**: Available on providers that support embeddings (OpenAI, Gemini, Ollama).
+
+---
+
+#### `embed_query` - Generate Query Embedding
+
+Generate a vector embedding for a single query string. Optimized for search queries.
+
+**Parameters:**
+- `input` (string, required): Text string to embed
+- `model` (string, optional): The embedding model to use
+- `apiKey` (string, optional): API key (falls back to environment variable)
+- `dimensions` (number, optional): Number of embedding dimensions (only for text-embedding-3 models)
+
+**Returns:** Embedding vector
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://openai'), {
+  method: 'embed_query',
+  params: {
+    input: 'What is machine learning?',
+    model: 'text-embedding-3-small',
+    apiKey: process.env.OPENAI_API_KEY
+  }
+});
+
+console.log(result.result.data);
+```
+
+> **Note**: Available on providers that support embeddings (OpenAI, Gemini, Ollama).
+
+---
+
+#### `generate_image` - Generate Images (Gemini)
+
+Generate images from text prompts using Gemini image models.
+
+**Parameters:**
+- `prompt` (string, required): Text description of the desired image
+- `model` (string, optional): Model to use (`gemini-2.5-flash-image` (default) or `gemini-3-pro-image-preview`)
+- `aspectRatio` (string, optional): Aspect ratio (e.g., `1:1`, `16:9`, `9:16`). Default: `1:1`
+- `imageSize` (string, optional): Size (`1K`, `2K` (default), `4K`)
+- `negativePrompt` (string, optional): Description of what to avoid in the image
+
+**Returns:** Generated image data
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://gemini'), {
+  method: 'generate_image',
+  params: {
+    prompt: 'A serene mountain landscape at sunset',
+    aspectRatio: '16:9',
+    imageSize: '2K'
+  }
+});
+
+console.log(result.result.data);
+```
+
+> **Note**: This method is only available on the Gemini provider (`o://gemini`).
+
+---
+
+#### `edit_image` - Edit Images (Gemini)
+
+Edit or transform an existing image using Gemini image models.
+
+**Parameters:**
+- `prompt` (string, required): Instructions for how to edit the image
+- `image` (string, required): Base64-encoded image data or file path (JPEG, PNG)
+- `model` (string, optional): Model to use (`gemini-2.5-flash-image` (default) or `gemini-3-pro-image-preview`)
+- `aspectRatio` (string, optional): Aspect ratio for the edited image
+- `imageSize` (string, optional): Size of the edited image (`1K`, `2K` (default), `4K`)
+
+**Returns:** Edited image data
+
+**Example:**
+```typescript
+const result = await intelligence.use(new oAddress('o://gemini'), {
+  method: 'edit_image',
+  params: {
+    prompt: 'Remove the background and replace with a white backdrop',
+    image: '/path/to/image.png',
+    imageSize: '2K'
+  }
+});
+
+console.log(result.result.data);
+```
+
+> **Note**: This method is only available on the Gemini provider (`o://gemini`).
+
+---
+
+## Two-Tier Architecture {#two-tier-architecture}
+
+`o-intelligence` uses a two-tier method parameter architecture:
+
+### `INTELLIGENCE_PARAMS` (Router Level)
+
+Defined in `intelligence.methods.ts`, these are the methods exposed by the `o://intelligence` router node:
+- `configure` - Set provider preferences (`modelProvider`, `hostingProvider`)
+- `prompt` - Simple AI prompting (`prompt`, `userMessage`, `stream`)
+
+These are high-level orchestration methods that handle provider selection and routing.
+
+### `LLM_PARAMS` (Provider Level)
+
+Defined in `llm.methods.ts`, these are the methods exposed by each provider child node (`o://anthropic`, `o://openai`, etc.):
+- `completion` - Multi-turn conversation (`model`, `messages`, `options`, `stream`)
+- `generate` - Simple text generation (`model`, `stream`)
+- `list_models` - List available models
+- `pull_model` - Pull model (Ollama-specific)
+- `delete_model` - Delete model (Ollama-specific)
+- `model_info` - Get model details (`model`)
+- `status` - Check provider health
+- `embed_documents` - Generate document embeddings
+- `embed_query` - Generate query embedding
+- `generate_image` - Generate images (Gemini-specific)
+- `edit_image` - Edit images (Gemini-specific)
+
+**Important**: The `LLM_PARAMS` definitions specify the formal parameter schema for AI discovery. However, individual provider implementations accept additional runtime parameters (like `apiKey`, `system`, `max_tokens`, `temperature`) that are destructured directly from `request.params`. This means you can pass these extra parameters when calling providers, even though they are not declared in the method schema.
+
+## Response Structure {#response-structure}
+
+When calling provider methods via `node.use()`, responses follow the standard Olane response pattern:
+
+```typescript
+const response = await intelligence.use(new oAddress('o://anthropic'), {
+  method: 'completion',
+  params: { messages: [...], model: 'claude-sonnet-4-5-20250929' }
+});
+
+// Always check success first
+if (response.result.success) {
+  const data = response.result.data;
+  console.log(data.message);  // The generated text
+  console.log(data.model);    // Model used
+  console.log(data.usage);    // Token usage info
+} else {
+  console.error(response.result.error);  // Error message string
+}
+
+// Full response shape:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,
+//     data: any,          // Present on success
+//     error?: string      // Present on failure
+//   }
+// }
+```
+
 ## Configuration {#configuration}
 
 ### Environment Variables
@@ -267,7 +501,7 @@ export GROK_API_KEY="..."
 export SONAR_API_KEY="..."  # Perplexity
 
 # Provider Selection
-export MODEL_PROVIDER_CHOICE="anthropic"  # anthropic, openai, ollama, perplexity, grok
+export MODEL_PROVIDER_CHOICE="anthropic"  # anthropic, openai, ollama, perplexity, grok, gemini
 ```
 
 ### Secure Storage
@@ -292,7 +526,7 @@ If no configuration is found, users will be prompted:
 
 ```bash
 # Terminal output when no provider is configured:
-? Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)
+? Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok, gemini)
 > anthropic
 
 ? What is the API key for the anthropic model?
@@ -384,7 +618,7 @@ async function generateWithFallback(prompt: string) {
         }
       });
 
-      if (response.result.data.success !== false) {
+      if (response.result.success) {
         return response.result.data;
       }
     } catch (error) {
@@ -585,6 +819,8 @@ enum LLMProviders {
 }
 ```
 
+> **Note**: Gemini is supported as a provider (`o://gemini`) with `GeminiIntelligenceTool`, but is not currently listed in the `LLMProviders` enum. It can be used by directly addressing `o://gemini` when the provider is initialized.
+
 ### HostModelProvider
 
 Where AI models are hosted.
@@ -680,7 +916,7 @@ await intelligence.use(new oAddress('o://intelligence'), {
 
 **Solution:** Use a valid provider:
 ```bash
-export MODEL_PROVIDER_CHOICE="anthropic"  # anthropic, openai, ollama, perplexity, grok
+export MODEL_PROVIDER_CHOICE="anthropic"  # anthropic, openai, ollama, perplexity, grok, gemini
 ```
 
 ---

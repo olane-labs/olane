@@ -2,12 +2,14 @@
 
 > Testing utilities and best practices for O-Network node development
 
-## ⚠️ Important: We Use Mocha, Not Jest
+## ⚠️ Important: Testing Framework Notes
 
-Since O-Network is built on the **libp2p ecosystem**, we use **aegir** with **Mocha** for testing (NOT Jest).
+Since O-Network is built on the **libp2p ecosystem**, the primary test runner is **aegir** with **Mocha** syntax.
 
-- ✅ Use: `aegir`, `chai`, Mocha syntax (`before`, `after`, `.to.equal()`)
-- ❌ Don't use: `jest`, `@types/jest`, `ts-jest`
+- ✅ Primary: `aegir`, `chai`, Mocha syntax (`before`, `after`, `.to.equal()`)
+- ✅ Also available: `jest` and `@types/jest` are included in devDependencies (^30.0.0) for packages that need Jest-style testing
+
+> **Note**: Both test frameworks are available in this package. The `package.json` includes `jest`, `@types/jest`, and `ts-jest` in devDependencies alongside `aegir` and `chai`. The `test` script uses `aegir test` by default, but Jest can be used for individual packages or specific test scenarios. When writing new tests, follow the conventions of the file you are editing -- Mocha/Chai for aegir-based tests, or Jest assertions if the test file uses Jest.
 
 See [MOCHA-MIGRATION.md](./MOCHA-MIGRATION.md) for migration guide.
 
@@ -74,13 +76,13 @@ describe('MyTool', () => {
   });
 
   it('should execute method', async () => {
-    const result = await tool.useSelf({
+    const response = await tool.useSelf({
       method: 'my_method',
       params: { test: 'value' },
     });
 
-    expect(result.success).to.be.true;
-    expect(result.result.data).to.exist;
+    expect(response.result.success).to.be.true;
+    expect(response.result.data).to.exist;
   });
 });
 ```
@@ -176,16 +178,55 @@ export default {
 - Create leader node before child nodes
 - Inject `hookInitializeFinished` for parent-child registration
 - Clean up all nodes in `afterEach`
-- Access response data via `result.result.data`
+- Access response data via `response.result.data`
 - Test both success and error paths
 
 ### L DON'T:
 
 - Override `start()` method (use hooks instead)
 - Forget to call `stop()` on nodes
-- Access `result.data` directly (use `result.result.data`)
+- Access `response.data` directly (use `response.result.data`)
 - Use mocks for node instances (use real nodes)
 - Share mutable state between tests
+
+## Response Structure
+
+When testing `node.use()` or `node.useSelf()` calls, responses are wrapped in the standard O-Network response structure. Understanding this structure is critical for writing correct assertions.
+
+```typescript
+// Response from use() / useSelf():
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+// Correct assertion patterns:
+const response = await tool.useSelf({
+  method: 'my_method',
+  params: { key: 'value' },
+});
+
+// Success case
+expect(response.result.success).to.be.true;
+expect(response.result.data).to.exist;
+expect(response.result.data.someField).to.equal('expected');
+
+// Error case
+expect(response.result.success).to.be.false;
+expect(response.result.error).to.include('error message');
+
+// WRONG - these will not work:
+// expect(response.success).to.be.true;     // undefined!
+// expect(response.data).to.exist;           // undefined!
+// expect(response.error).to.include('...');  // undefined!
+```
+
+> **Key rule**: Always access response fields through `response.result.success`, `response.result.data`, and `response.result.error`. Never access `response.success`, `response.data`, or `response.error` directly.
 
 ## Testing Philosophy
 
@@ -220,13 +261,13 @@ it('should start and stop successfully', async () => {
 
 ```typescript
 it('should validate required parameters', async () => {
-  const result = await tool.useSelf({
+  const response = await tool.useSelf({
     method: 'my_method',
     params: {}, // Missing required params
   });
 
-  expect(result.success).to.be.false;
-  expect(result.error).to.include('required');
+  expect(response.result.success).to.be.false;
+  expect(response.result.error).to.include('required');
 });
 ```
 
@@ -235,14 +276,14 @@ it('should validate required parameters', async () => {
 ```typescript
 it('should create and route to child', async () => {
   // Create child
-  const createResult = await manager.useSelf({
+  const createResponse = await manager.useSelf({
     method: 'create_worker',
     params: { workerId: 'worker-1' },
   });
-  expect(createResult.success).to.be.true;
+  expect(createResponse.result.success).to.be.true;
 
   // Route to child
-  const routeResult = await manager.useSelf({
+  const routeResponse = await manager.useSelf({
     method: 'use_worker',
     params: {
       workerId: 'worker-1',
@@ -250,7 +291,7 @@ it('should create and route to child', async () => {
       params: { data: 'test' },
     },
   });
-  expect(routeResult.success).to.be.true;
+  expect(routeResponse.result.success).to.be.true;
 });
 ```
 
@@ -292,10 +333,14 @@ afterEach(async () => {
 
 ```typescript
 // L WRONG
-const data = result.data; // undefined!
+const data = response.data;           // undefined!
+const success = response.success;     // undefined!
+const error = response.error;         // undefined!
 
 //  CORRECT
-const data = result.result.data;
+const data = response.result.data;
+const success = response.result.success;
+const error = response.result.error;
 ```
 
 ## Test Helpers

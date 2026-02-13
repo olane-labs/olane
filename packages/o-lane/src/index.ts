@@ -7,6 +7,7 @@ export * from './o-lane.tool.js';
 export * from './capabilities/index.js';
 export * from './intent/index.js';
 export * from './capabilities-all/o-capability.all.js';
+export * from './capabilities-execute/execute.capability.js';
 export * from './capabilities-evaluate/o-capability.evaluate.js';
 export * from './capabilities-multiple-step/o-capability.multiple-step.js';
 export * from './capabilities-search/o-capability.search.js';

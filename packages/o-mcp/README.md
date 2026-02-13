@@ -47,20 +47,10 @@ await mcpBridge.use({
 
 ### Why Use o-mcp?
 
-<CardGroup cols={2}>
-  <Card title="Unified Interface" icon="plug" color="#0D9373">
-    Use MCP servers alongside native Olane tools through the same `o://` addressing
-  </Card>
-  <Card title="Network Discovery" icon="magnifying-glass" color="#0D9373">
-    MCP tools indexed in vector store for semantic search
-  </Card>
-  <Card title="Intent Preservation" icon="brain" color="#0D9373">
-    Maintains execution context across MCP boundaries
-  </Card>
-  <Card title="Instant Integration" icon="rocket" color="#0D9373">
-    Add existing MCP servers without code changes
-  </Card>
-</CardGroup>
+- **Unified Interface**: Use MCP servers alongside native Olane tools through the same `o://` addressing
+- **Network Discovery**: MCP tools indexed in vector store for semantic search
+- **Intent Preservation**: Maintains execution context across MCP boundaries
+- **Instant Integration**: Add existing MCP servers without code changes
 
 ---
 
@@ -69,7 +59,7 @@ await mcpBridge.use({
 ### Installation
 
 ```bash
-npm install @olane/o-mcp
+pnpm install @olane/o-mcp
 ```
 
 ### Basic Usage
@@ -245,6 +235,8 @@ await bridge.use({
 
 Search for MCP servers using AI-powered search.
 
+> **Dependency**: This tool requires `o://perplexity` to be available in the network. Ensure a Perplexity tool node is registered before using search.
+
 **Parameters:**
 - `name` (string, optional): MCP server name
 - `provider` (string, optional): Provider/creator name
@@ -256,7 +248,7 @@ Search for MCP servers using AI-powered search.
 **Example:**
 ```typescript
 // Search for Slack MCP server
-const result = await bridge.use({
+const response = await bridge.use({
   method: 'search',
   params: {
     provider: 'Slack',
@@ -264,8 +256,10 @@ const result = await bridge.use({
   }
 });
 
-console.log(result.result);
-// Returns instructions on how to connect to Slack MCP
+if (response.result.success) {
+  console.log(response.result.data);
+  // Returns instructions on how to connect to Slack MCP
+}
 ```
 
 ---
@@ -273,6 +267,8 @@ console.log(result.result);
 #### Tool: validate_url {#tool-validate-url}
 
 Validate whether a URL points to a valid MCP server.
+
+> **Dependency**: This tool requires `o://perplexity` to be available in the network. Ensure a Perplexity tool node is registered before using validate_url.
 
 **Parameters:**
 - `mcpServerUrl` (string, required): URL to validate
@@ -282,15 +278,17 @@ Validate whether a URL points to a valid MCP server.
 
 **Example:**
 ```typescript
-const validation = await bridge.use({
+const response = await bridge.use({
   method: 'validate_url',
   params: {
     mcpServerUrl: 'https://example.com/mcp'
   }
 });
 
-console.log(validation.result);
-// "Yes, this is a valid MCP server providing..."
+if (response.result.success) {
+  console.log(response.result.data);
+  // "Yes, this is a valid MCP server providing..."
+}
 ```
 
 ---
@@ -419,7 +417,9 @@ const repos = await bridge.use(new oAddress('o://github'), {
   params: { organization: 'olane-labs' }
 });
 
-console.log(repos);
+if (repos.result.success) {
+  console.log(repos.result.data);
+}
 ```
 
 ---
@@ -581,13 +581,17 @@ const client = new oClient(
 
 ```typescript
 // Use validate_url to test connection first
-const validation = await bridge.use({
+const response = await bridge.use({
   method: 'validate_url',
   params: { mcpServerUrl: 'https://mcp.example.com' }
 });
 
-console.log(validation.result);
-// If validation fails, check URL and network
+if (response.result.success) {
+  console.log(response.result.data);
+} else {
+  console.error('Validation failed:', response.result.error);
+  // Check URL and network connectivity
+}
 ```
 
 ---
@@ -611,7 +615,9 @@ const whoami = await bridge.use(new oAddress('o://mcp_server_name'), {
   params: {}
 });
 
-console.log(whoami.tools); // Should list all MCP tools
+if (whoami.result.success) {
+  console.log(whoami.result.data.tools); // Should list all MCP tools
+}
 ```
 
 ---
@@ -669,15 +675,33 @@ When you add an MCP server, it becomes a **child node** of the bridge:
 
 ```
 o://mcp-bridge (McpBridgeTool)
-├── o://github (McpTool wrapping GitHub MCP)
-├── o://slack (McpTool wrapping Slack MCP)
-└── o://filesystem (McpTool wrapping Filesystem MCP)
+├── o://mcp-bridge/github (McpTool wrapping GitHub MCP)
+├── o://mcp-bridge/slack (McpTool wrapping Slack MCP)
+└── o://mcp-bridge/filesystem (McpTool wrapping Filesystem MCP)
 ```
 
 Each child node (`McpTool`) is a complete Olane tool node with:
 - Its own `o://` address
 - Discoverable tools in the network
 - Standard Olane tool interface
+
+#### Child Node Address Nesting
+
+Child `McpTool` nodes are created with **simple addresses** and linked to the bridge via `parent`. The system automatically creates the nested address during registration:
+
+```typescript
+// Internally, McpBridgeTool creates children like this:
+const mcpTool = new McpTool({
+  address: new oAddress(`o://${name}`),   // Simple address
+  parent: this.address,                    // Parent linkage
+  leader: this.leader,
+  mcpClient: client,
+});
+
+// After start(), mcpTool.address becomes 'o://mcp-bridge/{name}'
+```
+
+> **Important**: Never construct nested addresses manually (e.g., `new oAddress('o://mcp-bridge/github')`). Always use simple addresses with `parent` linkage and let the system create the hierarchy at runtime.
 
 ---
 
@@ -711,6 +735,43 @@ This enables:
 - **Audit trails**: Track why tools were called
 - **Context-aware responses**: MCP servers can adapt to intent
 - **Error debugging**: Understand execution context when failures occur
+
+---
+
+### Response Structure {#response-structure}
+
+All `use()` calls return responses following the standard Olane response wrapping pattern:
+
+```typescript
+const response = await bridge.use({
+  method: 'add_remote_server',
+  params: {
+    mcpServerUrl: 'https://mcp.example.com',
+    name: 'example',
+    description: 'Example MCP server'
+  }
+});
+
+// Response structure:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+// Always check success before accessing data
+if (response.result.success) {
+  console.log(response.result.data.message);
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Access data via `response.result.data`, not `response.result` directly. Always check `response.result.success` before accessing `response.result.data`.
 
 ---
 
@@ -850,20 +911,10 @@ const workflow = await devBridge.use({
 
 ## Next Steps {#next-steps}
 
-<CardGroup cols={2}>
-  <Card title="Build Your First Node" icon="hammer" href="/guides/quickstart">
-    Learn Olane fundamentals
-  </Card>
-  <Card title="Explore MCP Servers" icon="server" href="https://github.com/modelcontextprotocol/servers">
-    Find existing MCP servers
-  </Card>
-  <Card title="Package Combinations" icon="box" href="/packages/package-combinations">
-    Choose the right packages
-  </Card>
-  <Card title="o-lane Documentation" icon="brain" href="/packages/o-lane">
-    Learn intent-driven execution
-  </Card>
-</CardGroup>
+- **[Build Your First Node](/guides/quickstart)** - Learn Olane fundamentals
+- **[Explore MCP Servers](https://github.com/modelcontextprotocol/servers)** - Find existing MCP servers
+- **[Package Combinations](/packages/package-combinations)** - Choose the right packages
+- **[o-lane Documentation](/packages/o-lane)** - Learn intent-driven execution
 
 ---
 

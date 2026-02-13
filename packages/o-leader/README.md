@@ -20,20 +20,12 @@ Use `o-leader` when:
 
 ### Core capabilities {#core-capabilities}
 
-<CardGroup cols={2}>
-  <Card title="Network Coordination" icon="network-wired" color="#0D9373">
-    Entry point for agents joining the network
-  </Card>
-  <Card title="Agent Discovery" icon="magnifying-glass" color="#0D9373">
-    Built-in registry for finding agents by capability
-  </Card>
-  <Card title="Network Intelligence" icon="brain" color="#0D9373">
-    Automatic indexing and mapping of agent capabilities
-  </Card>
-  <Card title="Fault Tolerance" icon="shield" color="#0D9373">
-    Automatic failover and recovery coordination
-  </Card>
-</CardGroup>
+| Capability | Description |
+|------------|-------------|
+| **Network Coordination** | Entry point for agents joining the network |
+| **Agent Discovery** | Built-in registry for finding agents by capability |
+| **Network Intelligence** | Automatic indexing and mapping of agent capabilities |
+| **Fault Tolerance** | Automatic failover and recovery coordination |
 
 ---
 
@@ -48,7 +40,7 @@ Use `o-leader` when:
 ### Installation {#installation}
 
 ```bash
-npm install @olane/o-leader
+pnpm install @olane/o-leader
 ```
 
 ### Basic Leader Node Setup {#basic-setup}
@@ -77,17 +69,9 @@ console.log('Registry service available at o://registry');
 
 ### Next Steps {#next-steps}
 
-<CardGroup cols={3}>
-  <Card title="Join Agents" icon="users" href="#joining-agents-to-network">
-    Connect agents to your network
-  </Card>
-  <Card title="Discover Agents" icon="magnifying-glass" href="#using-the-registry">
-    Search for agents by capability
-  </Card>
-  <Card title="Custom Validation" icon="shield-check" href="#join-request-validation">
-    Implement access control
-  </Card>
-</CardGroup>
+- **[Join Agents](#joining-agents-to-network)** - Connect agents to your network
+- **[Discover Agents](#using-the-registry)** - Search for agents by capability
+- **[Custom Validation](#join-request-validation)** - Implement access control
 
 ---
 
@@ -137,8 +121,10 @@ const agents = await leader.use(new oAddress('o://registry'), {
   }
 });
 
-console.log(`Found ${agents.result.length} agents with payment capabilities`);
-// Use the discovered agents in your workflow
+if (agents.result.success) {
+  console.log(`Found ${agents.result.data.length} agents with payment capabilities`);
+  // Use the discovered agents in your workflow
+}
 ```
 
 ### Network Joining Flow {#joining-flow}
@@ -313,7 +299,7 @@ const analysts = await leader.use(new oAddress('o://registry'), {
     protocols: ['financial-analysis']
   }
 });
-console.log(`Found ${analysts.result.length} financial analysts`);
+console.log(`Found ${analysts.result.data.length} financial analysts`);
 
 // Find agent by address
 const agent = await leader.use(new oAddress('o://registry'), {
@@ -322,7 +308,7 @@ const agent = await leader.use(new oAddress('o://registry'), {
     address: 'o://company/finance/analyst'
   }
 });
-console.log('Found agent:', agent.result[0]);
+console.log('Found agent:', agent.result.data[0]);
 
 // Find by static address (for stable references)
 const stable = await leader.use(new oAddress('o://registry'), {
@@ -343,8 +329,8 @@ const allAgents = await leader.use(new oAddress('o://registry'), {
   params: {}
 });
 
-console.log(`Network has ${allAgents.result.length} active agents`);
-allAgents.result.forEach(agent => {
+console.log(`Network has ${allAgents.result.data.length} active agents`);
+allAgents.result.data.forEach(agent => {
   console.log(`- ${agent.address} (${agent.protocols.join(', ')})`);
 });
 ```
@@ -366,9 +352,7 @@ console.log('Network indexing complete');
 // This crawls all registered agents and indexes their capabilities
 ```
 
-<Note>
-  **Tip**: Run indexing on a schedule (e.g., every 5-10 minutes) or trigger it after significant network changes.
-</Note>
+> **Tip**: Run indexing on a schedule (e.g., every 5-10 minutes) or trigger it after significant network changes.
 
 #### Custom Indexing Logic {#custom-indexing}
 
@@ -442,8 +426,9 @@ class PostgresRegistryTool extends RegistryTool {
         transports = EXCLUDED.transports,
         updated_at = NOW()
     `, [params.peerId, params.address, params.protocols, params.transports]);
-    
-    return { success: true };
+
+    // Return raw data - base class wraps it in { success, data, error }
+    return { peerId: params.peerId, address: params.address };
   }
   
   async _tool_search(request: oRequest): Promise<any> {
@@ -476,9 +461,7 @@ await leader.start();
 console.log('Leader using persistent registry');
 ```
 
-<Check>
-  **Production Recommendation**: Always use a persistent registry (PostgreSQL, Redis, MongoDB) for production networks.
-</Check>
+> **Production Recommendation**: Always use a persistent registry (PostgreSQL, Redis, MongoDB) for production networks.
 
 ---
 
@@ -518,9 +501,7 @@ const euLeader = new oLeaderNode({
 // but can query primary leader for global discovery
 ```
 
-<Note>
-  **Pattern**: Regional leaders handle local coordination while primary leader maintains global visibility.
-</Note>
+> **Pattern**: Regional leaders handle local coordination while primary leader maintains global visibility.
 
 ---
 
@@ -609,15 +590,16 @@ class MonitoredLeader extends oLeaderNode {
       { method: 'find_all', params: {} }
     );
     
+    const agents = allAgents.result.data;
     const health = {
-      totalAgents: allAgents.result.length,
+      totalAgents: agents.length,
       activeAgents: 0,
       unhealthyAgents: [],
       timestamp: Date.now()
     };
-    
+
     // Check each agent
-    for (const agent of allAgents.result) {
+    for (const agent of agents) {
       const isHealthy = await this.checkAgentHealth(agent);
       if (isHealthy) {
         health.activeAgents++;
@@ -739,9 +721,7 @@ Use **static addresses** for production agents that need stable references:
 }
 ```
 
-<Check>
-  **Why?** Static addresses allow reliable references even when agent instances change.
-</Check>
+> **Why?** Static addresses allow reliable references even when agent instances change.
 
 ---
 
@@ -790,26 +770,12 @@ const metrics = {
 
 Follow these security guidelines for production networks:
 
-<Steps>
-  <Step title="Validate Join Requests">
-    Always implement custom `validateJoinRequest()` logic with business rules
-  </Step>
-  <Step title="Use Authentication">
-    Require authentication tokens for all join requests
-  </Step>
-  <Step title="Rate Limiting">
-    Implement rate limiting on join requests to prevent abuse
-  </Step>
-  <Step title="Permission-Based Access">
-    Filter registry results based on caller permissions
-  </Step>
-  <Step title="Monitor Patterns">
-    Watch for unusual patterns (rapid joins, suspicious addresses)
-  </Step>
-  <Step title="Encrypted Transports">
-    Prefer WebRTC over WebSocket for sensitive data
-  </Step>
-</Steps>
+1. **Validate Join Requests** - Always implement custom `validateJoinRequest()` logic with business rules
+2. **Use Authentication** - Require authentication tokens for all join requests
+3. **Rate Limiting** - Implement rate limiting on join requests to prevent abuse
+4. **Permission-Based Access** - Filter registry results based on caller permissions
+5. **Monitor Patterns** - Watch for unusual patterns (rapid joins, suspicious addresses)
+6. **Encrypted Transports** - Prefer WebRTC over WebSocket for sensitive data
 
 ---
 
@@ -872,7 +838,11 @@ const allAgents = await leader.use(
   new oAddress('o://registry'),
   { method: 'find_all', params: {} }
 );
-console.log('Registry state:', JSON.stringify(allAgents, null, 2));
+if (allAgents.result.success) {
+  console.log('Registry state:', JSON.stringify(allAgents.result.data, null, 2));
+} else {
+  console.error('Failed to fetch registry:', allAgents.result.error);
+}
 ```
 
 #### Monitor Join Requests
@@ -899,6 +869,38 @@ class DebugLeader extends oLeaderNode {
 ---
 
 ## API Reference {#api-reference}
+
+### Response Structure {#response-structure}
+
+All `use()` calls return responses following the standard Olane response wrapping pattern:
+
+```typescript
+const response = await leader.use(new oAddress('o://registry'), {
+  method: 'find_all',
+  params: {}
+});
+
+// Response structure:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+// Always check success before accessing data
+if (response.result.success) {
+  const agents = response.result.data;
+  console.log(`Found ${agents.length} agents`);
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Access data via `response.result.data`, not `response.result` directly.
 
 ### oLeaderNode {#oleadernode}
 
@@ -1034,9 +1036,7 @@ const registry = new RegistryMemoryTool(config);
 - Protocol indexing for **efficient searches**
 - **Not persistent** across restarts (use for development only)
 
-<Warning>
-  **Production Warning**: Use a persistent registry (PostgreSQL, Redis) for production networks.
-</Warning>
+> **Warning**: Use a persistent registry (PostgreSQL, Redis) for production networks.
 
 ---
 
@@ -1092,7 +1092,7 @@ async function main() {
     params: {}
   });
   
-  console.log(`Network has ${agents.result.length} agents`);
+  console.log(`Network has ${agents.result.data.length} agents`);
 }
 ```
 
@@ -1152,9 +1152,9 @@ async function findAnalysisAgents(leader: oLeaderNode) {
     }
   });
   
-  const agents = result.result;
+  const agents = result.result.data;
   console.log(`Found ${agents.length} agents with analysis capabilities`);
-  
+
   // Connect to first available agent
   if (agents.length > 0) {
     const targetAgent = new oAddress(agents[0].address);
@@ -1180,11 +1180,12 @@ class HealthMonitorLeader extends oLeaderNode {
       { method: 'find_all', params: {} }
     );
     
+    const agents = allAgents.result.data;
     const dashboard = {
-      totalAgents: allAgents.result.length,
-      byCapability: this.groupByCapability(allAgents.result),
-      byDomain: this.groupByDomain(allAgents.result),
-      health: await this.checkAllAgentsHealth(allAgents.result)
+      totalAgents: agents.length,
+      byCapability: this.groupByCapability(agents),
+      byDomain: this.groupByDomain(agents),
+      health: await this.checkAllAgentsHealth(agents)
     };
     
     return dashboard;
@@ -1300,66 +1301,48 @@ const agents = await leader.use(new oAddress('o://registry'), {
 
 ### General Questions {#faq-general}
 
-<AccordionGroup>
-  <Accordion title="Do I need a leader node for every Olane OS network?">
-    Yes, every network needs at least one leader node. It serves as the **entry point** and **coordination hub** for the network.
-  </Accordion>
+**Do I need a leader node for every Olane OS network?**
+Yes, every network needs at least one leader node. It serves as the **entry point** and **coordination hub** for the network.
 
-  <Accordion title="Can I have multiple leader nodes?">
-    Yes, for large or distributed networks, you can implement a **federation pattern** with regional leaders. See [Multi-Leader Networks](#multi-leader-networks).
-  </Accordion>
+**Can I have multiple leader nodes?**
+Yes, for large or distributed networks, you can implement a **federation pattern** with regional leaders. See [Multi-Leader Networks](#multi-leader-networks).
 
-  <Accordion title="Is the registry required?">
-    The registry is **built into** the leader node and is essential for agent discovery. You cannot run a leader without a registry.
-  </Accordion>
+**Is the registry required?**
+The registry is **built into** the leader node and is essential for agent discovery. You cannot run a leader without a registry.
 
-  <Accordion title="What happens if the leader node goes down?">
-    Existing agent connections remain active, but **new agents cannot join**. Implement leader failover for high availability.
-  </Accordion>
-</AccordionGroup>
+**What happens if the leader node goes down?**
+Existing agent connections remain active, but **new agents cannot join**. Implement leader failover for high availability.
 
 ### Technical Questions {#faq-technical}
 
-<AccordionGroup>
-  <Accordion title="How does registry search performance scale?">
-    In-memory registry is **O(n)** for searches. For large networks (1000+ agents), implement **indexed** or **database-backed** registries.
-  </Accordion>
+**How does registry search performance scale?**
+In-memory registry is **O(n)** for searches. For large networks (1000+ agents), implement **indexed** or **database-backed** registries.
 
-  <Accordion title="Can I customize the registry implementation?">
-    Yes, extend `RegistryTool` to implement custom storage backends (PostgreSQL, Redis, MongoDB, etc.). See [Custom Registry Implementations](#custom-registry).
-  </Accordion>
+**Can I customize the registry implementation?**
+Yes, extend `RegistryTool` to implement custom storage backends (PostgreSQL, Redis, MongoDB, etc.). See [Custom Registry Implementations](#custom-registry).
 
-  <Accordion title="What transports does the leader support?">
-    The leader supports all **libp2p transports**: WebRTC, WebSocket, TCP, QUIC, etc.
-  </Accordion>
+**What transports does the leader support?**
+The leader supports all **libp2p transports**: WebRTC, WebSocket, TCP, QUIC, etc.
 
-  <Accordion title="How do I handle registry cleanup?">
-    Implement **TTL logic** in your registry and **periodic cleanup** of disconnected agents. See [Registry Maintenance](#registry-maintenance).
-  </Accordion>
-</AccordionGroup>
+**How do I handle registry cleanup?**
+Implement **TTL logic** in your registry and **periodic cleanup** of disconnected agents. See [Registry Maintenance](#registry-maintenance).
 
 ### Operational Questions {#faq-operational}
 
-<AccordionGroup>
-  <Accordion title="How often should I run network indexing?">
-    Depends on network dynamics:
-    - **Stable networks**: Every 5-10 minutes
-    - **Dynamic networks**: Event-driven indexing
-    - **Large networks**: Incremental indexing
-  </Accordion>
+**How often should I run network indexing?**
+Depends on network dynamics:
+- **Stable networks**: Every 5-10 minutes
+- **Dynamic networks**: Event-driven indexing
+- **Large networks**: Incremental indexing
 
-  <Accordion title="What's the recommended registry backend for production?">
-    For production, use a **persistent registry** (PostgreSQL, Redis, MongoDB) instead of in-memory. See [Persistent Registry Example](#persistent-registry-example).
-  </Accordion>
+**What's the recommended registry backend for production?**
+For production, use a **persistent registry** (PostgreSQL, Redis, MongoDB) instead of in-memory. See [Persistent Registry Example](#persistent-registry-example).
 
-  <Accordion title="How do I monitor leader health?">
-    Implement **health check endpoints** and monitoring using your observability tools. See [Network Health Monitoring](#network-health).
-  </Accordion>
+**How do I monitor leader health?**
+Implement **health check endpoints** and monitoring using your observability tools. See [Network Health Monitoring](#network-health).
 
-  <Accordion title="Can agents join from different networks?">
-    Yes, as long as they can **reach the leader node** and **pass validation**.
-  </Accordion>
-</AccordionGroup>
+**Can agents join from different networks?**
+Yes, as long as they can **reach the leader node** and **pass validation**.
 
 ---
 
@@ -1367,20 +1350,10 @@ const agents = await leader.use(new oAddress('o://registry'), {
 
 ### Documentation {#documentation-links}
 
-<CardGroup cols={2}>
-  <Card title="Olane OS Overview" icon="home" href="/README.md">
-    Learn about Olane OS architecture
-  </Card>
-  <Card title="o-core" icon="gear" href="/packages/o-core/README.md">
-    Core protocol and addressing
-  </Card>
-  <Card title="o-node" icon="server" href="/packages/o-node/README.md">
-    Build agent nodes
-  </Card>
-  <Card title="o-lane" icon="brain" href="/packages/o-lane/README.md">
-    Add intelligence to nodes
-  </Card>
-</CardGroup>
+- **[Olane OS Overview](/README.md)** - Learn about Olane OS architecture
+- **[o-core](/packages/o-core/README.md)** - Core protocol and addressing
+- **[o-node](/packages/o-node/README.md)** - Build agent nodes
+- **[o-lane](/packages/o-lane/README.md)** - Add intelligence to nodes
 
 ### Examples {#example-projects}
 
@@ -1391,17 +1364,9 @@ const agents = await leader.use(new oAddress('o://registry'), {
 
 ### Community {#community}
 
-<CardGroup cols={3}>
-  <Card title="GitHub Issues" icon="github" href="https://github.com/olane-labs/olane/issues">
-    Report bugs or request features
-  </Card>
-  <Card title="Discussions" icon="comments" href="https://github.com/olane-labs/olane/discussions">
-    Ask questions and share ideas
-  </Card>
-  <Card title="Discord" icon="discord" href="https://discord.gg/olane">
-    Join our community
-  </Card>
-</CardGroup>
+- **[GitHub Issues](https://github.com/olane-labs/olane/issues)** - Report bugs or request features
+- **[Discussions](https://github.com/olane-labs/olane/discussions)** - Ask questions and share ideas
+- **[Discord](https://discord.gg/olane)** - Join our community
 
 ### Commercial Support {#commercial-support}
 

@@ -76,6 +76,39 @@ console.log(response.result.data);
 // }
 ```
 
+### Response Structure
+
+When calling `use()` on a lane-enabled tool, responses follow the standard O-Network wrapping structure:
+
+```typescript
+// Response from use() follows this structure:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+const response = await agent.use(agent.address, {
+  method: 'intent',
+  params: { intent: 'Analyze sales data' }
+});
+
+// Always check response.result.success before accessing data
+if (response.result.success) {
+  const data = response.result.data;
+  console.log('Result:', data.result);
+  console.log('Cycles:', data.cycles);
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Access data via `response.result.data`, not `response.data` directly. The `result` object contains the wrapping fields (`success`, `data`, `error`).
+
 ### Expected Output
 
 After executing an intent, you'll receive:
@@ -337,6 +370,8 @@ import { oCapabilityEvaluate } from '@olane/o-lane';
 **Purpose**: Execute a specific tool method with parameters determined by the AI agent.
 
 **When Used**: Agent needs to call a tool (API, database, computation, etc.)
+
+> **Note**: `oCapabilityExecute` is exported directly from `@olane/o-lane` and can be imported alongside other lane primitives.
 
 ```typescript
 import { oCapabilityExecute } from '@olane/o-lane';
@@ -696,7 +731,7 @@ Result object returned by capabilities.
 import { oCapabilityResult, oCapabilityType } from '@olane/o-lane';
 
 const result = new oCapabilityResult({
-  type: oCapabilityType.TASK,
+  type: oCapabilityType.EXECUTE,
   result: { data: 'success' },
   config: { /* next capability config */ },
   error: undefined
@@ -733,17 +768,19 @@ enum oLaneStatus {
 
 ```typescript
 enum oCapabilityType {
-  TASK = 'task',
+  TASK = 'task',           // Legacy alias - prefer EXECUTE for new code
   SEARCH = 'search',
   MULTIPLE_STEP = 'multiple_step',
   CONFIGURE = 'configure',
-  EXECUTE = 'execute',
+  EXECUTE = 'execute',     // Primary type for executing tool methods
   HANDSHAKE = 'handshake',
   EVALUATE = 'evaluate',
   STOP = 'stop',
   UNKNOWN = 'unknown'
 }
 ```
+
+> **Note on TASK vs EXECUTE**: `TASK` is a legacy capability type that predates `EXECUTE`. For new code, prefer using `oCapabilityType.EXECUTE` which maps to the `oCapabilityExecute` capability class. Both exist in the enum for backward compatibility.
 
 ## Examples
 
@@ -1253,9 +1290,9 @@ describe('Lane Execution', () => {
 import { oCapability, oCapabilityResult, oCapabilityType } from '@olane/o-lane';
 
 // Create mock capability for testing
-class MockTaskCapability extends oCapability {
+class MockExecuteCapability extends oCapability {
   get type() {
-    return oCapabilityType.TASK;
+    return oCapabilityType.EXECUTE;
   }
 
   async run(): Promise<oCapabilityResult> {
@@ -1271,7 +1308,7 @@ class MockTaskCapability extends oCapability {
 it('should use mock capabilities', async () => {
   const mockCapabilities = [
     new oCapabilityEvaluate(),
-    new MockTaskCapability()
+    new MockExecuteCapability()
   ];
 
   const lane = await manager.createLane({
