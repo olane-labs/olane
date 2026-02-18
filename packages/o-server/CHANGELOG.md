@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.5 (2026-02-18)</small>
+
+- added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))
+
 ## <small>0.8.4 (2026-02-18)</small>
 
 - updated docs ([3cc950f](https://github.com/olane-labs/olane/commit/3cc950f))
