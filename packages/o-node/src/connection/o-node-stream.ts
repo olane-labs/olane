@@ -41,6 +41,12 @@ export class oNodeStream extends oObject {
     this.p2pStream.addEventListener('close', () => {
       this.close();
     });
+    // Listen for transport-level errors (e.g. WebSocket WS_ERR_INVALID_CLOSE_CODE)
+    // that may not be typed in libp2p's MessageStreamEvents but can still fire at runtime
+    (this.p2pStream as any).addEventListener('error', (event: any) => {
+      this.logger.warn('P2P stream error:', event?.detail?.message || event);
+      this.close();
+    });
   }
 
   // callable pattern to disrupt flow if not in valid state
@@ -129,7 +135,13 @@ export class oNodeStream extends oObject {
     // Send the request with backpressure handling
     const data = new TextEncoder().encode(request.toString());
 
-    await this.lp.write(data, { signal: options?.abortSignal });
+    try {
+      await this.lp.write(data, { signal: options?.abortSignal });
+    } catch (error: any) {
+      this.logger.warn('Error writing to stream:', error?.message);
+      await this.close();
+      throw new oError(oErrorCodes.SEND_FAILED, 'Failed to write to stream');
+    }
   }
 
   /**
@@ -143,7 +155,14 @@ export class oNodeStream extends oObject {
   }
 
   async listenOnce(options: AbortSignalConfig) {
-    const messageBytes = await this.lp.read({ signal: options?.abortSignal });
+    let messageBytes;
+    try {
+      messageBytes = await this.lp.read({ signal: options?.abortSignal });
+    } catch (error: any) {
+      this.logger.warn('Error reading from stream:', error?.message);
+      await this.close();
+      return;
+    }
     const decoded = new TextDecoder().decode(messageBytes.subarray());
     const message = this.extractAndParseJSON(decoded);
 

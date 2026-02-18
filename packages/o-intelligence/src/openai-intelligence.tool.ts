@@ -434,6 +434,9 @@ export class OpenAIIntelligenceTool extends oLaneTool {
         prompt: prompt as string,
         stream: false,
         ...options,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : options.max_tokens,
       };
 
       const headers: Record<string, string> = {
@@ -513,6 +516,9 @@ export class OpenAIIntelligenceTool extends oLaneTool {
         prompt: prompt as string,
         stream: true,
         ...options,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : options.max_tokens,
       };
 
       const headers: Record<string, string> = {

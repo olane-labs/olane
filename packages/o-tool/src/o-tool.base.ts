@@ -8,6 +8,7 @@ import {
   oResponse,
   oNotificationManager,
   oConnectionConfig,
+  oRequestContext,
 } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
@@ -90,6 +91,12 @@ export class oToolBase extends oCore {
           ...(payload.params || {}), // TODO: is this correct? this line used to be ...payload
         },
       });
+    }
+
+    // Restore auth context from _auth in params so downstream this.use() calls auto-propagate
+    const auth = request.params?._auth;
+    if (auth) {
+      return oRequestContext.run({ auth }, () => this.run(request, stream));
     }
 
     const result = await this.run(request, stream);

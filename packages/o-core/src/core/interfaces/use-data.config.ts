@@ -1,5 +1,8 @@
 export interface UseDataConfig {
   method: string;
-  params?: { [key: string]: any };
+  params?: {
+    _auth?: { token: string; claims: { sub?: string; [key: string]: any } };
+    [key: string]: any;
+  };
   id?: string;
 }

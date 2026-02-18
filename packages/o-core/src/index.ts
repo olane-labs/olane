@@ -1,4 +1,6 @@
+export * from './auth/index.js';
 export * from './connection/index.js';
+export * from './context/index.js';
 export * from './core/index.js';
 export * from './error/index.js';
 export * from './response/index.js';

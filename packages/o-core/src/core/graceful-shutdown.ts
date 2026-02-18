@@ -70,7 +70,15 @@ export function setupGracefulShutdown(
   process.on('SIGUSR2', () => performCleanup('SIGUSR2'));
 
   // Handle uncaught exceptions
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', (error: any) => {
+    // WebSocket transport errors are recoverable - log but don't exit
+    if (
+      error?.code === 'WS_ERR_INVALID_CLOSE_CODE' ||
+      error?.code === 'WS_ERR_EXPECTED'
+    ) {
+      logger.warn('Recoverable WebSocket error (suppressed):', error.message);
+      return;
+    }
     logger.error('Uncaught Exception:', error);
     performCleanup('uncaughtException');
   });

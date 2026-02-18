@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.5 (2026-02-18)</small>
+
+- added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))
+
+## <small>0.8.4 (2026-02-18)</small>
+
+- updated docs ([3cc950f](https://github.com/olane-labs/olane/commit/3cc950f))
+
+## <small>0.8.3 (2026-02-11)</small>
+
+**Note:** Version bump only for package @olane/o-tool
+
+## <small>0.8.2 (2026-02-10)</small>
+
+**Note:** Version bump only for package @olane/o-tool
+
+## <small>0.8.1 (2026-02-07)</small>
+
+**Note:** Version bump only for package @olane/o-tool
+
 ## 0.8.0 (2026-02-03)
 
 **Note:** Version bump only for package @olane/o-tool

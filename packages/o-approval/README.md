@@ -20,7 +20,36 @@ The `o-approval` package provides a configurable approval system that allows hum
 This package is typically included as part of the Olane OS common tools and is automatically registered on all nodes.
 
 ```bash
-npm install @olane/o-approval
+pnpm install @olane/o-approval
+```
+
+## Dependencies
+
+This tool requires the following nodes to be running on the network:
+
+- **`o://leader`** - Used for persistent storage of approval preferences (whitelist/blacklist). Preferences are saved so that "always allow" and "never allow" choices survive restarts.
+- **`o://human`** - Used to prompt a human agent for approval decisions. When an action requires review, the approval tool sends a question to the human node and waits for a response.
+
+## Response Structure
+
+When calling the approval tool via `node.use()`, responses follow the standard Olane response structure:
+
+```typescript
+const response = await node.use(new oNodeAddress('o://approval'), {
+  method: 'request_approval',
+  params: { ... }
+});
+
+// response.result.success - boolean indicating success or failure
+// response.result.data    - the return value on success
+// response.result.error   - error message on failure
+
+if (response.result.success) {
+  const data = response.result.data;
+  console.log('Approved:', data.approved);
+} else {
+  console.error('Error:', response.result.error);
+}
 ```
 
 ## Usage
@@ -79,9 +108,9 @@ await approvalTool.start();
 #### Request Approval
 
 ```typescript
-import { oAddress } from '@olane/o-core';
+import { oNodeAddress } from '@olane/o-node';
 
-const response = await node.use(new oAddress('o://approval'), {
+const response = await node.use(new oNodeAddress('o://approval'), {
   method: 'request_approval',
   params: {
     toolAddress: 'o://storage',

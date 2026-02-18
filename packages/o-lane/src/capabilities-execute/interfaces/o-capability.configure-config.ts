@@ -13,5 +13,9 @@ export interface oCapabilityExecuteConfig extends oCapabilityConfig {
       method: string;
       params: any;
     };
+    task?: {
+      address: string;
+      intent?: string;
+    };
   };
 }

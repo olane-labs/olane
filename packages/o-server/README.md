@@ -7,7 +7,7 @@ HTTP server entrypoint for Olane OS nodes. Exposes a node's `use` functionality 
 ## Installation
 
 ```bash
-npm install @olane/o-server
+pnpm install @olane/o-server
 ```
 
 ## Quick Start
@@ -219,11 +219,19 @@ const server = oServer({
     credentials: true
   },
   
-  // Optional: Authentication middleware
-  authenticate: async (req) => {
-    const token = req.headers.authorization;
-    return validateToken(token);
+  // Optional: JWT authentication (recommended)
+  jwtAuth: {
+    method: 'secret',
+    secret: 'your-jwt-secret',
+    issuer: 'https://auth.example.com',
+    audience: 'https://api.example.com'
   },
+
+  // DEPRECATED: Use jwtAuth instead. Will be removed in a future version.
+  // authenticate: async (req) => {
+  //   const token = req.headers.authorization;
+  //   return validateToken(token);
+  // },
   
   // Optional: Enable debug logging (default: false)
   debug: true
@@ -232,28 +240,71 @@ const server = oServer({
 await server.start();
 ```
 
-### Authentication
+### JWT Authentication (Recommended)
 
-Protect your endpoints with authentication:
+Protect your endpoints with built-in JWT verification. All routes except `/health` require a valid token when `jwtAuth` is configured.
 
+**RS256 with public key:**
 ```typescript
 const server = oServer({
   node: myNode,
   port: 3000,
+  jwtAuth: {
+    method: 'publicKey',
+    publicKeyPath: '/path/to/public-key.pem',
+    issuer: 'https://auth.example.com',
+    audience: 'https://api.example.com',
+    algorithms: ['RS256']
+  }
+});
+```
+
+**HS256 with shared secret:**
+```typescript
+const server = oServer({
+  node: myNode,
+  port: 3000,
+  jwtAuth: {
+    method: 'secret',
+    secret: process.env.JWT_SECRET!,
+    clockTolerance: 5  // seconds of tolerance for exp/nbf
+  }
+});
+```
+
+**`jwtAuth` configuration options:**
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `method` | `'publicKey' \| 'secret'` | Yes | Verification method |
+| `publicKeyPath` | `string` | If `method='publicKey'` | Path to PEM public key file |
+| `secret` | `string` | If `method='secret'` | Shared secret for HS256 |
+| `issuer` | `string` | No | Expected `iss` claim |
+| `audience` | `string` | No | Expected `aud` claim |
+| `algorithms` | `Algorithm[]` | No | Allowed algorithms (defaults based on method) |
+| `clockTolerance` | `number` | No | Seconds of clock tolerance (default: 0) |
+
+### Legacy Authentication (Deprecated)
+
+> **Deprecated**: The `authenticate` option is deprecated and will be removed in a future version. Migrate to `jwtAuth` instead.
+
+```typescript
+// @deprecated - use jwtAuth instead
+const server = oServer({
+  node: myNode,
+  port: 3000,
+  // @deprecated - use jwtAuth instead
   authenticate: async (req) => {
-    // Validate JWT token
     const token = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       throw new Error('No token provided');
     }
-    
+
     const user = await verifyJWT(token);
     return { userId: user.id, roles: user.roles };
   }
 });
-
-// Now all requests require valid authentication
 ```
 
 ### CORS Configuration
@@ -323,6 +374,8 @@ await server.start();
 
 ```typescript
 // frontend/src/api.ts
+// Note: HTTP responses from o-server use the flat { success, data, error } format.
+// This is different from internal node.use() calls which return response.result.success.
 export async function analyzeRevenue(startDate: string, endDate: string) {
   const response = await fetch('http://localhost:3000/api/v1/use', {
     method: 'POST',
@@ -333,8 +386,13 @@ export async function analyzeRevenue(startDate: string, endDate: string) {
       params: { startDate, endDate }
     })
   });
-  
+
   const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error?.message || 'Request failed');
+  }
+
   return result.data;
 }
 ```
@@ -349,11 +407,10 @@ import { oServer } from '@olane/o-server';
 const server = oServer({
   node: myNode,
   port: 8080,
-  authenticate: async (req) => {
-    // Validate Firebase auth token
-    const token = req.headers.authorization?.split(' ')[1];
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    return { userId: decodedToken.uid };
+  jwtAuth: {
+    method: 'secret',
+    secret: process.env.JWT_SECRET!,
+    issuer: 'https://your-firebase-project.firebaseapp.com'
   }
 });
 
@@ -373,17 +430,22 @@ const server = oServer({ node: myNode, port: 3000 });
 // Stripe webhook
 server.app.post('/webhooks/stripe', async (req, res) => {
   const event = req.body;
-  
-  // Process via your node
-  await myNode.use(
+
+  // Process via your node (internal call uses response.result pattern)
+  const response = await myNode.use(
     new oAddress('o://payments/processor'),
     {
       method: 'handle_payment',
       params: { event }
     }
   );
-  
-  res.json({ received: true });
+
+  if (!response.result.success) {
+    res.status(500).json({ error: response.result.error });
+    return;
+  }
+
+  res.json({ received: true, data: response.result.data });
 });
 
 await server.start();
@@ -420,18 +482,20 @@ await server.start();
 //   -d '{"address": "o://any/node/in/network", "method": "...", "params": {...}}'
 ```
 
-## Error Handling
+## Response Structure
 
-`o-server` provides consistent error responses:
+### HTTP Response (from o-server)
 
-```typescript
-// Success response
+`o-server` flattens the internal node response into a simple HTTP-friendly format:
+
+```json
+// Success response (HTTP)
 {
   "success": true,
   "data": { ... }
 }
 
-// Error response
+// Error response (HTTP)
 {
   "success": false,
   "error": {
@@ -441,6 +505,38 @@ await server.start();
   }
 }
 ```
+
+### Internal Node Response (from node.use())
+
+Within the Olane node ecosystem, `node.use()` returns a JSON-RPC wrapped response. When calling nodes programmatically (not via HTTP), always access data through the `result` property:
+
+```typescript
+const response = await node.use(address, { method: 'my_method', params: {} });
+
+// Access the response correctly:
+if (response.result.success) {
+  const data = response.result.data;    // Your method's return value
+} else {
+  const error = response.result.error;  // Error message string
+}
+
+// Full internal response shape:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,
+//     data: any,          // Present on success
+//     error?: string      // Present on failure
+//   }
+// }
+```
+
+> **Important**: The `o-server` translates the internal `response.result.success` / `response.result.data` / `response.result.error` structure into the flat HTTP `{ success, data }` / `{ success, error }` format. When writing code that runs inside the node ecosystem (not behind o-server), always use `response.result.success`, `response.result.data`, and `response.result.error`.
+
+## Error Handling
+
+`o-server` provides consistent error responses:
 
 **Common error codes:**
 - `INVALID_PARAMS` - Missing or invalid request parameters
@@ -540,8 +636,9 @@ const config: ServerConfig = {
   cors: {
     origin: 'https://example.com'
   },
-  authenticate: async (req) => {
-    return { userId: '123' };
+  jwtAuth: {
+    method: 'secret',
+    secret: process.env.JWT_SECRET!,
   },
   debug: true
 };
@@ -568,13 +665,15 @@ LOG_LEVEL=info
 # Dockerfile
 FROM node:20-alpine
 
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 EXPOSE 8080
 
@@ -686,13 +785,13 @@ Complete examples:
 const server = oServer({ node: myNode, port: 3000 });
 await server.start();
 
-// With authentication
+// With JWT authentication
 const server = oServer({
   node: myNode,
   port: 3000,
-  authenticate: async (req) => {
-    const token = req.headers.authorization;
-    return await validateJWT(token);
+  jwtAuth: {
+    method: 'secret',
+    secret: process.env.JWT_SECRET!,
   }
 });
 

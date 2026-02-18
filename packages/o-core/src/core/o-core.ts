@@ -24,6 +24,7 @@ import {
 import { UseOptions } from './interfaces/use-options.interface.js';
 import { UseStreamOptions } from './interfaces/use-stream-options.interface.js';
 import { UseDataConfig } from './interfaces/use-data.config.js';
+import { oRequestContext } from '../context/o-request-context.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -151,11 +152,13 @@ export abstract class oCore extends oObject {
       throw new Error('Request manager is not initialized');
     }
 
+    const enriched = this.injectAuthContext(data);
+
     if (address?.toStaticAddress().equals(this.address.toStaticAddress())) {
-      return this.useSelf(data);
+      return this.useSelf(enriched);
     }
 
-    return this.requestManager.send(address, data, options, this);
+    return this.requestManager.send(address, enriched, options, this);
   }
 
   abstract execute(request: oRequest): Promise<any>;
@@ -171,6 +174,25 @@ export abstract class oCore extends oObject {
     }
   }
 
+  /**
+   * Injects _auth from AsyncLocalStorage into request params if not already present.
+   * This enables automatic auth propagation across node.use() calls.
+   */
+  private injectAuthContext(data?: UseDataConfig): UseDataConfig | undefined {
+    if (!data) return data;
+
+    const auth = oRequestContext.getAuth();
+    if (!auth || data.params?._auth) return data;
+
+    return {
+      ...data,
+      params: {
+        ...data.params,
+        _auth: auth,
+      },
+    };
+  }
+
   async useSelf(data?: {
     method?: string;
     params?: { [key: string]: any };
@@ -178,12 +200,14 @@ export abstract class oCore extends oObject {
   }): Promise<oResponse> {
     this.validateRunning();
 
+    const enriched = this.injectAuthContext(data as UseDataConfig | undefined);
+
     const request = new oRequest({
-      method: data?.method as string,
+      method: enriched?.method as string,
       params: {
         _connectionId: 0,
-        _requestMethod: data?.method,
-        ...(data?.params as any),
+        _requestMethod: enriched?.method,
+        ...(enriched?.params as any),
       },
       id: 0,
     });
@@ -226,6 +250,8 @@ export abstract class oCore extends oObject {
       throw new Error('Request manager is not initialized');
     }
 
+    const enriched = this.injectAuthContext(data);
+
     // extract child address with transports
     if (!childAddress.transports) {
       const child = this.hierarchyManager.getChild(childAddress);
@@ -240,7 +266,7 @@ export abstract class oCore extends oObject {
       }
     }
 
-    return this.requestManager.send(childAddress, data, options, this);
+    return this.requestManager.send(childAddress, enriched, options, this);
   }
 
   // hierarchy

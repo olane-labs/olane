@@ -4,13 +4,13 @@
 
 Common tool collection for Olane OS nodes - provides essential capabilities like encryption, search, and storage that most nodes need.
 
-**TL;DR**: Pre-built tools for encryption, search, and storage that you can add to any node with one function call.
+**TL;DR**: Pre-built tools for storage, encryption, search, and approval that you can add to any node with one function call.
 
 ## Quick Start
 
 ```bash
 # Install the package
-npm install @olane/o-tools-common
+pnpm install @olane/o-tools-common
 ```
 
 ```typescript
@@ -19,13 +19,12 @@ import { oLaneTool } from '@olane/o-lane';
 import { initCommonTools } from '@olane/o-tools-common';
 
 class MyNode extends oLaneTool {
-  async start() {
-    await super.start();
-    
+  async hookStartFinished(): Promise<void> {
     // Initialize all common tools
     await initCommonTools(this);
-    
+
     // Now you can use encryption, search, and storage tools
+    await super.hookStartFinished();
   }
 }
 ```
@@ -34,16 +33,18 @@ class MyNode extends oLaneTool {
 
 `o-tools-common` is a collection of reusable tools that solve common needs across Olane nodes:
 
+- **Storage**: Persistent data storage (via `@olane/o-storage`)
+- **OS Config Storage**: OS-level configuration storage
 - **Encryption**: Secure data encryption/decryption using AES-256-GCM
 - **Search**: Network-wide vector search capabilities
-- **Storage**: Persistent data storage (via `@olane/o-storage`)
+- **Approval**: Human-in-the-loop approval system (via `@olane/o-approval`)
 
 Instead of implementing these capabilities in every node, import this package and get them instantly.
 
 ## Installation {#installation}
 
 ```bash
-npm install @olane/o-tools-common
+pnpm install @olane/o-tools-common
 ```
 
 **Peer Dependencies:**
@@ -90,15 +91,17 @@ Encrypts plaintext to base64-encoded encrypted string.
 
 ```typescript
 // Encrypt sensitive data
-const result = await node.use(new oAddress('o://encryption'), {
+const response = await node.use(new oNodeAddress('o://encryption'), {
   method: 'encrypt',
   params: {
     value: 'my-secret-password'
   }
 });
 
-console.log(result.value);
-// Output: "eyJlbmNyeXB0ZWRUZXh0Ij..."
+if (response.result.success) {
+  console.log(response.result.data.value);
+  // Output: "eyJlbmNyeXB0ZWRUZXh0Ij..."
+}
 ```
 
 ##### `_tool_decrypt(request)`
@@ -119,15 +122,17 @@ Decrypts base64-encoded encrypted string back to plaintext.
 
 ```typescript
 // Decrypt encrypted data
-const result = await node.use(new oAddress('o://encryption'), {
+const response = await node.use(new oNodeAddress('o://encryption'), {
   method: 'decrypt',
   params: {
     value: 'eyJlbmNyeXB0ZWRUZXh0Ij...'
   }
 });
 
-console.log(result.value);
-// Output: "my-secret-password"
+if (response.result.success) {
+  console.log(response.result.data.value);
+  // Output: "my-secret-password"
+}
 ```
 
 #### Configuration
@@ -179,7 +184,7 @@ Array<{
 
 ```typescript
 // Search for documents about financial analysis
-const results = await node.use(new oAddress('o://search'), {
+const response = await node.use(new oNodeAddress('o://search'), {
   method: 'vector',
   params: {
     query: 'financial analysis and revenue forecasting',
@@ -187,8 +192,10 @@ const results = await node.use(new oAddress('o://search'), {
   }
 });
 
-console.log(results);
-// Returns 5 most similar documents
+if (response.result.success) {
+  console.log(response.result.data);
+  // Returns 5 most similar documents
+}
 ```
 
 <Note>
@@ -205,6 +212,29 @@ Provides persistent data storage capabilities. This tool is imported from `@olan
 
 See [@olane/o-storage documentation](/packages/o-storage) for complete API reference.
 
+## Response Structure {#response-structure}
+
+When calling common tools via `node.use()`, responses follow the standard Olane response structure:
+
+```typescript
+const response = await this.use(
+  new oNodeAddress('o://encryption'),
+  { method: 'encrypt', params: { value: 'secret' } }
+);
+
+// response.result.success - boolean indicating success or failure
+// response.result.data    - the return value on success
+// response.result.error   - error message on failure
+
+if (response.result.success) {
+  const encrypted = response.result.data.value;
+} else {
+  console.error('Failed:', response.result.error);
+}
+```
+
+> **Important**: Never access `response.success` or `response.data` directly. Always use `response.result.success` and `response.result.data`.
+
 ## Usage Guide {#usage-guide}
 
 ### Basic Setup
@@ -213,44 +243,47 @@ Add common tools to any `oLaneTool` node:
 
 ```typescript
 import { oLaneTool } from '@olane/o-lane';
-import { oAddress } from '@olane/o-core';
+import { oNodeAddress } from '@olane/o-node';
 import { initCommonTools } from '@olane/o-tools-common';
 
 class FinancialAnalystNode extends oLaneTool {
   constructor() {
     super({
-      address: new oAddress('o://company/finance/analyst'),
+      address: new oNodeAddress('o://company/finance/analyst'),
       laneContext: {
         domain: 'Financial Analysis'
       }
     });
   }
 
-  async start() {
-    await super.start();
-    
+  async hookStartFinished(): Promise<void> {
     // Add all common tools
     await initCommonTools(this);
-    
+
     this.logger.info('Common tools initialized');
+    await super.hookStartFinished();
   }
 
   // Now you can use common tools in your methods
   async _tool_save_report(request: oRequest) {
     const { reportData } = request.params;
-    
+
     // Use encryption tool
-    const encrypted = await this.use(
-      new oAddress('o://encryption'),
+    const encryptResponse = await this.use(
+      new oNodeAddress('o://encryption'),
       { method: 'encrypt', params: { value: reportData } }
     );
-    
+
+    if (!encryptResponse.result.success) {
+      throw new Error(`Encryption failed: ${encryptResponse.result.error}`);
+    }
+
     // Use storage tool
     await this.use(
-      new oAddress('o://storage'),
-      { method: 'set', params: { key: 'report', value: encrypted.value } }
+      new oNodeAddress('o://storage'),
+      { method: 'put', params: { key: 'report', value: encryptResponse.result.data.value } }
     );
-    
+
     return { saved: true };
   }
 }
@@ -265,18 +298,17 @@ import { EncryptionTool } from '@olane/o-tools-common';
 import { oLaneTool } from '@olane/o-lane';
 
 class MyNode extends oLaneTool {
-  async start() {
-    await super.start();
-    
+  async hookStartFinished(): Promise<void> {
     // Only add encryption tool
     const encryptionTool = new EncryptionTool({
       name: 'encryption',
       parent: this.address,
       leader: this.leader
     });
-    
+
     await encryptionTool.start();
     this.addChildNode(encryptionTool as any);
+    await super.hookStartFinished();
   }
 }
 ```
@@ -289,44 +321,56 @@ class MyNode extends oLaneTool {
 class AuthNode extends oLaneTool {
   async _tool_store_credentials(request: oRequest) {
     const { username, password } = request.params;
-    
+
     // Encrypt password before storing
     const encrypted = await this.use(
-      new oAddress('o://encryption'),
+      new oNodeAddress('o://encryption'),
       { method: 'encrypt', params: { value: password } }
     );
-    
+
+    if (!encrypted.result.success) {
+      throw new Error(`Encryption failed: ${encrypted.result.error}`);
+    }
+
     // Store encrypted password
     await this.use(
-      new oAddress('o://storage'),
-      { 
-        method: 'set', 
-        params: { 
-          key: `user:${username}:password`, 
-          value: encrypted.value 
-        } 
+      new oNodeAddress('o://storage'),
+      {
+        method: 'put',
+        params: {
+          key: `user:${username}:password`,
+          value: encrypted.result.data.value
+        }
       }
     );
-    
-    return { success: true };
+
+    return { stored: true };
   }
 
   async _tool_verify_credentials(request: oRequest) {
     const { username, password } = request.params;
-    
+
     // Retrieve encrypted password
     const stored = await this.use(
-      new oAddress('o://storage'),
+      new oNodeAddress('o://storage'),
       { method: 'get', params: { key: `user:${username}:password` } }
     );
-    
+
+    if (!stored.result.success) {
+      throw new Error(`Storage retrieval failed: ${stored.result.error}`);
+    }
+
     // Decrypt and compare
     const decrypted = await this.use(
-      new oAddress('o://encryption'),
-      { method: 'decrypt', params: { value: stored.value } }
+      new oNodeAddress('o://encryption'),
+      { method: 'decrypt', params: { value: stored.result.data.value } }
     );
-    
-    return { valid: decrypted.value === password };
+
+    if (!decrypted.result.success) {
+      throw new Error(`Decryption failed: ${decrypted.result.error}`);
+    }
+
+    return { valid: decrypted.result.data.value === password };
   }
 }
 ```
@@ -337,34 +381,38 @@ class AuthNode extends oLaneTool {
 class DocumentAnalystNode extends oLaneTool {
   async _tool_analyze_with_context(request: oRequest) {
     const { query } = request.params;
-    
+
     // Search for relevant documents
-    const context = await this.use(
-      new oAddress('o://search'),
-      { 
-        method: 'vector', 
-        params: { 
+    const searchResponse = await this.use(
+      new oNodeAddress('o://search'),
+      {
+        method: 'vector',
+        params: {
           query: query,
-          limit: 5 
-        } 
+          limit: 5
+        }
       }
     );
-    
+
+    if (!searchResponse.result.success) {
+      throw new Error(`Search failed: ${searchResponse.result.error}`);
+    }
+
     // Use context to generate analysis
-    const analysis = this.analyzeWithContext(query, context);
-    
+    const analysis = this.analyzeWithContext(query, searchResponse.result.data);
+
     // Store analysis result
     await this.use(
-      new oAddress('o://storage'),
-      { 
-        method: 'set', 
-        params: { 
-          key: `analysis:${Date.now()}`, 
-          value: JSON.stringify(analysis) 
-        } 
+      new oNodeAddress('o://storage'),
+      {
+        method: 'put',
+        params: {
+          key: `analysis:${Date.now()}`,
+          value: JSON.stringify(analysis)
+        }
       }
     );
-    
+
     return analysis;
   }
 }
@@ -376,42 +424,54 @@ class DocumentAnalystNode extends oLaneTool {
 class IntegrationNode extends oLaneTool {
   async _tool_store_api_key(request: oRequest) {
     const { service, apiKey } = request.params;
-    
+
     // Encrypt API key
     const encrypted = await this.use(
-      new oAddress('o://encryption'),
+      new oNodeAddress('o://encryption'),
       { method: 'encrypt', params: { value: apiKey } }
     );
-    
+
+    if (!encrypted.result.success) {
+      throw new Error(`Encryption failed: ${encrypted.result.error}`);
+    }
+
     // Store encrypted key
     await this.use(
-      new oAddress('o://storage'),
-      { 
-        method: 'set', 
-        params: { 
-          key: `api-keys:${service}`, 
-          value: encrypted.value 
-        } 
+      new oNodeAddress('o://storage'),
+      {
+        method: 'put',
+        params: {
+          key: `api-keys:${service}`,
+          value: encrypted.result.data.value
+        }
       }
     );
-    
+
     return { stored: true };
   }
 
   private async getApiKey(service: string): Promise<string> {
     // Retrieve encrypted key
     const stored = await this.use(
-      new oAddress('o://storage'),
+      new oNodeAddress('o://storage'),
       { method: 'get', params: { key: `api-keys:${service}` } }
     );
-    
+
+    if (!stored.result.success) {
+      throw new Error(`Storage retrieval failed: ${stored.result.error}`);
+    }
+
     // Decrypt and return
     const decrypted = await this.use(
-      new oAddress('o://encryption'),
-      { method: 'decrypt', params: { value: stored.value } }
+      new oNodeAddress('o://encryption'),
+      { method: 'decrypt', params: { value: stored.result.data.value } }
     );
-    
-    return decrypted.value;
+
+    if (!decrypted.result.success) {
+      throw new Error(`Decryption failed: ${decrypted.result.error}`);
+    }
+
+    return decrypted.result.data.value;
   }
 }
 ```
@@ -428,6 +488,13 @@ Initializes all common tools as child nodes of the provided parent node.
 **Returns:**
 - `Promise<Tool[]>`: Array of initialized tool instances
 
+**Initialized tools (5 total):**
+1. `StorageTool` - Persistent data storage (`o://storage`)
+2. `OSConfigStorageTool` - OS-level configuration storage (`o://os-config-storage`)
+3. `EncryptionTool` - AES-256-GCM encryption/decryption (`o://encryption`)
+4. `SearchTool` - Network-wide vector search (`o://search`)
+5. `oApprovalTool` - Human-in-the-loop approval system (`o://approval`)
+
 **Example:**
 
 ```typescript
@@ -435,15 +502,16 @@ import { initCommonTools } from '@olane/o-tools-common';
 import { oLaneTool } from '@olane/o-lane';
 
 class MyNode extends oLaneTool {
-  async start() {
-    await super.start();
-    
+  async hookStartFinished(): Promise<void> {
     const tools = await initCommonTools(this);
     // tools[0] = StorageTool
-    // tools[1] = EncryptionTool  
-    // tools[2] = SearchTool
-    
+    // tools[1] = OSConfigStorageTool
+    // tools[2] = EncryptionTool
+    // tools[3] = SearchTool
+    // tools[4] = oApprovalTool
+
     console.log(`Initialized ${tools.length} common tools`);
+    await super.hookStartFinished();
   }
 }
 ```
@@ -461,9 +529,9 @@ new EncryptionTool(config: oNodeToolConfig)
 **Config:**
 ```typescript
 {
-  name: string,           // Tool name
-  parent: oAddress,       // Parent node address
-  leader: LeaderClient    // Leader client instance
+  name: string,              // Tool name
+  parent: oNodeAddress,      // Parent node address
+  leader: LeaderClient       // Leader client instance
 }
 ```
 
@@ -480,9 +548,9 @@ new SearchTool(config: oNodeToolConfig)
 **Config:**
 ```typescript
 {
-  name: string,           // Tool name
-  parent: oAddress,       // Parent node address  
-  leader: LeaderClient    // Leader client instance
+  name: string,              // Tool name
+  parent: oNodeAddress,      // Parent node address
+  leader: LeaderClient       // Leader client instance
 }
 ```
 
@@ -555,7 +623,7 @@ const storageTools = [
 **Solution:**
 ```bash
 # Install all peer dependencies
-npm install @olane/o-core@latest @olane/o-config@latest \
+pnpm add @olane/o-core@latest @olane/o-config@latest \
   @olane/o-protocol@latest @olane/o-tool@latest \
   @olane/o-lane@latest @olane/o-leader@latest \
   @olane/o-storage@latest
@@ -590,9 +658,11 @@ Common tools are implemented as **child nodes** of your main node:
 │  ┌───────────────────────────────────┐ │
 │  │ Child Nodes (Common Tools)        │ │
 │  │                                   │ │
+│  │  o://storage                      │ │
+│  │  o://os-config-storage            │ │
 │  │  o://encryption                   │ │
 │  │  o://search                       │ │
-│  │  o://storage                      │ │
+│  │  o://approval                     │ │
 │  └───────────────────────────────────┘ │
 └─────────────────────────────────────────┘
 ```

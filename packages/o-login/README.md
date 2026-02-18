@@ -13,7 +13,7 @@
 ### Installation
 
 ```bash
-npm install @olane/o-login
+pnpm install @olane/o-login
 ```
 
 ### Minimal Example: Human Agent Login
@@ -139,8 +139,8 @@ new oHumanLoginTool(config: oLoginConfig)
     - **Signature**: `(data: any) => Promise<any>`
     - **Returns**: Processing result (optional)
   - `address` (oNodeAddress, optional): Custom address (default: `o://human`)
-  - `leader` (oAddress, optional): Leader node address for network registration
-  - `parent` (oAddress, optional): Parent node address
+  - `leader` (oNodeAddress, optional): Leader node address for network registration
+  - `parent` (oNodeAddress, optional): Parent node address
 
 **Example**:
 ```typescript
@@ -265,7 +265,7 @@ Handles intent-based requests.
 **Parameters**:
 - `intent` (string, required): The intent to resolve
 
-**Returns**:
+**Returns** (raw data from the tool method):
 ```typescript
 {
   success: boolean;
@@ -273,18 +273,22 @@ Handles intent-based requests.
 }
 ```
 
+> **Note**: When calling via `node.use()`, the raw return value is wrapped by the base class. Access it via `response.result.data`.
+
 **Example Usage** (from another node):
 ```typescript
 // Another node sends an intent to the human agent
-const result = await humanAgent.use({
+const response = await humanAgent.use(humanAgent.address, {
   method: 'intent',
   params: {
     intent: 'Please approve the budget request for Q4'
   }
 });
 
-console.log(result.resolution);
-// "Request approved" (based on your respond callback)
+if (response.result.success) {
+  console.log(response.result.data.resolution);
+  // "Request approved" (based on your respond callback)
+}
 ```
 
 ---
@@ -296,7 +300,7 @@ Handles question-answer requests.
 **Parameters**:
 - `question` (string, required): The question to answer
 
-**Returns**:
+**Returns** (raw data from the tool method):
 ```typescript
 {
   success: boolean;
@@ -304,18 +308,22 @@ Handles question-answer requests.
 }
 ```
 
+> **Note**: When calling via `node.use()`, the raw return value is wrapped by the base class. Access it via `response.result.data`.
+
 **Example Usage** (from another node):
 ```typescript
 // Another node asks a question
-const result = await aiAgent.use({
+const response = await aiAgent.use(aiAgent.address, {
   method: 'question',
   params: {
     question: 'What is the capital of France?'
   }
 });
 
-console.log(result.answer);
-// "Paris" (based on your answer callback)
+if (response.result.success) {
+  console.log(response.result.data.answer);
+  // "Paris" (based on your answer callback)
+}
 ```
 
 ---
@@ -327,23 +335,54 @@ Handles streamed data.
 **Parameters**:
 - `data` (any, required): The data to process
 
-**Returns**:
+**Returns** (raw data from the tool method):
 ```typescript
 {
   success: boolean;
 }
 ```
 
+> **Note**: When calling via `node.use()`, the raw return value is wrapped by the base class. Access it via `response.result.data`.
+
 **Example Usage** (from another node):
 ```typescript
 // Another node streams data
-await humanAgent.use({
+const response = await humanAgent.use(humanAgent.address, {
   method: 'receive_stream',
   params: {
     data: { type: 'notification', message: 'System update available' }
   }
 });
+
+if (response.result.success) {
+  console.log('Stream data delivered successfully');
+}
 ```
+
+---
+
+## Response Structure {#response-structure}
+
+When calling login tools via `node.use()`, responses follow the standard Olane response structure:
+
+```typescript
+const response = await node.use(
+  new oNodeAddress('o://human'),
+  { method: 'intent', params: { intent: 'Approve the request' } }
+);
+
+// response.result.success - boolean indicating success or failure
+// response.result.data    - the return value on success
+// response.result.error   - error message on failure
+
+if (response.result.success) {
+  console.log('Resolution:', response.result.data.resolution);
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Never access `response.success` or `response.data` directly. Always use `response.result.success` and `response.result.data`.
 
 ---
 
@@ -478,11 +517,11 @@ const aiSupport = new oAILoginTool({
     // Check if AI can handle this
     if (intent.includes('complex') || intent.includes('escalate')) {
       // Forward to human
-      const humanResult = await humanSupport.use({
+      const humanResponse = await humanSupport.use(humanSupport.address, {
         method: 'intent',
         params: { intent }
       });
-      return `Escalated to human: ${humanResult.resolution}`;
+      return `Escalated to human: ${humanResponse.result.data.resolution}`;
     }
     
     // AI handles routine intents
@@ -568,14 +607,16 @@ await taskProcessor.start();
 await humanWorker.start();
 
 // Task processor sends work to human
-const result = await humanWorker.use({
+const response = await humanWorker.use(humanWorker.address, {
   method: 'intent',
   params: {
     intent: 'Review and approve the financial report'
   }
 });
 
-console.log('Result:', result.resolution);
+if (response.result.success) {
+  console.log('Result:', response.result.data.resolution);
+}
 ```
 
 ---
@@ -600,10 +641,10 @@ const agent = new oHumanLoginTool({
 Connect to a leader node for service discovery:
 
 ```typescript
-import { oAddress } from '@olane/o-core';
+import { oNodeAddress } from '@olane/o-node';
 
 const agent = new oHumanLoginTool({
-  leader: new oAddress('o://network/leader'),
+  leader: new oNodeAddress('o://network/leader'),
   respond: async (intent) => 'resolved',
   answer: async (question) => 'answered',
   receiveStream: async (data) => {}
@@ -636,11 +677,11 @@ const childAgent = new oAILoginTool({
   respond: async (intent) => {
     // Escalate to parent if needed
     if (intent.includes('urgent')) {
-      const result = await parentAgent.use({
+      const parentResponse = await parentAgent.use(parentAgent.address, {
         method: 'intent',
         params: { intent }
       });
-      return result.resolution;
+      return parentResponse.result.data.resolution;
     }
     return 'Assistant handled';
   },
@@ -678,6 +719,8 @@ console.log('Agent offline');
 ```
 
 ### Error Handling
+
+> **Note**: The callback functions (`respond`, `answer`, `receiveStream`) are user-provided and follow a different pattern from `_tool_` methods. In `_tool_` methods, you should throw errors for failures and the base class handles wrapping. In callbacks, you may catch and handle errors as shown below, since the base class will wrap the callback's return value into the standard response structure (`response.result.success`, `response.result.data`, `response.result.error`).
 
 ```typescript
 const agent = new oHumanLoginTool({
@@ -763,7 +806,7 @@ const agent = new oHumanLoginTool({
 
 **Solution**: Install all peer dependencies:
 ```bash
-npm install @olane/o-core @olane/o-config @olane/o-protocol @olane/o-tool @olane/o-lane @olane/o-node
+pnpm install @olane/o-core @olane/o-config @olane/o-protocol @olane/o-tool @olane/o-lane @olane/o-node
 ```
 
 ---

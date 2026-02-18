@@ -9,5 +9,6 @@ export interface ConfigureRequest extends oRequest {
     hostingProvider: HostModelProvider;
     accessToken: string;
     address: string;
+    model: string;
   };
 }

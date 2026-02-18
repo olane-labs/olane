@@ -20,7 +20,7 @@ The tool system layer of Olane OS. Transform generalist LLMs into specialists th
 ## Installation
 
 ```bash
-npm install @olane/o-tool
+pnpm install @olane/o-tool
 ```
 
 ## Quick Start
@@ -65,7 +65,9 @@ const response = await calculator.use({
   params: { a: 5, b: 3 }
 });
 
-console.log(response.result); // { result: 8 }
+// response.result.success === true
+// response.result.data contains the tool's return value
+console.log(response.result.data); // { result: 8 }
 ```
 
 ### Using the Mixin Pattern
@@ -156,13 +158,47 @@ Parameter validation happens automatically before tool execution:
 
 ```typescript
 // Missing required parameters trigger clear errors
-try {
-  await tool.use({ method: 'add', params: { a: 5 } });
-} catch (error) {
+const response = await tool.use({ method: 'add', params: { a: 5 } });
+
+if (!response.result.success) {
   // Error: Missing required parameters: ["b"]
-  console.log(error.message);
+  console.log(response.result.error);
 }
 ```
+
+### Response Structure
+
+When calling tools via `node.use()`, responses follow a standard wrapped structure:
+
+```typescript
+{
+  jsonrpc: "2.0",
+  id: "request-id",
+  result: {
+    success: boolean,    // Whether the call succeeded
+    data: any,           // The return value on success
+    error?: string       // Error message on failure
+  }
+}
+```
+
+Always access response fields through the `result` property:
+
+```typescript
+const response = await tool.use(tool.address, {
+  method: 'some_method',
+  params: { /* ... */ }
+});
+
+// Check success
+if (response.result.success) {
+  const data = response.result.data;    // Access return value
+} else {
+  const error = response.result.error;  // Access error message
+}
+```
+
+> **Common mistake**: Accessing `response.success` or `response.data` directly will not work. Always use `response.result.success`, `response.result.data`, and `response.result.error`.
 
 ## Examples
 
@@ -238,12 +274,16 @@ class AdvancedCalculatorTool extends oToolBase {
 
   async _tool_complex_calculation(request: oRequest): Promise<ToolResult> {
     // Can leverage parent tool capabilities
-    const result = await this.use(new oAddress('o://calculator'), {
+    const response = await this.use(new oAddress('o://calculator'), {
       method: 'add',
       params: { a: 10, b: 20 }
     });
-    
-    return { result: result.result * 2 };
+
+    if (!response.result.success) {
+      throw new Error(response.result.error);
+    }
+
+    return { result: response.result.data.result * 2 };
   }
 }
 ```
@@ -352,29 +392,41 @@ async _tool_divide(request: oRequest): Promise<ToolResult> {
 
 ## Testing
 
+This project uses Mocha/Chai via [aegir](https://github.com/ipfs/aegir) for testing. Do not use Jest.
+
 ```typescript
+import { expect } from 'aegir/chai';
 import { oRequest } from '@olane/o-core';
 
 describe('CalculatorTool', () => {
   let tool: CalculatorTool;
-  
-  beforeEach(async () => {
+
+  before(async () => {
     tool = new CalculatorTool();
     await tool.start();
   });
-  
+
   it('should add two numbers', async () => {
-    const request = new oRequest({
+    const response = await tool.use(tool.address, {
       method: 'add',
-      params: { a: 5, b: 3 },
-      id: '123'
+      params: { a: 5, b: 3 }
     });
-    
-    const result = await tool.callMyTool(request);
-    expect(result.result).toBe(8);
+
+    expect(response.result.success).to.be.true;
+    expect(response.result.data.result).to.equal(8);
   });
-  
-  afterEach(async () => {
+
+  it('should return error for missing params', async () => {
+    const response = await tool.use(tool.address, {
+      method: 'add',
+      params: { a: 5 }
+    });
+
+    expect(response.result.success).to.be.false;
+    expect(response.result.error).to.exist;
+  });
+
+  after(async () => {
     await tool.stop();
   });
 });

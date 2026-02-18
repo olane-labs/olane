@@ -1,4 +1,3 @@
-import { ToolResult } from '@olane/o-tool';
 import { oAddress, oRequest } from '@olane/o-core';
 import { APPROVAL_METHODS } from './methods/approval.methods.js';
 import {
@@ -69,123 +68,93 @@ export class oApprovalTool extends oLaneTool {
   /**
    * Request human approval for an action
    */
-  async _tool_request_approval(request: oRequest): Promise<ToolResult> {
-    try {
-      const toolAddress = request.params.toolAddress as string;
-      const method = request.params.method as string;
-      const params = request.params.params;
-      const intent = request.params.intent as string | undefined;
+  async _tool_request_approval(request: oRequest): Promise<any> {
+    const toolAddress = request.params.toolAddress as string;
+    const method = request.params.method as string;
+    const params = request.params.params;
+    const intent = request.params.intent as string | undefined;
 
-      const approvalRequest: ApprovalRequest = {
-        toolAddress,
-        method,
-        params,
-        intent,
-        timestamp: Date.now(),
-      };
+    const approvalRequest: ApprovalRequest = {
+      toolAddress,
+      method,
+      params,
+      intent,
+      timestamp: Date.now(),
+    };
 
-      const toolMethod = `${toolAddress}/${method}`;
+    const toolMethod = `${toolAddress}/${method}`;
 
-      // Check if this action is blacklisted
-      if (this.preferences.blacklist?.includes(toolMethod)) {
-        this.logger.warn(`Action denied by blacklist: ${toolMethod}`);
-        return {
-          success: false,
-          error: 'Action denied by approval blacklist',
-          approved: false,
-        };
-      }
+    // Check if this action is blacklisted
+    if (this.preferences.blacklist?.includes(toolMethod)) {
+      this.logger.warn(`Action denied by blacklist: ${toolMethod}`);
+      throw new Error('Action denied by approval blacklist');
+    }
 
-      // Check if this action is whitelisted
-      if (this.preferences.whitelist?.includes(toolMethod)) {
-        this.logger.info(`Action pre-approved by whitelist: ${toolMethod}`);
-        return {
-          success: true,
-          approved: true,
-          decision: 'approve',
-        };
-      }
-
-      // Check if approval is needed based on mode
-      if (!this.needsApproval(toolAddress, method)) {
-        this.logger.debug(
-          `Approval not required for ${toolMethod} (mode: ${this.mode})`,
-        );
-        return {
-          success: true,
-          approved: true,
-          decision: 'approve',
-        };
-      }
-
-      // Format the approval prompt
-      const question = this.formatApprovalPrompt(approvalRequest);
-
-      // Request approval from human
-      this.logger.info(`Requesting approval for: ${toolMethod}`);
-
-      const timeout = this.preferences.timeout || DEFAULT_TIMEOUT;
-      const approvalPromise = this.use(new oAddress('o://human'), {
-        method: 'question',
-        params: { question },
-      });
-
-      // Implement timeout
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Approval timeout')), timeout),
-      );
-
-      try {
-        const response = await Promise.race([approvalPromise, timeoutPromise]);
-        const answer = (response.result.data as any)?.answer
-          ?.trim()
-          .toLowerCase();
-
-        // Parse the response
-        const decision = this.parseApprovalResponse(answer);
-
-        // Handle preference storage
-        if (decision === 'always') {
-          await this.addToWhitelist(toolMethod);
-          this.logger.info(`Added to whitelist: ${toolMethod}`);
-        } else if (decision === 'never') {
-          await this.addToBlacklist(toolMethod);
-          this.logger.info(`Added to blacklist: ${toolMethod}`);
-        }
-
-        const approved = decision === 'approve' || decision === 'always';
-
-        this.logger.info(
-          `Approval decision for ${toolMethod}: ${decision} (approved: ${approved})`,
-        );
-
-        return {
-          success: true,
-          approved,
-          decision,
-          timestamp: Date.now(),
-        };
-      } catch (error: any) {
-        // Timeout or error - default to deny
-        this.logger.error(
-          `Approval timeout or error for ${toolMethod}:`,
-          error.message,
-        );
-        return {
-          success: false,
-          error: error.message || 'Approval timeout',
-          approved: false,
-          decision: 'deny',
-        };
-      }
-    } catch (error: any) {
-      this.logger.error('Error in approval request:', error);
+    // Check if this action is whitelisted
+    if (this.preferences.whitelist?.includes(toolMethod)) {
+      this.logger.info(`Action pre-approved by whitelist: ${toolMethod}`);
       return {
-        success: false,
-        error: error.message || 'Unknown error',
-        approved: false,
+        approved: true,
+        decision: 'approve',
       };
     }
+
+    // Check if approval is needed based on mode
+    if (!this.needsApproval(toolAddress, method)) {
+      this.logger.debug(
+        `Approval not required for ${toolMethod} (mode: ${this.mode})`,
+      );
+      return {
+        approved: true,
+        decision: 'approve',
+      };
+    }
+
+    // Format the approval prompt
+    const question = this.formatApprovalPrompt(approvalRequest);
+
+    // Request approval from human
+    this.logger.info(`Requesting approval for: ${toolMethod}`);
+
+    const timeout = this.preferences.timeout || DEFAULT_TIMEOUT;
+    const approvalPromise = this.use(new oAddress('o://human'), {
+      method: 'question',
+      params: { question },
+    });
+
+    // Implement timeout
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Approval timeout')), timeout),
+    );
+
+    const response = await Promise.race([approvalPromise, timeoutPromise]);
+    const answer = (response.result.data as any)?.answer
+      ?.trim()
+      .toLowerCase();
+
+    // Parse the response
+    const decision = this.parseApprovalResponse(answer);
+
+    // Handle preference storage
+    if (decision === 'always') {
+      await this.addToWhitelist(toolMethod);
+      this.logger.info(`Added to whitelist: ${toolMethod}`);
+    } else if (decision === 'never') {
+      await this.addToBlacklist(toolMethod);
+      this.logger.info(`Added to blacklist: ${toolMethod}`);
+    }
+
+    const approved = decision === 'approve' || decision === 'always';
+
+    this.logger.info(
+      `Approval decision for ${toolMethod}: ${decision} (approved: ${approved})`,
+    );
+
+    return {
+      approved,
+      decision,
+      timestamp: Date.now(),
+    };
   }
 
   /**
@@ -275,43 +244,30 @@ Your response:`.trim();
   /**
    * Set an approval preference manually
    */
-  async _tool_set_preference(request: oRequest): Promise<ToolResult> {
-    try {
-      const toolMethod = request.params.toolMethod as string;
-      const preference = request.params.preference as string;
+  async _tool_set_preference(request: oRequest): Promise<any> {
+    const toolMethod = request.params.toolMethod as string;
+    const preference = request.params.preference as string;
 
-      if (preference === 'allow') {
-        await this.addToWhitelist(toolMethod);
-        return {
-          success: true,
-          message: `Added ${toolMethod} to whitelist`,
-        };
-      } else if (preference === 'deny') {
-        await this.addToBlacklist(toolMethod);
-        return {
-          success: true,
-          message: `Added ${toolMethod} to blacklist`,
-        };
-      } else {
-        return {
-          success: false,
-          error: 'Invalid preference. Use "allow" or "deny"',
-        };
-      }
-    } catch (error: any) {
+    if (preference === 'allow') {
+      await this.addToWhitelist(toolMethod);
       return {
-        success: false,
-        error: error.message || 'Unknown error',
+        message: `Added ${toolMethod} to whitelist`,
       };
+    } else if (preference === 'deny') {
+      await this.addToBlacklist(toolMethod);
+      return {
+        message: `Added ${toolMethod} to blacklist`,
+      };
+    } else {
+      throw new Error('Invalid preference. Use "allow" or "deny"');
     }
   }
 
   /**
    * Get the current approval mode
    */
-  async _tool_get_mode(request: oRequest): Promise<ToolResult> {
+  async _tool_get_mode(request: oRequest): Promise<any> {
     return {
-      success: true,
       mode: this.mode,
       preferences: this.preferences,
     };
@@ -320,35 +276,24 @@ Your response:`.trim();
   /**
    * Set the approval mode
    */
-  async _tool_set_mode(request: oRequest): Promise<ToolResult> {
-    try {
-      const mode = request.params.mode as string;
+  async _tool_set_mode(request: oRequest): Promise<any> {
+    const mode = request.params.mode as string;
 
-      if (!['allow', 'review', 'auto'].includes(mode)) {
-        return {
-          success: false,
-          error: 'Invalid mode. Use "allow", "review", or "auto"',
-        };
-      }
-
-      this.mode = mode as ApprovalMode;
-      this.logger.info(`Approval mode set to: ${this.mode}`);
-
-      // Save mode to OS config
-      await this.use(new oAddress('o://leader'), {
-        method: 'update_approval_mode',
-        params: { mode: this.mode },
-      });
-
-      return {
-        success: true,
-        mode: this.mode,
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Unknown error',
-      };
+    if (!['allow', 'review', 'auto'].includes(mode)) {
+      throw new Error('Invalid mode. Use "allow", "review", or "auto"');
     }
+
+    this.mode = mode as ApprovalMode;
+    this.logger.info(`Approval mode set to: ${this.mode}`);
+
+    // Save mode to OS config
+    await this.use(new oAddress('o://leader'), {
+      method: 'update_approval_mode',
+      params: { mode: this.mode },
+    });
+
+    return {
+      mode: this.mode,
+    };
   }
 }

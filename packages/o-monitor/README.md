@@ -20,7 +20,7 @@ Comprehensive monitoring and observability tool for Olane OS networks.
 ## Installation
 
 ```bash
-npm install @olane/o-monitor
+pnpm install @olane/o-monitor
 ```
 
 ## Quick Start
@@ -108,7 +108,21 @@ const monitor = new MonitorTool({
 
 ### Tool Methods
 
-All methods are accessible via `monitor.use({ method: '...', params: {...} })`
+All methods are accessible via `monitor.use(monitor.address, { method: '...', params: {...} })`.
+
+> **Response Structure**: When calling via `node.use()`, responses follow the standard oResponse structure:
+> ```typescript
+> {
+>   jsonrpc: "2.0",
+>   id: "request-id",
+>   result: {
+>     success: boolean,    // Check this first
+>     data: any,           // Access this on success
+>     error?: string       // Access this on failure
+>   }
+> }
+> ```
+> Always check `response.result.success` before accessing `response.result.data`.
 
 #### `record_heartbeat`
 
@@ -451,25 +465,30 @@ Returns aggregated network statistics.
 import { oAddress } from '@olane/o-core';
 
 // Trigger collection from all nodes
-const result = await monitor.use({
+const response = await monitor.use(monitor.address, {
   method: 'collect_metrics',
   params: {}
 });
 
-console.log(`Collected metrics from ${result.collected} nodes`);
+if (response.result.success) {
+  console.log(`Collected metrics from ${response.result.data.collected} nodes`);
+}
 ```
 
 ### Check Service Health (Registry Integration)
 
 ```typescript
 // Fast health check using heartbeat cache
-const status = await monitor.use({
+const response = await monitor.use(monitor.address, {
   method: 'get_service_status',
   params: { address: 'o://storage' }
 });
 
-if (!status.isAlive) {
-  console.log(`Service ${status.address} is stale!`);
+if (response.result.success) {
+  const status = response.result.data;
+  if (!status.isAlive) {
+    console.log(`Service ${status.address} is stale!`);
+  }
 }
 ```
 
@@ -498,18 +517,21 @@ curl http://localhost:9090/metrics | grep olane_node_success_count
 ### Get Network Performance Report
 
 ```typescript
-const report = await monitor.use({
+const response = await monitor.use(monitor.address, {
   method: 'get_performance_report',
   params: {}
 });
 
-console.log(`Healthy nodes: ${report.summary.healthy}`);
-console.log(`Slow nodes: ${report.summary.slow}`);
-console.log(`Error-prone nodes: ${report.summary.errorProne}`);
+if (response.result.success) {
+  const report = response.result.data;
+  console.log(`Healthy nodes: ${report.summary.healthy}`);
+  console.log(`Slow nodes: ${report.summary.slow}`);
+  console.log(`Error-prone nodes: ${report.summary.errorProne}`);
 
-// Inspect problematic nodes
-for (const node of report.errorProneNodes) {
-  console.log(`${node.address}: ${node.errorRate.toFixed(2)}% error rate`);
+  // Inspect problematic nodes
+  for (const node of report.errorProneNodes) {
+    console.log(`${node.address}: ${node.errorRate.toFixed(2)}% error rate`);
+  }
 }
 ```
 
@@ -517,21 +539,27 @@ for (const node of report.errorProneNodes) {
 
 ```typescript
 // Get peer information
-const peerInfo = await monitor.use({
+const peerResponse = await monitor.use(monitor.address, {
   method: 'get_peer_info',
   params: {}
 });
 
-console.log(`Connected to ${peerInfo.peerCount} peers`);
+if (peerResponse.result.success) {
+  const peerInfo = peerResponse.result.data;
+  console.log(`Connected to ${peerInfo.peerCount} peers`);
+}
 
 // Get DHT status
-const dhtStatus = await monitor.use({
+const dhtResponse = await monitor.use(monitor.address, {
   method: 'get_dht_status',
   params: {}
 });
 
-console.log(`DHT mode: ${dhtStatus.mode}`);
-console.log(`Routing table size: ${dhtStatus.routingTableSize}`);
+if (dhtResponse.result.success) {
+  const dhtStatus = dhtResponse.result.data;
+  console.log(`DHT mode: ${dhtStatus.mode}`);
+  console.log(`Routing table size: ${dhtStatus.routingTableSize}`);
+}
 ```
 
 ### Integrate with Prometheus & Grafana

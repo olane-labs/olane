@@ -10,7 +10,7 @@ import { errorHandler, OlaneError } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { createJwtMiddleware } from './middleware/jwt-auth.js';
 import { ServerLogger } from './utils/logger.js';
-import { oAddress } from '@olane/o-core';
+import { oAddress, oRequestContext, ORequestAuthContext } from '@olane/o-core';
 import { Server } from 'http';
 import {
   validateAddress,
@@ -35,6 +35,51 @@ export function oServer(config: ServerConfig): ServerInstance {
   const app: Express = express();
   const logger = new ServerLogger(debug);
   let server: Server | null = null;
+
+  /**
+   * Build auth context from a JWT-verified Express request.
+   * Returns undefined if no JWT is present (e.g. JWT auth is disabled).
+   */
+  function buildAuthFromRequest(req: Request): ORequestAuthContext | undefined {
+    if (!req.jwt) return undefined;
+
+    // Extract raw token from Authorization header
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : '';
+
+    return {
+      token,
+      claims: req.jwt,
+    };
+  }
+
+  /**
+   * Remove any client-injected _auth from params (anti-spoofing).
+   * Server-verified auth is injected separately.
+   */
+  function stripClientAuth(params: any): any {
+    if (!params || typeof params !== 'object') return params;
+    const { _auth, ...rest } = params;
+    return rest;
+  }
+
+  /**
+   * Deep-strip _auth from response data before sending to HTTP client.
+   * Prevents leaking tokens in response payloads.
+   */
+  function stripAuthFromResponse(obj: any): any {
+    if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(stripAuthFromResponse);
+
+    const result: any = {};
+    for (const key of Object.keys(obj)) {
+      if (key === '_auth') continue;
+      result[key] = stripAuthFromResponse(obj[key]);
+    }
+    return result;
+  }
 
   // Middleware
   app.use(express.json());
@@ -85,23 +130,36 @@ export function oServer(config: ServerConfig): ServerInstance {
       // Validate method
       validateMethod(method);
 
+      // Strip client-injected _auth before sanitization (anti-spoofing)
+      const strippedParams = stripClientAuth(params);
+
       // Sanitize params
-      const sanitizedParams = sanitizeParams(params);
+      const sanitizedParams = sanitizeParams(strippedParams);
+
+      // Build server-verified auth from JWT
+      const auth = buildAuthFromRequest(req);
+
+      // Inject _auth into params if JWT is present
+      const finalParams = auth
+        ? { ...sanitizedParams, _auth: auth }
+        : sanitizedParams;
 
       logger.debugLog(
         `Calling use with address ${addressStr}, method: ${method}`,
       );
 
       const address = new oAddress(addressStr);
-      const result = await node.use(address, {
-        method,
-        params: sanitizedParams,
-        id,
-      });
+
+      // Wrap in request context for AsyncLocalStorage propagation
+      const result = await (auth
+        ? oRequestContext.run({ auth }, () =>
+            node.use(address, { method, params: finalParams, id }),
+          )
+        : node.use(address, { method, params: finalParams, id }));
 
       const response: SuccessResponse = {
         success: true,
-        data: result.result,
+        data: stripAuthFromResponse(result.result),
       };
 
       res.json(response);
@@ -128,8 +186,19 @@ export function oServer(config: ServerConfig): ServerInstance {
         // Validate method
         validateMethod(method);
 
+        // Strip client-injected _auth before sanitization (anti-spoofing)
+        const strippedParams = stripClientAuth(params);
+
         // Sanitize params
-        const sanitizedParams = sanitizeParams(params);
+        const sanitizedParams = sanitizeParams(strippedParams);
+
+        // Build server-verified auth from JWT
+        const auth = buildAuthFromRequest(req);
+
+        // Inject _auth into params if JWT is present
+        const finalParams = auth
+          ? { ...sanitizedParams, _auth: auth }
+          : sanitizedParams;
 
         logger.debugLog(
           `Calling method ${method} on ${addressParam} with params:`,
@@ -137,14 +206,17 @@ export function oServer(config: ServerConfig): ServerInstance {
         );
 
         const address = new oAddress(addressStr);
-        const result = await node.use(address, {
-          method,
-          params: sanitizedParams,
-        });
+
+        // Wrap in request context for AsyncLocalStorage propagation
+        const result = await (auth
+          ? oRequestContext.run({ auth }, () =>
+              node.use(address, { method, params: finalParams }),
+            )
+          : node.use(address, { method, params: finalParams }));
 
         const response: SuccessResponse = {
           success: true,
-          data: result.result,
+          data: stripAuthFromResponse(result.result),
         };
 
         res.json(response);
@@ -169,8 +241,19 @@ export function oServer(config: ServerConfig): ServerInstance {
         // Validate method
         validateMethod(method);
 
+        // Strip client-injected _auth before sanitization (anti-spoofing)
+        const strippedParams = stripClientAuth(params);
+
         // Sanitize params
-        const sanitizedParams = sanitizeParams(params);
+        const sanitizedParams = sanitizeParams(strippedParams);
+
+        // Build server-verified auth from JWT
+        const auth = buildAuthFromRequest(req);
+
+        // Inject _auth into params if JWT is present
+        const finalParams = auth
+          ? { ...sanitizedParams, _auth: auth }
+          : sanitizedParams;
 
         logger.debugLog(
           `Streaming use call to ${addressStr}, method: ${method}`,
@@ -186,15 +269,16 @@ export function oServer(config: ServerConfig): ServerInstance {
         try {
           // TODO: Implement actual streaming support when available
           // For now, execute and return result
-          const result = await node.use(address, {
-            method,
-            params: sanitizedParams,
-          });
+          const result = await (auth
+            ? oRequestContext.run({ auth }, () =>
+                node.use(address, { method, params: finalParams }),
+              )
+            : node.use(address, { method, params: finalParams }));
 
           res.write(
             `data: ${JSON.stringify({
               type: 'complete',
-              result: result.result,
+              result: stripAuthFromResponse(result.result),
             })}\n\n`,
           );
 

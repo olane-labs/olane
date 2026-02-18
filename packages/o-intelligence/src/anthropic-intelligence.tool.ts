@@ -159,7 +159,9 @@ export class AnthropicIntelligenceTool extends oLaneTool {
 
       const chatRequest: AnthropicChatRequest = {
         model: model as string,
-        max_tokens: max_tokens as number,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : max_tokens,
         messages: messages as AnthropicMessage[],
         system: system as string,
         stream: false,
@@ -235,7 +237,9 @@ export class AnthropicIntelligenceTool extends oLaneTool {
 
       const chatRequest: AnthropicChatRequest = {
         model: model as string,
-        max_tokens: max_tokens as number,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : max_tokens,
         messages: messages as AnthropicMessage[],
         system: system as string,
         stream: true,
@@ -368,7 +372,9 @@ export class AnthropicIntelligenceTool extends oLaneTool {
 
       const generateRequest: AnthropicMessageRequest = {
         model: model as string,
-        max_tokens: max_tokens as number,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : max_tokens,
         messages,
         system: system as string,
         stream: false,
@@ -454,7 +460,9 @@ export class AnthropicIntelligenceTool extends oLaneTool {
 
       const generateRequest: AnthropicMessageRequest = {
         model: model as string,
-        max_tokens: max_tokens as number,
+        max_tokens: process.env.MAX_TOKENS
+          ? parseInt(process.env.MAX_TOKENS as string, 10)
+          : max_tokens,
         messages,
         system: system as string,
         stream: true,

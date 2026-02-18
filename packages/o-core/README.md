@@ -35,12 +35,14 @@ This is **NOT** a network framework or API library - it's the abstract operating
 ## Installation
 
 ```bash
-npm install @olane/o-core @olane/o-protocol
+pnpm install @olane/o-core @olane/o-protocol
 ```
 
 ## Quick Start
 
 ### Creating Your First Tool Node
+
+> **Note**: `oCore` is an abstract base class. For production use, extend higher-level packages like `oNodeTool` (from `@olane/o-node`), `oLaneTool` (from `@olane/o-lane`), or `McpTool` (from `@olane/o-mcp`). The example below demonstrates the core concepts.
 
 ```typescript
 import { oCore, oAddress, NodeType, NodeState } from '@olane/o-core';
@@ -48,9 +50,9 @@ import { oRequest, oResponse } from '@olane/o-core';
 
 // Extend oCore to create your tool node
 class MyToolNode extends oCore {
-  constructor(address: string) {
+  constructor(config: { address: oAddress }) {
     super({
-      address: new oAddress(address),
+      address: config.address,
       type: NodeType.AGENT, // Type remains AGENT for now (legacy naming)
       description: 'My first tool node',
       methods: {
@@ -68,11 +70,11 @@ class MyToolNode extends oCore {
   // Implement required abstract methods
   async execute(request: oRequest): Promise<any> {
     const { method, params } = request;
-    
+
     if (method === 'greet') {
       return { message: `Hello, ${params.name}!` };
     }
-    
+
     throw new Error(`Unknown method: ${method}`);
   }
 
@@ -103,19 +105,30 @@ class MyToolNode extends oCore {
 }
 
 // Create and start your tool node
-const toolNode = new MyToolNode('o://company/customer-service');
+// IMPORTANT: Use simple (non-nested) addresses in constructors.
+// Nested addresses like 'o://company/customer-service' are created
+// automatically at runtime during parent-child registration.
+const toolNode = new MyToolNode({
+  address: new oAddress('o://customer-service')
+});
 await toolNode.start();
 
 // AI agents can now use this tool node via its o:// address
 const response = await toolNode.use(
-  new oAddress('o://company/customer-service'),
+  new oAddress('o://customer-service'),
   {
     method: 'greet',
     params: { name: 'Alice' }
   }
 );
 
-console.log(response.result); // { message: "Hello, Alice!" }
+// Response follows the standard wrapping structure:
+// response.result.success - boolean indicating success/failure
+// response.result.data    - the returned data on success
+// response.result.error   - error details on failure
+if (response.result.success) {
+  console.log(response.result.data); // { message: "Hello, Alice!" }
+}
 
 // Stop the tool node gracefully
 await toolNode.stop();
@@ -125,15 +138,16 @@ await toolNode.stop();
 
 ```typescript
 // Tool Node A can communicate with Tool Node B using o:// addresses
-const salesTool = new MyToolNode('o://company/sales');
-const analyticsTool = new MyToolNode('o://company/analytics');
+// Use simple addresses in constructors; nested addresses are created at runtime
+const salesTool = new MyToolNode({ address: new oAddress('o://sales') });
+const analyticsTool = new MyToolNode({ address: new oAddress('o://analytics') });
 
 await salesTool.start();
 await analyticsTool.start();
 
 // Sales tool calls analytics tool (inter-process communication)
 const result = await salesTool.use(
-  new oAddress('o://company/analytics'),
+  new oAddress('o://analytics'),
   {
     method: 'analyze',
     params: { data: salesData }
@@ -145,19 +159,25 @@ const result = await salesTool.use(
 
 ```typescript
 // Create a parent-child hierarchy of tool nodes
-const parent = new MyToolNode('o://company');
-const child1 = new MyToolNode('o://company/sales');
-const child2 = new MyToolNode('o://company/marketing');
+// Use simple addresses in constructors - nested addresses are created at runtime
+const parent = new MyToolNode({ address: new oAddress('o://company') });
+
+// Children use simple addresses with a parent reference
+// During registration, child addresses become nested (e.g., 'o://company/sales')
+const child1 = new MyToolNode({ address: new oAddress('o://sales') });
+const child2 = new MyToolNode({ address: new oAddress('o://marketing') });
 
 await parent.start();
 await child1.start();
 await child2.start();
 
-// Register children with parent
+// Register children with parent - this creates the nested addresses
 parent.addChildNode(child1);
 parent.addChildNode(child2);
 
-// Child tool nodes automatically inherit context from parent
+// After registration:
+// child1.address -> 'o://company/sales'
+// child2.address -> 'o://company/marketing'
 // Routing happens automatically through the hierarchy
 ```
 
@@ -185,7 +205,9 @@ console.log(toolNode.state); // NodeState.STOPPED
 Addresses in Olane OS follow a hierarchical filesystem-like pattern:
 
 ```typescript
-// Hierarchical addresses
+// Hierarchical addresses exist at runtime after parent-child registration.
+// They are created by the system, not by constructors directly.
+// For example, after registration a child address may become:
 const address1 = new oAddress('o://company/finance/accounting');
 const address2 = new oAddress('o://users/alice/inbox');
 
@@ -197,6 +219,12 @@ console.log(address1.validate());   // true
 // Static vs dynamic addresses
 const staticAddr = address1.toStaticAddress();
 console.log(staticAddr.toString()); // "o://accounting"
+
+// IMPORTANT: When creating nodes in constructors, always use simple
+// (non-nested) addresses. Nested addresses are created automatically
+// during parent-child registration at runtime.
+// ✅ new oAddress('o://my-tool')
+// ❌ new oAddress('o://parent/my-tool')  -- violates validateNotNested()
 ```
 
 **📖 For complete details on address resolution, routing algorithms, and custom resolvers, see the [Router System documentation](./src/router/README.md).**
@@ -207,8 +235,9 @@ All inter-process communication (IPC) follows a request/response pattern using J
 
 ```typescript
 // Making a request from one tool node to another
+// Full signature: use(address: oAddress, data?: { method: string, params: any, id?: string }, options?: UseOptions)
 const response: oResponse = await toolNode.use(
-  new oAddress('o://target/toolnode'),
+  new oAddress('o://target-toolnode'),
   {
     method: 'processData',
     params: { key: 'value' },
@@ -216,18 +245,57 @@ const response: oResponse = await toolNode.use(
   }
 );
 
-// Handling errors
+// Always check the response structure
+if (response.result.success) {
+  console.log('Data:', response.result.data);
+} else {
+  console.error('Error:', response.result.error);
+}
+
+// Transport-level errors throw exceptions
 try {
   const response = await toolNode.use(targetAddress, requestData);
-  console.log(response.result);
+  // Check response.result.success for application-level errors
 } catch (error) {
   if (error instanceof oError) {
-    console.error(`Error ${error.code}: ${error.message}`);
+    console.error(`Transport error ${error.code}: ${error.message}`);
   }
 }
 ```
 
 **📖 Learn more about JSON-RPC messaging, request states, and connection lifecycle in the [Connection System documentation](./src/connection/README.md).**
+
+### Response Structure
+
+When you call `use()`, the response follows a standard wrapping structure created by the `ResponseBuilder`. In higher-level packages (`@olane/o-node`, `@olane/o-tool`, `@olane/o-lane`), responses are wrapped with `success`, `data`, and `error` fields:
+
+```typescript
+const response = await toolNode.use(targetAddress, {
+  method: 'processData',
+  params: { key: 'value' }
+});
+
+// Standard response structure:
+// {
+//   jsonrpc: "2.0",
+//   id: "request-id",
+//   result: {
+//     success: boolean,    // Whether the operation succeeded
+//     data: any,           // The returned data (on success)
+//     error?: string       // Error details (on failure)
+//   }
+// }
+
+// Always check success before accessing data
+if (response.result.success) {
+  const data = response.result.data;
+  console.log('Result:', data);
+} else {
+  console.error('Error:', response.result.error);
+}
+```
+
+> **Important**: Access data via `response.result.data`, not `response.result` directly. The `result` object contains the wrapping fields (`success`, `data`, `error`), not the raw return value.
 
 ### Metrics and Observability
 
@@ -252,7 +320,7 @@ toolNode.logger.error('Error message');
 `oCore` is an abstract base class that provides:
 
 - **Lifecycle Management**: `start()`, `stop()`, `initialize()`, `teardown()`
-- **Communication**: `use()`, `use()`, `connect()`
+- **Communication**: `use()`, `useDirect()`, `connect()`
 - **Routing**: `router`, `initializeRouter()`
 - **Hierarchy**: `addChildNode()`, `removeChildNode()`, `hierarchyManager`
 - **State Management**: `state`, `NodeState` enum
@@ -401,7 +469,7 @@ async execute(request: oRequest): Promise<any> {
 ```typescript
 import { setupGracefulShutdown } from '@olane/o-core';
 
-const toolNode = new MyToolNode('o://my/toolnode');
+const toolNode = new MyToolNode({ address: new oAddress('o://my-toolnode') });
 await toolNode.start();
 
 // Setup graceful shutdown handlers
@@ -430,7 +498,9 @@ Abstract base class for building tool nodes.
 #### Methods
 - `async start(): Promise<void>` - Start the tool node
 - `async stop(): Promise<void>` - Stop the tool node gracefully
-- `async use(address, data?): Promise<oResponse>` - Communicate with another tool node (IPC)
+- `async use(address: oAddress, data?: UseDataConfig, options?: UseOptions): Promise<oResponse>` - Communicate with another tool node (IPC). The `options` parameter supports `noRouting`, `isStream`, `onChunk`, `readTimeoutMs`, `drainTimeoutMs`, and `abortSignal`.
+- `async useDirect(address: oAddress, data?: UseDataConfig): Promise<oResponse>` - Send a request without routing (equivalent to `use()` with `{ noRouting: true }`)
+- `async useStream(address: oAddress, data: UseDataConfig, options: UseStreamOptions): Promise<oResponse>` - Send a streaming request to another tool node
 - `async execute(request): Promise<any>` - Execute a request (abstract - you implement this)
 - `addChildNode(node): void` - Add a child tool node
 - `removeChildNode(node): void` - Remove a child tool node
@@ -460,29 +530,29 @@ new oError(code: oErrorCodes, message: string, data?: any)
 
 ```bash
 # Run tests
-npm test
+pnpm test
 
 # Run tests in Node.js
-npm run test:node
+pnpm run test:node
 
 # Run tests in browser
-npm run test:browser
+pnpm run test:browser
 ```
 
 ## Development
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build the package
-npm run build
+pnpm run build
 
 # Run in development mode
-npm run dev
+pnpm run dev
 
 # Lint the code
-npm run lint
+pnpm run lint
 ```
 
 ## Use Cases

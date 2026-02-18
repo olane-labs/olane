@@ -3,6 +3,61 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.5 (2026-02-18)</small>
+
+- added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))
+- chore: update pnpm-lock.yaml after version bump ([b53623b](https://github.com/olane-labs/olane/commit/b53623b))
+
+## <small>0.8.4 (2026-02-18)</small>
+
+- added support for model selection ([3ef7741](https://github.com/olane-labs/olane/commit/3ef7741))
+- updated docs ([3cc950f](https://github.com/olane-labs/olane/commit/3cc950f))
+- chore: update pnpm-lock.yaml after version bump ([189c0cf](https://github.com/olane-labs/olane/commit/189c0cf))
+
+## <small>0.8.3 (2026-02-11)</small>
+
+- minor change ([6ffbc6c](https://github.com/olane-labs/olane/commit/6ffbc6c))
+- minor change ([9c7b023](https://github.com/olane-labs/olane/commit/9c7b023))
+- chore: update pnpm-lock.yaml after version bump ([9e35c87](https://github.com/olane-labs/olane/commit/9e35c87))
+
+## <small>0.8.2 (2026-02-10)</small>
+
+- bug fix for websocket frame crash ([e358ed0](https://github.com/olane-labs/olane/commit/e358ed0))
+- Fix the readme for o-lane package ([b4d962d](https://github.com/olane-labs/olane/commit/b4d962d))
+- minor change ([87aca78](https://github.com/olane-labs/olane/commit/87aca78))
+- chore: update pnpm-lock.yaml after version bump ([b84ad7d](https://github.com/olane-labs/olane/commit/b84ad7d))
+
+## <small>0.8.1 (2026-02-07)</small>
+
+- document o-server status ([99ed95d](https://github.com/olane-labs/olane/commit/99ed95d))
+- easier config for max_tokens ([dfc1ae2](https://github.com/olane-labs/olane/commit/dfc1ae2))
+- security: implement input validation and sanitization ([8205dd2](https://github.com/olane-labs/olane/commit/8205dd2))
+- security: implement mandatory JWT token verification ([596033c](https://github.com/olane-labs/olane/commit/596033c))
+- security: prevent information disclosure in error responses ([e2e1ac5](https://github.com/olane-labs/olane/commit/e2e1ac5))
+- security: update Express 4.18.2/4.19.2 → 4.22.1 to fix CVEs ([816e5cf](https://github.com/olane-labs/olane/commit/816e5cf))
+- chore: update pnpm-lock.yaml after version bump ([314bb7d](https://github.com/olane-labs/olane/commit/314bb7d))
+
+### Breaking Change
+
+- - Authentication is now mandatory (except /health endpoint)
+
+* Replaces optional authenticate parameter with JWT config
+
+Implementation details:
+
+- Created jwt-auth.ts middleware with signature verification
+- Updated ServerConfig interface with JwtAuthConfig
+- Added 5 JWT-specific error codes to error handler
+- Deprecated legacy authenticate parameter
+- Added @types/mocha and @types/jsonwebtoken dev dependencies
+
+Fixes: Security requirement from v0.8.0 Phase 1
+Part of: Wave 2 (JWT Verification)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+
 ## 0.8.0 (2026-02-03)
 
 - fix for reconnect ([72a70c0](https://github.com/olane-labs/olane/commit/72a70c0))
