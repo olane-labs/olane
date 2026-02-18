@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.4 (2026-02-18)</small>
+
+- added support for model selection ([3ef7741](https://github.com/olane-labs/olane/commit/3ef7741))
+- updated docs ([3cc950f](https://github.com/olane-labs/olane/commit/3cc950f))
+- chore: update pnpm-lock.yaml after version bump ([189c0cf](https://github.com/olane-labs/olane/commit/189c0cf))
+
 ## <small>0.8.3 (2026-02-11)</small>
 
 - minor change ([6ffbc6c](https://github.com/olane-labs/olane/commit/6ffbc6c))
