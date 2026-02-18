@@ -188,23 +188,55 @@ export class IntelligenceTool extends oLaneTool {
     };
   }
 
+  async getModelChoice(): Promise<string | undefined> {
+    if (process.env.MODEL_CHOICE) {
+      return process.env.MODEL_CHOICE;
+    }
+    const modelStored = await this.getSecureValue(
+      IntelligenceStorageKeys.MODEL_CHOICE,
+    );
+    if (modelStored) {
+      return modelStored;
+    }
+    return undefined;
+  }
+
   async chooseIntelligence(request: PromptRequest): Promise<{
     choice: oAddress;
     apiKey: string;
     options: any;
+    model: string | undefined;
   }> {
-    // check to see if anthropic key is in vault
-    const { provider } = await this.getModelProvider();
+    const { provider: providerParam, model: modelParam } = request.params;
+
+    // Resolve provider: per-request param > env/storage/human flow
+    let provider: LLMProviders;
+    if (providerParam) {
+      if (!Object.values(LLMProviders).includes(providerParam)) {
+        throw new Error(
+          `Invalid provider '${providerParam}'. Must be one of: ${Object.values(LLMProviders).join(', ')}`,
+        );
+      }
+      provider = providerParam;
+    } else {
+      const result = await this.getModelProvider();
+      provider = result.provider;
+    }
+
+    // Resolve model: per-request param > env/storage > undefined (child default)
+    const model = modelParam || (await this.getModelChoice());
+
     const { apiKey } = await this.getProviderApiKey(provider);
     return {
       choice: new oAddress(`o://${provider}`),
       apiKey,
       options: {},
+      model,
     };
   }
 
   async _tool_configure(request: ConfigureRequest): Promise<ToolResult> {
-    const { modelProvider, hostingProvider, accessToken, address } =
+    const { modelProvider, hostingProvider, accessToken, address, model } =
       request.params;
     if (hostingProvider) {
       await this.use(new oAddress('o://secure'), {
@@ -242,6 +274,15 @@ export class IntelligenceTool extends oLaneTool {
         },
       });
     }
+    if (model) {
+      await this.use(new oAddress('o://secure'), {
+        method: 'put',
+        params: {
+          key: `${IntelligenceStorageKeys.MODEL_CHOICE}`,
+          value: model,
+        },
+      });
+    }
     return {
       success: true,
     };
@@ -249,11 +290,21 @@ export class IntelligenceTool extends oLaneTool {
 
   // we cannot wrap this tool use in a plan because it is a core dependency in all planning
   async _tool_prompt(request: PromptRequest): Promise<ToolResult> {
-    const { userMessage, prompt, _isStreaming = false } = request.params;
+    const {
+      userMessage,
+      prompt,
+      _isStreaming = false,
+      model,
+      provider,
+    } = request.params;
     const stream = request.stream;
 
+    const providerAddress = provider ? new oAddress(`o://${provider}`) : null;
+
     const intelligence = await this.chooseIntelligence(request);
-    const child = this.hierarchyManager.getChild(intelligence.choice);
+    const child = this.hierarchyManager.getChild(
+      providerAddress || intelligence.choice,
+    );
     const response = await this.useChild(
       child || intelligence.choice,
       {
@@ -261,6 +312,11 @@ export class IntelligenceTool extends oLaneTool {
         params: {
           _isStreaming: _isStreaming as boolean,
           apiKey: intelligence.apiKey,
+          ...(model
+            ? { model }
+            : intelligence.model
+              ? { model: intelligence.model }
+              : {}),
           messages: !!userMessage
             ? [
                 {

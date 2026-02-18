@@ -21,6 +21,14 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
         description: 'The hosting provider to use (olane, local)',
         required: false,
       },
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description:
+          'Persistent model preference (e.g., claude-opus-4-20250514, gpt-4o). Stored in secure storage for future requests.',
+        required: false,
+      },
     ],
   },
   prompt: {
@@ -45,6 +53,22 @@ export const INTELLIGENCE_PARAMS: { [key: string]: oMethod } = {
         type: 'boolean',
         value: 'boolean',
         description: 'Whether to stream the response',
+        required: false,
+      },
+      {
+        name: 'model',
+        type: 'string',
+        value: 'string',
+        description:
+          'Per-request model override (e.g., claude-opus-4-20250514, gpt-4o). Takes priority over configured model.',
+        required: false,
+      },
+      {
+        name: 'provider',
+        type: 'string',
+        value: 'string',
+        description:
+          'Per-request provider override (anthropic, openai, ollama, perplexity, grok, olane). Takes priority over configured provider.',
         required: false,
       },
     ],
