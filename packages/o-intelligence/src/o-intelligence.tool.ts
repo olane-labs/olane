@@ -296,6 +296,7 @@ export class IntelligenceTool extends oLaneTool {
       _isStreaming = false,
       model,
       provider,
+      _token,
     } = request.params;
     const stream = request.stream;
 

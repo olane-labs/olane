@@ -13,6 +13,7 @@ export interface RequestParams {
   _isStreaming?: boolean;
   _streamId?: string;
   _responseConnectionId?: string;
+  _auth?: { token: string; claims: { sub?: string; [key: string]: any } };
   [key: string]: any;
 }
 
