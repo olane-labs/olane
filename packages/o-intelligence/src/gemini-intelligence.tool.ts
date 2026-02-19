@@ -166,7 +166,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
   protected apiKey: string = process.env.GEMINI_API_KEY || '';
   protected baseUrl: string =
     'https://generativelanguage.googleapis.com/v1beta';
-  protected defaultModel: string = 'gemini-3-pro-preview';
+  protected defaultModel: string = 'gemini-2.5-flash';
 
   constructor(config: oNodeToolConfig) {
     super({
@@ -195,9 +195,14 @@ export class GeminiIntelligenceTool extends oLaneTool {
     }
 
     try {
-      const { model = this.defaultModel, messages, ...options } = params;
+      const {
+        model = this.defaultModel,
+        messages,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: 'Gemini API key is required',
@@ -237,7 +242,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-goog-api-key': this.apiKey,
+            'x-goog-api-key': apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -284,9 +289,14 @@ export class GeminiIntelligenceTool extends oLaneTool {
   ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, messages, ...options } = params;
+      const {
+        model = this.defaultModel,
+        messages,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         yield {
           success: false,
           error: 'Gemini API key is required',
@@ -328,7 +338,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-goog-api-key': this.apiKey,
+            'x-goog-api-key': apiKey,
           },
           body: JSON.stringify(chatRequest),
         },
@@ -425,9 +435,15 @@ export class GeminiIntelligenceTool extends oLaneTool {
     }
 
     try {
-      const { model = this.defaultModel, prompt, system, ...options } = params;
+      const {
+        model = this.defaultModel,
+        prompt,
+        system,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         return {
           success: false,
           error: 'Gemini API key is required',
@@ -468,7 +484,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-goog-api-key': this.apiKey,
+            'x-goog-api-key': apiKey,
           },
           body: JSON.stringify(generateRequest),
         },
@@ -515,9 +531,15 @@ export class GeminiIntelligenceTool extends oLaneTool {
   ): AsyncGenerator<ToolResult> {
     try {
       const params = request.params as any;
-      const { model = this.defaultModel, prompt, system, ...options } = params;
+      const {
+        model = this.defaultModel,
+        prompt,
+        system,
+        apiKey = this.apiKey,
+        ...options
+      } = params;
 
-      if (!this.apiKey) {
+      if (!apiKey) {
         yield {
           success: false,
           error: 'Gemini API key is required',
@@ -560,7 +582,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-goog-api-key': this.apiKey,
+            'x-goog-api-key': apiKey,
           },
           body: JSON.stringify(generateRequest),
         },

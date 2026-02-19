@@ -2,6 +2,7 @@ import { CoreUtils, oAddress, oResponse } from '@olane/o-core';
 import { ToolResult } from '@olane/o-tool';
 import { AnthropicIntelligenceTool } from './anthropic-intelligence.tool.js';
 import { OpenAIIntelligenceTool } from './openai-intelligence.tool.js';
+import { GeminiIntelligenceTool } from './gemini-intelligence.tool.js';
 import { OllamaIntelligenceTool } from './ollama-intelligence.tool.js';
 import { PerplexityIntelligenceTool } from './perplexity-intelligence.tool.js';
 import { GrokIntelligenceTool } from './grok-intelligence.tool.js';
@@ -92,7 +93,7 @@ export class IntelligenceTool extends oLaneTool {
         method: 'question',
         params: {
           question:
-            'Which AI model do you want to use? (anthropic, openai, ollama, perplexity, grok)',
+            'Which AI model do you want to use? (anthropic, openai, gemini, ollama, perplexity, grok)',
         },
       });
 
@@ -356,6 +357,11 @@ export class IntelligenceTool extends oLaneTool {
         leader: this.leader as any,
       }),
       new OpenAIIntelligenceTool({
+        ...config,
+        parent: this.address as any,
+        leader: this.leader as any,
+      }),
+      new GeminiIntelligenceTool({
         ...config,
         parent: this.address as any,
         leader: this.leader as any,
