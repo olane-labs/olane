@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-context",
-  "version": "0.8.8",
+  "version": "0.8.9",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -54,6 +54,5 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
-  "dependencies": {},
   "gitHead": "61f955e3b9b94e554d51138ffc84b5f549b8c827"
 }
