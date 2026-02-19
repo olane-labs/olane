@@ -2,6 +2,7 @@ import { Libp2pConfig } from '@olane/o-config';
 import { oAddress } from '../../router/o-address.js';
 import { NodeType } from './node-type.enum.js';
 import { oDependency, oMethod } from '@olane/o-protocol';
+import type { oTokenManager } from '../../auth/o-token-manager.js';
 
 export interface oCoreConfig {
   address: oAddress;
@@ -18,6 +19,7 @@ export interface oCoreConfig {
   cwd?: string;
   systemName?: string;
   joinToken?: string;
+  tokenManager?: oTokenManager;
 
   /**
    * Internal flag - bypasses nested address validation.
