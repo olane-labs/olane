@@ -1,11 +1,11 @@
-import { oParameter } from "../parameter";
-import { oDependency } from "../dependency";
-import { oProtocolMethods } from "../enums";
+import { oParameter } from "../parameter/index.js";
+import { oDependency } from "../dependency/index.js";
+import { oProtocolMethods } from "../enums/index.js";
 import {
   JSONRPCRequest,
   JSONRPCResponse,
   RequestParams,
-} from "../json-rpc/json-rpc";
+} from "../json-rpc/json-rpc.js";
 
 export interface oHandshakeRequest extends JSONRPCRequest {
   method: oProtocolMethods.HANDSHAKE;

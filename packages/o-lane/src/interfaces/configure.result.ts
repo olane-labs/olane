@@ -1,4 +1,4 @@
-import { oCapabilityType } from '../capabilities';
+import { oCapabilityType } from '../capabilities/index.js';
 import { oTaskConfig } from './o-lane-task.config.js';
 
 export interface oConfigureResult {

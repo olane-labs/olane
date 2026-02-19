@@ -8,7 +8,7 @@ import {
   ResolveRequest,
   RouteResponse,
 } from '@olane/o-core';
-import { oToolBase } from '../../o-tool.base';
+import { oToolBase } from '../../o-tool.base.js';
 import { JSONRPC_VERSION, oProtocolMethods } from '@olane/o-protocol';
 import { v4 as uuidv4 } from 'uuid';
 

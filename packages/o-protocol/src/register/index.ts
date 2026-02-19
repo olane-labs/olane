@@ -1,1 +1,1 @@
-export * from "./o-register";
+export * from "./o-register.js";

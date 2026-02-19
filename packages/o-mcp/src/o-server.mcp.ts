@@ -8,7 +8,7 @@ import {
   isJSONRPCRequest,
 } from '@modelcontextprotocol/sdk/types.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { IntentWrappingTransport } from './o-transport.mcp';
+import { IntentWrappingTransport } from './o-transport.mcp.js';
 
 export type oServerOptions = ServerOptions & {
   /** Validate that all incoming requests include `_meta.intent` */

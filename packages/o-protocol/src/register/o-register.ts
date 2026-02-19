@@ -1,5 +1,5 @@
-import { oProtocolMethods } from "../enums";
-import { oRequest, RequestParams } from "../json-rpc";
+import { oProtocolMethods } from "../enums/index.js";
+import { oRequest, RequestParams } from "../json-rpc/index.js";
 
 export interface oRegistrationParams extends RequestParams {
   transports: string[];

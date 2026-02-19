@@ -1,6 +1,6 @@
 import { Connection, Libp2p } from '@olane/o-config';
 import { oConnectionConfig } from '@olane/o-core';
-import { oNodeAddress } from '../../router';
+import { oNodeAddress } from '../../router/index.js';
 
 export interface oNodeConnectionConfig extends oConnectionConfig {
   nextHopAddress: oNodeAddress;

@@ -1,1 +1,1 @@
-export * from "./o-parameter";
+export * from "./o-parameter.js";

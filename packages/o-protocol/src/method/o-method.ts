@@ -1,5 +1,5 @@
-import { oDependency } from "../dependency/o-dependency";
-import { oParameter } from "../parameter/o-parameter";
+import { oDependency } from "../dependency/o-dependency.js";
+import { oParameter } from "../parameter/o-parameter.js";
 
 export interface oApprovalMetadata {
   riskLevel?: 'low' | 'medium' | 'high' | 'critical';

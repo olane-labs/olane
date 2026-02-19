@@ -5,8 +5,8 @@ import {
   ResolveRequest,
   RouteResponse,
 } from '@olane/o-core';
-import { oIntelligenceResolver } from './o-intelligence.resolver';
-import { HostModelProvider } from '../enums/host-model-provider.enum';
+import { oIntelligenceResolver } from './o-intelligence.resolver.js';
+import { HostModelProvider } from '../enums/host-model-provider.enum.js';
 import { oNodeTransport } from '@olane/o-node/dist/src/router/o-node.transport';
 
 export class oIntelligenceOlaneResolver extends oIntelligenceResolver {

@@ -1,4 +1,4 @@
-import { oNodeAddress } from '../o-node.address';
+import { oNodeAddress } from '../o-node.address.js';
 import { oRouterRequest, RouteResponse } from '@olane/o-core';
 
 export interface oNodeRouterResponse extends RouteResponse {

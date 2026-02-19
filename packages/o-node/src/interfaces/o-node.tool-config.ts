@@ -1,3 +1,3 @@
-import { oNodeConfig } from './o-node.config';
+import { oNodeConfig } from './o-node.config.js';
 
 export interface oNodeToolConfig extends Omit<oNodeConfig, 'address'> {}

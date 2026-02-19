@@ -1,0 +1,566 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## <small>0.8.8 (2026-02-19)</small>
+
+- minor change ([9b36b9b](https://github.com/olane-labs/olane/commit/9b36b9b))
+- minor change ([1bedaeb](https://github.com/olane-labs/olane/commit/1bedaeb))
+- minor change ([61f955e](https://github.com/olane-labs/olane/commit/61f955e))
+
+## <small>0.8.7 (2026-02-19)</small>
+
+- minor change ([11e06a1](https://github.com/olane-labs/olane/commit/11e06a1))
+
+## <small>0.8.6 (2026-02-19)</small>
+
+- bug fixes for refactor ([1d02356](https://github.com/olane-labs/olane/commit/1d02356))
+
+## <small>0.8.5 (2026-02-18)</small>
+
+- added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))
+
+## <small>0.8.4 (2026-02-18)</small>
+
+- updated docs ([3cc950f](https://github.com/olane-labs/olane/commit/3cc950f))
+
+## <small>0.8.3 (2026-02-11)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.2 (2026-02-10)</small>
+
+- bug fix for websocket frame crash ([e358ed0](https://github.com/olane-labs/olane/commit/e358ed0))
+
+## <small>0.8.1 (2026-02-07)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## 0.8.0 (2026-02-03)
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.62 (2026-01-06)</small>
+
+- minor change ([eb6b938](https://github.com/olane-labs/olane/commit/eb6b938))
+
+## <small>0.7.61 (2026-01-06)</small>
+
+- updated versions ([bb32050](https://github.com/olane-labs/olane/commit/bb32050))
+
+## <small>0.7.60 (2026-01-05)</small>
+
+- minor change ([547d0f4](https://github.com/olane-labs/olane/commit/547d0f4))
+- minor change ([4d7ed25](https://github.com/olane-labs/olane/commit/4d7ed25))
+- minor improvements ([a0a3ef8](https://github.com/olane-labs/olane/commit/a0a3ef8))
+
+## <small>0.7.59 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.58 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.57 (2025-12-30)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.56 (2025-12-29)</small>
+
+- all unit tests passing for o-node ([5b11155](https://github.com/olane-labs/olane/commit/5b11155))
+- further refactor for event bubbling up + message handling ([8b5a274](https://github.com/olane-labs/olane/commit/8b5a274))
+- refactored node-stream + node-connection wrappers ([de94dfd](https://github.com/olane-labs/olane/commit/de94dfd))
+
+## <small>0.7.55 (2025-12-29)</small>
+
+- manual refinement for connection state managemenet ([34078e9](https://github.com/olane-labs/olane/commit/34078e9))
+
+## <small>0.7.54 (2025-12-28)</small>
+
+- experiment with dedicated read & write streams for limited clients ([5a1e15f](https://github.com/olane-labs/olane/commit/5a1e15f))
+
+## <small>0.7.53 (2025-12-27)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.52 (2025-12-27)</small>
+
+- added utility function useTool ([8d00e05](https://github.com/olane-labs/olane/commit/8d00e05))
+
+## <small>0.7.51 (2025-12-23)</small>
+
+- stream pooling functionality added ([a33ab20](https://github.com/olane-labs/olane/commit/a33ab20))
+
+## <small>0.7.50 (2025-12-19)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.49 (2025-12-19)</small>
+
+- minor change ([1810818](https://github.com/olane-labs/olane/commit/1810818))
+
+## <small>0.7.48 (2025-12-19)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.47 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.46 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.45 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.44 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.43 (2025-12-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.42 (2025-12-18)</small>
+
+- minor change ([f705ab1](https://github.com/olane-labs/olane/commit/f705ab1))
+
+## <small>0.7.41 (2025-12-18)</small>
+
+- refactored the connection management flow ([dd0a6af](https://github.com/olane-labs/olane/commit/dd0a6af))
+
+## <small>0.7.40 (2025-12-17)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.39 (2025-12-17)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.38 (2025-12-17)</small>
+
+- minor change ([b19f7ea](https://github.com/olane-labs/olane/commit/b19f7ea))
+
+## <small>0.7.37 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.36 (2025-12-12)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.35 (2025-12-12)</small>
+
+- minor change ([f5c2e65](https://github.com/olane-labs/olane/commit/f5c2e65))
+- more changes around prefix enforcement ([f4eb971](https://github.com/olane-labs/olane/commit/f4eb971))
+- removed old transport-based messaging ([b17e001](https://github.com/olane-labs/olane/commit/b17e001))
+- snapshot of workign lpstream ([d86bf8a](https://github.com/olane-labs/olane/commit/d86bf8a))
+
+## <small>0.7.34 (2025-12-12)</small>
+
+- minor change ([a1a218c](https://github.com/olane-labs/olane/commit/a1a218c))
+- minor change ([adaa790](https://github.com/olane-labs/olane/commit/adaa790))
+
+## <small>0.7.33 (2025-12-11)</small>
+
+- minor change ([8cd3eec](https://github.com/olane-labs/olane/commit/8cd3eec))
+
+## <small>0.7.32 (2025-12-11)</small>
+
+- minor change ([d3ecec4](https://github.com/olane-labs/olane/commit/d3ecec4))
+- minor change ([a17496f](https://github.com/olane-labs/olane/commit/a17496f))
+
+## <small>0.7.31 (2025-12-10)</small>
+
+- minor change ([fa7475b](https://github.com/olane-labs/olane/commit/fa7475b))
+- minor change ([4325f48](https://github.com/olane-labs/olane/commit/4325f48))
+- minor change ([e835a1c](https://github.com/olane-labs/olane/commit/e835a1c))
+- minor change ([378008a](https://github.com/olane-labs/olane/commit/378008a))
+- minor change ([6be2758](https://github.com/olane-labs/olane/commit/6be2758))
+- minor change ([01a6f75](https://github.com/olane-labs/olane/commit/01a6f75))
+
+## <small>0.7.30 (2025-12-10)</small>
+
+- clean up the hook init funcitonality ([cc10b57](https://github.com/olane-labs/olane/commit/cc10b57))
+- fixes for reconnection after parent / leader disconnect ([92bbe0c](https://github.com/olane-labs/olane/commit/92bbe0c))
+
+## <small>0.7.29 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.28 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.27 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.26 (2025-12-08)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.25 (2025-12-07)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.24 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.23 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.22 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.21 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.20 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.19 (2025-12-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.18 (2025-12-05)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.17 (2025-12-04)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.16 (2025-12-04)</small>
+
+- minor change ([681eceb](https://github.com/olane-labs/olane/commit/681eceb))
+
+## <small>0.7.15 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.14 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.13 (2025-12-03)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.13-alpha.2 (2025-12-03)</small>
+
+- added leader address validation ([c365513](https://github.com/olane-labs/olane/commit/c365513))
+
+## <small>0.7.13-alpha.1 (2025-12-03)</small>
+
+- olane core networking functionality more stable after adding unit tests ([afdd7e6](https://github.com/olane-labs/olane/commit/afdd7e6))
+- prevent nested addresses during init ([9965696](https://github.com/olane-labs/olane/commit/9965696))
+
+## <small>0.7.13-alpha.0 (2025-12-01)</small>
+
+- minor change ([1188cdd](https://github.com/olane-labs/olane/commit/1188cdd))
+
+## <small>0.7.12 (2025-11-30)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.76 (2025-11-21)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.75 (2025-11-19)</small>
+
+- minor improvements to o-protocol ([15f26d9](https://github.com/olane-labs/olane/commit/15f26d9))
+
+## <small>0.7.12-alpha.74 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.73 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.72 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.71 (2025-11-18)</small>
+
+- minor change ([73723b4](https://github.com/olane-labs/olane/commit/73723b4))
+
+## <small>0.7.12-alpha.70 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.69 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.68 (2025-11-18)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.67 (2025-11-16)</small>
+
+- fix for shared stream response handling ([f189928](https://github.com/olane-labs/olane/commit/f189928))
+
+## <small>0.7.12-alpha.66 (2025-11-16)</small>
+
+- fix ([e1975ce](https://github.com/olane-labs/olane/commit/e1975ce))
+
+## <small>0.7.12-alpha.65 (2025-11-15)</small>
+
+- minor change ([7b48124](https://github.com/olane-labs/olane/commit/7b48124))
+
+## <small>0.7.12-alpha.64 (2025-11-15)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.63 (2025-11-15)</small>
+
+- added test cases with claude code ([dd387a9](https://github.com/olane-labs/olane/commit/dd387a9))
+- fix ([fb6b1f8](https://github.com/olane-labs/olane/commit/fb6b1f8))
+- minor change for experiment ([374a1d6](https://github.com/olane-labs/olane/commit/374a1d6))
+
+## <small>0.7.12-alpha.59 (2025-11-14)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.58 (2025-11-14)</small>
+
+- annoyingly added more logging ([d36e819](https://github.com/olane-labs/olane/commit/d36e819))
+- minor fixes ([71a484e](https://github.com/olane-labs/olane/commit/71a484e))
+
+## <small>0.7.12-alpha.57 (2025-11-14)</small>
+
+- more logging + experimentation ([84ff369](https://github.com/olane-labs/olane/commit/84ff369))
+
+## <small>0.7.12-alpha.56 (2025-11-14)</small>
+
+- added messy implementation of stream handling via reuse ([77872fb](https://github.com/olane-labs/olane/commit/77872fb))
+
+## <small>0.7.12-alpha.55 (2025-11-14)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.54 (2025-11-14)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.53 (2025-11-14)</small>
+
+- adopted pnpm ([f899026](https://github.com/olane-labs/olane/commit/f899026))
+
+## <small>0.7.12-alpha.52 (2025-11-13)</small>
+
+- stream handler isolation ([b97f419](https://github.com/olane-labs/olane/commit/b97f419))
+- update version ([9aff117](https://github.com/olane-labs/olane/commit/9aff117))
+
+## <small>0.7.12-alpha.51 (2025-11-13)</small>
+
+- refactored node connections + added new package for limited clients ([1271a51](https://github.com/olane-labs/olane/commit/1271a51))
+
+## <small>0.7.12-alpha.50 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.49 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.48 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.47 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.46 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.45 (2025-11-13)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.44 (2025-11-12)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.43 (2025-11-12)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.42 (2025-11-12)</small>
+
+- udpate ([d6dafd6](https://github.com/olane-labs/olane/commit/d6dafd6))
+
+## <small>0.7.12-alpha.41 (2025-11-12)</small>
+
+- update deps ([af2da46](https://github.com/olane-labs/olane/commit/af2da46))
+
+## <small>0.7.12-alpha.40 (2025-11-12)</small>
+
+- added connection re-use ([16afc77](https://github.com/olane-labs/olane/commit/16afc77))
+
+## <small>0.7.12-alpha.39 (2025-11-11)</small>
+
+- correctly clean up streams when done ([7b582dd](https://github.com/olane-labs/olane/commit/7b582dd))
+- node connection interruption support ([21f3902](https://github.com/olane-labs/olane/commit/21f3902))
+
+## <small>0.7.12-alpha.38 (2025-11-10)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.37 (2025-11-10)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.36 (2025-11-09)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.35 (2025-11-08)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.34 (2025-11-07)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.33 (2025-11-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.32 (2025-11-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.31 (2025-11-06)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.30 (2025-11-05)</small>
+
+- streaming bug fixes + improvements ([ae29515](https://github.com/olane-labs/olane/commit/ae29515))
+
+## <small>0.7.12-alpha.29 (2025-11-05)</small>
+
+- bug fixes for routing for streaming ([c6ddfc6](https://github.com/olane-labs/olane/commit/c6ddfc6))
+
+## <small>0.7.12-alpha.28 (2025-11-04)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.27 (2025-11-04)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.26 (2025-11-04)</small>
+
+- more work around monitoring + connection loggign ([b6fc5bf](https://github.com/olane-labs/olane/commit/b6fc5bf))
+
+## <small>0.7.12-alpha.25 (2025-10-31)</small>
+
+- finished streaming v1 support ([be9918a](https://github.com/olane-labs/olane/commit/be9918a))
+- more work around streaming ([7ed21ab](https://github.com/olane-labs/olane/commit/7ed21ab))
+- removed unecessary stream related functionality ([ac75e0a](https://github.com/olane-labs/olane/commit/ac75e0a))
+
+## <small>0.7.12-alpha.24 (2025-10-31)</small>
+
+- streaming intelligence models ([a8787ba](https://github.com/olane-labs/olane/commit/a8787ba))
+- wired up the streaming functionality ([0a4c0a7](https://github.com/olane-labs/olane/commit/0a4c0a7))
+
+## <small>0.7.12-alpha.23 (2025-10-30)</small>
+
+- added streaming functionality ([7f310fc](https://github.com/olane-labs/olane/commit/7f310fc))
+- added timeouts for read + drain ([cad9348](https://github.com/olane-labs/olane/commit/cad9348))
+
+## <small>0.7.12-alpha.22 (2025-10-29)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.21 (2025-10-29)</small>
+
+- minor fix + logging ([8cff35c](https://github.com/olane-labs/olane/commit/8cff35c))
+
+## <small>0.7.12-alpha.20 (2025-10-29)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.19 (2025-10-28)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.18 (2025-10-28)</small>
+
+- minor bug fixes for reconnection + heartbeat managers ([20ae0c9](https://github.com/olane-labs/olane/commit/20ae0c9))
+
+## <small>0.7.12-alpha.17 (2025-10-28)</small>
+
+- reconfigured the node init methods to better support downstream use cases ([c930f4d](https://github.com/olane-labs/olane/commit/c930f4d))
+
+## <small>0.7.12-alpha.16 (2025-10-28)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.15 (2025-10-28)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.14 (2025-10-28)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.13 (2025-10-28)</small>
+
+- fix for heartbeat ping ([76d3f7b](https://github.com/olane-labs/olane/commit/76d3f7b))
+
+## <small>0.7.12-alpha.12 (2025-10-24)</small>
+
+- added circuit breaker logic ([e06729a](https://github.com/olane-labs/olane/commit/e06729a))
+
+## <small>0.7.12-alpha.11 (2025-10-24)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.10 (2025-10-24)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.9 (2025-10-23)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.8 (2025-10-23)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.7.12-alpha.6 (2025-10-23)</small>
+
+- added basic notification logic ([ed8be06](https://github.com/olane-labs/olane/commit/ed8be06))
+- self-healing improvements ([2841dfd](https://github.com/olane-labs/olane/commit/2841dfd))
+- chore: sync o-core, o-protocol, and o-server to v0.7.12-alpha.5 ([5c45d90](https://github.com/olane-labs/olane/commit/5c45d90))
+
+## <small>0.7.12-alpha.4 (2025-10-23)</small>
+
+- minor change ([5c05e5f](https://github.com/olane-labs/olane/commit/5c05e5f))
+
+## <small>0.7.12-alpha.3 (2025-10-22)</small>
+
+- manual correction of dependencies ([3ed0d9a](https://github.com/olane-labs/olane/commit/3ed0d9a))
+- modified repo to remove unused / redundant func ([54b1eab](https://github.com/olane-labs/olane/commit/54b1eab))
+
+## <small>0.7.12-alpha.2 (2025-10-22)</small>
+
+- Release v0.7.12-alpha.1 ([c5559b0](https://github.com/olane-labs/olane/commit/c5559b0))

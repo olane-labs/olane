@@ -1,4 +1,4 @@
-import { oCapabilityType } from "../../capabilities";
+import { oCapabilityType } from "../../capabilities/index.js";
 
 export interface oPromptConfig {
   rawValue: string;

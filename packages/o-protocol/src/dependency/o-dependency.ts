@@ -1,4 +1,4 @@
-import { oParameter } from "../parameter";
+import { oParameter } from "../parameter/index.js";
 
 export interface oDependency {
   address: string;
