@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.6 (2026-02-19)</small>
+
+- bug fixes for refactor ([1d02356](https://github.com/olane-labs/olane/commit/1d02356))
+- chore: update pnpm-lock.yaml after version bump ([e88f1e5](https://github.com/olane-labs/olane/commit/e88f1e5))
+
 ## <small>0.8.5 (2026-02-18)</small>
 
 - added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))

@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.6 (2026-02-19)</small>
+
+**Note:** Version bump only for package @olane/o-approval
+
 ## <small>0.8.5 (2026-02-18)</small>
 
 **Note:** Version bump only for package @olane/o-approval
