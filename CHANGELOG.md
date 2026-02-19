@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.7 (2026-02-19)</small>
+
+- minor change ([11e06a1](https://github.com/olane-labs/olane/commit/11e06a1))
+- chore: update pnpm-lock.yaml after version bump ([530f7e3](https://github.com/olane-labs/olane/commit/530f7e3))
+
 ## <small>0.8.6 (2026-02-19)</small>
 
 - bug fixes for refactor ([1d02356](https://github.com/olane-labs/olane/commit/1d02356))
