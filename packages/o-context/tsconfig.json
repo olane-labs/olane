@@ -5,11 +5,12 @@
     "declaration": true,
     "declarationMap": true,
     "declarationDir": "./dist",
+    "rootDir": ".",
     "emitDeclarationOnly": false,
     "module": "ESNext",
     "target": "ES2020",
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

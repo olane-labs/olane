@@ -7,15 +7,8 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
-    },
-    "./streaming": {
-      "types": "./dist/src/streaming/index.d.ts",
-      "default": "./dist/src/streaming/index.js"
-    },
-    "./utils/streaming.utils": {
-      "types": "./dist/src/utils/streaming.utils.d.ts",
-      "default": "./dist/src/utils/streaming.utils.js"
+      "node": "./dist/src/index.js",
+      "default": "./dist/src/o-context.browser.js"
     }
   },
   "files": [
@@ -39,7 +32,7 @@
   },
   "author": "Olane Inc.",
   "license": "(MIT OR Apache-2.0)",
-  "description": "Olane context module for managing request context",
+  "description": "Generic async context primitive with platform-specific implementations (AsyncLocalStorage for Node, variable swap for browser/RN)",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.29.0",
@@ -61,13 +54,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
-  "dependencies": {
-    "@olane/o-protocol": "0.8.8",
-    "chalk": "^5.4.1",
-    "debug": "^4.4.1",
-    "dotenv": "^16.5.0",
-    "multiformats": "^13.3.7",
-    "stream-json": "^1.9.1"
-  },
+  "dependencies": {},
   "gitHead": "61f955e3b9b94e554d51138ffc84b5f549b8c827"
 }

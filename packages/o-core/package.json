@@ -63,6 +63,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@olane/o-context": "0.8.8",
     "@olane/o-protocol": "0.8.8",
     "chalk": "^5.4.1",
     "debug": "^4.4.1",
