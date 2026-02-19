@@ -19,9 +19,11 @@ export interface ORequestStore {
 // Runtime detection: use native AsyncLocalStorage if available (Node, Deno, Bun, CF Workers).
 // Falls back to a simple variable for browsers/React Native where concurrent
 // multi-user requests don't happen.
+// Uses synchronous require() instead of top-level await import() for Hermes compatibility.
 let nativeALS: any = null;
 try {
-  const mod = await import('node:async_hooks');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require('node:async_hooks');
   nativeALS = new mod.AsyncLocalStorage();
 } catch {
   // Not available — browser or React Native runtime

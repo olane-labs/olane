@@ -5,7 +5,7 @@ import {
 import { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { RequestOptions } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { IntentValue, IntentWrappingTransport } from './o-transport.mcp';
+import { IntentValue, IntentWrappingTransport } from './o-transport.mcp.js';
 
 export type oClientOptions = ClientOptions & {
   /** Value placed into `params._meta.intent` for every outgoing request/notification */
