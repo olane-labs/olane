@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.11 (2026-02-22)</small>
+
+**Note:** Version bump only for package @olane/o-mcp
+
 ## <small>0.8.10 (2026-02-19)</small>
 
 - minor change ([52eeade](https://github.com/olane-labs/olane/commit/52eeade))
