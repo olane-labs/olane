@@ -792,11 +792,12 @@ export class GeminiIntelligenceTool extends oLaneTool {
     try {
       const params = request.params as any;
       const {
-        model = 'gemini-2.5-flash-image',
+        model = 'gemini-3-pro-image-preview',
         prompt,
         aspectRatio = '1:1',
         imageSize = '2K',
         negativePrompt,
+        images,
       } = params;
 
       if (!this.apiKey) {
@@ -818,19 +819,38 @@ export class GeminiIntelligenceTool extends oLaneTool {
         ? `${prompt}\n\nAvoid: ${negativePrompt}`
         : prompt;
 
+      // Build request parts array with text prompt and optional reference images
+      const requestParts: Array<{ text?: string; inline_data?: GeminiInlineData }> = [
+        { text: fullPrompt },
+      ];
+
+      if (images && Array.isArray(images)) {
+        for (const imageDataUri of images) {
+          const matches = imageDataUri.match(/^data:([^;]+);base64,(.+)$/);
+          if (matches) {
+            requestParts.push({
+              inline_data: {
+                mime_type: matches[1],
+                data: matches[2],
+              },
+            });
+          }
+        }
+      }
+
       const imageRequest: GeminiImageGenerateRequest = {
         contents: [
           {
-            parts: [{ text: fullPrompt }],
+            parts: requestParts,
           },
         ],
-        // generationConfig: {
-        //   responseModalities: ['TEXT', 'IMAGE'],
-        //   imageConfig: {
-        //     aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
-        //     imageSize: imageSize as GeminiImageConfig['imageSize'],
-        //   },
-        // },
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: {
+            aspectRatio: aspectRatio as GeminiImageConfig['aspectRatio'],
+            imageSize: imageSize as GeminiImageConfig['imageSize'],
+          },
+        },
       };
 
       const response = await fetch(
@@ -866,7 +886,6 @@ export class GeminiIntelligenceTool extends oLaneTool {
       let description: string | undefined;
 
       for (const part of parts) {
-        console.log('part:', part);
         if ((part as any).inlineData) {
           imageData = (part as any).inlineData.data;
         } else if ((part as any).text) {
@@ -902,7 +921,7 @@ export class GeminiIntelligenceTool extends oLaneTool {
     try {
       const params = request.params as any;
       const {
-        model = 'gemini-2.5-flash-image',
+        model = 'gemini-3-pro-image-preview',
         prompt,
         image,
         aspectRatio,
