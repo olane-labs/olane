@@ -159,7 +159,11 @@ export class oNodeStream extends oObject {
     try {
       messageBytes = await this.lp.read({ signal: options?.abortSignal });
     } catch (error: any) {
-      this.logger.warn('Error reading from stream:', error?.message);
+      // TODO: investigate why this always returns this.logger.warn('Error reading from stream:', error?.message);
+      /*
+        Error reading from stream: Stream closed
+        Error reading from stream: The stream has been reset
+      */
       await this.close();
       return;
     }
@@ -189,9 +193,9 @@ export class oNodeStream extends oObject {
         // TODO: create unit tests around no "_last" scenario
         if (data.id === requestId && data.result?._last === true) {
           this.off(oNodeMessageEvent.response, handler);
-          this.logger.debug(
-            'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
-          );
+          // this.logger.debug(
+          //   'Stream stopped listening for responses due to "waitForResponse", technically should continue if listen was called elsewhere',
+          // );
           resolve(data);
         }
       };

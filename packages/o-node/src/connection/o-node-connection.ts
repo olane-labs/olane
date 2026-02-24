@@ -87,10 +87,10 @@ export class oNodeConnection extends oConnection {
 
   async newStream(config: oNodeStreamConfig): Promise<oNodeStream> {
     const protocol = config.remoteAddress.protocol;
-    this.logger.debug('Creating new stream', {
-      protocol,
-      currentStreamCount: this.streams.size,
-    });
+    // this.logger.debug('Creating new stream', {
+    //   protocol,
+    //   currentStreamCount: this.streams.size,
+    // });
 
     // Create stream from libp2p connection
     const stream = await this.p2pConnection.newStream(protocol, {
@@ -102,11 +102,11 @@ export class oNodeConnection extends oConnection {
     // Wrap in oNodeStream with metadata
     const wrappedStream = new oNodeStream(stream, config);
 
-    this.logger.debug('Stream created', {
-      streamId: stream.id,
-      protocol,
-      totalStreams: this.streams.size,
-    });
+    // this.logger.debug('Stream created', {
+    //   streamId: stream.id,
+    //   protocol,
+    //   totalStreams: this.streams.size,
+    // });
 
     return wrappedStream;
   }
@@ -139,7 +139,7 @@ export class oNodeConnection extends oConnection {
 
   trackStream(stream: oNodeStream, options: AbortSignalConfig) {
     this.streams.set(stream.id, stream);
-    this.logger.debug('Stream count: ' + this.streams.size);
+    // this.logger.debug('Stream count: ' + this.streams.size);
     // persistent listener
     this.listenForMessages(stream, options);
   }
@@ -174,10 +174,10 @@ export class oNodeConnection extends oConnection {
     options: AbortSignalConfig,
   ): Promise<oNodeStream> {
     try {
-      this.logger.debug(
-        'Transmitting request on limited connection?',
-        this.config.runOnLimitedConnection,
-      );
+      // this.logger.debug(
+      //   'Transmitting request on limited connection?',
+      //   this.config.runOnLimitedConnection,
+      // );
 
       const stream = await this.doSend(request, options);
 

@@ -230,7 +230,9 @@ export abstract class oCore extends oObject {
   }): Promise<oResponse> {
     this.validateRunning();
 
-    const enriched = await this.injectAuthContext(data as UseDataConfig | undefined);
+    const enriched = await this.injectAuthContext(
+      data as UseDataConfig | undefined,
+    );
 
     const request = new oRequest({
       method: enriched?.method as string,
@@ -491,11 +493,11 @@ export abstract class oCore extends oObject {
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
     this.state = NodeState.STOPPING;
-    this.hierarchyManager.clear();
+    this.hierarchyManager?.clear();
 
     // Teardown notification manager
     if (this.notificationManager) {
-      await this.notificationManager.teardown();
+      await this.notificationManager?.teardown();
     }
 
     // Reset state to allow restart
