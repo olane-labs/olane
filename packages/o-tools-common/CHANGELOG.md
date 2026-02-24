@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.12 (2026-02-24)</small>
+
+**Note:** Version bump only for package @olane/o-tools-common
+
 ## <small>0.8.11 (2026-02-22)</small>
 
 **Note:** Version bump only for package @olane/o-tools-common

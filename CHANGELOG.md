@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.12 (2026-02-24)</small>
+
+- minor change ([70663d3](https://github.com/olane-labs/olane/commit/70663d3))
+- chore: update pnpm-lock.yaml after version bump ([d7f0105](https://github.com/olane-labs/olane/commit/d7f0105))
+
 ## <small>0.8.11 (2026-02-22)</small>
 
 - added support for image anchors in prompting ([8ce02e9](https://github.com/olane-labs/olane/commit/8ce02e9))
