@@ -85,19 +85,19 @@ importers:
   packages/o-approval:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -164,19 +164,19 @@ importers:
   packages/o-client-limited:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -436,10 +436,10 @@ importers:
   packages/o-core:
     dependencies:
       '@olane/o-context':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-context
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       chalk:
         specifier: ^5.4.1
@@ -518,16 +518,16 @@ importers:
   packages/o-gateway-interface:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -591,19 +591,19 @@ importers:
   packages/o-gateway-olane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -667,19 +667,19 @@ importers:
   packages/o-intelligence:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -746,22 +746,22 @@ importers:
   packages/o-lane:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -780,7 +780,7 @@ importers:
         specifier: ^9.29.0
         version: 9.39.2
       '@olane/o-test':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-test
       '@tsconfig/node20':
         specifier: ^20.1.6
@@ -840,25 +840,25 @@ importers:
   packages/o-leader:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-gateway-olane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-gateway-olane
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -922,19 +922,19 @@ importers:
   packages/o-login:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1004,31 +1004,31 @@ importers:
         specifier: ^1.18.1
         version: 1.26.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-leader
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1107,31 +1107,31 @@ importers:
         specifier: ^5.0.7
         version: 5.0.10
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-leader
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1210,16 +1210,16 @@ importers:
   packages/o-node:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1238,7 +1238,7 @@ importers:
         specifier: ^9.29.0
         version: 9.39.2
       '@olane/o-test':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-test
       '@tsconfig/node20':
         specifier: ^20.1.6
@@ -1295,40 +1295,40 @@ importers:
   packages/o-os:
     dependencies:
       '@olane/o-client-limited':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-client-limited
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-leader
       '@olane/o-login':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-login
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       '@olane/o-tool-registry':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool-registry
       '@olane/o-tools-common':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tools-common
       chalk:
         specifier: ^5.4.1
@@ -1437,7 +1437,7 @@ importers:
   packages/o-server:
     dependencies:
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       cors:
         specifier: ^2.8.5
@@ -1537,19 +1537,19 @@ importers:
   packages/o-storage:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-node':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-node
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
@@ -1616,7 +1616,7 @@ importers:
   packages/o-test:
     dependencies:
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       chalk:
         specifier: ^5.4.1
@@ -1695,13 +1695,13 @@ importers:
   packages/o-tool:
     dependencies:
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       debug:
         specifier: ^4.4.1
@@ -1780,28 +1780,28 @@ importers:
         specifier: 0.3.61
         version: 0.3.61(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.19.0)(zod@3.25.76))
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-intelligence':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-intelligence
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-mcp':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-mcp
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       '@olane/o-tools-common':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tools-common
       debug:
         specifier: ^4.4.1
@@ -1871,28 +1871,28 @@ importers:
   packages/o-tools-common:
     dependencies:
       '@olane/o-approval':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-approval
       '@olane/o-config':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-config
       '@olane/o-core':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-core
       '@olane/o-lane':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-lane
       '@olane/o-leader':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-leader
       '@olane/o-protocol':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-protocol
       '@olane/o-storage':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-storage
       '@olane/o-tool':
-        specifier: 0.8.12
+        specifier: 0.8.13
         version: link:../o-tool
       debug:
         specifier: ^4.4.1
