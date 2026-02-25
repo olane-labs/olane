@@ -212,15 +212,40 @@ export abstract class oCore extends oObject {
       }
     }
 
-    if (!auth) return data;
+    if (!auth) {
+      // Even without auth, inject _trace if available
+      if (!data.params?._trace) {
+        const requestId = oRequestContext.getRequestId();
+        if (requestId) {
+          return {
+            ...data,
+            params: { ...data.params, _trace: { requestId } },
+          };
+        }
+      }
+      return data;
+    }
 
-    return {
+    let enriched: UseDataConfig = {
       ...data,
       params: {
         ...data.params,
         _auth: auth,
       },
     };
+
+    // Inject _trace if not already present
+    if (!enriched.params?._trace) {
+      const requestId = oRequestContext.getRequestId();
+      if (requestId) {
+        enriched = {
+          ...enriched,
+          params: { ...enriched.params, _trace: { requestId } },
+        };
+      }
+    }
+
+    return enriched;
   }
 
   async useSelf(data?: {

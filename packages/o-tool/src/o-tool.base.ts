@@ -9,6 +9,7 @@ import {
   oNotificationManager,
   oConnectionConfig,
   oRequestContext,
+  ORequestStore,
 } from '@olane/o-core';
 import { Stream } from '@olane/o-config';
 import { oProtocolMethods } from '@olane/o-protocol';
@@ -93,15 +94,17 @@ export class oToolBase extends oCore {
       });
     }
 
-    // Restore auth context from _auth in params so downstream this.use() calls auto-propagate
+    // Build context store from request params for AsyncLocalStorage propagation
     const auth = request.params?._auth;
-    if (auth) {
-      return oRequestContext.run({ auth }, () => this.run(request, stream));
-    }
+    const incomingRequestId = request.params?._trace?.requestId;
+    const requestId = incomingRequestId
+      || oRequestContext.getRequestId()  // inherit from ALS (useSelf path)
+      || uuidv4().replace(/-/g, '').substring(0, 8);  // new root
 
-    const result = await this.run(request, stream);
+    const store: ORequestStore = { requestId };
+    if (auth) store.auth = auth;
 
-    return result;
+    return oRequestContext.run(store, () => this.run(request, stream));
   }
 
   async run(request: oRequest, stream?: Stream): Promise<RunResult> {

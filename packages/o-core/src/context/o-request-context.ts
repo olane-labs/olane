@@ -15,6 +15,7 @@ export interface ORequestAuthContext {
 export interface ORequestStore {
   auth?: ORequestAuthContext;
   tokenManager?: oTokenManager;
+  requestId?: string;
 }
 
 const ctx = createOContext<ORequestStore>();
@@ -34,5 +35,9 @@ export const oRequestContext = {
 
   getTokenManager(): oTokenManager | undefined {
     return oRequestContext.getStore()?.tokenManager;
+  },
+
+  getRequestId(): string | undefined {
+    return oRequestContext.getStore()?.requestId;
   },
 };
