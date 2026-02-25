@@ -29,7 +29,7 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   async loadPrompt({ tools, methods }: any): Promise<string> {
-    const prompt = await this.promptLoader?.loadPromptForType(this.type, {
+    const params = {
       human_about: '',
       agent_about: '',
       context_global: `
@@ -39,26 +39,73 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       past_cycles: '',
       address: this.resolveAddress(),
       methods: methods ? JSON.stringify(methods) : '',
-    });
-    return prompt.render();
+    };
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute loadPrompt params', {
+        paramKeys: Object.keys(params),
+        address: params.address,
+        methodsLength: params.methods.length,
+      });
+    }
+    const prompt = await this.promptLoader?.loadPromptForType(this.type, params);
+    const rendered = prompt.render();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute prompt rendered', {
+        length: rendered.length,
+        preview: rendered.substring(0, 500) + (rendered.length > 500 ? '...' : ''),
+      });
+    }
+    return rendered;
   }
 
   async handshake(): Promise<oHandshakeResult> {
-    const response = await this.node.use(new oAddress(this.resolveAddress()), {
+    const address = this.resolveAddress();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Handshake starting', {
+        targetAddress: address,
+        intent: this.config.intent.value,
+      });
+    }
+    const response = await this.node.use(new oAddress(address), {
       method: oProtocolMethods.HANDSHAKE,
       params: {
         intent: this.config.intent.value,
       },
     });
+    if (process.env.VERBOSE === 'true') {
+      const data = response.result.data as oHandshakeResult;
+      this.logger.verbose('Handshake response', {
+        targetAddress: address,
+        hasResult: !!data?.result,
+        toolsCount: data?.result?.tools?.length,
+        methodKeys: data?.result?.methods ? Object.keys(data.result.methods) : [],
+      });
+    }
     return response.result.data as oHandshakeResult;
   }
 
   private async executeTask(method: string, params: any): Promise<any> {
     this.logger.debug('Executing task:', method);
-    return await this.node.use(new oAddress(this.resolveAddress()), {
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('executeTask', {
+        address: this.resolveAddress(),
+        method,
+        paramsKeys: params ? Object.keys(params) : [],
+        params,
+      });
+    }
+    const response = await this.node.use(new oAddress(this.resolveAddress()), {
       method,
       params,
     });
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('executeTask response', {
+        method,
+        success: response?.result?.success,
+        resultKeys: response?.result?.data && typeof response.result.data === 'object' ? Object.keys(response.result.data) : [],
+      });
+    }
+    return response;
   }
 
   private buildResult(
@@ -83,6 +130,16 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       result.address = address;
     }
 
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('buildResult', {
+        shouldPersist,
+        address,
+        method: taskConfig.method,
+        resultKeys: Object.keys(result),
+        responseSuccess: taskResponse.result?.success,
+      });
+    }
+
     return new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       config: this.config,
@@ -101,6 +158,16 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
 
     this.logger.error('Failed to execute:', errorMessage);
 
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('buildErrorResult', {
+        address: addr,
+        method: taskConfig.method,
+        params: taskConfig.params,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+      });
+    }
+
     return new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       config: this.config,
@@ -113,6 +180,13 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   private async requestApproval(method: string, params: any): Promise<void> {
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('requestApproval sending', {
+        toolAddress: this.resolveAddress(),
+        method,
+        paramsKeys: params ? Object.keys(params) : [],
+      });
+    }
     try {
       const approvalResponse = await this.node.use(
         new oAddress('o://approval'),
@@ -128,6 +202,12 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       );
 
       const approved = (approvalResponse.result.data as any)?.approved;
+      if (process.env.VERBOSE === 'true') {
+        this.logger.verbose('requestApproval response', {
+          approved,
+          decision: (approvalResponse.result.data as any)?.decision,
+        });
+      }
       if (!approved) {
         const decision =
           (approvalResponse.result.data as any)?.decision || 'denied';
@@ -186,6 +266,16 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       const { handshakeResult, taskConfig } = storedExecution;
       const { method, params } = taskConfig;
 
+      if (process.env.VERBOSE === 'true') {
+        this.logger.verbose('Execute replay full stored data', {
+          address: storedExecution.address,
+          method,
+          params,
+          handshakeToolsCount: handshakeResult?.tools?.length,
+          handshakeMethodKeys: handshakeResult?.methods ? Object.keys(handshakeResult.methods) : [],
+        });
+      }
+
       this.logger.debug('Replaying task execution with stored data', {
         method,
         params,
@@ -203,14 +293,37 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     }
 
     // Normal execution flow
+    const address = this.resolveAddress();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute run normal flow starting', {
+        address,
+        intent: this.config.intent.value,
+      });
+    }
+
     const handshake = await this.handshake();
     if (!handshake.result) {
       throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
     }
 
     const { tools, methods } = handshake.result;
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute handshake result', {
+        toolsList: tools,
+        methodKeys: methods ? Object.keys(methods) : [],
+      });
+    }
+
     const prompt = await this.loadPrompt({ tools, methods });
     const aiResponse = await this.intelligence(prompt);
+
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute AI response', {
+        responseType: aiResponse.type,
+        hasError: !!aiResponse.error,
+        resultKeys: aiResponse.result && typeof aiResponse.result === 'object' ? Object.keys(aiResponse.result) : [],
+      });
+    }
 
     const task = (aiResponse.result as any)?.task || (aiResponse.result as any);
     if (!task || !task.method) {
@@ -234,6 +347,13 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
     const taskConfig = { method, params };
 
     this.logger.debug('AI decided to execute:', { method, params });
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute task chosen by AI', {
+        method,
+        params,
+        address,
+      });
+    }
 
     await this.requestApproval(method, params);
 

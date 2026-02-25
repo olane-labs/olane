@@ -85,10 +85,19 @@ export class oLaneStorageManager {
       );
     }
 
+    const serialized = JSON.stringify(this.serialize());
     const params = {
       key: cid.toString(),
-      value: JSON.stringify(this.serialize()),
+      value: serialized,
     };
+
+    if (process.env.VERBOSE === 'true') {
+      this.lane.logger.verbose('Storage save', {
+        cid: cid.toString(),
+        serializedSize: serialized.length,
+        sequenceLength: this.lane.sequence.length,
+      });
+    }
 
     this.lane.logger.debug('Storing lane params: ', params);
     await this.lane.node.use(oAddress.lane(), {
@@ -113,6 +122,15 @@ export class oLaneStorageManager {
       // Get the OS instance name from the node's system name
       const systemName =
         (this.lane.node.config as any).systemName || 'default-os';
+
+      if (process.env.VERBOSE === 'true') {
+        this.lane.logger.verbose('persistToConfig', {
+          systemName,
+          cid: cid.toString(),
+          hasAddressesToIndex: !!response?.result?.addresses_to_index,
+          addressesToIndex: response?.result?.addresses_to_index || [],
+        });
+      }
 
       await this.lane.node.use(new oAddress('o://os-config'), {
         method: 'add_lane_to_config',
@@ -175,13 +193,32 @@ export class oLaneStorageManager {
         throw new Error('Invalid lane data: missing or invalid sequence');
       }
 
+      if (process.env.VERBOSE === 'true') {
+        this.lane.logger.verbose('Replay loaded lane data', {
+          cid,
+          sequenceLength: storedLane.sequence.length,
+          configKeys: storedLane.config ? Object.keys(storedLane.config) : [],
+          hasResult: !!storedLane.result,
+        });
+      }
+
       // Iterate through the stored sequence and replay capabilities
-      for (const sequenceItem of storedLane.sequence) {
+      for (let i = 0; i < storedLane.sequence.length; i++) {
+        const sequenceItem = storedLane.sequence[i];
         const capabilityType = sequenceItem.type;
 
         // Determine if this capability should be replayed
         if (this.shouldReplayCapability(sequenceItem)) {
           this.lane.logger.debug(`Replaying capability: ${capabilityType}`);
+
+          if (process.env.VERBOSE === 'true') {
+            this.lane.logger.verbose('Replay step executing', {
+              stepIndex: i,
+              capabilityType,
+              hasTaskConfig: !!sequenceItem.result?.taskConfig,
+              method: sequenceItem.result?.taskConfig?.method,
+            });
+          }
 
           // Create a capability result with replay flag
           const replayConfig: any = {
@@ -224,9 +261,22 @@ export class oLaneStorageManager {
           this.lane.logger.debug(
             `Skipping capability (using cached result): ${capabilityType}`,
           );
+          if (process.env.VERBOSE === 'true') {
+            this.lane.logger.verbose('Replay step skipped (cached)', {
+              stepIndex: i,
+              capabilityType,
+            });
+          }
           // Add the cached result to sequence without re-executing
           this.lane.addSequence(sequenceItem);
         }
+      }
+
+      if (process.env.VERBOSE === 'true') {
+        this.lane.logger.verbose('Replay completed', {
+          cid,
+          finalSequenceLength: this.lane.sequence.length,
+        });
       }
 
       this.lane.logger.debug('Lane replay completed successfully');
