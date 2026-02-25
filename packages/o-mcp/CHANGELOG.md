@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.14 (2026-02-25)</small>
+
+- clean up messy logic in primary o-lane loop ([8c82e9d](https://github.com/olane-labs/olane/commit/8c82e9d))
+- update deps ([4143daa](https://github.com/olane-labs/olane/commit/4143daa))
+
 ## <small>0.8.13 (2026-02-25)</small>
 
 **Note:** Version bump only for package @olane/o-mcp

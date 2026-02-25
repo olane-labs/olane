@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.14 (2026-02-25)</small>
+
+- added traceability ([67aafb1](https://github.com/olane-labs/olane/commit/67aafb1))
+- clean up messy logic in primary o-lane loop ([8c82e9d](https://github.com/olane-labs/olane/commit/8c82e9d))
+- minor change ([248b7f4](https://github.com/olane-labs/olane/commit/248b7f4))
+- update deps ([4143daa](https://github.com/olane-labs/olane/commit/4143daa))
+- chore: update pnpm-lock.yaml after version bump ([23c3e99](https://github.com/olane-labs/olane/commit/23c3e99))
+
 ## <small>0.8.13 (2026-02-25)</small>
 
 - minor change ([e3060ee](https://github.com/olane-labs/olane/commit/e3060ee))
