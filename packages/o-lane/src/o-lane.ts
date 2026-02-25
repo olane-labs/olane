@@ -16,7 +16,8 @@ import {
   oCapabilityResult,
   oCapabilityType,
 } from './capabilities/index.js';
-import { ALL_CAPABILITIES } from './capabilities-all/o-capability.all.js';
+import { oCapabilityEvaluate } from './capabilities-evaluate/o-capability.evaluate.js';
+import { oCapabilityExecute } from './capabilities-execute/execute.capability.js';
 import { MarkdownBuilder } from './formatters/index.js';
 import { PromptLoader } from './storage/prompt-loader.js';
 import { oCapabilityConfig } from './capabilities/o-capability.config.js';
@@ -34,6 +35,9 @@ export class oLane extends oObject {
   public onChunk?: (chunk: any) => void;
   private promptLoader: PromptLoader;
   public storageManager: oLaneStorageManager;
+  private evaluateCapability!: oCapabilityEvaluate;
+  private executeCapability!: oCapabilityExecute;
+  private capabilitiesByType?: Map<oCapabilityType, oCapability>;
 
   constructor(protected readonly config: oLaneConfig) {
     super('o-lane:' + `[${config.intent.value}]`);
@@ -48,6 +52,14 @@ export class oLane extends oObject {
     }
     this.MAX_CYCLES = this.config.maxCycles || this.MAX_CYCLES;
     this.promptLoader = config.promptLoader;
+
+    // Support config.capabilities override (backward compat)
+    if (this.config.capabilities) {
+      this.capabilitiesByType = new Map();
+      for (const cap of this.config.capabilities) {
+        this.capabilitiesByType.set(cap.type, cap);
+      }
+    }
   }
 
   get intent(): oIntent {
@@ -200,85 +212,60 @@ export class oLane extends oObject {
     return this.result;
   }
 
-  /**
-   * Filter capabilities by type from ALL_CAPABILITIES
-   * @param types Array of capability types to include
-   * @returns Array of instantiated capabilities matching the specified types
-   */
-  private filterCapabilitiesByType(types: oCapabilityType[]): oCapability[] {
-    return ALL_CAPABILITIES.map((CapabilityClass) => {
-      const instance = new CapabilityClass({
-        promptLoader: this.promptLoader,
-        node: this.node,
-      });
-      return instance;
-    }).filter((capability) => types.includes(capability.type));
+  private ensureCapabilities(): void {
+    if (!this.evaluateCapability) {
+      const args = { promptLoader: this.promptLoader, node: this.node };
+      this.evaluateCapability = new oCapabilityEvaluate(args);
+      this.executeCapability = new oCapabilityExecute(args);
+    }
   }
 
-  get capabilities() {
-    // Priority order:
-    // 1. If config.capabilities exists, use it (full backward compatibility)
-    // 2. If config.enabledCapabilityTypes exists, filter ALL_CAPABILITIES
-    // 3. Otherwise, use ALL_CAPABILITIES (default behavior)
-    if (this.config.capabilities) {
-      return this.config.capabilities;
+  private getCapability(type: oCapabilityType): oCapability {
+    // config.capabilities override takes priority (backward compat)
+    if (this.capabilitiesByType) {
+      const cap = this.capabilitiesByType.get(type);
+      if (cap) return cap;
     }
 
-    if (this.config.enabledCapabilityTypes) {
-      return this.filterCapabilitiesByType(this.config.enabledCapabilityTypes);
-    }
+    this.ensureCapabilities();
+    if (type === oCapabilityType.EVALUATE) return this.evaluateCapability;
+    if (type === oCapabilityType.EXECUTE) return this.executeCapability;
 
-    return ALL_CAPABILITIES.map(
-      (c) =>
-        new c({
-          promptLoader: this.promptLoader,
-          node: this.node,
-        }),
+    throw new oError(
+      oErrorCodes.INVALID_CAPABILITY,
+      'Unknown capability: ' + type,
     );
   }
 
-  resultToConfig(result: any): oCapabilityConfig {
-    const obj = result.result || result.error;
-    return {
-      ...result.config,
-      history: this.agentHistory,
-      params: typeof obj === 'object' ? obj : {},
-      laneConfig: {
-        ...this.config,
-        sequence: this.sequence, // pass the full sequence to the next capability
-      },
-      useStream: this.config.useStream || false,
+  private buildConfig(step: oCapabilityResult): oCapabilityConfig {
+    const resultData = step.result || step.error;
+    return new oCapabilityConfig({
       intent: this.intent,
       node: this.node,
+      history: this.agentHistory,
       chatHistory: this.config.chatHistory,
-    };
+      useStream: this.config.useStream || false,
+      params: typeof resultData === 'object' ? resultData : {},
+      laneConfig: { ...this.config, sequence: this.sequence },
+      isReplay: step.config?.isReplay,
+    });
   }
 
   async doCapability(
     currentStep: oCapabilityResult,
   ): Promise<oCapabilityResult> {
     try {
-      const capabilityType = currentStep.type;
-      for (const capability of this.capabilities) {
-        if (capability.type === capabilityType && currentStep.config) {
-          const capabilityConfig: oCapabilityConfig =
-            this.resultToConfig(currentStep);
-          this.logger.debug('Executing capability: ', capabilityType);
-          const result = await capability.execute(
-            oCapabilityConfig.fromJSON({
-              ...capabilityConfig,
-            }),
-          );
-          return result;
-        }
-      }
+      const config = this.buildConfig(currentStep);
+      const capability = this.getCapability(currentStep.type);
+      this.logger.debug('Executing capability: ', currentStep.type);
+      return await capability.execute(config);
     } catch (error) {
       this.logger.error('Error in doCapability: ', error);
-      const errorResult = new oCapabilityResult({
+      return new oCapabilityResult({
         type: oCapabilityType.EVALUATE,
         result: null,
         error: error instanceof Error ? error.message : 'Unknown error',
-        config: oCapabilityConfig.fromJSON({
+        config: new oCapabilityConfig({
           laneConfig: this.config,
           intent: this.intent,
           node: this.node,
@@ -286,12 +273,7 @@ export class oLane extends oObject {
           chatHistory: this.config.chatHistory,
         }),
       });
-      return errorResult;
     }
-    throw new oError(
-      oErrorCodes.INVALID_CAPABILITY,
-      'Unknown capability:' + currentStep.type,
-    );
   }
 
   async loop(): Promise<oCapabilityResult> {
@@ -303,7 +285,7 @@ export class oLane extends oObject {
     let currentStep = new oCapabilityResult({
       type: oCapabilityType.EVALUATE,
       result: null,
-      config: oCapabilityConfig.fromJSON({
+      config: new oCapabilityConfig({
         laneConfig: this.config,
         intent: this.intent,
         node: this.node,
@@ -390,9 +372,13 @@ export class oLane extends oObject {
   cancel() {
     this.logger.debug('Cancelling lane...');
     this.status = oLaneStatus.CANCELLED;
-    // tell all capabilities to cancel
-    for (const capability of this.capabilities) {
-      capability.cancel();
+    this.evaluateCapability?.cancel();
+    this.executeCapability?.cancel();
+    // Also cancel any custom capabilities
+    if (this.capabilitiesByType) {
+      for (const cap of this.capabilitiesByType.values()) {
+        cap.cancel();
+      }
     }
   }
 

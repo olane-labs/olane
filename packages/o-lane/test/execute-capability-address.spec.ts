@@ -24,7 +24,7 @@ describe('EVALUATE → EXECUTE handoff: address resolution', () => {
    */
   function simulateResultToConfig(aiResult: any): oCapabilityConfig {
     const obj = aiResult;
-    return oCapabilityConfig.fromJSON({
+    return new oCapabilityConfig({
       params: typeof obj === 'object' ? obj : {},
       intent,
       node: stubNode,
