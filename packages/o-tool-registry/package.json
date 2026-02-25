@@ -54,9 +54,9 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.8.1",
-    "@langchain/community": "1.1.19",
-    "@langchain/core": "1.1.28",
+    "@huggingface/transformers": "^3.5.2",
+    "@langchain/community": "0.3.47",
+    "@langchain/core": "0.3.61",
     "@olane/o-config": "0.8.14",
     "@olane/o-core": "0.8.14",
     "@olane/o-intelligence": "0.8.14",
@@ -65,9 +65,9 @@
     "@olane/o-protocol": "0.8.14",
     "@olane/o-tool": "0.8.14",
     "@olane/o-tools-common": "0.8.14",
-    "debug": "^4.4.3",
-    "dotenv": "^17.3.1",
-    "langchain": "1.2.27"
+    "debug": "^4.4.1",
+    "dotenv": "^16.5.0",
+    "langchain": "0.3.29"
   },
   "gitHead": "982373dd4827ee23bdb0fcba913a718d4bc64f1a"
 }
