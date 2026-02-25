@@ -17,11 +17,12 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   private resolveAddress(): string {
-    const address = this.config.params?.address || this.config.params?.task?.address;
+    const address =
+      this.config.params?.address || this.config.params?.task?.address;
     if (!address || typeof address !== 'string') {
       throw new Error(
         `Execute capability requires a valid address but received: ${JSON.stringify(address)}. ` +
-        `The AI response must include an "address" field when type is "execute".`
+          `The AI response must include an "address" field when type is "execute".`,
       );
     }
     return address;
@@ -43,15 +44,12 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   async handshake(): Promise<oHandshakeResult> {
-    const response = await this.node.use(
-      new oAddress(this.resolveAddress()),
-      {
-        method: oProtocolMethods.HANDSHAKE,
-        params: {
-          intent: this.config.intent.value,
-        },
+    const response = await this.node.use(new oAddress(this.resolveAddress()), {
+      method: oProtocolMethods.HANDSHAKE,
+      params: {
+        intent: this.config.intent.value,
       },
-    );
+    });
     return response.result.data as oHandshakeResult;
   }
 
@@ -127,7 +125,8 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
           shouldPersist,
         });
       } catch (error: any) {
-        const addr = this.config?.params?.address || this.config?.params?.task?.address;
+        const addr =
+          this.config?.params?.address || this.config?.params?.task?.address;
         this.logger.error(
           'Failed to execute during replay:',
           `Error when trying to use ${addr} with config: ${JSON.stringify(
@@ -165,7 +164,19 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       this.logger.warn('AI did not return a valid task to execute', {
         aiResponse,
       });
-      return aiResponse; // Return AI response as-is if no task to execute
+      return new oCapabilityResult({
+        type: oCapabilityType.EVALUATE,
+        config: this.config,
+        result: {
+          handshakeResult: {
+            tools: tools,
+            methods: methods,
+          },
+          address: this.resolveAddress(),
+          response: aiResponse.result,
+        },
+        shouldPersist: false,
+      });
     }
 
     const method = task.method;
@@ -251,15 +262,14 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         shouldPersist,
       });
     } catch (error: any) {
-      const addr = this.config?.params?.address || this.config?.params?.task?.address;
+      const addr =
+        this.config?.params?.address || this.config?.params?.task?.address;
       this.logger.error(
         'Failed to execute:',
-        `Error when trying to use ${addr} with config: ${JSON.stringify(
-          {
-            method: method,
-            params: params,
-          },
-        )} resulting in error: ${error?.message}`,
+        `Error when trying to use ${addr} with config: ${JSON.stringify({
+          method: method,
+          params: params,
+        })} resulting in error: ${error?.message}`,
       );
       return new oCapabilityResult({
         type: oCapabilityType.EVALUATE,
@@ -274,12 +284,10 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
             params: params,
           },
         },
-        error: `Error when trying to use ${addr} with config: ${JSON.stringify(
-          {
-            method: method,
-            params: params,
-          },
-        )} resulting in error: ${error?.message}`,
+        error: `Error when trying to use ${addr} with config: ${JSON.stringify({
+          method: method,
+          params: params,
+        })} resulting in error: ${error?.message}`,
       });
     }
   }
