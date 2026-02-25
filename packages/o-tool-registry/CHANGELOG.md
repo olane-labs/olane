@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.16 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-tool-registry
+
 ## <small>0.8.15 (2026-02-25)</small>
 
 - minor change ([4845ceb](https://github.com/olane-labs/olane/commit/4845ceb))
