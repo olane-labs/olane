@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.15 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
 ## <small>0.8.14 (2026-02-25)</small>
 
 - clean up messy logic in primary o-lane loop ([8c82e9d](https://github.com/olane-labs/olane/commit/8c82e9d))
