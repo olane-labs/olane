@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.13 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-node
+
 ## <small>0.8.12 (2026-02-24)</small>
 
 - minor change ([70663d3](https://github.com/olane-labs/olane/commit/70663d3))
