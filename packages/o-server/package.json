@@ -69,5 +69,5 @@
     "jsonwebtoken": "^9.0.3",
     "zod": "^4.3.6"
   },
-  "gitHead": "982373dd4827ee23bdb0fcba913a718d4bc64f1a"
+  "gitHead": "6c7d07af01ad9e2457263bcb4b79523791d3bc8e"
 }
