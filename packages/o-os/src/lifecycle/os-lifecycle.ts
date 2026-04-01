@@ -12,11 +12,23 @@ export interface OSStartResult {
 
 /**
  * Start an OlaneOS instance and persist its PID/state.
+ * If an instance with this name is already running, stops it first.
  */
 export async function startOS(
   instanceName: string,
   osConfig: OlaneOSConfig,
 ): Promise<{ os: OlaneOS; result: OSStartResult }> {
+  // Check for an existing running instance and clean up
+  const existing = await ConfigManager.getOSConfig(instanceName);
+  if (existing?.pid && isProcessAlive(existing.pid) && existing.pid !== process.pid) {
+    process.kill(existing.pid, 'SIGTERM');
+    await ConfigManager.updateOSConfig({
+      ...existing,
+      status: OlaneOSSystemStatus.STOPPED,
+      pid: undefined,
+    });
+  }
+
   const os = new OlaneOS(osConfig);
   const { peerId, transports } = await os.start();
 

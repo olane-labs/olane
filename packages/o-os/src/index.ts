@@ -8,6 +8,6 @@ export * from './worlds/world.types.js';
 export * from './worlds/world-instance.tool.js';
 export * from './worlds/world-manager.tool.js';
 export * from './nodes/relay-node.js';
-export * from './auth/os-auth-guard.js';
+export * from './vector-store/copass-vector-store.tool.js';
 export * from './identity/copass-id.js';
 export * from './mcp/os-mcp-server.js';

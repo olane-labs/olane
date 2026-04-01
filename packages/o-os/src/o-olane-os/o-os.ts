@@ -2,6 +2,8 @@ import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
 import { OlaneOSConfig } from './interfaces/o-os.config.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
+import { mkdir } from 'fs/promises';
+import * as path from 'path';
 import { oLeaderNode } from '@olane/o-leader';
 import { oAddress, oObject, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
@@ -15,6 +17,7 @@ import { oNodeConfig } from '@olane/o-node';
 import { WorldManagerTool } from '../worlds/world-manager.tool.js';
 import { AddressBook } from '../address-book/address-book.js';
 import { MemoryHarness } from '../memory/memory-harness.js';
+import { CopassVectorStoreTool } from '../vector-store/copass-vector-store.tool.js';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -68,6 +71,8 @@ export class OlaneOS extends oObject {
     // Then we'll migrate to using o://os-config for persistence
     if (this.config.configFilePath) {
       try {
+        // Ensure parent directory exists before touch
+        await mkdir(path.dirname(this.config.configFilePath), { recursive: true });
         await touch(this.config.configFilePath);
 
         this.logger.debug('Config file path: ' + this.config.configFilePath);
@@ -75,9 +80,10 @@ export class OlaneOS extends oObject {
         // let's load the config
         const config = await readFile(this.config.configFilePath, 'utf8');
         this.logger.debug('Config file contents: ' + config);
-        if (config?.length === 0) {
-          // no contents, let's create a new config
-          throw new Error('No config file found, cannot start OS instance');
+        if (!config || config.trim().length === 0) {
+          // Empty file (fresh OS) — use the in-memory config as-is
+          this.logger.debug('Empty config file, using constructor config');
+          return;
         }
 
         const json = JSON.parse(config) as any;
@@ -332,11 +338,23 @@ export class OlaneOS extends oObject {
     this.addressBook = new AddressBook(instanceName);
     await this.addressBook.load();
 
-    // Memory harness and world manager (children of root leader)
+    // OS service nodes (children of root leader)
     if (this.rootLeader) {
       // Memory harness — shells out to `olane ingest/copass` CLI
       this.memory = new MemoryHarness();
       this.logger.debug('Memory harness initialized');
+
+      // Vector store — routes to Copass backend so index_network
+      // and any o://vector-store calls go through the memory harness
+      const vectorStore = new CopassVectorStoreTool({
+        address: new oAddress('o://vector-store'),
+        leader: this.rootLeader.address,
+        parent: this.rootLeader.address,
+        _allowNestedAddress: true,
+      });
+      this.rootLeader.addChildNode(vectorStore as any);
+      await vectorStore.start();
+      this.logger.debug('Copass vector store started');
 
       // World manager
       this.worldManager = new WorldManagerTool({
@@ -349,6 +367,39 @@ export class OlaneOS extends oObject {
       await this.worldManager.start();
       this.logger.debug('World manager started');
     }
+  }
+
+  /**
+   * Index all nodes in the network in parallel.
+   * Each node indexes itself + its children concurrently,
+   * rather than the default sequential tree walk.
+   */
+  private async indexNetworkParallel(): Promise<void> {
+    const allNodes: Array<oLaneTool | oLeaderNode> = [
+      ...this.leaders,
+      ...this.nodes,
+    ];
+
+    this.logger.debug(
+      `Indexing ${allNodes.length} node(s) in parallel...`,
+    );
+
+    await Promise.allSettled(
+      allNodes.map(async (node) => {
+        try {
+          await node.use(node.address, {
+            method: 'index_network',
+            params: {},
+          });
+        } catch (err) {
+          this.logger.warn(
+            `Failed to index ${node.address.toString()}: ${err}`,
+          );
+        }
+      }),
+    );
+
+    this.logger.debug('Parallel network indexing complete');
   }
 
   async use(oAddress: oAddress, params: any) {
@@ -388,12 +439,10 @@ export class OlaneOS extends oObject {
     this.logger.debug('Saved plans run...');
     this.logger.debug('OS instance started...');
 
-    // index the OS instance
+    // Index the network so tools are discoverable via vector search.
+    // Fan out all nodes in parallel instead of the default sequential tree walk.
     if (!this.config.noIndexNetwork) {
-      await this.use(oAddress.leader(), {
-        method: 'index_network',
-        params: {},
-      });
+      await this.indexNetworkParallel();
     }
 
     this.status = OlaneOSSystemStatus.RUNNING;

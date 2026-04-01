@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import { readFile, writeFile, mkdir, readdir, rm, access } from 'fs/promises';
 import * as path from 'path';
 import {
   DEFAULT_CONFIG_PATH,
@@ -36,16 +36,34 @@ export interface CLIConfig {
 
 export const CONFIG_FILE_NAME = 'config.json';
 
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readJson(p: string): Promise<any> {
+  const data = await readFile(p, 'utf8');
+  return JSON.parse(data);
+}
+
+async function writeJson(p: string, data: any, opts?: { spaces?: number }): Promise<void> {
+  await writeFile(p, JSON.stringify(data, null, opts?.spaces), 'utf8');
+}
+
 export class ConfigManager {
   private static configPath = DEFAULT_CONFIG_PATH;
   private static instancesPath = DEFAULT_INSTANCE_PATH;
   private static configFile = DEFAULT_CONFIG_FILE;
 
   static async initialize(): Promise<void> {
-    await fs.ensureDir(ConfigManager.configPath);
-    await fs.ensureDir(ConfigManager.instancesPath);
+    await mkdir(ConfigManager.configPath, { recursive: true });
+    await mkdir(ConfigManager.instancesPath, { recursive: true });
 
-    if (!(await fs.pathExists(ConfigManager.configFile))) {
+    if (!(await pathExists(ConfigManager.configFile))) {
       await this.writeConfig(this.getDefaultConfig());
     }
   }
@@ -59,7 +77,7 @@ export class ConfigManager {
 
   static async getConfig(): Promise<CLIConfig> {
     await this.initialize();
-    const config = await fs.readJson(ConfigManager.configFile);
+    const config = await readJson(ConfigManager.configFile);
     return { ...this.getDefaultConfig(), ...config };
   }
 
@@ -71,16 +89,20 @@ export class ConfigManager {
   }
 
   static async writeConfig(config: Partial<CLIConfig>): Promise<void> {
-    await fs.writeJson(ConfigManager.configFile, config, { spaces: 2 });
+    await writeJson(ConfigManager.configFile, config, { spaces: 2 });
   }
 
   static async getOSConfigFromPath(
-    path: string,
+    p: string,
   ): Promise<OlaneOSInstanceConfig | null> {
-    if (await fs.pathExists(path)) {
-      return await fs.readJson(path);
+    try {
+      if (!(await pathExists(p))) return null;
+      const raw = await readFile(p, 'utf8');
+      if (!raw || !raw.trim()) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
     }
-    return null;
   }
 
   static async getOSConfig(
@@ -91,8 +113,8 @@ export class ConfigManager {
       name,
       CONFIG_FILE_NAME,
     );
-    if (await fs.pathExists(configPath)) {
-      return await fs.readJson(configPath);
+    if (await pathExists(configPath)) {
+      return await readJson(configPath);
     }
     return null;
   }
@@ -108,10 +130,9 @@ export class ConfigManager {
   }
 
   static async saveOSConfig(config: OlaneOSInstanceConfig): Promise<void> {
-    // Use direct filesystem operations for OS config persistence
     const osPath = path.join(ConfigManager.instancesPath, config.name);
-    await fs.ensureDir(osPath);
-    await fs.writeJson(path.join(osPath, CONFIG_FILE_NAME), config, {
+    await mkdir(osPath, { recursive: true });
+    await writeJson(path.join(osPath, CONFIG_FILE_NAME), config, {
       spaces: 2,
     });
   }
@@ -120,7 +141,7 @@ export class ConfigManager {
     try {
       await this.initialize();
       const osInstances: OlaneOSInstanceConfig[] = [];
-      const osInstanceNames = await fs.readdir(ConfigManager.instancesPath);
+      const osInstanceNames = await readdir(ConfigManager.instancesPath);
 
       for (const osInstanceName of osInstanceNames) {
         const config = await this.getOSConfig(osInstanceName);
@@ -131,7 +152,6 @@ export class ConfigManager {
 
       return osInstances;
     } catch (error) {
-      // if the default path for config does not exist, return an empty array
       if (error instanceof Error && error.message.includes('ENOENT')) {
         return [];
       }
@@ -141,8 +161,8 @@ export class ConfigManager {
 
   static async deleteOSInstance(name: string): Promise<void> {
     const osInstancePath = path.join(ConfigManager.instancesPath, name);
-    if (await fs.pathExists(osInstancePath)) {
-      await fs.remove(osInstancePath);
+    if (await pathExists(osInstancePath)) {
+      await rm(osInstancePath, { recursive: true });
     }
   }
 }
