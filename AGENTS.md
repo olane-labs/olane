@@ -10,7 +10,7 @@ In Olane OS, **agents** are Layer 1 (users) - either **human** (via CLI/web) or 
 // Same tool node serves both agent types
 const result = await toolNode.use({
   method: 'intent',
-  params: { intent: 'Analyze Q4 sales trends' }
+  params: { intent: 'Analyze Q4 sales trends' },
 });
 
 // Human: $ olane intent "Analyze Q4 sales trends"
@@ -30,15 +30,17 @@ const result = await toolNode.use({
 ### Quick start
 
 1. Install packages:
+
    ```bash
    npm install @olane/os @olane/o-core @olane/o-lane @olane/o-tool @olane/o-node
    ```
 
 2. Define method schemas in separate file (enables validation and AI discovery):
+
    ```typescript
    // methods/analytics.methods.ts
    import { oMethod } from '@olane/o-protocol';
-   
+
    export const ANALYTICS_METHODS: { [key: string]: oMethod } = {
      get_customers: {
        name: 'get_customers',
@@ -50,9 +52,9 @@ const result = await toolNode.use({
            type: 'object',
            value: 'object',
            description: 'Optional filters for customer query',
-           required: false
-         }
-       ]
+           required: false,
+         },
+       ],
      },
      calculate_ltv: {
        name: 'calculate_ltv',
@@ -64,28 +66,29 @@ const result = await toolNode.use({
            type: 'string',
            value: 'string',
            description: 'Customer ID',
-           required: true
-         }
-       ]
-     }
+           required: true,
+         },
+       ],
+     },
    };
    ```
 
 3. Create tool node (choose based on complexity):
 
    **Simple node (1-5 tools)** - Direct invocation:
+
    ```typescript
    import { oNodeTool } from '@olane/o-tool';
    import { oAddress, oRequest } from '@olane/o-core';
-   
+
    class CurrencyConverter extends oNodeTool {
      constructor() {
        super({
          address: new oAddress('o://utilities/currency'),
-         methods: CURRENCY_METHODS
+         methods: CURRENCY_METHODS,
        });
      }
-     
+
      async _tool_convert(request: oRequest) {
        const { amount, from, to } = request.params;
        return { converted: amount * rate, rate };
@@ -94,29 +97,30 @@ const result = await toolNode.use({
    ```
 
    **Complex node (5-20+ tools)** - Intent-driven:
+
    ```typescript
-   import { oLaneTool } from '@olane/o-lane';
-   
-   class CustomerAnalytics extends oLaneTool {
+   import { OlaneTool } from '@olane/o-lane';
+
+   class CustomerAnalytics extends OlaneTool {
      constructor() {
        super({
          address: new oAddress('o://analytics/customers'),
          methods: ANALYTICS_METHODS,
          laneContext: {
            domain: 'Customer Analytics',
-           expertise: ['Churn Analysis', 'LTV', 'Segmentation']
-         }
+           expertise: ['Churn Analysis', 'LTV', 'Segmentation'],
+         },
        });
      }
-     
+
      async _tool_get_customers(request: oRequest) {
        return { customers: await this.fetchCustomers(request.params.filters) };
      }
-     
+
      async _tool_calculate_ltv(request: oRequest) {
        return { ltv: await this.calculateLTV(request.params.customerId) };
      }
-     
+
      // Intent method automatically available via o-lane
      // Agents send: "Find high-value customers at risk of churning"
      // Node autonomously determines which tools to use
@@ -124,16 +128,18 @@ const result = await toolNode.use({
    ```
 
 4. Start the node:
+
    ```typescript
    const analytics = new CustomerAnalytics();
    await analytics.start();
    ```
 
-5. *Optional*: Extend with MCP integration to add external tools (see [Extending with MCP integration](#extending-with-mcp-integration))
+5. _Optional_: Extend with MCP integration to add external tools (see [Extending with MCP integration](#extending-with-mcp-integration))
 
 ### Usage patterns
 
 **Human agents:**
+
 ```bash
 # Direct tool call
 $ olane call o://analytics/customers get_customers --filters '{"status": "active"}'
@@ -143,11 +149,12 @@ $ olane intent "Find high-value customers at risk of churning"
 ```
 
 **AI agents:**
+
 ```typescript
 // Direct tool call
 const customers = await analytics.use({
   method: 'get_customers',
-  params: { filters: { status: 'active' } }
+  params: { filters: { status: 'active' } },
 });
 
 // Intent-driven (complex workflows)
@@ -155,15 +162,15 @@ const result = await analytics.use({
   method: 'intent',
   params: {
     intent: 'Find high-value customers at risk of churning',
-    context: 'Focus on accounts > $50k LTV'
-  }
+    context: 'Focus on accounts > $50k LTV',
+  },
 });
 
 // AI uses results for further coordination
 for (const customer of result.atRiskCustomers) {
   await crmTool.use({
     method: 'create_retention_task',
-    params: { customerId: customer.id }
+    params: { customerId: customer.id },
   });
 }
 ```
@@ -174,7 +181,7 @@ for (const customer of result.atRiskCustomers) {
 
 ```typescript
 // DON'T: Different logic based on agent type
-class BadToolNode extends oLaneTool {
+class BadToolNode extends OlaneTool {
   async _tool_intent(request: oRequest) {
     if (request.source === 'human') {
       return this.processForHuman(request);
@@ -189,7 +196,7 @@ class BadToolNode extends oLaneTool {
 
 ```typescript
 // DO: Same logic for all agents
-class GoodToolNode extends oLaneTool {
+class GoodToolNode extends OlaneTool {
   async _tool_intent(request: oRequest) {
     return await this.processIntent(request.params.intent);
   }
@@ -257,19 +264,19 @@ async _tool_process_payment(request: oRequest) {
 Tool node serves both human support reps and AI triage agents.
 
 ```typescript
-class CustomerSupport extends oLaneTool {
+class CustomerSupport extends OlaneTool {
   async _tool_get_customer(request: oRequest) {
     const { customerId } = request.params;
     return {
       customer: await this.fetchCustomer(customerId),
-      recentTickets: await this.fetchTickets(customerId)
+      recentTickets: await this.fetchTickets(customerId),
     };
   }
 
   async _tool_create_ticket(request: oRequest) {
     const { customerId, issue, priority } = request.params;
     return {
-      ticketId: await this.createTicket(customerId, issue, priority)
+      ticketId: await this.createTicket(customerId, issue, priority),
     };
   }
 }
@@ -286,7 +293,7 @@ class CustomerSupport extends oLaneTool {
 Tool node serves both human analysts and AI monitoring agents.
 
 ```typescript
-class FinancialReporting extends oLaneTool {
+class FinancialReporting extends OlaneTool {
   async _tool_get_revenue(request: oRequest) {
     return { revenue: await this.calculateRevenue() };
   }
@@ -308,11 +315,19 @@ class FinancialReporting extends oLaneTool {
 Tool node serves both data engineers and AI coordinators.
 
 ```typescript
-class DataPipeline extends oLaneTool {
-  async _tool_extract(request: oRequest) { /* ... */ }
-  async _tool_transform(request: oRequest) { /* ... */ }
-  async _tool_validate(request: oRequest) { /* ... */ }
-  async _tool_load(request: oRequest) { /* ... */ }
+class DataPipeline extends OlaneTool {
+  async _tool_extract(request: oRequest) {
+    /* ... */
+  }
+  async _tool_transform(request: oRequest) {
+    /* ... */
+  }
+  async _tool_validate(request: oRequest) {
+    /* ... */
+  }
+  async _tool_load(request: oRequest) {
+    /* ... */
+  }
 }
 
 // Data engineer (manual testing):
@@ -329,15 +344,16 @@ class DataPipeline extends oLaneTool {
 ```typescript
 // Phase 1: Build for humans
 class SalesAnalytics extends oNodeTool {
-  async _tool_get_revenue(request: oRequest) { 
+  async _tool_get_revenue(request: oRequest) {
     return { revenue: await this.calculateRevenue() };
   }
 }
 // Humans use via web UI
 
 // Phase 2: Add intent support
-class SalesAnalytics extends oLaneTool { // Just upgrade to oLaneTool
-  async _tool_get_revenue(request: oRequest) { 
+class SalesAnalytics extends OlaneTool {
+  // Just upgrade to OlaneTool
+  async _tool_get_revenue(request: oRequest) {
     return { revenue: await this.calculateRevenue() };
   }
   // Intent method automatically available
@@ -355,15 +371,15 @@ class SmartOrderProcessor {
   async processOrder(order: Order) {
     const analysis = await orderTool.use({
       method: 'analyze_order',
-      params: { orderId: order.id }
+      params: { orderId: order.id },
     });
-    
+
     if (analysis.needsApproval) {
       const decision = await this.requestHumanReview(analysis);
       if (decision.approved) {
         await orderTool.use({
           method: 'approve_order',
-          params: { orderId: order.id }
+          params: { orderId: order.id },
         });
       }
     } else {
@@ -380,15 +396,15 @@ class SmartOrderProcessor {
 const humanStrategy = {
   budgetLimit: 50000,
   requiredVendors: ['VendorA', 'VendorB'],
-  priorities: ['cost', 'quality']
+  priorities: ['cost', 'quality'],
 };
 
 const result = await procurementTool.use({
   method: 'intent',
   params: {
     intent: 'Optimize procurement across vendors',
-    context: JSON.stringify(humanStrategy)
-  }
+    context: JSON.stringify(humanStrategy),
+  },
 });
 // AI proposes solution, human makes final decision
 ```
@@ -407,7 +423,7 @@ import { oAddress } from '@olane/o-core';
 
 // Create MCP bridge
 const bridge = new McpBridgeTool({
-  address: new oAddress('o://mcp')
+  address: new oAddress('o://mcp'),
 });
 
 await bridge.start();
@@ -420,9 +436,9 @@ await bridge.use({
     name: 'github',
     description: 'GitHub repository management',
     headers: {
-      'Authorization': `Bearer ${GITHUB_TOKEN}`
-    }
-  }
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+    },
+  },
 });
 
 // Now both human and AI agents can use GitHub tools
@@ -440,14 +456,15 @@ await bridge.use({
 ### Quick MCP examples
 
 **Add local filesystem MCP:**
+
 ```typescript
 await bridge.use({
   method: 'add_local_server',
   params: {
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-filesystem', '/documents'],
-    name: 'documents'
-  }
+    name: 'documents',
+  },
 });
 
 // Both agents can now access filesystem
@@ -456,13 +473,14 @@ await bridge.use({
 ```
 
 **Intent-driven MCP discovery:**
+
 ```typescript
 // Agent sends high-level intent
 await bridge.use({
   method: 'intent',
   params: {
-    intent: 'I need GitHub integration. Find and add the GitHub MCP server.'
-  }
+    intent: 'I need GitHub integration. Find and add the GitHub MCP server.',
+  },
 });
 
 // Bridge autonomously:
@@ -473,6 +491,7 @@ await bridge.use({
 ```
 
 **Multi-MCP coordination:**
+
 ```typescript
 // Add multiple MCPs for research workflow
 await bridge.use({
@@ -480,8 +499,8 @@ await bridge.use({
   params: {
     mcpServerUrl: 'https://arxiv-mcp.example.com',
     name: 'arxiv',
-    description: 'Academic paper search'
-  }
+    description: 'Academic paper search',
+  },
 });
 
 await bridge.use({
@@ -489,8 +508,8 @@ await bridge.use({
   params: {
     mcpServerUrl: 'https://wikipedia-mcp.example.com',
     name: 'wikipedia',
-    description: 'Wikipedia summaries'
-  }
+    description: 'Wikipedia summaries',
+  },
 });
 
 // Agent coordinates across multiple MCPs
@@ -529,7 +548,7 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
   it('should handle direct tool calls from any agent', async () => {
     const result = await toolNode.use({
       method: 'get_customers',
-      params: { filters: { status: 'active' } }
+      params: { filters: { status: 'active' } },
     });
     expect(result.customers).toBeDefined();
   });
@@ -537,7 +556,7 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
   it('should handle intents from any agent', async () => {
     const result = await toolNode.use({
       method: 'intent',
-      params: { intent: 'Find high-value customers at risk of churning' }
+      params: { intent: 'Find high-value customers at risk of churning' },
     });
     expect(result.atRiskCustomers).toBeDefined();
   });
@@ -545,7 +564,7 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
   it('should return JSON-serializable results', async () => {
     const result = await toolNode.use({
       method: 'get_customers',
-      params: {}
+      params: {},
     });
     const serialized = JSON.stringify(result);
     expect(JSON.parse(serialized)).toEqual(result);
@@ -555,15 +574,15 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
     await expect(
       toolNode.use({
         method: 'calculate_ltv',
-        params: {} // Missing required customerId
-      })
+        params: {}, // Missing required customerId
+      }),
     ).rejects.toThrow();
   });
 
   it('should return structured errors', async () => {
     const result = await toolNode.use({
       method: 'get_customers',
-      params: { filters: { invalidField: 'test' } }
+      params: { filters: { invalidField: 'test' } },
     });
     if (!result.success) {
       expect(result.error).toBeDefined();
@@ -576,20 +595,23 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
 ## Troubleshooting
 
 ### "Intent not understood"
+
 - **Cause**: Ambiguous intent or missing capability
 - **Fix**: Add more context or implement missing tools
+
   ```typescript
   // ❌ Too vague
   { intent: 'Analyze data' }
-  
+
   // ✅ Clear with context
-  { 
+  {
     intent: 'Analyze customer churn data for Q4 2024',
     context: 'Focus on high-value accounts > $50k'
   }
   ```
 
 ### "Method not found"
+
 - **Cause**: Calling non-existent tool
 - **Fix**: Check available methods
   ```bash
@@ -599,31 +621,33 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
   ```
 
 ### Results not rendering in UI
+
 - **Cause**: Non-serializable results (circular refs, functions)
 - **Fix**: Return plain data objects
+
   ```typescript
   // ❌ BAD
   return { data: this, process: () => {} };
-  
+
   // ✅ GOOD
   return { data: { id: 1 }, timestamp: Date.now() };
   ```
 
 ## Why agent-agnostic design matters
 
-| Traditional Approach | Olane OS Approach |
-|---------------------|-------------------|
+| Traditional Approach                  | Olane OS Approach                  |
+| ------------------------------------- | ---------------------------------- |
 | Separate interfaces for humans and AI | Unified natural language interface |
-| 2x maintenance (human + AI code) | 1x maintenance (same code) |
-| Feature parity requires coordination | Guaranteed (same implementation) |
-| AI adoption requires refactoring | Add AI without changes |
-| Interfaces often diverge | Always consistent |
+| 2x maintenance (human + AI code)      | 1x maintenance (same code)         |
+| Feature parity requires coordination  | Guaranteed (same implementation)   |
+| AI adoption requires refactoring      | Add AI without changes             |
+| Interfaces often diverge              | Always consistent                  |
 
 ## Migration checklist
 
 - [ ] Identify code that handles human vs AI differently
 - [ ] Design unified intent-based interface for both
-- [ ] Upgrade to `oLaneTool` for complex nodes (5+ tools)
+- [ ] Upgrade to `OlaneTool` for complex nodes (5+ tools)
 - [ ] Ensure all results are JSON-serializable
 - [ ] Define oMethod schemas in separate definition files
 - [ ] Test with both human CLI and AI programmatic usage
@@ -650,9 +674,7 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
 
 ---
 
-*This file follows the [AGENTS.md specification](https://github.com/openai/agents.md) - a simple, open format for guiding coding agents.*
-
-
+_This file follows the [AGENTS.md specification](https://github.com/openai/agents.md) - a simple, open format for guiding coding agents._
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
@@ -665,6 +687,5 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
 - When working in individual projects, use the `nx_project_details` mcp tool to analyze and understand the specific project structure and dependencies
 - For questions around nx configuration, best practices or if you're unsure, use the `nx_docs` tool to get relevant, up-to-date docs. Always use this instead of assuming things about nx configuration
 - If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
-
 
 <!-- nx configuration end-->

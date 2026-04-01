@@ -11,6 +11,7 @@
 Security is a top priority for Olane OS. We appreciate the security research community's efforts to responsibly disclose vulnerabilities and will work with you to address any issues promptly.
 
 **We commit to:**
+
 - Acknowledge receipt of your report within **48 hours**
 - Provide an initial assessment within **5 business days**
 - Keep you informed of our progress
@@ -23,11 +24,11 @@ Security is a top priority for Olane OS. We appreciate the security research com
 
 We provide security updates for the following versions:
 
-| Version | Supported          | Status |
-| ------- | ------------------ | ------ |
-| 0.7.x   | ✅ Yes             | Current stable |
+| Version | Supported          | Status              |
+| ------- | ------------------ | ------------------- |
+| 0.7.x   | ✅ Yes             | Current stable      |
 | 0.6.x   | ⚠️ Limited support | Critical fixes only |
-| < 0.6   | ❌ No              | Unsupported |
+| < 0.6   | ❌ No              | Unsupported         |
 
 **Recommendation**: Always use the latest stable version for the best security posture.
 
@@ -42,6 +43,7 @@ Send a detailed report to **developer@olane.com** with:
 **Subject line**: `[SECURITY] Brief description`
 
 **Include:**
+
 - **Description**: Clear explanation of the vulnerability
 - **Impact**: What could an attacker accomplish?
 - **Affected versions**: Which versions are vulnerable?
@@ -56,12 +58,12 @@ Send a detailed report to **developer@olane.com** with:
 Subject: [SECURITY] Authentication bypass in o-login package
 
 Description:
-An authentication bypass vulnerability exists in the o-login package that 
+An authentication bypass vulnerability exists in the o-login package that
 allows an attacker to forge authentication tokens without valid credentials.
 
 Impact:
-An attacker could gain unauthorized access to any tool node requiring 
-authentication, potentially exposing sensitive data or allowing unauthorized 
+An attacker could gain unauthorized access to any tool node requiring
+authentication, potentially exposing sensitive data or allowing unauthorized
 operations.
 
 Affected Versions:
@@ -87,6 +89,7 @@ Contact:
 ### Step 2: Wait for Acknowledgment
 
 We will acknowledge receipt within **48 hours** and provide:
+
 - Confirmation we received your report
 - Initial assessment of severity
 - Estimated timeline for investigation
@@ -95,6 +98,7 @@ We will acknowledge receipt within **48 hours** and provide:
 ### Step 3: Coordinate Disclosure
 
 We will work with you to:
+
 - Understand the full scope of the vulnerability
 - Develop and test a fix
 - Coordinate a responsible disclosure timeline
@@ -135,12 +139,12 @@ We will work with you to:
 
 We use CVSS v3.1 scoring to assess severity:
 
-| Severity | CVSS Score | Response Time | Examples |
-|----------|-----------|---------------|----------|
-| **Critical** | 9.0-10.0 | 24-48 hours | Remote code execution, authentication bypass |
-| **High** | 7.0-8.9 | 1-2 weeks | Data exposure, privilege escalation |
-| **Medium** | 4.0-6.9 | 2-4 weeks | DoS, information disclosure |
-| **Low** | 0.1-3.9 | As scheduled | Minor information leaks |
+| Severity     | CVSS Score | Response Time | Examples                                     |
+| ------------ | ---------- | ------------- | -------------------------------------------- |
+| **Critical** | 9.0-10.0   | 24-48 hours   | Remote code execution, authentication bypass |
+| **High**     | 7.0-8.9    | 1-2 weeks     | Data exposure, privilege escalation          |
+| **Medium**   | 4.0-6.9    | 2-4 weeks     | DoS, information disclosure                  |
+| **Low**      | 0.1-3.9    | As scheduled  | Minor information leaks                      |
 
 ---
 
@@ -149,6 +153,7 @@ We use CVSS v3.1 scoring to assess severity:
 ### In Scope
 
 **Vulnerabilities in:**
+
 - All packages in the `@olane/*` namespace
 - Core infrastructure code
 - Authentication and authorization systems
@@ -158,6 +163,7 @@ We use CVSS v3.1 scoring to assess severity:
 - Examples and templates (if they represent security anti-patterns)
 
 **Types of vulnerabilities:**
+
 - Remote code execution (RCE)
 - Authentication bypass
 - Authorization bypass
@@ -174,6 +180,7 @@ We use CVSS v3.1 scoring to assess severity:
 ### Out of Scope
 
 **Not eligible for security reports:**
+
 - Vulnerabilities in third-party dependencies (report to upstream)
 - Social engineering attacks
 - Physical attacks
@@ -215,6 +222,7 @@ We ask that security researchers:
 **Current Status**: We do not currently operate a formal bug bounty program.
 
 However, we deeply appreciate security research and will:
+
 - Publicly credit you in our security advisory (if desired)
 - Send Olane swag as a token of appreciation
 - Consider you for future bug bounty programs (when available)
@@ -228,19 +236,21 @@ We are exploring options for a formal bug bounty program and will update this do
 ### For Developers Using Olane
 
 **Authentication:**
+
 ```typescript
 import { oLoginTool } from '@olane/o-login';
 
 // ✅ Always use authentication for production nodes
-const node = new oLaneTool({
+const node = new OlaneTool({
   address: new oAddress('o://protected-node'),
   authProvider: new oLoginTool({
-    requiredPermissions: ['read', 'write']
-  })
+    requiredPermissions: ['read', 'write'],
+  }),
 });
 ```
 
 **Input Validation:**
+
 ```typescript
 // ✅ Define parameter validation in oMethod definitions
 import { oMethod } from '@olane/o-protocol';
@@ -265,18 +275,19 @@ export const DATA_METHODS: { [key: string]: oMethod } = {
 // Validate in tool implementation
 async _tool_process_data(request: oRequest) {
   const { data } = request.params;
-  
+
   // Additional validation in implementation
   if (data.length > 10000) {
     throw new Error('Data too large');
   }
-  
+
   // Process data
   return { processed: true };
 }
 ```
 
 **Error Handling:**
+
 ```typescript
 // ✅ Don't leak sensitive information in errors
 try {
@@ -284,7 +295,7 @@ try {
 } catch (error) {
   // ❌ Don't expose internal details
   // throw new Error(`SQL error: ${error.message}`);
-  
+
   // ✅ Log internally, return generic error
   logger.error('Database query failed', { error, sql });
   throw new oError('Failed to process request');
@@ -292,6 +303,7 @@ try {
 ```
 
 **Network Security:**
+
 ```typescript
 // ✅ Use TLS for production
 const node = new oNodeTool({
@@ -299,12 +311,13 @@ const node = new oNodeTool({
   network: {
     listeners: ['/ip4/0.0.0.0/tcp/4999/tls'],
     tlsCert: process.env.TLS_CERT,
-    tlsKey: process.env.TLS_KEY
-  }
+    tlsKey: process.env.TLS_KEY,
+  },
 });
 ```
 
 **Dependency Management:**
+
 ```bash
 # ✅ Regularly audit dependencies
 npm audit
@@ -321,11 +334,13 @@ npm ci  # Use package-lock.json
 ## Security Advisories {#advisories}
 
 We publish security advisories at:
+
 - **GitHub Security Advisories**: https://github.com/olane-labs/olane/security/advisories
 - **Website**: https://olane.com/security
 - **NPM**: Package-specific advisories on npm
 
 **Subscribe to updates:**
+
 - Watch the GitHub repository
 - Follow [@olane](https://twitter.com/olane) on Twitter
 - Subscribe to our security mailing list: security-updates@olane.io
@@ -352,7 +367,7 @@ We publish security advisories at:
 
 We thank the following researchers for responsibly disclosing vulnerabilities:
 
-*(List will be updated as security researchers contribute)*
+_(List will be updated as security researchers contribute)_
 
 ---
 
@@ -360,11 +375,11 @@ We thank the following researchers for responsibly disclosing vulnerabilities:
 
 **Current Security Notices:**
 
-*No active security advisories at this time.*
+_No active security advisories at this time._
 
 **Recent Security Updates:**
 
-*No security updates published yet.*
+_No security updates published yet._
 
 ---
 
@@ -373,6 +388,7 @@ We thank the following researchers for responsibly disclosing vulnerabilities:
 ### Safe Harbor
 
 We support safe harbor for security research conducted:
+
 - In good faith
 - Without violating privacy or service availability
 - In compliance with this policy
@@ -395,6 +411,7 @@ We may request extension beyond 90 days for complex vulnerabilities.
 ## Questions?
 
 If you have questions about this security policy:
+
 - **Email**: security@olane.io
 - **GitHub Discussions**: [Ask publicly](https://github.com/olane-labs/olane/discussions) (for policy questions, not vulnerabilities)
 
@@ -405,4 +422,3 @@ If you have questions about this security policy:
 **Effective Date**: 2025-10-06
 
 Thank you for helping keep Olane OS secure! 🔒
-

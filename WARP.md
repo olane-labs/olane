@@ -26,7 +26,7 @@ You’ll be most productive if you understand how the major packages layer toget
 
 - `@olane/o-lane` (`packages/o-lane`)
   - Agentic process/lane manager on top of `o-node`.
-  - Provides `oLane`, `oLaneTool`, capabilities, and the evaluate/plan/execute loop that turns intents into emergent multi-step workflows.
+  - Provides `Olane`, `OlaneTool`, capabilities, and the evaluate/plan/execute loop that turns intents into emergent multi-step workflows.
   - Lanes capture execution history (sequences) and support streaming updates.
 
 - `@olane/os` (`packages/o-os`)
@@ -52,7 +52,7 @@ Many other packages (`o-config`, `o-intelligence`, `o-leader`, `o-login`, `o-sto
 At a high level, the architecture follows the three-layer pattern described in `README.md` and the package READMEs:
 
 - **Agents (humans & LLMs)** – issue intents and tool calls.
-- **Tool nodes** – instances of `oNodeTool`/`oLaneTool`/`Mcp*` classes that implement capabilities and live at `o://` addresses.
+- **Tool nodes** – instances of `oNodeTool`/`OlaneTool`/`Mcp*` classes that implement capabilities and live at `o://` addresses.
 - **Olane OS runtime** – provided by `o-core`, `o-node`, `o-lane`, and `o-os` to handle addressing, routing, networking, discovery, and process management.
 
 Most application work in this repo involves:
@@ -177,7 +177,7 @@ The CLAUDE guides (`CLAUDE.md` in the repo root and `packages/o-test/CLAUDE.md`)
 
 - `oNodeTool` (from `@olane/o-node`)
   - For simpler tools with 1–5 focused capabilities and direct method calls.
-- `oLaneTool` (from `@olane/o-lane`)
+- `OlaneTool` (from `@olane/o-lane`)
   - For intent-driven tools with larger method surfaces; agents call `method: 'intent'` and the lane capability loop decides which `_tool_*` methods to invoke.
 - `McpBridgeTool` / `McpTool` (from `@olane/o-mcp`)
   - For bridging MCP servers; MCP tools are auto-exposed as tool methods and discoverable in the Olane network.
@@ -240,7 +240,7 @@ The repository-standard testing approach is centralized in `@olane/o-test` and i
 Common patterns from `@olane/o-test` and the package READMEs:
 
 - Create a leader node (`oLeaderNode`) in `before` hooks and attach tools as children via `leader.addChildNode(tool)` in `hookInitializeFinished`.
-- Use real nodes instead of mocks – tests spin up actual `oNodeTool`/`oLaneTool` instances and call `start()`/`stop()`.
+- Use real nodes instead of mocks – tests spin up actual `oNodeTool`/`OlaneTool` instances and call `start()`/`stop()`.
 - When testing tool methods:
   - Prefer calling through the node’s own `use`/`useSelf` API with realistic payloads.
   - Verify both success paths (correct data shape) and error paths (validation errors, limits like max instances).
@@ -252,7 +252,7 @@ When working on the OS/runtime as a whole (`@olane/os`):
 
 - `OlaneOS` is configured with a list of nodes (leaders and workers) and optional lanes/plans; it then manages their lifecycle and acts as a router for external requests.
 - Typical flow (see `packages/o-os/README.md` for code-level examples):
-  - Construct an `OlaneOS` instance with a root leader (`NodeType.LEADER`) and one or more worker nodes (`NodeType.NODE`), usually using `oLaneTool` subclasses.
+  - Construct an `OlaneOS` instance with a root leader (`NodeType.LEADER`) and one or more worker nodes (`NodeType.NODE`), usually using `OlaneTool` subclasses.
   - Call `os.start()` to bring the network up; the OS will start each node, register them, and expose an entry point.
   - Use `os.use(oAddress, { method, params })` to forward requests into the network.
   - Call `os.stop()` to gracefully shut everything down.
@@ -263,54 +263,55 @@ Understanding how `o-core`, `o-node`, `o-lane`, and `o-os` fit together—and fo
 
 This project uses aegir with Mocha + Chai for tests.
 
-•  Runner
-  ◦  npm test (aegir)
-  ◦  Do not assume Jest: avoid jest.mock, describe.each, expect(...).rejects.toThrow, etc.
+• Runner
+◦ npm test (aegir)
+◦ Do not assume Jest: avoid jest.mock, describe.each, expect(...).rejects.toThrow, etc.
 
 ## Principles
 
-•  Test behavior, not shapes
-◦  Prefer tests that call real code paths:
-▪  Core node/leader types (e.g. startOS, oCloudLeader, oLeaderNode-based classes)
-▪  Public handlers/entrypoints (HTTP/Lambda, CLIs)
-▪  Storage, vector-store, and config utilities
-◦  Avoid tests that only assert on hand-constructed literals:
-▪  Bad: const state = { indexed: true }; expect(state.indexed).to.be.true;
-▪  Good: call the function that produces or uses that state.
-•  Use real modules, minimal stubbing
-◦  Prefer using the real implementation under test.
-◦  When you need to intercept behavior, override instance methods locally in the test (e.g. stub router.route on a constructed node) instead of building deep mock graphs.
-•  Be environment-light
-◦  Don’t require a real libp2p network, relay, or Supabase instance for unit tests.
-◦  Where external dependencies are needed, use in-repo helpers/mocks that stay close to the real APIs.
+• Test behavior, not shapes
+◦ Prefer tests that call real code paths:
+▪ Core node/leader types (e.g. startOS, oCloudLeader, oLeaderNode-based classes)
+▪ Public handlers/entrypoints (HTTP/Lambda, CLIs)
+▪ Storage, vector-store, and config utilities
+◦ Avoid tests that only assert on hand-constructed literals:
+▪ Bad: const state = { indexed: true }; expect(state.indexed).to.be.true;
+▪ Good: call the function that produces or uses that state.
+• Use real modules, minimal stubbing
+◦ Prefer using the real implementation under test.
+◦ When you need to intercept behavior, override instance methods locally in the test (e.g. stub router.route on a constructed node) instead of building deep mock graphs.
+• Be environment-light
+◦ Don’t require a real libp2p network, relay, or Supabase instance for unit tests.
+◦ Where external dependencies are needed, use in-repo helpers/mocks that stay close to the real APIs.
 
 ## Helper Harness (Pattern)
 
 For packages that need richer scenarios (networked leaders, storage, Lambda/HTTP handlers), follow this pattern:
 
-•  A small TestEnvironment helper:
-◦  Manages node lifecycle and cleanup (createLeader, createTool, cleanup).
-◦  Provides access to shared mocks:
-▪  getMockRelay() / getMockRelayAddress()
-▪  getMockSupabase() (in-memory client)
-◦  Exposes waitFor / waitForState helpers where polling is unavoidable.
-•  A MockRelay:
-◦  getAddress() → address for relay configuration.
-◦  reserveCircuit(peerId), releaseCircuit(peerId), hasReservation(peerId).
-◦  getMetrics(), setReservationDelay(ms), setReservationFailure(bool).
-◦  Used to test logic that depends on the idea of circuit reservations, without a real relay.
-•  A MockSupabase:
-◦  Lightweight in-memory implementation of:
-▪  storage.from(bucket).upload/download/remove/list
-▪  from(table) with select/insert/update/delete/upsert
-▪  auth operations (getUser, signInWithPassword, etc.)
-◦  Used to test storage and vector-store tools without real Supabase.
-•  Event/context builders (for HTTP/Lambda-style packages):
-◦  e.g. LambdaEventBuilder and createMockContext to construct realistic request events and minimal contexts.
+• A small TestEnvironment helper:
+◦ Manages node lifecycle and cleanup (createLeader, createTool, cleanup).
+◦ Provides access to shared mocks:
+▪ getMockRelay() / getMockRelayAddress()
+▪ getMockSupabase() (in-memory client)
+◦ Exposes waitFor / waitForState helpers where polling is unavoidable.
+• A MockRelay:
+◦ getAddress() → address for relay configuration.
+◦ reserveCircuit(peerId), releaseCircuit(peerId), hasReservation(peerId).
+◦ getMetrics(), setReservationDelay(ms), setReservationFailure(bool).
+◦ Used to test logic that depends on the idea of circuit reservations, without a real relay.
+• A MockSupabase:
+◦ Lightweight in-memory implementation of:
+▪ storage.from(bucket).upload/download/remove/list
+▪ from(table) with select/insert/update/delete/upsert
+▪ auth operations (getUser, signInWithPassword, etc.)
+◦ Used to test storage and vector-store tools without real Supabase.
+• Event/context builders (for HTTP/Lambda-style packages):
+◦ e.g. LambdaEventBuilder and createMockContext to construct realistic request events and minimal contexts.
 
 ## Example Patterns
 
 1. Validation-only unit test
+
 ```typescript
 import { expect } from 'chai';
 import { startOS } from '../src/os.js';
@@ -331,7 +332,9 @@ describe('startOS (validation)', () => {
   });
 });
 ```
+
 2. Routing behavior via local method override
+
 ```typescript
 import { expect } from 'chai';
 import { oCloudLeader } from '../src/o-cloud.leader.js';
@@ -374,9 +377,9 @@ describe('oCloudLeader routing', () => {
 
 Anti‑Patterns to Avoid
 
-•  Tests that never call production code and only operate on locally declared data.
-•  Tests that assume fields/methods that don’t exist on real types (e.g. leader.clientCount if not part of the public API).
-•  Reintroducing Jest-style APIs or global mocking infrastructure in a Mocha/aegir project.
-•  Building large, divergent mock ecosystems that behave differently from real implementations (“parallel universes”).
+• Tests that never call production code and only operate on locally declared data.
+• Tests that assume fields/methods that don’t exist on real types (e.g. leader.clientCount if not part of the public API).
+• Reintroducing Jest-style APIs or global mocking infrastructure in a Mocha/aegir project.
+• Building large, divergent mock ecosystems that behave differently from real implementations (“parallel universes”).
 
 Keep tests focused, fast, and coupled to the public behavior of the actual implementation, using the shared helpers only as thin scaffolding to reach realistic states.

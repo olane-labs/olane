@@ -5,12 +5,14 @@
 ## ⚠️ CRITICAL RULES - READ FIRST
 
 **Lifecycle Management:**
+
 - ✅ **DO**: Use `hookInitializeFinished()` for 3rd party service initialization
 - ✅ **DO**: Use `hookStartFinished()` for background tasks and child creation
 - ✅ **DO**: Override `stop()` for cleanup
 - ❌ **NEVER**: Override `start()` method - it orchestrates the entire lifecycle
 
 **Error Handling:**
+
 - ✅ **DO**: Throw errors for validation failures and exceptions
 - ✅ **DO**: Return raw data on success
 - ✅ **DO**: Let base class handle error wrapping
@@ -18,6 +20,7 @@
 - ❌ **NEVER**: Wrap success responses in `{ success: true, result: ... }`
 
 **Address Construction:**
+
 - ✅ **DO**: Use simple addresses in constructors (e.g., `new oNodeAddress('o://my-tool')`)
 - ✅ **DO**: Set `parent` and `leader` properties for hierarchical nodes
 - ✅ **DO**: Let the system create nested addresses during registration
@@ -25,12 +28,14 @@
 - ❌ **NEVER**: Manually construct hierarchical addresses - they're created at runtime
 
 **Response Structure (when calling other tools):**
+
 - When using `node.use()`, responses follow: `response.result.success`, `response.result.data`, `response.result.error`
 - Always check `response.result.success` before accessing data
 - Access data via `response.result.data` and errors via `response.result.error`
 - Base class automatically wraps your returns in this structure
 
 **Package Management:**
+
 - ⚠️ **ALWAYS use `pnpm`, not `npm`**
 
 ---
@@ -59,6 +64,7 @@
 Template for creating **O-Network nodes** - addressable, distributed tools (`o://my-tool`) that serve both humans and AI agents through the same interface.
 
 **Use when you need:**
+
 - Tool accessible via `o://` protocol
 - Service for both humans and AI agents
 - Distributed component in Olane OS ecosystem
@@ -82,18 +88,19 @@ o-node-template/
 
 ### Essential Commands
 
-| Command | Purpose |
-|---------|---------|
-| `pnpm install` | Install dependencies |
-| `pnpm run build` | Build TypeScript |
-| `pnpm test` | Run tests |
-| `pnpm run dev` | Watch mode |
-| `pnpm run lint` | Run linting |
+| Command          | Purpose               |
+| ---------------- | --------------------- |
+| `pnpm install`   | Install dependencies  |
+| `pnpm run build` | Build TypeScript      |
+| `pnpm test`      | Run tests             |
+| `pnpm run dev`   | Watch mode            |
+| `pnpm run lint`  | Run linting           |
 | `pnpm run clean` | Clean build artifacts |
 
 ### Key Files
 
 **package.json:**
+
 ```json
 {
   "name": "@olane/o-your-tool",
@@ -115,21 +122,23 @@ o-node-template/
 
 ### Three Node Types
 
-| Type | Use For | Pattern | State | Example |
-|------|---------|---------|-------|---------|
-| **oNodeTool** | 1-5 focused capabilities | Direct method calls | Stateless | Currency converter |
-| **oLaneTool** | 5-20+ capabilities | Intent-driven (AI decides methods) | Emergent workflows | Customer analytics |
-| **McpTool** | MCP server bridge | Auto-expose MCP capabilities | Proxy to MCP | Git operations |
+| Type          | Use For                  | Pattern                            | State              | Example            |
+| ------------- | ------------------------ | ---------------------------------- | ------------------ | ------------------ |
+| **oNodeTool** | 1-5 focused capabilities | Direct method calls                | Stateless          | Currency converter |
+| **OlaneTool** | 5-20+ capabilities       | Intent-driven (AI decides methods) | Emergent workflows | Customer analytics |
+| **McpTool**   | MCP server bridge        | Auto-expose MCP capabilities       | Proxy to MCP       | Git operations     |
 
 ### Simple vs Parent-Child Pattern
 
-**Use Simple (oNodeTool/oLaneTool) when:**
+**Use Simple (oNodeTool/OlaneTool) when:**
+
 - 1-5 focused capabilities
 - Static configuration
 - No multiple instances needed
 - Stateless or simple state
 
 **Use Parent-Child (Manager/Worker) when:**
+
 - Multiple isolated instances with different configs
 - Dynamic spawning on-demand
 - Per-instance authentication (different API keys)
@@ -162,14 +171,15 @@ Parent-Child Pattern:
 ### Choosing Base Class
 
 ```typescript
-import { oNodeTool } from '@olane/o-node';     // Simple tools
-import { oLaneTool } from '@olane/o-lane';     // Intent-driven tools
-import { McpTool } from '@olane/o-mcp';        // MCP bridges
+import { oNodeTool } from '@olane/o-node'; // Simple tools
+import { OlaneTool } from '@olane/o-lane'; // Intent-driven tools
+import { McpTool } from '@olane/o-mcp'; // MCP bridges
 ```
 
 **Decision Tree:**
+
 1. Bridging MCP server? → `McpTool`
-2. Intent-driven AI workflows (5+ methods)? → `oLaneTool`
+2. Intent-driven AI workflows (5+ methods)? → `OlaneTool`
 3. Simple, direct method calls? → `oNodeTool`
 
 ---
@@ -179,12 +189,12 @@ import { McpTool } from '@olane/o-mcp';        // MCP bridges
 ### Tool Class Structure
 
 ```typescript
-import { oLaneTool } from '@olane/o-lane';
+import { OlaneTool } from '@olane/o-lane';
 import { oNodeAddress, oNodeToolConfig } from '@olane/o-node';
 import { oRequest } from '@olane/o-core';
 import { MY_METHODS } from './methods/my-tool.methods.js';
 
-export class MyTool extends oLaneTool {
+export class MyTool extends OlaneTool {
   private apiClient?: ExternalAPIClient;
 
   constructor(config: oNodeToolConfig) {
@@ -347,7 +357,7 @@ export class MyManager extends oNodeTool {
       return {
         workerId: finalWorkerId,
         existing: true,
-        address: `o://my-manager/${finalWorkerId}`
+        address: `o://my-manager/${finalWorkerId}`,
       };
     }
 
@@ -359,7 +369,7 @@ export class MyManager extends oNodeTool {
     // Create worker with simple address - parent linkage creates nested address
     const worker = new MyWorker({
       address: new oNodeAddress(`o://${finalWorkerId}`), // ✅ Simple address
-      parent: this.address,  // System creates nested address during registration
+      parent: this.address, // System creates nested address during registration
       leader: this.leader,
       ...config,
     });
@@ -390,10 +400,7 @@ export class MyManager extends oNodeTool {
     }
 
     // Proxy to worker
-    return await worker.use(
-      new oNodeAddress(worker.address.toString()),
-      { method, params }
-    );
+    return await worker.use(new oNodeAddress(worker.address.toString()), { method, params });
   }
 
   async _tool_list_workers(request: oRequest): Promise<any> {
@@ -404,7 +411,7 @@ export class MyManager extends oNodeTool {
         status: w.status,
       })),
       count: this.workers.size,
-      maxInstances: this.maxInstances
+      maxInstances: this.maxInstances,
     };
   }
 
@@ -425,12 +432,10 @@ export class MyManager extends oNodeTool {
   // ✅ Cascade stop to all children
   async stop(): Promise<void> {
     this.logger.info('Stopping manager and workers', {
-      count: this.workers.size
+      count: this.workers.size,
     });
 
-    await Promise.all(
-      Array.from(this.workers.values()).map(w => w.stop())
-    );
+    await Promise.all(Array.from(this.workers.values()).map((w) => w.stop()));
 
     this.workers.clear();
     await super.stop();
@@ -459,7 +464,7 @@ export class MyWorker extends oNodeTool {
     // Worker-specific API client
     this.apiClient = new ExternalAPI({
       apiKey: this.config.apiKey,
-      scope: this.config.resourceScope
+      scope: this.config.resourceScope,
     });
     await this.apiClient.connect();
     await super.hookInitializeFinished();
@@ -471,7 +476,7 @@ export class MyWorker extends oNodeTool {
 
     return {
       result,
-      workerId: this.address.toString()
+      workerId: this.address.toString(),
     };
   }
 
@@ -490,8 +495,8 @@ export class MyWorker extends oNodeTool {
 // In parent's create method:
 const child = new ChildTool({
   address: new oNodeAddress(`o://${childId}`), // ✅ Simple address
-  parent: this.address,    // ✅ Parent reference (creates nested path)
-  leader: this.leader,     // ✅ Leader reference
+  parent: this.address, // ✅ Parent reference (creates nested path)
+  leader: this.leader, // ✅ Leader reference
 });
 
 // ✅ Inject hook to register with parent
@@ -534,7 +539,8 @@ import { oMethod } from '@olane/o-protocol';
 export const MY_TOOL_METHODS: { [key: string]: oMethod } = {
   get_customer: {
     name: 'get_customer',
-    description: 'Retrieves customer information by ID. Returns full profile including contact details and account status.',
+    description:
+      'Retrieves customer information by ID. Returns full profile including contact details and account status.',
 
     parameters: [
       {
@@ -542,48 +548,47 @@ export const MY_TOOL_METHODS: { [key: string]: oMethod } = {
         type: 'string',
         description: 'Unique customer identifier (UUID)',
         required: true,
-        exampleValues: ['cust_abc123']
+        exampleValues: ['cust_abc123'],
       },
       {
         name: 'includeHistory',
         type: 'boolean',
         description: 'Include purchase history',
         required: false,
-        defaultValue: false
+        defaultValue: false,
       },
       {
         name: 'fields',
         type: 'array',
         description: 'Specific fields to return',
         required: false,
-      }
+      },
     ],
-
-  }
+  },
 };
 ```
 
 ### Parameter Types Reference
 
-| Type | Example |
-|------|---------|
-| String | `{ name: 'username', type: 'string', required: true }` |
-| Number | `{ name: 'amount', type: 'number', required: true }` |
-| Boolean | `{ name: 'verified', type: 'boolean', defaultValue: false }` |
-| Array | `{ name: 'tags', type: 'array', structure: { itemType: 'string' } }` |
-| Object | `{ name: 'address', type: 'object', structure: { properties: {...} } }` |
-| Enum | `{ name: 'status', type: 'string', structure: { enum: ['pending', 'done'] } }` |
+| Type    | Example                                                                        |
+| ------- | ------------------------------------------------------------------------------ |
+| String  | `{ name: 'username', type: 'string', required: true }`                         |
+| Number  | `{ name: 'amount', type: 'number', required: true }`                           |
+| Boolean | `{ name: 'verified', type: 'boolean', defaultValue: false }`                   |
+| Array   | `{ name: 'tags', type: 'array', structure: { itemType: 'string' } }`           |
+| Object  | `{ name: 'address', type: 'object', structure: { properties: {...} } }`        |
+| Enum    | `{ name: 'status', type: 'string', structure: { enum: ['pending', 'done'] } }` |
 
 ### Using in Tool
 
 ```typescript
 import { MY_TOOL_METHODS } from './methods/my-tool.methods.js';
 
-export class MyTool extends oLaneTool {
+export class MyTool extends OlaneTool {
   constructor(config: oNodeToolConfig) {
     super({
       ...config,
-      methods: MY_TOOL_METHODS,  // ✅ Provide definitions
+      methods: MY_TOOL_METHODS, // ✅ Provide definitions
     });
   }
 }
@@ -624,12 +629,14 @@ src/                    dist/src/
 ### Publishing to NPM
 
 **Public package:**
+
 ```bash
 npm login
 npm publish --access public
 ```
 
 **Private package:**
+
 ```json
 {
   "publishConfig": {
@@ -637,6 +644,7 @@ npm publish --access public
   }
 }
 ```
+
 ```bash
 npm publish
 ```
@@ -695,12 +703,13 @@ expect(response.result.data.foo).to.equal('bar');
 expect(response.result.error).to.exist; // For error cases
 
 // ❌ WRONG - direct access will fail
-expect(response.success).to.be.true;  // Property doesn't exist!
-expect(response.data).to.exist;        // Property doesn't exist!
-expect(response.error).to.exist;       // Property doesn't exist!
+expect(response.success).to.be.true; // Property doesn't exist!
+expect(response.data).to.exist; // Property doesn't exist!
+expect(response.error).to.exist; // Property doesn't exist!
 ```
 
 **Response structure:**
+
 ```typescript
 {
   jsonrpc: "2.0",
@@ -742,7 +751,7 @@ describe('MyTool', () => {
     it('should process valid request', async () => {
       const response = await tool.use(tool.address, {
         method: 'my_method',
-        params: { param1: 'test' }
+        params: { param1: 'test' },
       });
 
       expect(response.result.success).toBe(true);
@@ -752,7 +761,7 @@ describe('MyTool', () => {
     it('should validate required parameters', async () => {
       const response = await tool.use(tool.address, {
         method: 'my_method',
-        params: {}
+        params: {},
       });
 
       expect(response.result.success).toBe(false);
@@ -780,7 +789,7 @@ describe('Manager and Worker', () => {
   it('should create worker', async () => {
     const response = await manager.use(manager.address, {
       method: 'create_worker',
-      params: { workerId: 'test-1' }
+      params: { workerId: 'test-1' },
     });
 
     expect(response.result.success).toBe(true);
@@ -790,7 +799,7 @@ describe('Manager and Worker', () => {
   it('should route to worker', async () => {
     await manager.use(manager.address, {
       method: 'create_worker',
-      params: { workerId: 'test-2' }
+      params: { workerId: 'test-2' },
     });
 
     const response = await manager.use(manager.address, {
@@ -798,8 +807,8 @@ describe('Manager and Worker', () => {
       params: {
         workerId: 'test-2',
         method: 'process_task',
-        params: { taskData: 'test' }
-      }
+        params: { taskData: 'test' },
+      },
     });
 
     expect(response.result.success).toBe(true);
@@ -809,13 +818,13 @@ describe('Manager and Worker', () => {
     for (let i = 0; i < 5; i++) {
       await manager.use(manager.address, {
         method: 'create_worker',
-        params: { workerId: `worker-${i}` }
+        params: { workerId: `worker-${i}` },
       });
     }
 
     const response = await manager.use(manager.address, {
       method: 'create_worker',
-      params: { workerId: 'overflow' }
+      params: { workerId: 'overflow' },
     });
 
     expect(response.result.success).toBe(false);
@@ -830,20 +839,20 @@ describe('Manager and Worker', () => {
 
 ### Core Dependencies
 
-| Package | Version | Required | Purpose |
-|---------|---------|----------|---------|
-| `@olane/o-core` | ^0.7.12 | Yes | Core types |
-| `@olane/o-node` | ^0.7.12 | Yes | Node base classes |
-| `@olane/o-tool` | ^0.7.12 | Yes | Tool interfaces |
+| Package         | Version | Required | Purpose               |
+| --------------- | ------- | -------- | --------------------- |
+| `@olane/o-core` | ^0.7.12 | Yes      | Core types            |
+| `@olane/o-node` | ^0.7.12 | Yes      | Node base classes     |
+| `@olane/o-tool` | ^0.7.12 | Yes      | Tool interfaces       |
 | `@olane/o-lane` | ^0.7.12 | Optional | Intent-driven support |
-| `@olane/o-mcp` | ^0.7.12 | Optional | MCP integration |
+| `@olane/o-mcp`  | ^0.7.12 | Optional | MCP integration       |
 
 ### Lane Support
 
 ```typescript
-import { oLaneTool } from '@olane/o-lane';
+import { OlaneTool } from '@olane/o-lane';
 
-export class MyLaneTool extends oLaneTool {
+export class MyLaneTool extends OlaneTool {
   // Methods called automatically based on intent
   // Lane decides which methods to use
 }
@@ -896,27 +905,28 @@ async _tool_coordinate(request: oRequest): Promise<any> {
 
 ### Critical Rules Summary
 
-| Rule | DO | DON'T |
-|------|-----|-------|
-| **Lifecycle** | Use `hookInitializeFinished()`, `hookStartFinished()` | Override `start()` |
-| **Errors** | Throw errors | Return error objects |
-| **Returns** | Return raw data | Wrap in `{ success, result }` |
-| **State** | Isolate per child | Share mutable state |
-| **Cleanup** | Cascade `stop()` to children | Forget child cleanup |
+| Rule          | DO                                                    | DON'T                         |
+| ------------- | ----------------------------------------------------- | ----------------------------- |
+| **Lifecycle** | Use `hookInitializeFinished()`, `hookStartFinished()` | Override `start()`            |
+| **Errors**    | Throw errors                                          | Return error objects          |
+| **Returns**   | Return raw data                                       | Wrap in `{ success, result }` |
+| **State**     | Isolate per child                                     | Share mutable state           |
+| **Cleanup**   | Cascade `stop()` to children                          | Forget child cleanup          |
 
 ### Common Mistakes
 
-| Problem | Solution | Reference |
-|---------|----------|-----------|
-| Method not discovered | Add `_tool_` prefix | [Section 5](#5-method-discovery) |
-| "start() overridden" | Use hooks instead | [Section 3](#3-building-nodes) |
-| Child not registering | Inject hook before `start()` | [Section 4](#4-parent-child-system) |
-| Service not ready | Initialize in `hookInitializeFinished()` | [Section 3](#3-building-nodes) |
-| Module format mismatch | Set `"type": "module"` in package.json | [Section 1](#1-project-overview--quick-start) |
+| Problem                | Solution                                 | Reference                                     |
+| ---------------------- | ---------------------------------------- | --------------------------------------------- |
+| Method not discovered  | Add `_tool_` prefix                      | [Section 5](#5-method-discovery)              |
+| "start() overridden"   | Use hooks instead                        | [Section 3](#3-building-nodes)                |
+| Child not registering  | Inject hook before `start()`             | [Section 4](#4-parent-child-system)           |
+| Service not ready      | Initialize in `hookInitializeFinished()` | [Section 3](#3-building-nodes)                |
+| Module format mismatch | Set `"type": "module"` in package.json   | [Section 1](#1-project-overview--quick-start) |
 
 ### Quick Troubleshooting
 
 **Build errors:**
+
 ```bash
 pnpm run deep:clean
 pnpm install
@@ -924,6 +934,7 @@ pnpm run build
 ```
 
 **Type errors:**
+
 ```bash
 pnpm run type-check
 # Use .js extensions in imports for ESM
@@ -931,16 +942,18 @@ import { MyClass } from './my-class.js';  // ✅
 ```
 
 **Test timeouts:**
+
 ```typescript
-jest.setTimeout(30000);  // Increase timeout
+jest.setTimeout(30000); // Increase timeout
 ```
 
 **Child not found:**
+
 ```typescript
 // Ensure parent and leader references set
 const child = new Child({
-  parent: this.address,  // ✅ Required
-  leader: this.leader,   // ✅ Required
+  parent: this.address, // ✅ Required
+  leader: this.leader, // ✅ Required
 });
 ```
 
@@ -968,38 +981,38 @@ SESSION_TIMEOUT=3600000
 
 ```typescript
 interface oNodeToolConfig {
-  address?: oNodeAddress;        // Node address
-  description?: string;          // AI-readable description
-  leader?: oNodeAddress;         // Network leader
-  parent?: oNodeAddress;         // Parent node (for children)
+  address?: oNodeAddress; // Node address
+  description?: string; // AI-readable description
+  leader?: oNodeAddress; // Network leader
+  parent?: oNodeAddress; // Parent node (for children)
   transports?: oNodeTransport[]; // Network transports
-  methods?: { [key: string]: oMethod };  // Method definitions
-  [key: string]: any;            // Custom config
+  methods?: { [key: string]: oMethod }; // Method definitions
+  [key: string]: any; // Custom config
 }
 ```
 
 ### Lifecycle Hooks
 
-| Hook | When | Use For | Call Super |
-|------|------|---------|------------|
-| `hookInitializeFinished()` | After `initialize()`, before `register()` | Init 3rd party services, load resources | Yes (end) |
-| `hookStartFinished()` | After `register()`, fully started | Start background tasks, create children | Yes (end) |
-| `stop()` | When stopping | Cleanup resources, disconnect services | Yes (end) |
+| Hook                       | When                                      | Use For                                 | Call Super |
+| -------------------------- | ----------------------------------------- | --------------------------------------- | ---------- |
+| `hookInitializeFinished()` | After `initialize()`, before `register()` | Init 3rd party services, load resources | Yes (end)  |
+| `hookStartFinished()`      | After `register()`, fully started         | Start background tasks, create children | Yes (end)  |
+| `stop()`                   | When stopping                             | Cleanup resources, disconnect services  | Yes (end)  |
 
 ### Command Reference
 
-| Command | Purpose |
-|---------|---------|
-| `pnpm install` | Install deps |
-| `pnpm run build` | Build TS |
-| `pnpm test` | Run tests |
-| `pnpm run dev` | Watch mode |
-| `pnpm run lint` | Lint |
-| `pnpm run lint:fix` | Fix linting |
-| `pnpm run clean` | Clean build |
-| `pnpm run deep:clean` | Clean all |
-| `pnpm lerna version patch` | Bump version |
-| `pnpm lerna publish from-package` | Publish |
+| Command                           | Purpose      |
+| --------------------------------- | ------------ |
+| `pnpm install`                    | Install deps |
+| `pnpm run build`                  | Build TS     |
+| `pnpm test`                       | Run tests    |
+| `pnpm run dev`                    | Watch mode   |
+| `pnpm run lint`                   | Lint         |
+| `pnpm run lint:fix`               | Fix linting  |
+| `pnpm run clean`                  | Clean build  |
+| `pnpm run deep:clean`             | Clean all    |
+| `pnpm lerna version patch`        | Bump version |
+| `pnpm lerna publish from-package` | Publish      |
 
 ---
 
@@ -1034,7 +1047,7 @@ export class BrowserManager extends oNodeTool {
   async hookStartFinished(): Promise<void> {
     setInterval(() => this.cleanupExpiredSessions(), 60000);
     this.logger.info('Browser manager started', {
-      maxSessions: this.maxSessions
+      maxSessions: this.maxSessions,
     });
     await super.hookStartFinished();
   }
@@ -1048,7 +1061,7 @@ export class BrowserManager extends oNodeTool {
       return {
         sessionId: finalSessionId,
         existing: true,
-        address: `o://browser/${finalSessionId}`
+        address: `o://browser/${finalSessionId}`,
       };
     }
 
@@ -1059,7 +1072,7 @@ export class BrowserManager extends oNodeTool {
 
     const session = new BrowserSession({
       address: new oNodeAddress(`o://${finalSessionId}`), // ✅ Simple address
-      parent: this.address,  // System creates nested address during registration
+      parent: this.address, // System creates nested address during registration
       leader: this.leader,
       headless,
     });
@@ -1092,10 +1105,7 @@ export class BrowserManager extends oNodeTool {
     }
 
     session.updateLastAccessed();
-    return await session.use(
-      new oNodeAddress(session.address.toString()),
-      { method, params }
-    );
+    return await session.use(new oNodeAddress(session.address.toString()), { method, params });
   }
 
   async _tool_list_sessions(request: oRequest): Promise<any> {
@@ -1126,9 +1136,7 @@ export class BrowserManager extends oNodeTool {
   // ✅ PATTERN: Cascading cleanup to all children
   async stop(): Promise<void> {
     this.logger.info('Stopping manager', { count: this.sessions.size });
-    await Promise.all(
-      Array.from(this.sessions.values()).map(s => s.stop())
-    );
+    await Promise.all(Array.from(this.sessions.values()).map((s) => s.stop()));
     this.sessions.clear();
     await super.stop();
   }
@@ -1220,6 +1228,7 @@ export class BrowserSession extends oNodeTool {
 ```
 
 **Key Patterns Demonstrated:**
+
 - ✅ Lifecycle hooks (never override `start()`)
 - ✅ Parent-child with hook injection
 - ✅ Resource limits and validation
@@ -1236,15 +1245,17 @@ export class BrowserSession extends oNodeTool {
 ### Decision Flowcharts
 
 **Which Base Class?**
+
 ```
 Need MCP bridge? → McpTool
     ↓ No
-Intent-driven (5+ methods)? → oLaneTool
+Intent-driven (5+ methods)? → OlaneTool
     ↓ No
 Simple direct calls → oNodeTool
 ```
 
 **Simple vs Parent-Child?**
+
 ```
 Need multiple isolated instances? → Parent-Child
     ↓ No
@@ -1258,6 +1269,7 @@ Simple single instance → Simple Pattern
 ### Common Tasks Cookbook
 
 **Create simple tool:**
+
 ```typescript
 class MyTool extends oNodeTool {
   constructor(config) {
@@ -1275,6 +1287,7 @@ class MyTool extends oNodeTool {
 ```
 
 **Initialize external service:**
+
 ```typescript
 async hookInitializeFinished(): Promise<void> {
   this.client = new ExternalClient();
@@ -1284,10 +1297,11 @@ async hookInitializeFinished(): Promise<void> {
 ```
 
 **Create child node:**
+
 ```typescript
 const child = new ChildTool({
   address: new oNodeAddress(`o://${id}`), // Simple address
-  parent: this.address,  // Creates nested address at runtime
+  parent: this.address, // Creates nested address at runtime
   leader: this.leader,
 });
 
@@ -1300,6 +1314,7 @@ await child.start();
 ```
 
 **Call another tool:**
+
 ```typescript
 const response = await this.otherTool.use(address, {
   method: 'method_name',
@@ -1328,6 +1343,7 @@ const data = response.result.data;
 You now have everything needed to build O-Network nodes:
 
 **Remember:**
+
 - ✅ Use `pnpm`, not npm
 - ✅ Never override `start()` - use hooks
 - ✅ Throw errors, return raw data
@@ -1337,3 +1353,14 @@ You now have everything needed to build O-Network nodes:
 - ✅ Cascade cleanup from parent to children
 
 **Start simple, scale to complex as needed.**
+
+<!-- Copass:START -->
+## MANDATORY: Copass Context Engineering (Non-Blocking)
+
+You MUST query Copass for context on every task — but do so **in parallel** with your other work, never as a blocking prerequisite.
+
+1. **Every new task** — Fire off `context_query` or `search_entities` calls **in the same tool-call batch** as your initial codebase reads/searches. Do NOT wait for Copass results before starting exploration. Incorporate Copass context as it arrives.
+2. **Personal questions about the user** — Always check Copass first. The ontology contains personal context that your built-in memory does not.
+
+**Key rule:** Never block on it, continue working while it loads. Launch Copass calls concurrently with file reads, grep searches, and other tool calls in the same response.
+<!-- Copass:END -->

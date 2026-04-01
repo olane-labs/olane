@@ -23,6 +23,10 @@ export interface OlaneOSInstanceConfig {
   transports?: string[];
   oNetworkConfig?: OlaneOSConfig;
   remoteLeaderAddress?: oNodeAddress;
+  /** Copass ID linked to this OS instance. */
+  copassId?: string;
+  /** World ID if this instance represents a world. */
+  worldId?: string;
 }
 
 export interface CLIConfig {

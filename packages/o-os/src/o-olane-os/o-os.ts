@@ -12,6 +12,9 @@ import { oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
+import { WorldManagerTool } from '../worlds/world-manager.tool.js';
+import { AddressBook } from '../address-book/address-book.js';
+import { MemoryHarness } from '../memory/memory-harness.js';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -21,6 +24,9 @@ export class OlaneOS extends oObject {
   public status!: OlaneOSSystemStatus;
   private config: OlaneOSConfig;
   private roundRobinIndex: number = 0;
+  public worldManager: WorldManagerTool | null = null;
+  public addressBook: AddressBook | null = null;
+  public memory: MemoryHarness | null = null;
 
   constructor(config: OlaneOSConfig) {
     super();
@@ -312,6 +318,39 @@ export class OlaneOS extends oObject {
     }
   }
 
+  /**
+   * Initialize world manager, address book, and memory harness
+   * after the leader and nodes are started.
+   */
+  private async initOSServices(): Promise<void> {
+    const instanceName =
+      (await this.getOSInstanceName()) ||
+      this.config.network?.name ||
+      'default';
+
+    // Address book
+    this.addressBook = new AddressBook(instanceName);
+    await this.addressBook.load();
+
+    // Memory harness and world manager (children of root leader)
+    if (this.rootLeader) {
+      // Memory harness — shells out to `olane ingest/copass` CLI
+      this.memory = new MemoryHarness();
+      this.logger.debug('Memory harness initialized');
+
+      // World manager
+      this.worldManager = new WorldManagerTool({
+        leader: this.rootLeader.address,
+        parent: this.rootLeader.address,
+        systemName: instanceName,
+        _allowNestedAddress: true,
+      } as any);
+      this.rootLeader.addChildNode(this.worldManager as any);
+      await this.worldManager.start();
+      this.logger.debug('World manager started');
+    }
+  }
+
   async use(oAddress: oAddress, params: any) {
     const entryNode = this.entryNode();
     if (!entryNode) {
@@ -334,6 +373,10 @@ export class OlaneOS extends oObject {
     this.logger.debug('Leaders started...');
     await this.startNodes(NodeType.NODE);
     this.logger.debug('Nodes started...');
+
+    // Initialize world manager, address book, and memory harness
+    await this.initOSServices();
+    this.logger.debug('OS services initialized...');
 
     // Load config from o://os-config storage backend (after tools are initialized)
     // This merges any saved lanes from persistent storage

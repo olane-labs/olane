@@ -1,4 +1,4 @@
-name: oLane Version Release (Optimized)
+name: Olane Version Release (Optimized)
 
 on:
   pull_request:

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "olane": {
+      "type": "stdio",
+      "command": "olane",
+      "args": [
+        "copass",
+        "--mcp"
+      ]
+    }
+  }
+}

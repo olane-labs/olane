@@ -107,7 +107,7 @@ interface AnthropicListModelsResponse {
 }
 
 export class AnthropicIntelligenceTool extends oLaneTool {
-  private defaultModel = 'claude-sonnet-4-5-20250929';
+  private defaultModel = 'claude-sonnet-4-6';
   private apiKey: string = process.env.ANTHROPIC_API_KEY || '';
 
   constructor(config: oNodeToolConfig) {
