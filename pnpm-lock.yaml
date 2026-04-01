@@ -1294,6 +1294,9 @@ importers:
 
   packages/o-os:
     dependencies:
+      '@libp2p/circuit-relay-v2':
+        specifier: ^4.1.3
+        version: 4.1.3
       '@olane/o-client-limited':
         specifier: 0.8.16
         version: link:../o-client-limited
