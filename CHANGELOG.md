@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.17 (2026-04-01)</small>
+
+- added olane os improvements for the local functionality ([c5a92d3](https://github.com/olane-labs/olane/commit/c5a92d3))
+- fix for relay + startup + vector store ([e2bfe27](https://github.com/olane-labs/olane/commit/e2bfe27))
+- improvements to the os offering around address management + indexing ([225c421](https://github.com/olane-labs/olane/commit/225c421))
+- minor change ([e4ff9ab](https://github.com/olane-labs/olane/commit/e4ff9ab))
+- chore: update pnpm-lock.yaml after version bump ([8e724c4](https://github.com/olane-labs/olane/commit/8e724c4))
+
 ## <small>0.8.16 (2026-02-25)</small>
 
 - verbose logging ([dd2017c](https://github.com/olane-labs/olane/commit/dd2017c))
