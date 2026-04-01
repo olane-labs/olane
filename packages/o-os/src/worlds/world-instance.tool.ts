@@ -1,27 +1,33 @@
 import { oNodeConfig } from '@olane/o-node';
 import { oLaneTool } from '@olane/o-lane';
-import { oRequest } from '@olane/o-core';
+import { oAddress, oRequest } from '@olane/o-core';
 import type { ToolResult } from '@olane/o-tool';
+import { FilesystemTool } from '../tools/filesystem.tool.js';
 import type {
   WorldConfig,
   WorldAddressEntry,
   WorldSupportedType,
   WorldData,
 } from './world.types.js';
-import * as fs from 'fs-extra';
+import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import * as path from 'path';
+
+async function pathExists(p: string): Promise<boolean> {
+  try { await access(p); return true; } catch { return false; }
+}
 
 /**
  * A world instance node — hub for addresses of a given world.
  * Registered as a child of the WorldManagerTool at o://world-manager/{world-name}.
  *
- * Supported types define what kinds of addresses can be registered.
- * The first supported type is 'filepath'.
+ * Each world instance owns a FilesystemTool child that provides scoped
+ * filesystem access to the directories (addresses) registered with it.
  */
 export class WorldInstanceTool extends oLaneTool {
   private worldConfig: WorldConfig;
   private addresses: WorldAddressEntry[] = [];
   private persistPath: string | undefined;
+  public filesystemTool: FilesystemTool | null = null;
 
   constructor(
     nodeConfig: oNodeConfig,
@@ -34,9 +40,9 @@ export class WorldInstanceTool extends oLaneTool {
       methods: {
         register_address: {
           name: 'register_address',
-          description: 'Register an address with this world',
+          description: 'Register an address (directory path) with this world',
           parameters: [
-            { name: 'address', type: 'string', required: true, description: 'The address to register' },
+            { name: 'address', type: 'string', required: true, description: 'The directory path to register' },
             { name: 'type', type: 'string', required: true, description: 'Address type (e.g. filepath)' },
           ],
           dependencies: [],
@@ -55,20 +61,6 @@ export class WorldInstanceTool extends oLaneTool {
           parameters: [
             { name: 'type', type: 'string', required: false, description: 'Filter by type' },
           ],
-          dependencies: [],
-        },
-        register_filepath: {
-          name: 'register_filepath',
-          description: 'Register a filepath with this world',
-          parameters: [
-            { name: 'path', type: 'string', required: true, description: 'The filepath to register' },
-          ],
-          dependencies: [],
-        },
-        list_filepaths: {
-          name: 'list_filepaths',
-          description: 'List all filepaths in this world',
-          parameters: [],
           dependencies: [],
         },
         get_world_info: {
@@ -90,6 +82,24 @@ export class WorldInstanceTool extends oLaneTool {
   async start(): Promise<void> {
     await super.start();
     await this.loadAddresses();
+
+    // Create the FilesystemTool child node scoped to this world's filepath addresses
+    const filepathAddresses = this.addresses
+      .filter((a) => a.type === 'filepath')
+      .map((a) => a.address);
+
+    const slug = this.worldConfig.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    this.filesystemTool = new FilesystemTool(
+      {
+        address: new oAddress(`o://world-manager/${slug}/fs`),
+        leader: this.leader,
+        parent: this.address,
+        _allowNestedAddress: true,
+      },
+      filepathAddresses,
+    );
+    this.addChildNode(this.filesystemTool as any);
+    await this.filesystemTool.start();
   }
 
   // ── Tool methods ───────────────────────────────────────────
@@ -103,17 +113,25 @@ export class WorldInstanceTool extends oLaneTool {
       };
     }
 
+    const existing = this.addresses.find((a) => a.address === address);
+    if (existing) {
+      return {
+        success: false,
+        error: `Address '${address}' is already registered in world '${this.worldConfig.name}'`,
+      };
+    }
+
     const entry: WorldAddressEntry = {
       address,
       type,
       registeredAt: new Date().toISOString(),
       metadata,
     };
-    const existing = this.addresses.findIndex((a) => a.address === address);
-    if (existing >= 0) {
-      this.addresses[existing] = entry;
-    } else {
-      this.addresses.push(entry);
+    this.addresses.push(entry);
+
+    // Sync filepath to the FilesystemTool
+    if (type === 'filepath' && this.filesystemTool) {
+      await this.filesystemTool._tool_add_path({ params: { path: address } } as any);
     }
 
     await this.persistAddresses();
@@ -122,10 +140,19 @@ export class WorldInstanceTool extends oLaneTool {
 
   async _tool_remove_address(request: oRequest): Promise<ToolResult> {
     const { address } = request.params as any;
+    const entry = this.addresses.find((a) => a.address === address);
     const before = this.addresses.length;
     this.addresses = this.addresses.filter((a) => a.address !== address);
     const removed = this.addresses.length < before;
-    if (removed) await this.persistAddresses();
+
+    if (removed) {
+      // Unsync from FilesystemTool
+      if (entry?.type === 'filepath' && this.filesystemTool) {
+        await this.filesystemTool._tool_remove_path({ params: { path: address } } as any);
+      }
+      await this.persistAddresses();
+    }
+
     return { success: true, removed };
   }
 
@@ -137,28 +164,16 @@ export class WorldInstanceTool extends oLaneTool {
     return { success: true, addresses: filtered };
   }
 
-  async _tool_register_filepath(request: oRequest): Promise<ToolResult> {
-    const { path: filepath, metadata } = request.params as any;
-    return this._tool_register_address({
-      ...request,
-      params: { address: filepath, type: 'filepath', metadata },
-    } as any);
-  }
-
-  async _tool_list_filepaths(_request: oRequest): Promise<ToolResult> {
-    const filepaths = this.addresses.filter((a) => a.type === 'filepath');
-    return { success: true, filepaths };
-  }
-
   async _tool_get_world_info(_request: oRequest): Promise<ToolResult> {
     return {
       success: true,
       config: this.worldConfig,
       addressCount: this.addresses.length,
+      filesystemPaths: this.filesystemTool?.getAllowedPaths() || [],
     };
   }
 
-  // ── Convenience accessors (non-tool) ───────────────────────
+  // ── Convenience accessors ─────────────────────────────────
 
   getAddresses(type?: WorldSupportedType): WorldAddressEntry[] {
     if (type) return this.addresses.filter((a) => a.type === type);
@@ -170,8 +185,10 @@ export class WorldInstanceTool extends oLaneTool {
   private async loadAddresses(): Promise<void> {
     if (!this.persistPath) return;
     try {
-      if (await fs.pathExists(this.persistPath)) {
-        const data: WorldData = await fs.readJson(this.persistPath);
+      if (await pathExists(this.persistPath)) {
+        const raw = await readFile(this.persistPath, 'utf8');
+        if (!raw.trim()) return;
+        const data: WorldData = JSON.parse(raw);
         this.addresses = data.addresses || [];
       }
     } catch {
@@ -179,13 +196,13 @@ export class WorldInstanceTool extends oLaneTool {
     }
   }
 
-  private async persistAddresses(): Promise<void> {
+  async persistAddresses(): Promise<void> {
     if (!this.persistPath) return;
-    await fs.ensureDir(path.dirname(this.persistPath));
+    await mkdir(path.dirname(this.persistPath), { recursive: true });
     const data: WorldData = {
       config: this.worldConfig,
       addresses: this.addresses,
     };
-    await fs.writeJson(this.persistPath, data, { spaces: 2 });
+    await writeFile(this.persistPath, JSON.stringify(data, null, 2), 'utf8');
   }
 }

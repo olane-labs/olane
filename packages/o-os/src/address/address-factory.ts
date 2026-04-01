@@ -14,7 +14,17 @@ export class AddressFactory {
    * Create a validated o:// address from a name.
    */
   static createAddress(name: string): oNodeAddress {
-    const value = name.startsWith('o://') ? name : `o://${name}`;
+    // Normalize: strip surrounding quotes, then ensure o:// prefix
+    const cleaned = name.replace(/^['"]|['"]$/g, '').trim();
+    const value = cleaned.startsWith('o://') ? cleaned : `o://${cleaned}`;
+
+    // Use oAddress validation: must start with o:// and must not be nested
+    const addr = new oAddress(value);
+    if (!addr.validate()) {
+      throw new Error(`Invalid address '${value}': must use o:// protocol`);
+    }
+    addr.validateNotNested();
+
     return new oNodeAddress(value);
   }
 

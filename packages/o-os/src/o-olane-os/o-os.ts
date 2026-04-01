@@ -370,6 +370,34 @@ export class OlaneOS extends oObject {
   }
 
   /**
+   * Only index if `indexCompletedAt` is not set in the instance config.
+   * Records the timestamp after successful indexing.
+   */
+  private async indexOnceInBackground(): Promise<void> {
+    const osName = await this.getOSInstanceName();
+    if (osName) {
+      const existing = await ConfigManager.getOSConfig(osName);
+      if (existing?.indexCompletedAt) {
+        this.logger.debug('Network already indexed, skipping');
+        return;
+      }
+    }
+
+    await this.indexNetworkParallel();
+
+    // Record completion
+    if (osName) {
+      const config = await ConfigManager.getOSConfig(osName);
+      if (config) {
+        await ConfigManager.saveOSConfig({
+          ...config,
+          indexCompletedAt: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  /**
    * Index all nodes in the network in parallel.
    * Each node indexes itself + its children concurrently,
    * rather than the default sequential tree walk.
@@ -439,13 +467,14 @@ export class OlaneOS extends oObject {
     this.logger.debug('Saved plans run...');
     this.logger.debug('OS instance started...');
 
-    // Index the network so tools are discoverable via vector search.
-    // Fan out all nodes in parallel instead of the default sequential tree walk.
-    if (!this.config.noIndexNetwork) {
-      await this.indexNetworkParallel();
-    }
-
     this.status = OlaneOSSystemStatus.RUNNING;
+
+    // Index the network once (first boot only), in the background.
+    if (!this.config.noIndexNetwork) {
+      this.indexOnceInBackground().catch((err) =>
+        this.logger.error('Background network indexing failed:', err),
+      );
+    }
     return {
       peerId: this.rootLeader?.peerId.toString() || '',
       transports: this.rootLeader?.transports || [],

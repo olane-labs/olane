@@ -3,9 +3,10 @@ import { oLaneTool } from '@olane/o-lane';
 import { oAddress, oRequest, DEFAULT_INSTANCE_PATH } from '@olane/o-core';
 import type { ToolResult } from '@olane/o-tool';
 import { WorldInstanceTool } from './world-instance.tool.js';
-import type { WorldConfig, WorldSupportedType } from './world.types.js';
+import type { WorldConfig, WorldSupportedType, WorldData } from './world.types.js';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { watch, type FSWatcher } from 'node:fs';
 
 export interface WorldManagerConfig extends oNodeConfig {
   /** Base storage path for world data. Defaults to ~/.olane/storage/{systemName}/worlds/ */
@@ -21,6 +22,8 @@ export interface WorldManagerConfig extends oNodeConfig {
 export class WorldManagerTool extends oLaneTool {
   private worlds: Map<string, WorldInstanceTool> = new Map();
   private storagePath: string;
+  private fsWatcher: FSWatcher | null = null;
+  private syncDebounce: NodeJS.Timeout | null = null;
 
   constructor(config: WorldManagerConfig) {
     super({
@@ -80,6 +83,83 @@ export class WorldManagerTool extends oLaneTool {
     await super.start();
     await fs.ensureDir(this.storagePath);
     await this.restoreWorlds();
+    this.startWatching();
+  }
+
+  async stop(): Promise<void> {
+    this.stopWatching();
+    await super.stop();
+  }
+
+  /**
+   * Watch the worlds directory for file changes.
+   * When the CLI writes a new address to a world JSON,
+   * the running instance picks it up and syncs to memory.
+   */
+  private startWatching(): void {
+    try {
+      this.fsWatcher = watch(this.storagePath, (event, filename) => {
+        if (!filename?.endsWith('.json')) return;
+        // Debounce — multiple events fire for a single write
+        if (this.syncDebounce) clearTimeout(this.syncDebounce);
+        this.syncDebounce = setTimeout(() => {
+          this.syncFromDisk(filename).catch((err) =>
+            this.logger.warn(`Failed to sync world file ${filename}:`, err),
+          );
+        }, 500);
+      });
+      this.fsWatcher.unref(); // Don't prevent process exit
+      this.logger.debug('Watching worlds directory for changes');
+    } catch (err) {
+      this.logger.warn('Could not watch worlds directory:', err);
+    }
+  }
+
+  private stopWatching(): void {
+    if (this.syncDebounce) clearTimeout(this.syncDebounce);
+    if (this.fsWatcher) {
+      this.fsWatcher.close();
+      this.fsWatcher = null;
+    }
+  }
+
+  /**
+   * Sync a world from its JSON file on disk into the running instance.
+   * Handles both new worlds and updated addresses on existing worlds.
+   */
+  private async syncFromDisk(filename: string): Promise<void> {
+    const filePath = path.join(this.storagePath, filename);
+    if (!(await fs.pathExists(filePath))) return;
+
+    try {
+      const data: WorldData = await fs.readJson(filePath);
+      const worldConfig: WorldConfig = data.config;
+      if (!worldConfig?.id) return;
+
+      const existing = this.worlds.get(worldConfig.id);
+      if (existing) {
+        // Sync addresses: add any new ones from disk into the running instance
+        const diskAddresses = data.addresses || [];
+        const currentAddresses = existing.getAddresses();
+
+        for (const addr of diskAddresses) {
+          const alreadyLoaded = currentAddresses.some((a) => a.address === addr.address);
+          if (!alreadyLoaded) {
+            await existing._tool_register_address({
+              params: { address: addr.address, type: addr.type, metadata: addr.metadata },
+            } as any);
+            this.logger.debug(`Synced new address '${addr.address}' to world '${worldConfig.name}'`);
+          }
+        }
+      } else {
+        // New world — start it
+        const instance = await this.startWorldInstance(worldConfig);
+        this.worlds.set(worldConfig.id, instance);
+        this.logger.debug(`Synced new world from disk: ${worldConfig.name}`);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to parse world file ${filename}:`, err);
+    }
   }
 
   // ── Tool methods ───────────────────────────────────────────

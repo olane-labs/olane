@@ -27,6 +27,8 @@ export interface OlaneOSInstanceConfig {
   copassId?: string;
   /** World ID if this instance represents a world. */
   worldId?: string;
+  /** Timestamp of first completed network index. */
+  indexCompletedAt?: string;
 }
 
 export interface CLIConfig {
