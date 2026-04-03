@@ -10,7 +10,13 @@ import { errorHandler, OlaneError } from './middleware/error-handler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { createJwtMiddleware } from './middleware/jwt-auth.js';
 import { ServerLogger } from './utils/logger.js';
-import { oAddress, oRequestContext, ORequestAuthContext } from '@olane/o-core';
+import {
+  oAddress,
+  oRequestContext,
+  ORequestAuthContext,
+  ORequestStore,
+} from '@olane/o-core';
+import { randomUUID } from 'crypto';
 import { Server } from 'http';
 import {
   validateAddress,
@@ -45,9 +51,7 @@ export function oServer(config: ServerConfig): ServerInstance {
 
     // Extract raw token from Authorization header
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : '';
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
     return {
       token,
@@ -61,22 +65,23 @@ export function oServer(config: ServerConfig): ServerInstance {
    */
   function stripClientAuth(params: any): any {
     if (!params || typeof params !== 'object') return params;
-    const { _auth, ...rest } = params;
+    const { _auth, _trace, ...rest } = params;
     return rest;
   }
 
   /**
-   * Deep-strip _auth from response data before sending to HTTP client.
-   * Prevents leaking tokens in response payloads.
+   * Deep-strip internal fields (_auth, _trace) from response data before
+   * sending to HTTP client. Prevents leaking tokens and trace metadata.
    */
-  function stripAuthFromResponse(obj: any): any {
-    if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
-    if (Array.isArray(obj)) return obj.map(stripAuthFromResponse);
+  function stripInternalFields(obj: any): any {
+    if (obj === null || obj === undefined || typeof obj !== 'object')
+      return obj;
+    if (Array.isArray(obj)) return obj.map(stripInternalFields);
 
     const result: any = {};
     for (const key of Object.keys(obj)) {
-      if (key === '_auth') continue;
-      result[key] = stripAuthFromResponse(obj[key]);
+      if (key === '_auth' || key === '_trace') continue;
+      result[key] = stripInternalFields(obj[key]);
     }
     return result;
   }
@@ -101,7 +106,9 @@ export function oServer(config: ServerConfig): ServerInstance {
     });
   } else if (authenticate) {
     // Deprecated: Legacy authentication support
-    logger.log('⚠️  WARNING: The "authenticate" parameter is deprecated. Please migrate to "jwtAuth".');
+    logger.log(
+      '⚠️  WARNING: The "authenticate" parameter is deprecated. Please migrate to "jwtAuth".',
+    );
     app.use(basePath, authMiddleware(authenticate));
   }
 
@@ -150,16 +157,18 @@ export function oServer(config: ServerConfig): ServerInstance {
 
       const address = new oAddress(addressStr);
 
-      // Wrap in request context for AsyncLocalStorage propagation
-      const result = await (auth
-        ? oRequestContext.run({ auth }, () =>
-            node.use(address, { method, params: finalParams, id }),
-          )
-        : node.use(address, { method, params: finalParams, id }));
+      // Generate a short request ID for tracing across the call chain
+      const requestId = randomUUID().replace(/-/g, '').substring(0, 8);
+      const store: ORequestStore = { requestId };
+      if (auth) store.auth = auth;
+
+      const result = await oRequestContext.run(store, () =>
+        node.use(address, { method, params: finalParams, id }),
+      );
 
       const response: SuccessResponse = {
         success: true,
-        data: stripAuthFromResponse(result.result),
+        data: stripInternalFields(result.result),
       };
 
       res.json(response);
@@ -184,7 +193,7 @@ export function oServer(config: ServerConfig): ServerInstance {
         validateAddress(addressStr);
 
         // Validate method
-        validateMethod(method);
+        validateMethod(method as string);
 
         // Strip client-injected _auth before sanitization (anti-spoofing)
         const strippedParams = stripClientAuth(params);
@@ -207,16 +216,18 @@ export function oServer(config: ServerConfig): ServerInstance {
 
         const address = new oAddress(addressStr);
 
-        // Wrap in request context for AsyncLocalStorage propagation
-        const result = await (auth
-          ? oRequestContext.run({ auth }, () =>
-              node.use(address, { method, params: finalParams }),
-            )
-          : node.use(address, { method, params: finalParams }));
+        // Generate a short request ID for tracing across the call chain
+        const requestId = randomUUID().replace(/-/g, '').substring(0, 8);
+        const store: ORequestStore = { requestId };
+        if (auth) store.auth = auth;
+
+        const result = await oRequestContext.run(store, () =>
+          node.use(address, { method: method as string, params: finalParams }),
+        );
 
         const response: SuccessResponse = {
           success: true,
-          data: stripAuthFromResponse(result.result),
+          data: stripInternalFields(result.result),
         };
 
         res.json(response);
@@ -266,19 +277,22 @@ export function oServer(config: ServerConfig): ServerInstance {
 
         const address = new oAddress(addressStr);
 
+        // Generate a short request ID for tracing across the call chain
+        const requestId = randomUUID().replace(/-/g, '').substring(0, 8);
+        const store: ORequestStore = { requestId };
+        if (auth) store.auth = auth;
+
         try {
           // TODO: Implement actual streaming support when available
           // For now, execute and return result
-          const result = await (auth
-            ? oRequestContext.run({ auth }, () =>
-                node.use(address, { method, params: finalParams }),
-              )
-            : node.use(address, { method, params: finalParams }));
+          const result = await oRequestContext.run(store, () =>
+            node.use(address, { method, params: finalParams }),
+          );
 
           res.write(
             `data: ${JSON.stringify({
               type: 'complete',
-              result: stripAuthFromResponse(result.result),
+              result: stripInternalFields(result.result),
             })}\n\n`,
           );
 

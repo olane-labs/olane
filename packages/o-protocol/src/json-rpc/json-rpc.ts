@@ -14,6 +14,7 @@ export interface RequestParams {
   _streamId?: string;
   _responseConnectionId?: string;
   _auth?: { token: string; claims: { sub?: string; [key: string]: any } };
+  _trace?: { requestId: string };
   [key: string]: any;
 }
 

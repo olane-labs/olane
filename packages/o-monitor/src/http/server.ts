@@ -214,7 +214,7 @@ export class MonitorHTTPServer {
     // Get specific node metrics
     this.app.get('/api/nodes/:address', async (req: Request, res: Response) => {
       try {
-        const address = decodeURIComponent(req.params.address);
+        const address = decodeURIComponent(req.params.address as string);
         const latestMetrics = this.metricsStore.getLatestMetrics(address);
         const allMetrics = this.metricsStore.getAllMetrics(address);
         const heartbeat = this.metricsStore.getLastHeartbeat(address);

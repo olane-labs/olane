@@ -125,7 +125,7 @@ export class CoreUtils extends oObject {
     }
 
     try {
-      utils.logger.debug('Sending response via stream', stream.id);
+      // utils.logger.debug('Sending response via stream', stream.id);
       const lp = lpStream(stream, {
         maxBufferSize: 100 * 1024 * 1024 * 5, // 500 MB
       });

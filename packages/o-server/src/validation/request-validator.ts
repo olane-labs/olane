@@ -42,8 +42,8 @@ export function validateRequest<T>(data: unknown, schema: z.ZodSchema<T>): T {
   } catch (error) {
     if (error instanceof z.ZodError) {
       // Format Zod errors into a readable message
-      const message = error.errors
-        .map((e) => {
+      const message = (error as any).errors
+        .map((e: any) => {
           const path = e.path.join('.');
           return path ? `${path}: ${e.message}` : e.message;
         })
@@ -51,7 +51,7 @@ export function validateRequest<T>(data: unknown, schema: z.ZodSchema<T>): T {
 
       throw new ValidationError(
         `Invalid request: ${message}`,
-        'INVALID_PARAMS'
+        'INVALID_PARAMS',
       );
     }
     // Re-throw non-Zod errors

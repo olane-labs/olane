@@ -128,9 +128,7 @@ export class oApprovalTool extends oLaneTool {
     );
 
     const response = await Promise.race([approvalPromise, timeoutPromise]);
-    const answer = (response.result.data as any)?.answer
-      ?.trim()
-      .toLowerCase();
+    const answer = (response.result.data as any)?.answer?.trim().toLowerCase();
 
     // Parse the response
     const decision = this.parseApprovalResponse(answer);

@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.17 (2026-04-01)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
+## <small>0.8.16 (2026-02-25)</small>
+
+- verbose logging ([dd2017c](https://github.com/olane-labs/olane/commit/dd2017c))
+
+## <small>0.8.15 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
+## <small>0.8.14 (2026-02-25)</small>
+
+- clean up messy logic in primary o-lane loop ([8c82e9d](https://github.com/olane-labs/olane/commit/8c82e9d))
+- minor change ([248b7f4](https://github.com/olane-labs/olane/commit/248b7f4))
+- update deps ([4143daa](https://github.com/olane-labs/olane/commit/4143daa))
+
+## <small>0.8.13 (2026-02-25)</small>
+
+- minor change ([e3060ee](https://github.com/olane-labs/olane/commit/e3060ee))
+
+## <small>0.8.12 (2026-02-24)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
+## <small>0.8.11 (2026-02-22)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
+## <small>0.8.10 (2026-02-19)</small>
+
+- minor change ([52eeade](https://github.com/olane-labs/olane/commit/52eeade))
+
+## <small>0.8.9 (2026-02-19)</small>
+
+- updated exports + skeleton for o-context ([fa02bd8](https://github.com/olane-labs/olane/commit/fa02bd8))
+
+## <small>0.8.8 (2026-02-19)</small>
+
+- minor change ([1bedaeb](https://github.com/olane-labs/olane/commit/1bedaeb))
+- minor change ([61f955e](https://github.com/olane-labs/olane/commit/61f955e))
+
+## <small>0.8.7 (2026-02-19)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
+## <small>0.8.6 (2026-02-19)</small>
+
+**Note:** Version bump only for package @olane/o-lane
+
 ## <small>0.8.5 (2026-02-18)</small>
 
 **Note:** Version bump only for package @olane/o-lane

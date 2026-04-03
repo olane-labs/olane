@@ -184,7 +184,7 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
   },
   generate_image: {
     name: 'generate_image',
-    description: 'Generate images using Gemini nano-banana models. Creates images from text prompts using gemini-2.5-flash-image or gemini-3-pro-image-preview.',
+    description: 'Generate images using Gemini nano-banana models. Creates images from text prompts using gemini-3-pro-image-preview (Nano Banana Pro).',
     dependencies: [],
     parameters: [
       {
@@ -198,7 +198,7 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
         name: 'model',
         type: 'string',
         value: 'string',
-        description: 'The model to use for image generation. Options: "gemini-2.5-flash-image" (default) or "gemini-3-pro-image-preview"',
+        description: 'The model to use for image generation. Default: "gemini-3-pro-image-preview" (Nano Banana Pro)',
         required: false,
       },
       {
@@ -220,6 +220,14 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
         type: 'string',
         value: 'string',
         description: 'Optional description of what to avoid in the generated image.',
+        required: false,
+      },
+      {
+        name: 'images',
+        type: 'array',
+        value: 'string[]',
+        description:
+          'Optional array of reference images as data URIs (data:image/...;base64,...) for context-aware generation',
         required: false,
       },
     ],
@@ -247,7 +255,7 @@ export const LLM_PARAMS: { [key: string]: oMethod } = {
         name: 'model',
         type: 'string',
         value: 'string',
-        description: 'The model to use for image editing. Options: "gemini-2.5-flash-image" (default) or "gemini-3-pro-image-preview"',
+        description: 'The model to use for image editing. Default: "gemini-3-pro-image-preview" (Nano Banana Pro)',
         required: false,
       },
       {

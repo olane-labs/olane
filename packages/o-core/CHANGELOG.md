@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.17 (2026-04-01)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.16 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.15 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.14 (2026-02-25)</small>
+
+- added traceability ([67aafb1](https://github.com/olane-labs/olane/commit/67aafb1))
+- update deps ([4143daa](https://github.com/olane-labs/olane/commit/4143daa))
+
+## <small>0.8.13 (2026-02-25)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.12 (2026-02-24)</small>
+
+- minor change ([70663d3](https://github.com/olane-labs/olane/commit/70663d3))
+
+## <small>0.8.11 (2026-02-22)</small>
+
+**Note:** Version bump only for package @olane/o-core
+
+## <small>0.8.10 (2026-02-19)</small>
+
+- minor change ([52eeade](https://github.com/olane-labs/olane/commit/52eeade))
+
+## <small>0.8.9 (2026-02-19)</small>
+
+- added o-context ([67dd43e](https://github.com/olane-labs/olane/commit/67dd43e))
+
+## <small>0.8.8 (2026-02-19)</small>
+
+- minor change ([9b36b9b](https://github.com/olane-labs/olane/commit/9b36b9b))
+- minor change ([1bedaeb](https://github.com/olane-labs/olane/commit/1bedaeb))
+- minor change ([61f955e](https://github.com/olane-labs/olane/commit/61f955e))
+
+## <small>0.8.7 (2026-02-19)</small>
+
+- minor change ([11e06a1](https://github.com/olane-labs/olane/commit/11e06a1))
+
+## <small>0.8.6 (2026-02-19)</small>
+
+- bug fixes for refactor ([1d02356](https://github.com/olane-labs/olane/commit/1d02356))
+
 ## <small>0.8.5 (2026-02-18)</small>
 
 - added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))

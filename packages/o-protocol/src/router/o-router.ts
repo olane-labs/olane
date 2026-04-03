@@ -1,5 +1,5 @@
-import { RequestParams, JSONRPCRequest } from "../json-rpc";
-import { oProtocolMethods } from "../enums";
+import { RequestParams, JSONRPCRequest } from "../json-rpc/index.js";
+import { oProtocolMethods } from "../enums/index.js";
 import { Stream } from "@olane/o-config";
 
 export interface oRouterRequestInterface extends JSONRPCRequest {

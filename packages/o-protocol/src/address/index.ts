@@ -1,1 +1,1 @@
-export * from './o-address';
+export * from './o-address.js';

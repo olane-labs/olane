@@ -94,7 +94,7 @@ export class McpTool extends oLaneTool {
           'MCP Tool Definition: ',
           tool.name,
           tool.description,
-          tool.inputSchema,
+          tool.inputSchema.properties,
         );
         return {
           name: tool.name,

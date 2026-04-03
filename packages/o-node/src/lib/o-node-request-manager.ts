@@ -213,9 +213,9 @@ export class oNodeRequestManager extends oRequestManager {
       const response = await responseBuilder.build(request, result, null);
       await CoreUtils.sendResponse(response, request.stream);
 
-      this.logger.debug(
-        `Successfully processed request: method=${request.method}, id=${request.id}`,
-      );
+      // this.logger.debug(
+      //   `Successfully processed request: method=${request.method}, id=${request.id}`,
+      // );
     } catch (error: any) {
       this.logger.error(
         `Error processing request: method=${request.method}, id=${request.id}`,

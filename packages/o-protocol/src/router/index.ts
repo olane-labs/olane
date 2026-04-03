@@ -1,1 +1,1 @@
-export * from './o-router';
+export * from './o-router.js';

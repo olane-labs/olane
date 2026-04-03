@@ -1,1 +1,1 @@
-export * from "./o-method";
+export * from "./o-method.js";

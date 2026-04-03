@@ -2,6 +2,8 @@ import { OlaneOSSystemStatus } from './enum/o-os.status-enum.js';
 import { OlaneOSConfig } from './interfaces/o-os.config.js';
 import touch from 'touch';
 import { readFile } from 'fs/promises';
+import { mkdir } from 'fs/promises';
+import * as path from 'path';
 import { oLeaderNode } from '@olane/o-leader';
 import { oAddress, oObject, oTransport } from '@olane/o-core';
 import { NodeType } from '@olane/o-core';
@@ -12,6 +14,10 @@ import { oLaneTool } from '@olane/o-lane';
 import { oLaneStorage } from '@olane/o-storage';
 import { oNodeAddress } from '@olane/o-node';
 import { oNodeConfig } from '@olane/o-node';
+import { WorldManagerTool } from '../worlds/world-manager.tool.js';
+import { AddressBook } from '../address-book/address-book.js';
+import { MemoryHarness } from '../memory/memory-harness.js';
+import { CopassVectorStoreTool } from '../vector-store/copass-vector-store.tool.js';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -21,6 +27,9 @@ export class OlaneOS extends oObject {
   public status!: OlaneOSSystemStatus;
   private config: OlaneOSConfig;
   private roundRobinIndex: number = 0;
+  public worldManager: WorldManagerTool | null = null;
+  public addressBook: AddressBook | null = null;
+  public memory: MemoryHarness | null = null;
 
   constructor(config: OlaneOSConfig) {
     super();
@@ -62,6 +71,8 @@ export class OlaneOS extends oObject {
     // Then we'll migrate to using o://os-config for persistence
     if (this.config.configFilePath) {
       try {
+        // Ensure parent directory exists before touch
+        await mkdir(path.dirname(this.config.configFilePath), { recursive: true });
         await touch(this.config.configFilePath);
 
         this.logger.debug('Config file path: ' + this.config.configFilePath);
@@ -69,9 +80,10 @@ export class OlaneOS extends oObject {
         // let's load the config
         const config = await readFile(this.config.configFilePath, 'utf8');
         this.logger.debug('Config file contents: ' + config);
-        if (config?.length === 0) {
-          // no contents, let's create a new config
-          throw new Error('No config file found, cannot start OS instance');
+        if (!config || config.trim().length === 0) {
+          // Empty file (fresh OS) — use the in-memory config as-is
+          this.logger.debug('Empty config file, using constructor config');
+          return;
         }
 
         const json = JSON.parse(config) as any;
@@ -312,6 +324,112 @@ export class OlaneOS extends oObject {
     }
   }
 
+  /**
+   * Initialize world manager, address book, and memory harness
+   * after the leader and nodes are started.
+   */
+  private async initOSServices(): Promise<void> {
+    const instanceName =
+      (await this.getOSInstanceName()) ||
+      this.config.network?.name ||
+      'default';
+
+    // Address book
+    this.addressBook = new AddressBook(instanceName);
+    await this.addressBook.load();
+
+    // OS service nodes (children of root leader)
+    if (this.rootLeader) {
+      // Memory harness — shells out to `olane ingest/copass` CLI
+      this.memory = new MemoryHarness();
+      this.logger.debug('Memory harness initialized');
+
+      // Vector store — routes to Copass backend so index_network
+      // and any o://vector-store calls go through the memory harness
+      const vectorStore = new CopassVectorStoreTool({
+        address: new oAddress('o://vector-store'),
+        leader: this.rootLeader.address,
+        parent: this.rootLeader.address,
+        _allowNestedAddress: true,
+      });
+      this.rootLeader.addChildNode(vectorStore as any);
+      await vectorStore.start();
+      this.logger.debug('Copass vector store started');
+
+      // World manager
+      this.worldManager = new WorldManagerTool({
+        leader: this.rootLeader.address,
+        parent: this.rootLeader.address,
+        systemName: instanceName,
+        _allowNestedAddress: true,
+      } as any);
+      this.rootLeader.addChildNode(this.worldManager as any);
+      await this.worldManager.start();
+      this.logger.debug('World manager started');
+    }
+  }
+
+  /**
+   * Only index if `indexCompletedAt` is not set in the instance config.
+   * Records the timestamp after successful indexing.
+   */
+  private async indexOnceInBackground(): Promise<void> {
+    const osName = await this.getOSInstanceName();
+    if (osName) {
+      const existing = await ConfigManager.getOSConfig(osName);
+      if (existing?.indexCompletedAt) {
+        this.logger.debug('Network already indexed, skipping');
+        return;
+      }
+    }
+
+    await this.indexNetworkParallel();
+
+    // Record completion
+    if (osName) {
+      const config = await ConfigManager.getOSConfig(osName);
+      if (config) {
+        await ConfigManager.saveOSConfig({
+          ...config,
+          indexCompletedAt: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  /**
+   * Index all nodes in the network in parallel.
+   * Each node indexes itself + its children concurrently,
+   * rather than the default sequential tree walk.
+   */
+  private async indexNetworkParallel(): Promise<void> {
+    const allNodes: Array<oLaneTool | oLeaderNode> = [
+      ...this.leaders,
+      ...this.nodes,
+    ];
+
+    this.logger.debug(
+      `Indexing ${allNodes.length} node(s) in parallel...`,
+    );
+
+    await Promise.allSettled(
+      allNodes.map(async (node) => {
+        try {
+          await node.use(node.address, {
+            method: 'index_network',
+            params: {},
+          });
+        } catch (err) {
+          this.logger.warn(
+            `Failed to index ${node.address.toString()}: ${err}`,
+          );
+        }
+      }),
+    );
+
+    this.logger.debug('Parallel network indexing complete');
+  }
+
   async use(oAddress: oAddress, params: any) {
     const entryNode = this.entryNode();
     if (!entryNode) {
@@ -335,6 +453,10 @@ export class OlaneOS extends oObject {
     await this.startNodes(NodeType.NODE);
     this.logger.debug('Nodes started...');
 
+    // Initialize world manager, address book, and memory harness
+    await this.initOSServices();
+    this.logger.debug('OS services initialized...');
+
     // Load config from o://os-config storage backend (after tools are initialized)
     // This merges any saved lanes from persistent storage
     await this.loadConfigFromStorage();
@@ -345,15 +467,14 @@ export class OlaneOS extends oObject {
     this.logger.debug('Saved plans run...');
     this.logger.debug('OS instance started...');
 
-    // index the OS instance
-    if (!this.config.noIndexNetwork) {
-      await this.use(oAddress.leader(), {
-        method: 'index_network',
-        params: {},
-      });
-    }
-
     this.status = OlaneOSSystemStatus.RUNNING;
+
+    // Index the network once (first boot only), in the background.
+    if (!this.config.noIndexNetwork) {
+      this.indexOnceInBackground().catch((err) =>
+        this.logger.error('Background network indexing failed:', err),
+      );
+    }
     return {
       peerId: this.rootLeader?.peerId.toString() || '',
       transports: this.rootLeader?.transports || [],

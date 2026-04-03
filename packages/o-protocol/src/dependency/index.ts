@@ -1,1 +1,1 @@
-export * from './o-dependency';
+export * from './o-dependency.js';

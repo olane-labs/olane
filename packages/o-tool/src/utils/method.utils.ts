@@ -1,5 +1,5 @@
 import { oAddress, oParameter } from '@olane/o-core';
-import type { oToolBase } from '../o-tool.base';
+import type { oToolBase } from '../o-tool.base.js';
 import { oProtocolMethods } from '@olane/o-protocol';
 
 export class MethodUtils {

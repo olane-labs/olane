@@ -204,7 +204,6 @@ export class oRegistrationManager extends oObject {
             address: this.node.address.toString(),
             transports: this.node.transports.map((t) => t.toString()),
             peerId: this.node.peerId.toString(),
-            _token: this.node.config.joinToken,
           },
         },
       );

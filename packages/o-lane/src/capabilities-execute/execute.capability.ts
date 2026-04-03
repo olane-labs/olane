@@ -17,18 +17,19 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
   }
 
   private resolveAddress(): string {
-    const address = this.config.params?.address || this.config.params?.task?.address;
+    const address =
+      this.config.params?.address || this.config.params?.task?.address;
     if (!address || typeof address !== 'string') {
       throw new Error(
         `Execute capability requires a valid address but received: ${JSON.stringify(address)}. ` +
-        `The AI response must include an "address" field when type is "execute".`
+          `The AI response must include an "address" field when type is "execute".`,
       );
     }
     return address;
   }
 
   async loadPrompt({ tools, methods }: any): Promise<string> {
-    const prompt = await this.promptLoader?.loadPromptForType(this.type, {
+    const params = {
       human_about: '',
       agent_about: '',
       context_global: `
@@ -38,142 +39,154 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
       past_cycles: '',
       address: this.resolveAddress(),
       methods: methods ? JSON.stringify(methods) : '',
-    });
-    return prompt.render();
+    };
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute loadPrompt params', {
+        paramKeys: Object.keys(params),
+        address: params.address,
+        methodsLength: params.methods.length,
+      });
+    }
+    const prompt = await this.promptLoader?.loadPromptForType(this.type, params);
+    const rendered = prompt.render();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute prompt rendered', {
+        length: rendered.length,
+        preview: rendered.substring(0, 500) + (rendered.length > 500 ? '...' : ''),
+      });
+    }
+    return rendered;
   }
 
   async handshake(): Promise<oHandshakeResult> {
-    const response = await this.node.use(
-      new oAddress(this.resolveAddress()),
-      {
-        method: oProtocolMethods.HANDSHAKE,
-        params: {
-          intent: this.config.intent.value,
-        },
+    const address = this.resolveAddress();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Handshake starting', {
+        targetAddress: address,
+        intent: this.config.intent.value,
+      });
+    }
+    const response = await this.node.use(new oAddress(address), {
+      method: oProtocolMethods.HANDSHAKE,
+      params: {
+        intent: this.config.intent.value,
       },
-    );
+    });
+    if (process.env.VERBOSE === 'true') {
+      const data = response.result.data as oHandshakeResult;
+      this.logger.verbose('Handshake response', {
+        targetAddress: address,
+        hasResult: !!data?.result,
+        toolsCount: data?.result?.tools?.length,
+        methodKeys: data?.result?.methods ? Object.keys(data.result.methods) : [],
+      });
+    }
     return response.result.data as oHandshakeResult;
   }
 
-  async run(): Promise<oCapabilityResult> {
-    this.logger.debug(
-      'Starting execution capability with config:',
-      this.config,
-    );
-    // Check if we're in replay mode
-    if (this.config.isReplay) {
-      this.logger.debug(
-        'Execute capability is being replayed - using stored execution data',
-      );
-
-      // Extract stored execution data
-      const storedExecution = this.config.params;
-
-      // Validate stored data exists (strict mode - fail if missing)
-      if (!storedExecution) {
-        this.logger.warn('Invalid replay:', this.config);
-        throw new oError(
-          oErrorCodes.INVALID_RESPONSE,
-          'Replay mode enabled but no stored execution data found',
-        );
-      }
-
-      if (!storedExecution.handshakeResult || !storedExecution.taskConfig) {
-        throw new oError(
-          oErrorCodes.INVALID_RESPONSE,
-          'Replay mode enabled but stored execution data is incomplete',
-        );
-      }
-
-      const { handshakeResult, taskConfig } = storedExecution;
-      const { method, params } = taskConfig;
-
-      this.logger.debug('Replaying task execution with stored data', {
+  private async executeTask(method: string, params: any): Promise<any> {
+    this.logger.debug('Executing task:', method);
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('executeTask', {
+        address: this.resolveAddress(),
         method,
+        paramsKeys: params ? Object.keys(params) : [],
         params,
-        skipHandshake: true,
-        skipIntelligence: true,
-        skipApproval: true,
       });
-
-      // Execute the stored task directly (skip handshake, AI, and approval)
-      try {
-        const taskResponse = await this.node.use(
-          new oAddress(this.resolveAddress()),
-          {
-            method: method,
-            params: params,
-          },
-        );
-
-        // Check if the tool response contains _save flag
-        const shouldPersist =
-          (taskResponse.result?.data as any)?._save === true;
-        if (shouldPersist) {
-          this.logger.debug(
-            'Tool response contains _save flag - lane will be persisted to config',
-          );
-        }
-
-        // Return an EVALUATE result that contains the task execution output
-        return new oCapabilityResult({
-          type: oCapabilityType.EVALUATE,
-          config: this.config,
-          result: {
-            handshakeResult: handshakeResult,
-            taskConfig: taskConfig,
-            response: taskResponse.result,
-          },
-          shouldPersist,
-        });
-      } catch (error: any) {
-        const addr = this.config?.params?.address || this.config?.params?.task?.address;
-        this.logger.error(
-          'Failed to execute during replay:',
-          `Error when trying to use ${addr} with config: ${JSON.stringify(
-            taskConfig,
-          )} resulting in error: ${error?.message}`,
-        );
-        return new oCapabilityResult({
-          type: oCapabilityType.EVALUATE,
-          config: this.config,
-          result: {
-            handshakeResult: handshakeResult,
-            taskConfig: taskConfig,
-          },
-          error: `Error when trying to use ${addr} with config: ${JSON.stringify(
-            taskConfig,
-          )} resulting in error: ${error?.message}`,
-        });
-      }
     }
-
-    // Normal execution flow (not replay)
-    const handshake = await this.handshake();
-    if (!handshake.result) {
-      throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
-    }
-
-    const { tools, methods } = handshake.result;
-    const prompt = await this.loadPrompt({ tools, methods });
-    const aiResponse = await this.intelligence(prompt);
-
-    // Extract task details from AI response
-    // The AI should return the method and params to execute
-    const task = (aiResponse.result as any)?.task || (aiResponse.result as any);
-    if (!task || !task.method) {
-      this.logger.warn('AI did not return a valid task to execute', {
-        aiResponse,
+    const response = await this.node.use(new oAddress(this.resolveAddress()), {
+      method,
+      params,
+    });
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('executeTask response', {
+        method,
+        success: response?.result?.success,
+        resultKeys: response?.result?.data && typeof response.result.data === 'object' ? Object.keys(response.result.data) : [],
       });
-      return aiResponse; // Return AI response as-is if no task to execute
+    }
+    return response;
+  }
+
+  private buildResult(
+    taskResponse: any,
+    handshakeResult: any,
+    taskConfig: { method: string; params: any },
+    address?: string,
+  ): oCapabilityResult {
+    const shouldPersist = (taskResponse.result?.data as any)?._save === true;
+    if (shouldPersist) {
+      this.logger.debug(
+        'Tool response contains _save flag - lane will be persisted to config',
+      );
     }
 
-    const method = task.method;
-    const params = task.params || {};
+    const result: any = {
+      handshakeResult,
+      taskConfig,
+      response: taskResponse.result,
+    };
+    if (address) {
+      result.address = address;
+    }
 
-    this.logger.debug('AI decided to execute:', { method, params });
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('buildResult', {
+        shouldPersist,
+        address,
+        method: taskConfig.method,
+        resultKeys: Object.keys(result),
+        responseSuccess: taskResponse.result?.success,
+      });
+    }
 
-    // Request approval before executing the task
+    return new oCapabilityResult({
+      type: oCapabilityType.EVALUATE,
+      config: this.config,
+      result,
+      shouldPersist,
+    });
+  }
+
+  private buildErrorResult(
+    error: any,
+    handshakeResult: any,
+    taskConfig: { method: string; params: any },
+  ): oCapabilityResult {
+    const addr = this.resolveAddress();
+    const errorMessage = `Error when trying to use ${addr} with config: ${JSON.stringify(taskConfig)} resulting in error: ${error?.message}`;
+
+    this.logger.error('Failed to execute:', errorMessage);
+
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('buildErrorResult', {
+        address: addr,
+        method: taskConfig.method,
+        params: taskConfig.params,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+      });
+    }
+
+    return new oCapabilityResult({
+      type: oCapabilityType.EVALUATE,
+      config: this.config,
+      result: {
+        handshakeResult,
+        taskConfig,
+      },
+      error: errorMessage,
+    });
+  }
+
+  private async requestApproval(method: string, params: any): Promise<void> {
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('requestApproval sending', {
+        toolAddress: this.resolveAddress(),
+        method,
+        paramsKeys: params ? Object.keys(params) : [],
+      });
+    }
     try {
       const approvalResponse = await this.node.use(
         new oAddress('o://approval'),
@@ -181,14 +194,20 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
           method: 'request_approval',
           params: {
             toolAddress: this.resolveAddress(),
-            method: method,
-            params: params,
+            method,
+            params,
             intent: this.config.intent,
           },
         },
       );
 
       const approved = (approvalResponse.result.data as any)?.approved;
+      if (process.env.VERBOSE === 'true') {
+        this.logger.verbose('requestApproval response', {
+          approved,
+          decision: (approvalResponse.result.data as any)?.decision,
+        });
+      }
       if (!approved) {
         const decision =
           (approvalResponse.result.data as any)?.decision || 'denied';
@@ -213,74 +232,141 @@ export class oCapabilityExecute extends oCapabilityIntelligence {
         throw error;
       }
     }
+  }
 
-    try {
-      // Execute the task
-      const taskResponse = await this.node.use(
-        new oAddress(this.resolveAddress()),
-        {
-          method: method,
-          params: params,
-        },
+  async run(): Promise<oCapabilityResult> {
+    this.logger.debug(
+      'Starting execution capability with config:',
+      this.config.intent,
+    );
+
+    // Replay mode: skip handshake, AI, and approval
+    if (this.config.isReplay) {
+      this.logger.debug(
+        'Execute capability is being replayed - using stored execution data',
       );
 
-      // Check if the tool response contains _save flag
-      const shouldPersist = (taskResponse.result?.data as any)?._save === true;
-      if (shouldPersist) {
-        this.logger.debug(
-          'Tool response contains _save flag - lane will be persisted to config',
+      const storedExecution = this.config.params;
+
+      if (!storedExecution) {
+        this.logger.warn('Invalid replay:', this.config);
+        throw new oError(
+          oErrorCodes.INVALID_RESPONSE,
+          'Replay mode enabled but no stored execution data found',
         );
       }
 
-      // Return an EVALUATE result that contains the task execution output
+      if (!storedExecution.handshakeResult || !storedExecution.taskConfig) {
+        throw new oError(
+          oErrorCodes.INVALID_RESPONSE,
+          'Replay mode enabled but stored execution data is incomplete',
+        );
+      }
+
+      const { handshakeResult, taskConfig } = storedExecution;
+      const { method, params } = taskConfig;
+
+      if (process.env.VERBOSE === 'true') {
+        this.logger.verbose('Execute replay full stored data', {
+          address: storedExecution.address,
+          method,
+          params,
+          handshakeToolsCount: handshakeResult?.tools?.length,
+          handshakeMethodKeys: handshakeResult?.methods ? Object.keys(handshakeResult.methods) : [],
+        });
+      }
+
+      this.logger.debug('Replaying task execution with stored data', {
+        method,
+        params,
+        skipHandshake: true,
+        skipIntelligence: true,
+        skipApproval: true,
+      });
+
+      try {
+        const taskResponse = await this.executeTask(method, params);
+        return this.buildResult(taskResponse, handshakeResult, taskConfig);
+      } catch (error: any) {
+        return this.buildErrorResult(error, handshakeResult, taskConfig);
+      }
+    }
+
+    // Normal execution flow
+    const address = this.resolveAddress();
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute run normal flow starting', {
+        address,
+        intent: this.config.intent.value,
+      });
+    }
+
+    const handshake = await this.handshake();
+    if (!handshake.result) {
+      throw new oError(oErrorCodes.INVALID_RESPONSE, 'Handshake failed');
+    }
+
+    const { tools, methods } = handshake.result;
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute handshake result', {
+        toolsList: tools,
+        methodKeys: methods ? Object.keys(methods) : [],
+      });
+    }
+
+    const prompt = await this.loadPrompt({ tools, methods });
+    const aiResponse = await this.intelligence(prompt);
+
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute AI response', {
+        responseType: aiResponse.type,
+        hasError: !!aiResponse.error,
+        resultKeys: aiResponse.result && typeof aiResponse.result === 'object' ? Object.keys(aiResponse.result) : [],
+      });
+    }
+
+    const task = (aiResponse.result as any)?.task || (aiResponse.result as any);
+    if (!task || !task.method) {
+      this.logger.warn('AI did not return a valid task to execute', {
+        aiResponse,
+      });
       return new oCapabilityResult({
         type: oCapabilityType.EVALUATE,
         config: this.config,
         result: {
-          handshakeResult: {
-            tools: tools,
-            methods: methods,
-          },
-          taskConfig: {
-            method: method,
-            params: params,
-          },
+          handshakeResult: { tools, methods },
           address: this.resolveAddress(),
-          response: taskResponse.result,
+          response: aiResponse.result,
         },
-        shouldPersist,
+        shouldPersist: false,
       });
-    } catch (error: any) {
-      const addr = this.config?.params?.address || this.config?.params?.task?.address;
-      this.logger.error(
-        'Failed to execute:',
-        `Error when trying to use ${addr} with config: ${JSON.stringify(
-          {
-            method: method,
-            params: params,
-          },
-        )} resulting in error: ${error?.message}`,
+    }
+
+    const method = task.method;
+    const params = task.params || {};
+    const taskConfig = { method, params };
+
+    this.logger.debug('AI decided to execute:', { method, params });
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Execute task chosen by AI', {
+        method,
+        params,
+        address,
+      });
+    }
+
+    await this.requestApproval(method, params);
+
+    try {
+      const taskResponse = await this.executeTask(method, params);
+      return this.buildResult(
+        taskResponse,
+        { tools, methods },
+        taskConfig,
+        this.resolveAddress(),
       );
-      return new oCapabilityResult({
-        type: oCapabilityType.EVALUATE,
-        config: this.config,
-        result: {
-          handshakeResult: {
-            tools: handshake.result.tools,
-            methods: handshake.result.methods,
-          },
-          taskConfig: {
-            method: method,
-            params: params,
-          },
-        },
-        error: `Error when trying to use ${addr} with config: ${JSON.stringify(
-          {
-            method: method,
-            params: params,
-          },
-        )} resulting in error: ${error?.message}`,
-      });
+    } catch (error: any) {
+      return this.buildErrorResult(error, { tools, methods }, taskConfig);
     }
   }
 }

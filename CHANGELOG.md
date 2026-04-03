@@ -3,6 +3,76 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## <small>0.8.17 (2026-04-01)</small>
+
+- added olane os improvements for the local functionality ([c5a92d3](https://github.com/olane-labs/olane/commit/c5a92d3))
+- fix for relay + startup + vector store ([e2bfe27](https://github.com/olane-labs/olane/commit/e2bfe27))
+- improvements to the os offering around address management + indexing ([225c421](https://github.com/olane-labs/olane/commit/225c421))
+- minor change ([e4ff9ab](https://github.com/olane-labs/olane/commit/e4ff9ab))
+- chore: update pnpm-lock.yaml after version bump ([8e724c4](https://github.com/olane-labs/olane/commit/8e724c4))
+
+## <small>0.8.16 (2026-02-25)</small>
+
+- verbose logging ([dd2017c](https://github.com/olane-labs/olane/commit/dd2017c))
+- chore: update pnpm-lock.yaml after version bump ([e68ec12](https://github.com/olane-labs/olane/commit/e68ec12))
+
+## <small>0.8.15 (2026-02-25)</small>
+
+- minor change ([4845ceb](https://github.com/olane-labs/olane/commit/4845ceb))
+- chore: update pnpm-lock.yaml after version bump ([c7df897](https://github.com/olane-labs/olane/commit/c7df897))
+
+## <small>0.8.14 (2026-02-25)</small>
+
+- added traceability ([67aafb1](https://github.com/olane-labs/olane/commit/67aafb1))
+- clean up messy logic in primary o-lane loop ([8c82e9d](https://github.com/olane-labs/olane/commit/8c82e9d))
+- minor change ([248b7f4](https://github.com/olane-labs/olane/commit/248b7f4))
+- update deps ([4143daa](https://github.com/olane-labs/olane/commit/4143daa))
+- chore: update pnpm-lock.yaml after version bump ([23c3e99](https://github.com/olane-labs/olane/commit/23c3e99))
+
+## <small>0.8.13 (2026-02-25)</small>
+
+- minor change ([e3060ee](https://github.com/olane-labs/olane/commit/e3060ee))
+- chore: update pnpm-lock.yaml after version bump ([97a0630](https://github.com/olane-labs/olane/commit/97a0630))
+
+## <small>0.8.12 (2026-02-24)</small>
+
+- minor change ([70663d3](https://github.com/olane-labs/olane/commit/70663d3))
+- chore: update pnpm-lock.yaml after version bump ([d7f0105](https://github.com/olane-labs/olane/commit/d7f0105))
+
+## <small>0.8.11 (2026-02-22)</small>
+
+- added support for image anchors in prompting ([8ce02e9](https://github.com/olane-labs/olane/commit/8ce02e9))
+- chore: update pnpm-lock.yaml after version bump ([fca15d7](https://github.com/olane-labs/olane/commit/fca15d7))
+
+## <small>0.8.10 (2026-02-19)</small>
+
+- minor change ([3411d9d](https://github.com/olane-labs/olane/commit/3411d9d))
+- minor change ([52eeade](https://github.com/olane-labs/olane/commit/52eeade))
+- chore: update pnpm-lock.yaml after version bump ([982373d](https://github.com/olane-labs/olane/commit/982373d))
+
+## <small>0.8.9 (2026-02-19)</small>
+
+- added o-context ([67dd43e](https://github.com/olane-labs/olane/commit/67dd43e))
+- updated exports + skeleton for o-context ([fa02bd8](https://github.com/olane-labs/olane/commit/fa02bd8))
+- chore: update pnpm-lock.yaml after version bump ([3e8d257](https://github.com/olane-labs/olane/commit/3e8d257))
+
+## <small>0.8.8 (2026-02-19)</small>
+
+- minor change ([9b36b9b](https://github.com/olane-labs/olane/commit/9b36b9b))
+- minor change ([1bedaeb](https://github.com/olane-labs/olane/commit/1bedaeb))
+- minor change ([61f955e](https://github.com/olane-labs/olane/commit/61f955e))
+- chore: update pnpm-lock.yaml after version bump ([73f9e90](https://github.com/olane-labs/olane/commit/73f9e90))
+
+## <small>0.8.7 (2026-02-19)</small>
+
+- minor change ([11e06a1](https://github.com/olane-labs/olane/commit/11e06a1))
+- chore: update pnpm-lock.yaml after version bump ([530f7e3](https://github.com/olane-labs/olane/commit/530f7e3))
+
+## <small>0.8.6 (2026-02-19)</small>
+
+- bug fixes for refactor ([1d02356](https://github.com/olane-labs/olane/commit/1d02356))
+- chore: update pnpm-lock.yaml after version bump ([e88f1e5](https://github.com/olane-labs/olane/commit/e88f1e5))
+
 ## <small>0.8.5 (2026-02-18)</small>
 
 - added standardization around token management + context injection for subsequent tool calls ([462b935](https://github.com/olane-labs/olane/commit/462b935))

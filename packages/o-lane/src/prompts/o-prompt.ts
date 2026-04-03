@@ -83,6 +83,18 @@ export class oPrompt extends oObject {
 
       // Render the template with params
       const result = this.compiledTemplate(this.params);
+
+      if (process.env.VERBOSE === 'true') {
+        this.logger.verbose('Prompt compiled', {
+          type: this.type,
+          provider: this.provider,
+          requiredVariables: this.getRequiredVariables(),
+          providedParams: Object.keys(this.params),
+          outputLength: result.length,
+          preview: result.substring(0, 300) + (result.length > 300 ? '...' : ''),
+        });
+      }
+
       return result;
     } catch (error) {
       if (error instanceof Error) {

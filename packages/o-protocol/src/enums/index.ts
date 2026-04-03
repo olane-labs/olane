@@ -1,1 +1,1 @@
-export * from './o-protocol-methods.enum';
+export * from './o-protocol-methods.enum.js';

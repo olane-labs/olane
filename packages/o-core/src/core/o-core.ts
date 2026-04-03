@@ -25,6 +25,7 @@ import { UseOptions } from './interfaces/use-options.interface.js';
 import { UseStreamOptions } from './interfaces/use-stream-options.interface.js';
 import { UseDataConfig } from './interfaces/use-data.config.js';
 import { oRequestContext } from '../context/o-request-context.js';
+import { oTokenManager } from '../auth/o-token-manager.js';
 
 export abstract class oCore extends oObject {
   public address: oAddress;
@@ -36,6 +37,7 @@ export abstract class oCore extends oObject {
   public requestManager?: oRequestManager;
   public router!: oRouter;
   public notificationManager!: oNotificationManager;
+  public tokenManager?: oTokenManager;
   private heartbeatInterval?: NodeJS.Timeout;
 
   constructor(readonly config: oCoreConfig) {
@@ -50,6 +52,10 @@ export abstract class oCore extends oObject {
     }
 
     this.address = config.address || new oAddress('o://node');
+
+    if (config.tokenManager) {
+      this.tokenManager = config.tokenManager;
+    }
   }
 
   get isLeader(): boolean {
@@ -152,7 +158,7 @@ export abstract class oCore extends oObject {
       throw new Error('Request manager is not initialized');
     }
 
-    const enriched = this.injectAuthContext(data);
+    const enriched = await this.injectAuthContext(data);
 
     if (address?.toStaticAddress().equals(this.address.toStaticAddress())) {
       return this.useSelf(enriched);
@@ -175,22 +181,71 @@ export abstract class oCore extends oObject {
   }
 
   /**
-   * Injects _auth from AsyncLocalStorage into request params if not already present.
-   * This enables automatic auth propagation across node.use() calls.
+   * Injects _auth into request params if not already present.
+   *
+   * Resolution order:
+   * 1. AsyncLocalStorage context (propagated auth from an incoming request)
+   * 2. Node-level tokenManager (the node's own identity)
+   *
+   * This ensures every outbound request carries auth — whether it originates
+   * from within a request chain or from a node-initiated call (registration,
+   * heartbeat, etc.).
    */
-  private injectAuthContext(data?: UseDataConfig): UseDataConfig | undefined {
+  private async injectAuthContext(
+    data?: UseDataConfig,
+  ): Promise<UseDataConfig | undefined> {
     if (!data) return data;
 
-    const auth = oRequestContext.getAuth();
-    if (!auth || data.params?._auth) return data;
+    // Already has explicit _auth — don't overwrite
+    if (data.params?._auth) return data;
 
-    return {
+    // 1. Propagated auth from incoming request context
+    let auth = oRequestContext.getAuth();
+
+    // 2. Fallback: node's own identity via tokenManager
+    if (!auth && this.tokenManager) {
+      try {
+        await this.tokenManager.getTokenResult();
+        auth = this.tokenManager.toAuthContext() ?? undefined;
+      } catch (error) {
+        this.logger.debug('Failed to get token from tokenManager:', error);
+      }
+    }
+
+    if (!auth) {
+      // Even without auth, inject _trace if available
+      if (!data.params?._trace) {
+        const requestId = oRequestContext.getRequestId();
+        if (requestId) {
+          return {
+            ...data,
+            params: { ...data.params, _trace: { requestId } },
+          };
+        }
+      }
+      return data;
+    }
+
+    let enriched: UseDataConfig = {
       ...data,
       params: {
         ...data.params,
         _auth: auth,
       },
     };
+
+    // Inject _trace if not already present
+    if (!enriched.params?._trace) {
+      const requestId = oRequestContext.getRequestId();
+      if (requestId) {
+        enriched = {
+          ...enriched,
+          params: { ...enriched.params, _trace: { requestId } },
+        };
+      }
+    }
+
+    return enriched;
   }
 
   async useSelf(data?: {
@@ -200,7 +255,9 @@ export abstract class oCore extends oObject {
   }): Promise<oResponse> {
     this.validateRunning();
 
-    const enriched = this.injectAuthContext(data as UseDataConfig | undefined);
+    const enriched = await this.injectAuthContext(
+      data as UseDataConfig | undefined,
+    );
 
     const request = new oRequest({
       method: enriched?.method as string,
@@ -250,7 +307,7 @@ export abstract class oCore extends oObject {
       throw new Error('Request manager is not initialized');
     }
 
-    const enriched = this.injectAuthContext(data);
+    const enriched = await this.injectAuthContext(data);
 
     // extract child address with transports
     if (!childAddress.transports) {
@@ -461,11 +518,11 @@ export abstract class oCore extends oObject {
   public async teardown(): Promise<void> {
     this.logger.debug('Tearing down node...');
     this.state = NodeState.STOPPING;
-    this.hierarchyManager.clear();
+    this.hierarchyManager?.clear();
 
     // Teardown notification manager
     if (this.notificationManager) {
-      await this.notificationManager.teardown();
+      await this.notificationManager?.teardown();
     }
 
     // Reset state to allow restart

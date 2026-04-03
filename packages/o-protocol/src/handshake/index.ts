@@ -1,1 +1,1 @@
-export * from './o-handshake';
+export * from './o-handshake.js';

@@ -1,4 +1,4 @@
-import { OlaneOS } from '../o-olane-os';
+import { OlaneOS } from '../o-olane-os/index.js';
 import { NodeType, oAddress, setupGracefulShutdown } from '@olane/o-core';
 import dotenv from 'dotenv';
 

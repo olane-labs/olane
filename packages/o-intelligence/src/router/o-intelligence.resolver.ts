@@ -6,10 +6,10 @@ import {
   oTransport,
   RouteResponse,
 } from '@olane/o-core';
-import { IntelligenceStorageKeys } from '../enums/intelligence-storage-keys.enum';
+import { IntelligenceStorageKeys } from '../enums/intelligence-storage-keys.enum.js';
 import { ToolResult } from '@olane/o-tool';
-import { LLMProviders } from '../enums/llm-providers.enum';
-import { HostModelProvider } from '../enums/host-model-provider.enum';
+import { LLMProviders } from '../enums/llm-providers.enum.js';
+import { HostModelProvider } from '../enums/host-model-provider.enum.js';
 
 export abstract class oIntelligenceResolver extends oAddressResolver {
   constructor(protected readonly address: oAddress) {

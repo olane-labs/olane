@@ -1,0 +1,58 @@
+{
+  "name": "@olane/o-context",
+  "version": "0.8.17",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "node": "./dist/src/index.js",
+      "default": "./dist/src/o-context.browser.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "build": "rm -rf dist && tsc",
+    "start:prod": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "lint": "aegir lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olane-labs/olane.git"
+  },
+  "author": "Olane Inc.",
+  "license": "(MIT OR Apache-2.0)",
+  "description": "Generic async context primitive with platform-specific implementations (AsyncLocalStorage for Node, variable swap for browser/RN)",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/js": "^10.0.1",
+    "@tsconfig/node20": "^20.1.9",
+    "@types/jest": "^30.0.0",
+    "@types/uuid": "^11.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "aegir": "^47.0.26",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.3.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "gitHead": "6516f4d0c3034c7c5003862472fecd0bd9241387"
+}

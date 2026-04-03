@@ -77,6 +77,7 @@ export function withLeader<T extends new (...args: any[]) => oToolBase>(
           listeners: [],
         },
         joinToken: (this as any).config.joinToken,
+        tokenManager: (this as any).tokenManager,
       });
       (registryTool as any).onInitFinished(() => {
         this.addChildNode(registryTool);

@@ -1,5 +1,6 @@
 import debug, { Debugger } from 'debug';
 import chalk from 'chalk';
+import { oRequestContext } from '../context/o-request-context.js';
 
 export class Logger {
   private log: Debugger;
@@ -14,27 +15,33 @@ export class Logger {
     this.log = debug('olane-os:' + this.suffix + name);
   }
 
+  private tracePrefix(): string {
+    const reqId = oRequestContext.getRequestId?.();
+    if (!reqId) return '';
+    return `[${reqId}] `;
+  }
+
   verbose(...args: any[]) {
-    this.log(chalk.gray('[VERBOSE]'), ...args);
+    this.log(chalk.gray('[VERBOSE]'), this.tracePrefix(), ...args);
   }
 
   debug(...args: any[]) {
-    this.log(chalk.blue('[DEBUG]'), ...args);
+    this.log(chalk.blue('[DEBUG]'), this.tracePrefix(), ...args);
   }
 
   info(...args: any[]) {
-    this.log(chalk.green('[INFO]'), ...args);
+    this.log(chalk.green('[INFO]'), this.tracePrefix(), ...args);
   }
 
   warn(...args: any[]) {
-    this.log(chalk.yellow('[WARN]'), ...args);
+    this.log(chalk.yellow('[WARN]'), this.tracePrefix(), ...args);
   }
 
   error(...args: any[]) {
-    this.log(chalk.red('[ERROR]'), ...args);
+    this.log(chalk.red('[ERROR]'), this.tracePrefix(), ...args);
   }
 
   alert(...args: any[]) {
-    this.log(chalk.redBright('[ALERT]'), ...args);
+    this.log(chalk.redBright('[ALERT]'), this.tracePrefix(), ...args);
   }
 }

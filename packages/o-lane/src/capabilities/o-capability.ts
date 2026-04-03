@@ -23,6 +23,14 @@ export abstract class oCapability extends oObject {
 
   async execute(config: oCapabilityConfig): Promise<oCapabilityResult> {
     this.config = config;
+    if (process.env.VERBOSE === 'true') {
+      this.logger.verbose('Capability execute starting', {
+        capabilityType: this.type,
+        intent: config.intent?.value,
+        isReplay: config.isReplay || false,
+        paramsKeys: config.params && typeof config.params === 'object' ? Object.keys(config.params) : [],
+      });
+    }
     return this.run();
   }
 
