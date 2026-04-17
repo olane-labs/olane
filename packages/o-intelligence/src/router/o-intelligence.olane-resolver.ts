@@ -7,7 +7,7 @@ import {
 } from '@olane/o-core';
 import { oIntelligenceResolver } from './o-intelligence.resolver.js';
 import { HostModelProvider } from '../enums/host-model-provider.enum.js';
-import { oNodeTransport } from '@olane/o-node/dist/src/router/o-node.transport';
+import { oNodeTransport } from '@olane/o-node';
 
 export class oIntelligenceOlaneResolver extends oIntelligenceResolver {
   constructor(protected readonly address: oAddress) {

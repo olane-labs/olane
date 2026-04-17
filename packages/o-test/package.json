@@ -48,6 +48,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
+    "@olane/o-leader": "0.8.18",
     "@tsconfig/node20": "^20.1.9",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
@@ -70,9 +71,13 @@
   },
   "dependencies": {
     "@olane/o-core": "0.8.18",
+    "@olane/o-lane": "0.8.18",
+    "@olane/o-node": "0.8.18",
+    "@olane/o-protocol": "0.8.18",
+    "@olane/o-tool": "0.8.18",
     "chalk": "^5.6.2",
     "debug": "^4.4.3",
     "dotenv": "^17.3.1"
   },
-  "gitHead": "6516f4d0c3034c7c5003862472fecd0bd9241387"
+  "gitHead": "66cd4f8d3987c01d42809692db23be4218ef863b"
 }

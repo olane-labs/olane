@@ -43,6 +43,9 @@
     "serve:docs": "cd docs && mintlify dev",
     "build": "tsc"
   },
+  "dependencies": {
+    "@olane/o-config": "0.8.18"
+  },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.9",
     "glob": "^13.0.6",
@@ -53,5 +56,5 @@
     "typescript": "^5.9.3",
     "typescript-json-schema": "^0.67.1"
   },
-  "gitHead": "6516f4d0c3034c7c5003862472fecd0bd9241387"
+  "gitHead": "66cd4f8d3987c01d42809692db23be4218ef863b"
 }

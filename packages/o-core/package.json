@@ -45,6 +45,7 @@
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
     "@tsconfig/node20": "^20.1.9",
+    "@types/debug": "^4.1.12",
     "@types/jest": "^30.0.0",
     "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
@@ -63,6 +64,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@olane/o-config": "0.8.18",
     "@olane/o-context": "0.8.18",
     "@olane/o-protocol": "0.8.18",
     "chalk": "^5.6.2",
@@ -71,5 +73,5 @@
     "multiformats": "^13.4.2",
     "stream-json": "^1.9.1"
   },
-  "gitHead": "6516f4d0c3034c7c5003862472fecd0bd9241387"
+  "gitHead": "66cd4f8d3987c01d42809692db23be4218ef863b"
 }

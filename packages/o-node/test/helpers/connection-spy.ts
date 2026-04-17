@@ -1,6 +1,6 @@
 import { oNode } from '../../src/o-node.js';
 import { oNodeTool } from '../../src/o-node.tool.js';
-import type { Connection, Stream } from '@libp2p/interface';
+import type { Connection, Stream } from '@olane/o-config';
 
 /**
  * Connection event captured by the spy
