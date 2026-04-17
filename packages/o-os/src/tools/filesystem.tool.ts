@@ -6,8 +6,8 @@ import { readFile, readdir, stat, access } from 'fs/promises';
 import * as path from 'path';
 
 /**
- * FilesystemTool — an oLaneTool that provides scoped filesystem access
- * for a world. Each world gets its own FilesystemTool as a child node.
+ * FilesystemTool — an oLaneTool that provides scoped filesystem access.
+ * A single instance exists per OS at o://fs, shared across all worlds.
  *
  * The tool maintains a list of allowed directory paths (addresses).
  * All file operations are restricted to these directories.

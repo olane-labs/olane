@@ -2,7 +2,6 @@ import { oNodeConfig } from '@olane/o-node';
 import { oLaneTool } from '@olane/o-lane';
 import { oAddress, oRequest } from '@olane/o-core';
 import type { ToolResult } from '@olane/o-tool';
-import { FilesystemTool } from '../tools/filesystem.tool.js';
 import type {
   WorldConfig,
   WorldAddressEntry,
@@ -20,14 +19,14 @@ async function pathExists(p: string): Promise<boolean> {
  * A world instance node — hub for addresses of a given world.
  * Registered as a child of the WorldManagerTool at o://world-manager/{world-name}.
  *
- * Each world instance owns a FilesystemTool child that provides scoped
- * filesystem access to the directories (addresses) registered with it.
+ * Uses the shared OS-level FilesystemTool for scoped filesystem access
+ * to the directories (addresses) registered with it.
  */
 export class WorldInstanceTool extends oLaneTool {
   private worldConfig: WorldConfig;
   private addresses: WorldAddressEntry[] = [];
   private persistPath: string | undefined;
-  public filesystemTool: FilesystemTool | null = null;
+  private fsAddress = new oAddress('o://fs');
 
   constructor(
     nodeConfig: oNodeConfig,
@@ -69,6 +68,14 @@ export class WorldInstanceTool extends oLaneTool {
           parameters: [],
           dependencies: [],
         },
+        ping_address: {
+          name: 'ping_address',
+          description: 'Ping a registered address to verify the underlying resource still exists',
+          parameters: [
+            { name: 'address', type: 'string', required: true, description: 'The registered address to ping' },
+          ],
+          dependencies: [],
+        },
       },
     });
     this.worldConfig = worldConfig;
@@ -83,23 +90,14 @@ export class WorldInstanceTool extends oLaneTool {
     await super.start();
     await this.loadAddresses();
 
-    // Create the FilesystemTool child node scoped to this world's filepath addresses
+    // Sync existing filepath addresses to the shared OS-level FilesystemTool
     const filepathAddresses = this.addresses
       .filter((a) => a.type === 'filepath')
       .map((a) => a.address);
 
-    const slug = this.worldConfig.name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    this.filesystemTool = new FilesystemTool(
-      {
-        address: new oAddress(`o://world-manager/${slug}/fs`),
-        leader: this.leader,
-        parent: this.address,
-        _allowNestedAddress: true,
-      },
-      filepathAddresses,
-    );
-    this.addChildNode(this.filesystemTool as any);
-    await this.filesystemTool.start();
+    for (const addr of filepathAddresses) {
+      await this.use(this.fsAddress, { method: 'add_path', params: { path: addr } });
+    }
   }
 
   // ── Tool methods ───────────────────────────────────────────
@@ -121,6 +119,17 @@ export class WorldInstanceTool extends oLaneTool {
       };
     }
 
+    // Validate and register with o://fs BEFORE storing
+    if (type === 'filepath') {
+      const fsResult = await this.use(this.fsAddress, { method: 'add_path', params: { path: address } });
+      if (!fsResult.result?.success) {
+        return {
+          success: false,
+          error: fsResult.result?.error || `Address '${address}' does not exist or is not a valid directory`,
+        };
+      }
+    }
+
     const entry: WorldAddressEntry = {
       address,
       type,
@@ -128,12 +137,6 @@ export class WorldInstanceTool extends oLaneTool {
       metadata,
     };
     this.addresses.push(entry);
-
-    // Sync filepath to the FilesystemTool
-    if (type === 'filepath' && this.filesystemTool) {
-      await this.filesystemTool._tool_add_path({ params: { path: address } } as any);
-    }
-
     await this.persistAddresses();
     return { success: true };
   }
@@ -147,8 +150,8 @@ export class WorldInstanceTool extends oLaneTool {
 
     if (removed) {
       // Unsync from FilesystemTool
-      if (entry?.type === 'filepath' && this.filesystemTool) {
-        await this.filesystemTool._tool_remove_path({ params: { path: address } } as any);
+      if (entry?.type === 'filepath') {
+        await this.use(this.fsAddress, { method: 'remove_path', params: { path: address } });
       }
       await this.persistAddresses();
     }
@@ -165,12 +168,43 @@ export class WorldInstanceTool extends oLaneTool {
   }
 
   async _tool_get_world_info(_request: oRequest): Promise<ToolResult> {
+    const fsResponse = await this.use(this.fsAddress, { method: 'list_paths' });
     return {
       success: true,
       config: this.worldConfig,
       addressCount: this.addresses.length,
-      filesystemPaths: this.filesystemTool?.getAllowedPaths() || [],
+      filesystemPaths: fsResponse.result?.paths || [],
     };
+  }
+
+  async _tool_ping_address(request: oRequest): Promise<ToolResult> {
+    const { address } = request.params as any;
+    const entry = this.addresses.find((a) => a.address === address);
+    if (!entry) {
+      return { success: false, error: `Address '${address}' is not registered in this world` };
+    }
+
+    if (entry.type === 'filepath') {
+      const fsResult = await this.use(this.fsAddress, { method: 'stat_path', params: { path: entry.address } });
+      if (!fsResult.result?.success) {
+        return {
+          success: false,
+          address: entry.address,
+          type: entry.type,
+          error: fsResult.result?.error || 'Resource not reachable',
+        };
+      }
+      return {
+        success: true,
+        address: entry.address,
+        type: entry.type,
+        isDirectory: fsResult.result.isDirectory,
+        size: fsResult.result.size,
+        modified: fsResult.result.modified,
+      };
+    }
+
+    return { success: false, error: `Ping not supported for type '${entry.type}'` };
   }
 
   // ── Convenience accessors ─────────────────────────────────
