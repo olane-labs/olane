@@ -26,8 +26,6 @@ What this enables:
 - 🌐 **Runs anywhere** — over libp2p (WebSocket, TCP, WebRTC, QUIC), so nodes live in browsers, servers, mobile, IoT
 - 🧠 **One client, one mental model** — no separate SDKs per participant type
 
-[**Why a unified interface changes everything →**](/docs/concepts/unified-interface)
-
 ---
 
 ## Table of Contents
@@ -36,7 +34,7 @@ What this enables:
 - [First-Class Peers](#first-class-peers) — how humans, AI, and tools join the same network
 - [The Transport](#the-transport-run-anywhere-reach-anywhere) — libp2p across browser, server, mobile, IoT
 - [What Emerges](#what-emerges-from-a-unified-interface) — Lanes, discovery, adaptive coordination
-- [Quick Start](#quick-start-run-olane-locally) — running in 2 minutes
+- [Get Started](#get-started) — a working OS in four steps
 - [What Is Olane OS?](#what-is-olane-os) — architecture and core concepts
 - [Framework Comparison](#framework-comparison) — vs LangGraph, n8n, CrewAI
 - [Community](#community--support) — get help and contribute
@@ -158,7 +156,7 @@ await ai.start();
 
 **Same network. Same interface. Different execution models.** Humans bring judgment and oversight. AI agents bring automation and scale. Tools bring deterministic capability. The transport doesn't care which is which — and neither do callers.
 
-[**Agent login →**](/packages/o-login/) | [**Agent-agnostic design →**](/docs/agents/agent-agnostic-design)
+[**Agent login →**](./packages/o-login/) | [**Agent-agnostic design →**](./docs/agents/agent-agnostic-design.mdx)
 
 ---
 
@@ -223,7 +221,7 @@ await deviceTool.start();
 - ⚡ **QUIC** — low-latency UDP
 - 📱 **Bluetooth** — coming soon for local devices
 
-[**P2P networking →**](/packages/o-node/README.md) | [**Network architecture patterns →**](/packages/o-node/README.md#network-architecture-patterns)
+[**P2P networking →**](./packages/o-node/README.md) | [**Browser nodes guide →**](./docs/guides/browser-nodes.mdx)
 
 ---
 
@@ -266,7 +264,7 @@ Cycle 11: AI Agent A   → Formats and delivers
 
 This coordination wasn't programmed. It **emerged** from peers pursuing a shared intent across a uniform interface — humans and AI substituted for each other, work paused for human latency without breaking, and the path is now recorded as a reusable Lane.
 
-[**Emergent workflows →**](/docs/concepts/emergent-workflows)
+[**Emergent workflows →**](./docs/concepts/emergent-workflows.mdx)
 
 ---
 
@@ -310,8 +308,12 @@ await os.start();
 
 **3. Call any address — same shape for everything**
 
+Every node on the network exposes `.use()`. Grab any node and start calling.
+
 ```typescript
-const response = await os.use(new oAddress('o://node'), {
+const node = os.entryNode();
+
+const response = await node.use(new oAddress('o://node'), {
   method: 'some_tool',
   params: { /* ... */ },
 });
@@ -325,42 +327,48 @@ if (response.result.success) {
 
 **4. Bring a human or an AI into the same network**
 
-The same `os.use(...)` call now reaches a person or a model — no new SDK, no new protocol.
+Each login tool joins as a child of the OS's root leader, so the rest of the network can reach it. Once attached, the same `node.use(...)` call reaches a person or a model — no new SDK, no new protocol.
 
 ```typescript
 import { oHumanLoginTool, oAILoginTool } from '@olane/o-login';
 
+const leader = os.rootLeader!;
+
 // A human joins at o://human
 const human = new oHumanLoginTool({
+  leader: leader.address,
+  parent: leader.address,
   respond: async (intent) => `Approved: ${intent}`,
   answer: async (q) => 'Human answer',
   receiveStream: async (data) => { /* ... */ },
 });
-await human.start();
+leader.addChildNode(human);
 
 // An AI agent joins at o://ai
 const ai = new oAILoginTool({
+  leader: leader.address,
+  parent: leader.address,
   respond: async (intent) => await runModel(intent),
   answer: async (q) => await runModel(q),
   receiveStream: async (data) => { /* ... */ },
 });
-await ai.start();
+leader.addChildNode(ai);
 
 // Reach either through the same call shape
-await os.use(new oAddress('o://human'), {
+await node.use(new oAddress('o://human'), {
   method: 'respond',
   params: { intent: 'Approve release v0.9' },
 });
 
-await os.use(new oAddress('o://ai'), {
+await node.use(new oAddress('o://ai'), {
   method: 'respond',
   params: { intent: 'Summarize the Q4 report' },
 });
 ```
 
-That's the unified interface in practice. Tools, humans, and AI are all reached through `os.use(address, ...)` — the caller doesn't change shape based on who's on the other end.
+That's the unified interface in practice. Tools, humans, and AI are all reached through `node.use(address, ...)` — the caller doesn't change shape based on who's on the other end.
 
-[**📚 Full setup guide →**](./docs/getting-started/installation.mdx) • [**Examples →**](./examples/)
+[**📚 Full setup guide →**](./packages/o-os/README.md)
 
 ---
 
@@ -389,7 +397,7 @@ Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
 - 🤖 **Agents** — humans or AI, both first-class addressable peers
 - 🔄 **Lanes** — emergent, recorded workflows that arise from execution
 
-[**Architecture deep dive →**](/docs/concepts/architecture)
+[**Three-layer model →**](./docs/understanding/three-layer-model.mdx)
 
 ---
 
@@ -397,12 +405,12 @@ Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
 
 | Category | Links |
 |---|---|
-| 🚀 **Getting Started** | [Installation](./docs/getting-started/installation.mdx) • [Quick Start](./docs/getting-started/quickstart.mdx) • [Core Concepts](./docs/concepts/overview.mdx) |
-| 🎯 **Key Ideas** | [Unified Interface](/docs/concepts/unified-interface.mdx) • [Emergent Workflows](/docs/concepts/emergent-workflows.mdx) • [Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx) |
-| 📦 **Packages** | [o-core](./packages/o-core/) • [o-node](./packages/o-node/) • [o-tool](./packages/o-tool/) • [o-lane](./packages/o-lane/) • [o-leader](./packages/o-leader/) • [o-os](./packages/o-os/) |
-| 📖 **Guides** | [Building Tool Nodes](./docs/guides/building-tool-nodes.mdx) • [Multi-Node Apps](./docs/guides/multi-node-applications.mdx) • [Testing](./docs/guides/testing.mdx) |
-| 💡 **Examples** | [Financial Analyst](./examples/financial-analyst) • [CRM Application](./examples/crm-application) • [All Examples](./examples/) |
-| 🔄 **Comparisons** | [vs LangGraph](./docs/comparisons/langgraph.mdx) • [vs CrewAI](./docs/comparisons/crewai.mdx) • [All Frameworks](./docs/comparisons/frameworks.mdx) |
+| 🚀 **Getting Started** | [Introduction](./docs/introduction.mdx) • [Why Olane](./docs/why-olane.mdx) • [Install + Quick Start](./packages/o-os/README.md) |
+| 🎯 **Key Ideas** | [Three-Layer Model](./docs/understanding/three-layer-model.mdx) • [Emergent Workflows](./docs/concepts/emergent-workflows.mdx) • [Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx) |
+| 🧩 **Concepts** | [Tools / Nodes / Applications](./docs/concepts/tools-nodes-applications.mdx) • [Everything is a Node](./docs/concepts/nodes/everything-is-a-node.mdx) • [MCP Integration](./docs/concepts/tools/mcp-integration.mdx) |
+| 🤖 **Agents** | [Overview](./docs/agents/overview.mdx) • [Human-in-the-Loop](./docs/agents/human-in-the-loop.mdx) • [Human Interfaces](./docs/agents/human-interfaces.mdx) |
+| 📖 **Guides** | [Browser Nodes](./docs/guides/browser-nodes.mdx) |
+| 📦 **Packages** | [o-core](./packages/o-core/) • [o-node](./packages/o-node/) • [o-tool](./packages/o-tool/) • [o-lane](./packages/o-lane/) • [o-leader](./packages/o-leader/) • [o-login](./packages/o-login/) • [o-os](./packages/o-os/) • [o-mcp](./packages/o-mcp/) • [o-storage](./packages/o-storage/) |
 
 [**📚 Browse all documentation →**](https://olane.com/docs)
 
@@ -421,7 +429,7 @@ Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
 | **Where it runs** | Server | Server | Server | **Browser, server, mobile, IoT** |
 | **Inter-participant comms** | Custom per edge | Workflow-bound | Crew-bound | **One call pattern (`node.use()`)** |
 
-[**In-depth framework comparison →**](/docs/comparisons/frameworks) | [**Why a unified interface →**](/docs/concepts/unified-interface)
+[**Why Olane →**](./docs/why-olane.mdx) | [**Three-layer model →**](./docs/understanding/three-layer-model.mdx)
 
 ---
 
@@ -462,9 +470,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 **Ready to build?**
 
-- 🚀 [Quick Start](#quick-start-run-olane-locally)
+- 🚀 [Get Started](#get-started)
 - 📚 [Full Documentation](https://olane.com/docs)
-- 💡 [Browse Examples](./examples/)
 - 💬 [Join Discord](https://discord.gg/olane)
 
 Copyright © 2025 Olane Inc.
