@@ -7,3 +7,4 @@ dist
 .claude
 .cursor
 .gemini
+.mcp.json

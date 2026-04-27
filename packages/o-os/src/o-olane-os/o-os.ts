@@ -18,6 +18,7 @@ import { WorldManagerTool } from '../worlds/world-manager.tool.js';
 import { AddressBook } from '../address-book/address-book.js';
 import { MemoryHarness } from '../memory/memory-harness.js';
 import { CopassVectorStoreTool } from '../vector-store/copass-vector-store.tool.js';
+import { FilesystemTool } from '../tools/filesystem.tool.js';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -30,6 +31,7 @@ export class OlaneOS extends oObject {
   public worldManager: WorldManagerTool | null = null;
   public addressBook: AddressBook | null = null;
   public memory: MemoryHarness | null = null;
+  public filesystemTool: FilesystemTool | null = null;
 
   constructor(config: OlaneOSConfig) {
     super();
@@ -355,6 +357,19 @@ export class OlaneOS extends oObject {
       this.rootLeader.addChildNode(vectorStore as any);
       await vectorStore.start();
       this.logger.debug('Copass vector store started');
+
+      // Filesystem tool — single instance for the entire OS
+      this.filesystemTool = new FilesystemTool(
+        {
+          address: new oAddress('o://fs'),
+          leader: this.rootLeader.address,
+          parent: this.rootLeader.address,
+          _allowNestedAddress: true,
+        },
+      );
+      this.rootLeader.addChildNode(this.filesystemTool as any);
+      await this.filesystemTool.start();
+      this.logger.debug('Filesystem tool started');
 
       // World manager
       this.worldManager = new WorldManagerTool({

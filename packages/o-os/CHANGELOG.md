@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.8.18](https://github.com/olane-labs/olane/compare/v0.8.17...v0.8.18) (2026-04-17)
+
+**Note:** Version bump only for package @olane/os
+
 ## <small>0.8.17 (2026-04-01)</small>
 
 - added olane os improvements for the local functionality ([c5a92d3](https://github.com/olane-labs/olane/commit/c5a92d3))

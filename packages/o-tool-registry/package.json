@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tool-registry",
-  "version": "0.8.17",
+  "version": "0.8.18",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -41,6 +41,7 @@
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "aegir": "^47.0.26",
+    "chai": "^6.2.2",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
@@ -57,17 +58,18 @@
     "@huggingface/transformers": "^3.5.2",
     "@langchain/community": "0.3.47",
     "@langchain/core": "0.3.61",
-    "@olane/o-config": "0.8.17",
-    "@olane/o-core": "0.8.17",
-    "@olane/o-intelligence": "0.8.17",
-    "@olane/o-lane": "0.8.17",
-    "@olane/o-mcp": "0.8.17",
-    "@olane/o-protocol": "0.8.17",
-    "@olane/o-tool": "0.8.17",
-    "@olane/o-tools-common": "0.8.17",
+    "@olane/o-config": "0.8.18",
+    "@olane/o-core": "0.8.18",
+    "@olane/o-intelligence": "0.8.18",
+    "@olane/o-lane": "0.8.18",
+    "@olane/o-mcp": "0.8.18",
+    "@olane/o-node": "0.8.18",
+    "@olane/o-protocol": "0.8.18",
+    "@olane/o-tool": "0.8.18",
+    "@olane/o-tools-common": "0.8.18",
     "debug": "^4.4.1",
     "dotenv": "^16.5.0",
     "langchain": "0.3.29"
   },
-  "gitHead": "6516f4d0c3034c7c5003862472fecd0bd9241387"
+  "gitHead": "66cd4f8d3987c01d42809692db23be4218ef863b"
 }

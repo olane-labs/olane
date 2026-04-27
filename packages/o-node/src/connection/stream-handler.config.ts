@@ -1,4 +1,4 @@
-import type { Stream } from '@libp2p/interface';
+import type { Stream } from '@olane/o-config';
 
 /**
  * Configuration for StreamHandler behavior
