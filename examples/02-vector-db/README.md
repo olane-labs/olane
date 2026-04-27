@@ -1,1 +1,0 @@
-# o-component-typescript-template
