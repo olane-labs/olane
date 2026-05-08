@@ -33,14 +33,14 @@ export interface AgentNodeConfig extends oNodeConfig {
  * `AgentNode` — one running coding-agent session on the local Olane OS.
  *
  * Address scheme: a SINGLE-segment slug encoding user / kind / session,
- * typically `o://agent-<user>-<kind>-<session-id>`. Multi-segment
- * constructor addresses break olane's cross-process registration
- * (`oRegistrationManager` → `leader._tool_child_register` does path
- * arithmetic that fails on nested addresses) — every in-tree olane node
- * uses single-segment constructor addresses for the same reason. After
- * the leader registers the AgentNode under its hierarchy, the effective
- * address is `o://leader/<slug>`. Structured user/kind/sessionId fields
- * are preserved on `card.olane` for filtering and display.
+ * typically `o://agent-<user>-<kind>-<session-id>`. olane convention:
+ * node tools declare exactly ONE path segment in their constructor
+ * address. Hierarchical routing happens via child-node registration or
+ * in-node sub-path resolvers (see README "Address scheme") — never via
+ * multi-segment constructor addresses. After the leader registers the
+ * AgentNode under its hierarchy, the effective address is
+ * `o://leader/<slug>`. Structured user/kind/sessionId fields are
+ * preserved on `card.olane` for filtering and display.
  *
  * Sub-paths (`/inbox`, `/inbox/<id>`, `/send`, `/receive`, `/drain`,
  * `/card`, `/status`) dispatch to methods via the `oAgentResolver`
