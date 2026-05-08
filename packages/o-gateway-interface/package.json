@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-gateway-interface",
-  "version": "0.8.20",
+  "version": "0.8.21",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -51,10 +51,10 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@olane/o-config": "0.8.20",
-    "@olane/o-core": "0.8.20",
-    "@olane/o-protocol": "0.8.20",
-    "@olane/o-tool": "0.8.20",
+    "@olane/o-config": "0.8.21",
+    "@olane/o-core": "0.8.21",
+    "@olane/o-protocol": "0.8.21",
+    "@olane/o-tool": "0.8.21",
     "debug": "^4.4.3",
     "dotenv": "^17.3.1"
   },

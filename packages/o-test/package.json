@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-test",
-  "version": "0.8.20",
+  "version": "0.8.21",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -48,7 +48,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
     "@eslint/js": "^10.0.1",
-    "@olane/o-leader": "0.8.20",
+    "@olane/o-leader": "0.8.21",
     "@tsconfig/node20": "^20.1.9",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
@@ -70,11 +70,11 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@olane/o-core": "0.8.20",
-    "@olane/o-lane": "0.8.20",
-    "@olane/o-node": "0.8.20",
-    "@olane/o-protocol": "0.8.20",
-    "@olane/o-tool": "0.8.20",
+    "@olane/o-core": "0.8.21",
+    "@olane/o-lane": "0.8.21",
+    "@olane/o-node": "0.8.21",
+    "@olane/o-protocol": "0.8.21",
+    "@olane/o-tool": "0.8.21",
     "chalk": "^5.6.2",
     "debug": "^4.4.3",
     "dotenv": "^17.3.1"

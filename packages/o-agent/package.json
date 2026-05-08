@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-agent",
-  "version": "0.8.20",
+  "version": "0.8.21",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -53,11 +53,11 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@olane/o-core": "0.8.20",
-    "@olane/o-lane": "0.8.20",
-    "@olane/o-node": "0.8.20",
-    "@olane/o-protocol": "0.8.20",
-    "@olane/o-tool": "0.8.20",
+    "@olane/o-core": "0.8.21",
+    "@olane/o-lane": "0.8.21",
+    "@olane/o-node": "0.8.21",
+    "@olane/o-protocol": "0.8.21",
+    "@olane/o-tool": "0.8.21",
     "debug": "^4.4.3",
     "uuid": "^11.0.0"
   }
