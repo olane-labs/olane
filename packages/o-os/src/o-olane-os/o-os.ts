@@ -20,6 +20,7 @@ import { MemoryHarness } from '../memory/memory-harness.js';
 import { CopassVectorStoreTool } from '../vector-store/copass-vector-store.tool.js';
 import { FilesystemTool } from '../tools/filesystem.tool.js';
 import { AgentRegistryNode } from '@olane/o-agent';
+import { RelayNode } from '../nodes/relay-node.js';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -227,6 +228,30 @@ export class OlaneOS extends oObject {
         await leaderNode.start();
         await initCommonTools(leaderNode);
         this.leaders.push(leaderNode);
+      } else if ((node as any).relay === true) {
+        // Relay node — circuit-relay-v2 server. Mounted as a leader
+        // child so it lives at `o://relay` (or whatever address the
+        // config specifies) at the same hierarchy level as the
+        // o://fs / o://vector-store / o://world-manager services.
+        // The `relay` flag is declared in OSRelayNodeConfig
+        // (interfaces/o-os.config.ts:11) but was never wired —
+        // consumers like @copass/olane-agents had to spawn the OS
+        // and call `addNode(new RelayNode(...))` themselves, which
+        // attached the relay to a round-robin worker, not the leader.
+        this.logger.debug(
+          'Starting relay node: ' + node.address.toString(),
+        );
+        const relayNode = new RelayNode({
+          ...node,
+          address: node.address,
+          leader: this.rootLeader?.address || null,
+          parent: this.rootLeader?.address || null,
+        } as any);
+        (relayNode as any).onInitFinished(() => {
+          this.rootLeader?.addChildNode(relayNode as any);
+        });
+        await relayNode.start();
+        this.nodes.push(relayNode);
       } else {
         this.logger.debug(
           'Starting non-leader node: ' + node.address.toString(),
