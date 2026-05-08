@@ -32,10 +32,27 @@ export interface AgentNodeConfig extends oNodeConfig {
 /**
  * `AgentNode` — one running coding-agent session on the local Olane OS.
  *
- * Each session is a flat `o://<user>/<kind>/<session-id>` address. Sub-paths
- * (`/inbox`, `/inbox/<id>`, `/send`, `/receive`, `/drain`, `/card`,
- * `/status`) dispatch to methods via the `oAgentResolver` registered in
- * `initialize()`.
+ * Address scheme: a SINGLE-segment slug encoding user / kind / session,
+ * typically `o://agent-<user>-<kind>-<session-id>`. Multi-segment
+ * constructor addresses break olane's cross-process registration
+ * (`oRegistrationManager` → `leader._tool_child_register` does path
+ * arithmetic that fails on nested addresses) — every in-tree olane node
+ * uses single-segment constructor addresses for the same reason. After
+ * the leader registers the AgentNode under its hierarchy, the effective
+ * address is `o://leader/<slug>`. Structured user/kind/sessionId fields
+ * are preserved on `card.olane` for filtering and display.
+ *
+ * Sub-paths (`/inbox`, `/inbox/<id>`, `/send`, `/receive`, `/drain`,
+ * `/card`, `/status`) dispatch to methods via the `oAgentResolver`
+ * registered in `initialize()`. **The resolver fires inside this node's
+ * own process only.** Cross-process callers should use the explicit
+ * method-as-param form: `node.use(canonical, { method: 'receive',
+ * params: ... })`. See README "Cross-process callers" section.
+ *
+ * Cross-process daemon usage (the most common pattern): pass
+ * `network.listeners: ['/ip4/0.0.0.0/tcp/0']` so libp2p binds a port the
+ * leader can dial back through during routing. In-process AgentNodes do
+ * NOT need this — see README "Cross-process daemon usage".
  *
  * Inbox is in-memory in Phase 1 (bounded ring buffer). Persistent
  * overflow is deferred to Phase 2 per ADR.
