@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-tools-common",
-  "version": "0.8.21",
+  "version": "0.9.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,15 +52,15 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "@olane/o-approval": "0.8.21",
-    "@olane/o-config": "0.8.21",
-    "@olane/o-core": "0.8.21",
-    "@olane/o-lane": "0.8.21",
-    "@olane/o-leader": "0.8.21",
-    "@olane/o-node": "0.8.21",
-    "@olane/o-protocol": "0.8.21",
-    "@olane/o-storage": "0.8.21",
-    "@olane/o-tool": "0.8.21",
+    "@olane/o-approval": "0.9.0",
+    "@olane/o-config": "0.9.0",
+    "@olane/o-core": "0.9.0",
+    "@olane/o-lane": "0.9.0",
+    "@olane/o-leader": "0.9.0",
+    "@olane/o-node": "0.9.0",
+    "@olane/o-protocol": "0.9.0",
+    "@olane/o-storage": "0.9.0",
+    "@olane/o-tool": "0.9.0",
     "debug": "^4.4.3",
     "dotenv": "^17.3.1"
   },
