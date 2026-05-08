@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@libp2p/circuit-relay-v2": "^4.1.3",
-    "@olane/o-agent": "workspace:*",
+    "@olane/o-agent": "0.8.19",
     "@olane/o-client-limited": "0.8.19",
     "@olane/o-config": "0.8.19",
     "@olane/o-core": "0.8.19",
