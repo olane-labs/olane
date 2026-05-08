@@ -19,6 +19,7 @@ import { AddressBook } from '../address-book/address-book.js';
 import { MemoryHarness } from '../memory/memory-harness.js';
 import { CopassVectorStoreTool } from '../vector-store/copass-vector-store.tool.js';
 import { FilesystemTool } from '../tools/filesystem.tool.js';
+import { AgentRegistryNode } from '@olane/o-agent';
 
 type OlaneOSNode = oLaneTool | oLeaderNode;
 export class OlaneOS extends oObject {
@@ -32,6 +33,7 @@ export class OlaneOS extends oObject {
   public addressBook: AddressBook | null = null;
   public memory: MemoryHarness | null = null;
   public filesystemTool: FilesystemTool | null = null;
+  public agentRegistry: AgentRegistryNode | null = null;
 
   constructor(config: OlaneOSConfig) {
     super();
@@ -381,6 +383,20 @@ export class OlaneOS extends oObject {
       this.rootLeader.addChildNode(this.worldManager as any);
       await this.worldManager.start();
       this.logger.debug('World manager started');
+
+      // Agent registry — directory of live agent sessions on this OS.
+      // Sibling of the agents themselves; agents register at flat
+      // o://<user>/<kind>/<session-id> addresses and the registry tracks
+      // them with TTL + PID-liveness GC.
+      this.agentRegistry = new AgentRegistryNode({
+        address: new oAddress('o://agents'),
+        leader: this.rootLeader.address,
+        parent: this.rootLeader.address,
+        _allowNestedAddress: true,
+      } as any);
+      this.rootLeader.addChildNode(this.agentRegistry as any);
+      await this.agentRegistry.start();
+      this.logger.debug('Agent registry started');
     }
   }
 
