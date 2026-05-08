@@ -2,7 +2,20 @@ import { DEFAULT_INSTANCE_PATH, NodeType, oAddress } from '@olane/o-core';
 import { OlaneOSConfig } from '../interfaces/o-os.config.js';
 import * as path from 'path';
 
-export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
+export interface DefaultOSInstanceConfigOptions {
+  /**
+   * Mount a circuit-relay-v2 RelayNode as a leader child so other peers
+   * can dial through this OS. Defaults to `true` — opt out by passing
+   * `{ enableRelay: false }` for headless server-side usage.
+   */
+  enableRelay?: boolean;
+}
+
+export const defaultOSInstanceConfig = (
+  port: number,
+  options: DefaultOSInstanceConfigOptions = {},
+): OlaneOSConfig => {
+  const { enableRelay = true } = options;
   return {
     configFilePath: path.join(
       DEFAULT_INSTANCE_PATH,
@@ -33,6 +46,19 @@ export const defaultOSInstanceConfig = (port: number): OlaneOSConfig => {
         leader: null,
         parent: null,
       },
+      ...(enableRelay
+        ? [
+            {
+              type: NodeType.NODE,
+              address: new oAddress('o://relay'),
+              description:
+                'circuit-relay-v2 server for the OS — other peers dial through this',
+              leader: null,
+              parent: null,
+              relay: true,
+            },
+          ]
+        : []),
     ],
     lanes: [],
     inProgress: [],
