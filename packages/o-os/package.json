@@ -63,6 +63,7 @@
     "@olane/o-client-limited": "0.8.18",
     "@olane/o-config": "0.8.18",
     "@olane/o-core": "0.8.18",
+    "@olane/o-agent": "workspace:*",
     "@olane/o-intelligence": "0.8.18",
     "@olane/o-lane": "0.8.18",
     "@olane/o-leader": "0.8.18",
