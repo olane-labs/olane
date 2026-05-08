@@ -38,13 +38,25 @@ The package ships:
 
 ## Address scheme
 
-> **Constraint:** olane's cross-process registration (`oRegistrationManager`
-> → `leader._tool_child_register`) does not work with multi-segment
-> constructor addresses — path arithmetic during the join handshake
-> concatenates the daemon's path onto the leader address and the
-> registration call lands at a non-existent node. Every in-tree olane
-> node uses single-segment constructor addresses (`o://node`,
-> `o://services`, `o://relay`, `o://storage`, …) for the same reason.
+**olane convention:** node tools must declare exactly **one path segment**
+in their constructor address (e.g. `o://node`, `o://services`, `o://relay`,
+`o://storage`). Hierarchical addressing happens via either:
+
+- **Child-node registration** — a parent node registers per-instance
+  children via `_tool_child_register`. The leader/parent prefixes its
+  own path post-registration, yielding addresses like
+  `o://leader/agents/<id>`.
+- **In-node sub-path resolvers** — a node's `oAddressResolver` (e.g.
+  `oAgentResolver`, `oStorageResolver`) dispatches sub-paths under its
+  canonical address to local methods. Sub-paths are resolved
+  in-process; they don't manifest as additional nodes in the OS
+  hierarchy.
+
+Multi-segment constructor addresses are NOT a routing primitive and
+will not behave as intended even with `_allowNestedAddress: true`.
+That escape hatch exists for the limited cases where the OS itself
+constructs already-hierarchical addresses internally — not for
+arbitrary cross-process workers.
 
 Per-session AgentNodes therefore use a **single-segment slug** that
 encodes the user, agent kind, and session id:
