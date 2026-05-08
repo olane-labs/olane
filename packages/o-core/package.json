@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-core",
-  "version": "0.8.19",
+  "version": "0.8.20",
   "type": "module",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -64,9 +64,9 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@olane/o-config": "0.8.19",
-    "@olane/o-context": "0.8.19",
-    "@olane/o-protocol": "0.8.19",
+    "@olane/o-config": "0.8.20",
+    "@olane/o-context": "0.8.20",
+    "@olane/o-protocol": "0.8.20",
     "chalk": "^5.6.2",
     "debug": "^4.4.3",
     "dotenv": "^17.3.1",
