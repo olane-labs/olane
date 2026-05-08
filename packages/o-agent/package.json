@@ -1,0 +1,64 @@
+{
+  "name": "@olane/o-agent",
+  "version": "0.8.18",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "aegir test",
+    "test:node": "aegir test -t node",
+    "test:browser": "aegir test -t browser",
+    "build": "rm -rf dist && tsc",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src/**/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olane-labs/olane.git"
+  },
+  "author": "oLane Inc.",
+  "license": "(MIT OR Apache-2.0)",
+  "description": "oLane per-session agent broker — registry, AgentNode, and A2A-shaped envelopes",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/js": "^10.0.1",
+    "@tsconfig/node20": "^20.1.9",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "aegir": "^47.0.26",
+    "chai": "^6.2.2",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.3.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@olane/o-core": "0.8.18",
+    "@olane/o-lane": "0.8.18",
+    "@olane/o-node": "0.8.18",
+    "@olane/o-protocol": "0.8.18",
+    "@olane/o-tool": "0.8.18",
+    "debug": "^4.4.3",
+    "uuid": "^11.0.0"
+  }
+}
