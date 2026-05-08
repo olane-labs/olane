@@ -1,6 +1,6 @@
 {
   "name": "@olane/o-protocol",
-  "version": "0.8.18",
+  "version": "0.8.19",
   "description": "oLane Protocol specification and protocol schema",
   "license": "MIT",
   "author": "oLane Inc. (https://olane.com)",
@@ -44,7 +44,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@olane/o-config": "0.8.18"
+    "@olane/o-config": "0.8.19"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.9",
