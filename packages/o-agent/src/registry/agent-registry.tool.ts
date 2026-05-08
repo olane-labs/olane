@@ -4,6 +4,7 @@ import { oAddress, oRequest } from '@olane/o-core';
 import type { ToolResult } from '@olane/o-tool';
 import { AgentCard } from '../interfaces/agent-card.js';
 import { RegistryEntry } from '../interfaces/registry-entry.js';
+import { AGENT_REGISTRY_METHODS } from '../methods/agent-registry.methods.js';
 
 /**
  * Heartbeat / sweep parameters per ADR 0001 (decision D9). Tightening or
@@ -42,93 +43,7 @@ export class AgentRegistryNode extends oLaneTool {
       address: config.address || new oAddress('o://agents'),
       description:
         'Directory of live agent sessions on the local Olane OS. Tracks AgentNode addresses, capability cards, and last-heartbeat timestamps.',
-      methods: {
-        register: {
-          name: 'register',
-          description: 'Register an agent session and its capability card.',
-          parameters: [
-            {
-              name: 'address',
-              type: 'string',
-              required: true,
-              description: 'Canonical olane address of the AgentNode',
-            },
-            {
-              name: 'card',
-              type: 'object',
-              required: true,
-              description: 'A2A-shaped AgentCard for the session',
-            },
-            {
-              name: 'registeringPid',
-              type: 'number',
-              required: false,
-              description:
-                'PID of the registering process (used for liveness GC)',
-            },
-          ],
-          dependencies: [],
-        },
-        deregister: {
-          name: 'deregister',
-          description: 'Remove an agent session from the registry.',
-          parameters: [
-            {
-              name: 'address',
-              type: 'string',
-              required: true,
-              description: 'Canonical olane address of the AgentNode',
-            },
-          ],
-          dependencies: [],
-        },
-        heartbeat: {
-          name: 'heartbeat',
-          description: 'Mark an agent session as still alive.',
-          parameters: [
-            {
-              name: 'address',
-              type: 'string',
-              required: true,
-              description: 'Canonical olane address of the AgentNode',
-            },
-          ],
-          dependencies: [],
-        },
-        list: {
-          name: 'list',
-          description: 'List registered agent sessions, with optional filters.',
-          parameters: [
-            {
-              name: 'kind',
-              type: 'string',
-              required: false,
-              description: 'Filter by agent kind (e.g. claude-code)',
-            },
-            {
-              name: 'user',
-              type: 'string',
-              required: false,
-              description: 'Filter by user segment',
-            },
-            {
-              name: 'live',
-              type: 'boolean',
-              required: false,
-              description:
-                'If true, only return entries whose last heartbeat is fresher than TTL',
-            },
-          ],
-          dependencies: [],
-        },
-        sweep: {
-          name: 'sweep',
-          description:
-            'Run a stale-entry sweep (also runs automatically on a 60s timer).',
-          parameters: [],
-          dependencies: [],
-        },
-      },
+      methods: AGENT_REGISTRY_METHODS,
     });
   }
 

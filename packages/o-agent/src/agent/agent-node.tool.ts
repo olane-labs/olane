@@ -10,6 +10,7 @@ import {
   TaskState,
 } from '../interfaces/inbox-message.js';
 import { oAgentResolver } from '../router/agent.resolver.js';
+import { AGENT_NODE_METHODS } from '../methods/agent-node.methods.js';
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const REGISTRY_ADDRESS = 'o://agents';
@@ -60,98 +61,7 @@ export class AgentNode extends oLaneTool {
       description:
         config.card.description ||
         `Olane agent session: ${config.card.olane.kind}/${config.card.olane.sessionId}`,
-      methods: {
-        get_card: {
-          name: 'get_card',
-          description: 'Return the A2A-shaped capability card for this agent.',
-          parameters: [],
-          dependencies: [],
-        },
-        get_status: {
-          name: 'get_status',
-          description: 'Return liveness + inbox depth.',
-          parameters: [],
-          dependencies: [],
-        },
-        list_inbox: {
-          name: 'list_inbox',
-          description: 'List ids + sender + sent_at of all pending messages.',
-          parameters: [],
-          dependencies: [],
-        },
-        read_message: {
-          name: 'read_message',
-          description: 'Read a single inbox message by id.',
-          parameters: [
-            {
-              name: 'id',
-              type: 'string',
-              required: true,
-              description: 'Message id',
-            },
-          ],
-          dependencies: [],
-        },
-        send: {
-          name: 'send',
-          description:
-            'Send a message FROM this agent to another address. Used by the agent itself or by a CLI tool speaking on its behalf.',
-          parameters: [
-            {
-              name: 'to',
-              type: 'string',
-              required: true,
-              description: 'Recipient olane address',
-            },
-            {
-              name: 'parts',
-              type: 'array',
-              required: true,
-              description: 'A2A-shaped MessagePart[]',
-            },
-            {
-              name: 'task_id',
-              type: 'string',
-              required: false,
-              description: 'Task correlation id (optional)',
-            },
-            {
-              name: 'task_state',
-              type: 'string',
-              required: false,
-              description: 'A2A TaskState (optional)',
-            },
-            {
-              name: 'correlation_id',
-              type: 'string',
-              required: false,
-              description: 'Caller-supplied correlation id (optional)',
-            },
-          ],
-          dependencies: [],
-        },
-        receive: {
-          name: 'receive',
-          description:
-            'Inbound deposit — drop a message INTO this agent\'s inbox. Called by other agents or the broker.',
-          parameters: [
-            {
-              name: 'message',
-              type: 'object',
-              required: true,
-              description: 'Full InboxMessage envelope',
-            },
-          ],
-          dependencies: [],
-        },
-        drain_inbox: {
-          name: 'drain_inbox',
-          description:
-            'Atomically read and remove all pending inbox messages. Used by the Stop hook to flush messages into Claude\'s additionalContext.',
-          parameters: [],
-          dependencies: [],
-        },
-      },
+      methods: AGENT_NODE_METHODS,
     });
     this.card = config.card;
     this.inboxBound = config.inboxBound ?? DEFAULT_INBOX_BOUND;
