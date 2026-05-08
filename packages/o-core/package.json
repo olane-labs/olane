@@ -71,7 +71,8 @@
     "debug": "^4.4.3",
     "dotenv": "^17.3.1",
     "multiformats": "^13.4.2",
-    "stream-json": "^1.9.1"
+    "stream-json": "^1.9.1",
+    "uuid": "^11.0.0"
   },
   "gitHead": "66cd4f8d3987c01d42809692db23be4218ef863b"
 }
