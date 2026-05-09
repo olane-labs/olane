@@ -1,0 +1,61 @@
+{
+  "name": "@olane/o-gateway-registry",
+  "version": "0.9.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "dev": "DEBUG=o-protocol:* npx tsx src/tests/index.ts",
+    "build": "tsc",
+    "deep:clean": "rm -rf node_modules && rm package-lock.json",
+    "start:prod": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "lint": "eslint src/**/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olane-labs/olane.git"
+  },
+  "author": "oLane Inc.",
+  "license": "(MIT OR Apache-2.0)",
+  "description": "Public-good gateway registry resolver for o:// addresses (ADR 0025). Resolves the first path segment (gateway namespace) to a libp2p multiaddr by reading a pinned snapshot of the olane-labs/gateway-registry public registry.",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.4",
+    "@eslint/js": "^10.0.1",
+    "@tsconfig/node20": "^20.1.9",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.3.0",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@olane/o-config": "0.9.0",
+    "@olane/o-core": "0.9.0",
+    "@olane/o-gateway-interface": "0.9.0",
+    "@olane/o-protocol": "0.9.0",
+    "debug": "^4.4.3",
+    "dotenv": "^17.3.1"
+  }
+}
