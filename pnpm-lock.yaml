@@ -781,6 +781,9 @@ importers:
       '@olane/o-gateway-interface':
         specifier: 0.9.0
         version: 0.9.0
+      '@olane/o-node':
+        specifier: 0.9.0
+        version: 0.9.0
       '@olane/o-protocol':
         specifier: 0.9.0
         version: 0.9.0
@@ -19256,9 +19259,9 @@ snapshots:
       strong-log-transformer: 2.1.0
       tempy: 3.2.0
       typedoc: 0.28.19(typescript@5.8.3)
-      typedoc-plugin-mdn-links: 5.1.1(typedoc@0.28.19(typescript@5.9.3))
-      typedoc-plugin-mermaid: 1.12.0(typedoc@0.28.19(typescript@5.9.3))
-      typedoc-plugin-missing-exports: 4.1.3(typedoc@0.28.19(typescript@5.9.3))
+      typedoc-plugin-mdn-links: 5.1.1(typedoc@0.28.19(typescript@5.8.3))
+      typedoc-plugin-mermaid: 1.12.0(typedoc@0.28.19(typescript@5.8.3))
+      typedoc-plugin-missing-exports: 4.1.3(typedoc@0.28.19(typescript@5.8.3))
       typescript: 5.8.3
       typescript-docs-verifier: 3.0.2(typescript@5.8.3)
       wherearewe: 2.0.1
@@ -19363,9 +19366,9 @@ snapshots:
       strong-log-transformer: 2.1.0
       tempy: 3.2.0
       typedoc: 0.28.19(typescript@5.8.3)
-      typedoc-plugin-mdn-links: 5.1.1(typedoc@0.28.19(typescript@5.9.3))
-      typedoc-plugin-mermaid: 1.12.0(typedoc@0.28.19(typescript@5.9.3))
-      typedoc-plugin-missing-exports: 4.1.3(typedoc@0.28.19(typescript@5.9.3))
+      typedoc-plugin-mdn-links: 5.1.1(typedoc@0.28.19(typescript@5.8.3))
+      typedoc-plugin-mermaid: 1.12.0(typedoc@0.28.19(typescript@5.8.3))
+      typedoc-plugin-missing-exports: 4.1.3(typedoc@0.28.19(typescript@5.8.3))
       typescript: 5.8.3
       typescript-docs-verifier: 3.0.2(typescript@5.8.3)
       wherearewe: 2.0.1
@@ -28551,16 +28554,16 @@ snapshots:
 
   typedarray@0.0.6: {}
 
-  typedoc-plugin-mdn-links@5.1.1(typedoc@0.28.19(typescript@5.9.3)):
+  typedoc-plugin-mdn-links@5.1.1(typedoc@0.28.19(typescript@5.8.3)):
     dependencies:
       typedoc: 0.28.19(typescript@5.8.3)
 
-  typedoc-plugin-mermaid@1.12.0(typedoc@0.28.19(typescript@5.9.3)):
+  typedoc-plugin-mermaid@1.12.0(typedoc@0.28.19(typescript@5.8.3)):
     dependencies:
       html-escaper: 3.0.3
       typedoc: 0.28.19(typescript@5.8.3)
 
-  typedoc-plugin-missing-exports@4.1.3(typedoc@0.28.19(typescript@5.9.3)):
+  typedoc-plugin-missing-exports@4.1.3(typedoc@0.28.19(typescript@5.8.3)):
     dependencies:
       typedoc: 0.28.19(typescript@5.8.3)
 

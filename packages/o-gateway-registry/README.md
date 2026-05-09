@@ -9,7 +9,7 @@ gateway namespace — to a libp2p multiaddr by reading a pinned snapshot of
 the public-good registry at `github.com/olane-labs/gateway-registry`.
 
 ```
-o://meta/brendon/shell
+o://copass/brendon/shell
    └──┘  ← this segment is what we resolve
 ```
 
@@ -18,7 +18,7 @@ o://meta/brendon/shell
 Today, `o://` resolves through a single hard-coded gateway (`o://olane` →
 `leader.olane.com`). One gateway is a product, not a network. The registry
 layer is the substrate that lets multiple operators host slices of the
-network — Meta, Anthropic, an enterprise on its own infrastructure, an
+network — Copass, Anthropic, an enterprise on its own infrastructure, an
 indie hacker on a Raspberry Pi — each authoritative for their own users,
 all rooted in a common, auditable, mirror-able directory.
 
@@ -42,7 +42,7 @@ End-to-end smoke is the final PR in the v0 chain.
 
 See [ADR 0025 §"Phasing"][adr-phasing] for the full sequence and
 [ADR 0025 §"Resolution Flow"][adr-flow] for the on-the-wire walkthrough
-of `o://meta/brendon/shell` → libp2p stream.
+of `o://copass/brendon/shell` → libp2p stream.
 
 [adr-phasing]: https://github.com/olane-labs/o-twin-data-pipeline/blob/staging/docs/adr/0025-public-good-gateway-registry.md#phasing
 [adr-flow]: https://github.com/olane-labs/o-twin-data-pipeline/blob/staging/docs/adr/0025-public-good-gateway-registry.md#resolution-flow--concrete-walk-through
