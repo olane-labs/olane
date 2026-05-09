@@ -16,10 +16,8 @@ import {
   HttpsSnapshotFetcher,
   SnapshotFetcher,
 } from './snapshot-fetcher.js';
-import {
-  AlwaysAcceptVerifier,
-  SnapshotVerifier,
-} from './snapshot-verifier.js';
+import { SnapshotVerifier } from './snapshot-verifier.js';
+import { DidWebSnapshotVerifier } from '../did/did-web-snapshot-verifier.js';
 import { isReservedGatewayName } from './reserved-names.js';
 
 /**
@@ -54,7 +52,7 @@ export class GatewayRegistryResolver extends oAddressResolver {
     address: oAddress,
     private readonly config: GatewayRegistryResolverConfig,
     private readonly fetcher: SnapshotFetcher = new HttpsSnapshotFetcher(),
-    private readonly verifier: SnapshotVerifier = new AlwaysAcceptVerifier(),
+    private readonly verifier: SnapshotVerifier = new DidWebSnapshotVerifier(),
   ) {
     super(address);
   }

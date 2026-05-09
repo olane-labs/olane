@@ -29,14 +29,14 @@ describe('reserved gateway names', () => {
 
   test('a normal two-character name is not reserved', () => {
     expect(isReservedGatewayName('ab')).toBe(false);
-    expect(isReservedGatewayName('meta')).toBe(false);
+    expect(isReservedGatewayName('copass')).toBe(false);
     expect(isReservedGatewayName('your-grandma')).toBe(false);
   });
 });
 
 describe('validateGatewayName', () => {
   test('accepts the canonical examples from ADR 0025', () => {
-    expect(validateGatewayName('meta')).toBeNull();
+    expect(validateGatewayName('copass')).toBeNull();
     expect(validateGatewayName('your-grandma')).toBeNull();
     expect(validateGatewayName('acme-corp')).toBeNull();
   });
@@ -55,7 +55,7 @@ describe('validateGatewayName', () => {
   });
 
   test('rejects uppercase', () => {
-    expect(validateGatewayName('Meta')).toMatch(/lowercase/);
+    expect(validateGatewayName('Copass')).toMatch(/lowercase/);
   });
 
   test('rejects underscore (DNS-label compatibility)', () => {
@@ -63,11 +63,11 @@ describe('validateGatewayName', () => {
   });
 
   test('rejects leading hyphen', () => {
-    expect(validateGatewayName('-meta')).toMatch(/leading or trailing hyphen/);
+    expect(validateGatewayName('-copass')).toMatch(/leading or trailing hyphen/);
   });
 
   test('rejects trailing hyphen', () => {
-    expect(validateGatewayName('meta-')).toMatch(/leading or trailing hyphen/);
+    expect(validateGatewayName('copass-')).toMatch(/leading or trailing hyphen/);
   });
 
   test('rejects reserved names with the reservation reason', () => {
@@ -81,7 +81,7 @@ describe('validateGatewayName', () => {
   });
 
   test('accepts digits', () => {
-    expect(validateGatewayName('meta2')).toBeNull();
+    expect(validateGatewayName('copass2')).toBeNull();
     expect(validateGatewayName('v3')).toBeNull();
   });
 });
