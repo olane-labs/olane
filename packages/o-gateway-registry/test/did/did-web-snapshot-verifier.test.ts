@@ -21,7 +21,7 @@ function newTestSetup(): TestSetup {
   const maintainerDid = 'did:web:registry.olane.network';
   const maintainerKey = generateTestKey();
   const maintainerKeyId = `${maintainerDid}#key-1`;
-  const operatorDid = 'did:web:meta.example.com';
+  const operatorDid = 'did:web:copass.example.com';
   const operatorKey = generateTestKey();
   const operatorKeyId = `${operatorDid}#key-1`;
 
@@ -31,7 +31,7 @@ function newTestSetup(): TestSetup {
       maintainerKeyId,
       maintainerKey,
     ),
-    'https://meta.example.com/.well-known/did.json': makeDidDocument(
+    'https://copass.example.com/.well-known/did.json': makeDidDocument(
       operatorDid,
       operatorKeyId,
       operatorKey,
@@ -226,7 +226,7 @@ describe('DidWebSnapshotVerifier — verifyEntry', () => {
 
     const entryA = signEntry(
       makeEntry({
-        name: 'meta',
+        name: 'copass',
         operatorDid: setup.operatorDid,
         signature: {
           keyId: `${setup.operatorDid}#key-1`,
@@ -238,7 +238,7 @@ describe('DidWebSnapshotVerifier — verifyEntry', () => {
     );
     const entryB = signEntry(
       makeEntry({
-        name: 'meta-test',
+        name: 'copass-test',
         operatorDid: setup.operatorDid,
         signature: {
           keyId: `${setup.operatorDid}#key-1`,

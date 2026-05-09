@@ -37,7 +37,7 @@ function makeRequest(uri: string) {
 
 describe('GatewayRegistryResolver — load() lifecycle', () => {
   test('load() fetches the snapshot once and verifies it', async () => {
-    const snapshot = makeSnapshot([makeEntry({ name: 'meta' })]);
+    const snapshot = makeSnapshot([makeEntry({ name: 'copass' })]);
     const verifyCalls: Array<{ snap: RegistrySnapshot; did: string }> = [];
     const verifier: SnapshotVerifier = {
       async verifySnapshot(snap, did) {
@@ -88,19 +88,19 @@ describe('GatewayRegistryResolver — load() lifecycle', () => {
 describe('GatewayRegistryResolver — resolve()', () => {
   test('routes to the gateway transport when first segment matches an entry', async () => {
     const entry = makeEntry({
-      name: 'meta',
-      transports: ['/dns4/leader.meta.example.com/tcp/4000/tls/ws'],
+      name: 'copass',
+      transports: ['/dns4/leader.copass.example.com/tcp/4000/tls/ws'],
     });
     const resolver = makeResolver(makeSnapshot([entry]));
 
     const result = await resolver.resolve(
-      makeRequest('o://meta/brendon/shell'),
+      makeRequest('o://copass/brendon/shell'),
     );
 
     expect(result.nextHopAddress.toString()).toBe('o://leader');
     const transports = result.nextHopAddress.transports.map((t) => t.value);
     expect(transports).toEqual([
-      '/dns4/leader.meta.example.com/tcp/4000/tls/ws',
+      '/dns4/leader.copass.example.com/tcp/4000/tls/ws',
     ]);
   });
 
@@ -133,25 +133,25 @@ describe('GatewayRegistryResolver — resolve()', () => {
   });
 
   test('drops entries that fail per-entry verification rather than throwing', async () => {
-    const entry = makeEntry({ name: 'meta' });
+    const entry = makeEntry({ name: 'copass' });
     const verifier: SnapshotVerifier = {
       async verifySnapshot() {
         // accept the snapshot
       },
       async verifyEntry(e: GatewayRegistryEntry) {
-        if (e.name === 'meta') throw new Error('forged entry');
+        if (e.name === 'copass') throw new Error('forged entry');
       },
     };
     const resolver = makeResolver(makeSnapshot([entry]), { verifier });
 
-    const req = makeRequest('o://meta/brendon');
+    const req = makeRequest('o://copass/brendon');
     const result = await resolver.resolve(req);
 
     expect(result.nextHopAddress).toBe(req.address);
   });
 
   test('lazy-loads the snapshot on first resolve when load() was not called', async () => {
-    const snapshot = makeSnapshot([makeEntry({ name: 'meta' })]);
+    const snapshot = makeSnapshot([makeEntry({ name: 'copass' })]);
     let fetchCount = 0;
     const fetcher: SnapshotFetcher = {
       async fetch() {
@@ -161,13 +161,13 @@ describe('GatewayRegistryResolver — resolve()', () => {
     };
     const resolver = makeResolver(snapshot, { fetcher });
 
-    await resolver.resolve(makeRequest('o://meta/x'));
+    await resolver.resolve(makeRequest('o://copass/x'));
 
     expect(fetchCount).toBe(1);
   });
 
   test('lookup() of a reserved name short-circuits and never fetches', async () => {
-    const snapshot = makeSnapshot([makeEntry({ name: 'meta' })]);
+    const snapshot = makeSnapshot([makeEntry({ name: 'copass' })]);
     let fetchCount = 0;
     const fetcher: SnapshotFetcher = {
       async fetch() {
@@ -197,7 +197,7 @@ describe('GatewayRegistryResolver — error posture', () => {
       fetcher,
     );
 
-    await expect(resolver.lookup('meta')).rejects.toThrow(/network down/);
+    await expect(resolver.lookup('copass')).rejects.toThrow(/network down/);
   });
 
   test('failClosed=false returns null when the fetch fails (test mode only)', async () => {
@@ -212,7 +212,7 @@ describe('GatewayRegistryResolver — error posture', () => {
       fetcher,
     );
 
-    const result = await resolver.lookup('meta');
+    const result = await resolver.lookup('copass');
     expect(result).toBeNull();
   });
 });

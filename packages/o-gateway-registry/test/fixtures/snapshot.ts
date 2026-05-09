@@ -9,16 +9,16 @@ export function makeEntry(
   overrides: Partial<GatewayRegistryEntry> = {},
 ): GatewayRegistryEntry {
   return {
-    name: 'meta',
-    operatorDid: 'did:web:meta.example.com',
-    transports: ['/dns4/leader.meta.example.com/tcp/4000/tls/ws'],
-    description: 'Meta operator gateway (test fixture)',
+    name: 'copass',
+    operatorDid: 'did:web:copass.example.com',
+    transports: ['/dns4/leader.copass.example.com/tcp/4000/tls/ws'],
+    description: 'Copass operator gateway (test fixture)',
     logo: '',
-    website: 'https://meta.example.com',
+    website: 'https://copass.example.com',
     defaultCapabilityClass: 'side-effecting',
     publishedAt: '2026-05-09T00:00:00Z',
     signature: {
-      keyId: 'did:web:meta.example.com#key-1',
+      keyId: 'did:web:copass.example.com#key-1',
       algorithm: 'Ed25519',
       value: 'AAAA',
     },

@@ -46,8 +46,8 @@ describe('canonicalize', () => {
   });
 
   test('two reorderings produce identical output', () => {
-    const a = { meta: 'x', name: 'y', transports: ['/a', '/b'] };
-    const b = { transports: ['/a', '/b'], name: 'y', meta: 'x' };
+    const a = { extra: 'x', name: 'y', transports: ['/a', '/b'] };
+    const b = { transports: ['/a', '/b'], name: 'y', extra: 'x' };
     expect(canonicalize(a)).toBe(canonicalize(b));
   });
 });
