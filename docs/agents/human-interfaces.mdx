@@ -80,29 +80,44 @@ The Olane CLI provides direct terminal access to tool nodes.
 ### Installation
 
 ```bash
-# Install CLI globally
-npm install -g @olane/cli
+# Install the Olane CLI globally
+pnpm add -g olane
 
 # Verify installation
 olane --version
 ```
 
+The `olane` CLI focuses on workspace and OS management. Its top-level commands include `login`, `logout`, `setup`, `upgrade`, `index`, `status`, `watch`, `search`, `copass`, `ingest`, `config`, `transcript`, and `os`. Use `olane os start|stop|status|address|contacts|world|identity` to manage a local OS instance. To send natural-language intents to a tool node, use the SDK's `use()` method as shown below.
+
 ### Basic usage
 
 #### Sending intents
 
-Express goals in natural language:
+Express goals in natural language. Intents are sent to a tool node using the SDK's `use()` method with the `intent` method:
 
-```bash
-# Send intent to a tool node
-olane intent "Analyze Q4 2024 sales trends"
+```typescript
+import { oAddress } from '@olane/o-core';
 
-# Target specific node
-olane use o://company/analytics --intent "Identify top-performing products"
+// Send intent to a tool node
+const result = await os.use(
+  new oAddress('o://company/analytics'),
+  {
+    method: 'intent',
+    params: { intent: 'Identify top-performing products' }
+  }
+);
 
-# With context
-olane use o://crm/customers --intent "Find customers at risk of churning" \
-  --context "Focus on high-value accounts"
+// With context
+const atRisk = await os.use(
+  new oAddress('o://crm/customers'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Find customers at risk of churning',
+      context: 'Focus on high-value accounts'
+    }
+  }
+);
 ```
 
 **Response**:
@@ -127,142 +142,92 @@ olane use o://crm/customers --intent "Find customers at risk of churning" \
 
 #### Direct tool calls
 
-For simple operations, call tools directly:
+For simple operations, call a specific tool method directly instead of routing through an intent:
+
+```typescript
+import { oAddress } from '@olane/o-core';
+
+// Call specific tool method with parameters
+const conversion = await os.use(
+  new oAddress('o://utilities/currency'),
+  {
+    method: 'convert',
+    params: { amount: 100, from: 'USD', to: 'EUR' }
+  }
+);
+
+// Response (accessed via result): { amount: 85, currency: 'EUR', rate: 0.85 }
+```
+
+#### Managing a local OS
+
+Use the `olane os` subcommands to manage a local OS instance from the terminal:
 
 ```bash
-# Call specific tool with parameters
-olane call o://utilities/currency convert \
-  --amount 100 \
-  --from "USD" \
-  --to "EUR"
+# Start a local OS instance
+olane os start
 
-# Response: { "amount": 85, "currency": "EUR", "rate": 0.85 }
+# Check OS status
+olane os status
+
+# Stop the OS instance
+olane os stop
 ```
 
-#### Discovering available nodes
-
-Find tool nodes in your network:
-
-```bash
-# List all nodes
-olane nodes list
-
-# Search by capability
-olane nodes search --capability "financial_analysis"
-
-# Get node details
-olane nodes info o://company/finance/analyst
-```
-
-**Output**:
-```
-Node: o://company/finance/analyst
-Type: Complex (Intent-driven)
-Status: Running
-
-Tools:
-  • calculate_revenue - Calculate revenue for date range
-  • calculate_expenses - Calculate expenses for date range
-  • calculate_margin - Calculate profit margins
-  • identify_trends - Identify revenue trends
-  • generate_report - Generate financial reports
-
-Supported Intents:
-  • "Analyze financial performance for [period]"
-  • "Generate profit and loss report"
-  • "Identify revenue trends and forecasts"
-```
-
-### Advanced CLI usage
+### Advanced usage
 
 #### Streaming results
 
-Watch long-running operations in real-time:
+Watch long-running operations in real-time by passing a progress callback to `use()`:
 
-```bash
-# Stream progress updates
-olane use o://data/pipeline --intent "Process Q4 customer data" --stream
-
-# Output:
-# [10%] Loading dataset...
-# [30%] Processing 5000 records...
-# [60%] Validating data...
-# [90%] Generating report...
-# [100%] Complete
-```
-
-#### Working with files
-
-Pass data from files:
-
-```bash
-# Read intent from file
-olane intent @intent.txt
-
-# Pipe input
-echo "Analyze customer churn" | olane intent
-
-# Save output to file
-olane use o://analytics --intent "Generate monthly report" > report.json
-```
-
-#### Environment configuration
-
-Configure CLI behavior:
-
-```bash
-# Set default network
-olane config set network o://leader
-
-# Set default output format
-olane config set output-format json
-
-# View configuration
-olane config list
-```
-
-**Configuration file** (`~/.olane/config.json`):
-```json
-{
-  "defaultNetwork": "o://leader",
-  "outputFormat": "json",
-  "streamUpdates": true,
-  "colorOutput": true
-}
+```typescript
+const result = await os.use(
+  new oAddress('o://data/pipeline'),
+  {
+    method: 'intent',
+    params: { intent: 'Process Q4 customer data', streamTo: 'inline' }
+  },
+  {
+    onProgress: (update) => {
+      console.log(`[${update.progress}%] ${update.message}`);
+    }
+  }
+);
 ```
 
 #### Scripting and automation
 
-Integrate CLI in shell scripts:
+Wrap intent calls in a small script to automate recurring work:
 
-```bash
-#!/bin/bash
-# daily-report.sh - Generate and email daily sales report
+```typescript
+// daily-report.ts - Generate a daily sales report
+import { oAddress } from '@olane/o-core';
 
-# Generate report
-REPORT=$(olane use o://analytics \
-  --intent "Generate daily sales summary for $(date +%Y-%m-%d)" \
-  --format json)
+const today = new Date().toISOString().slice(0, 10);
 
-# Check if successful
-if [ $? -eq 0 ]; then
-  # Email report
-  echo "$REPORT" | mail -s "Daily Sales Report" team@company.com
-  echo "Report sent successfully"
-else
-  echo "Report generation failed"
-  exit 1
-fi
+const result = await os.use(
+  new oAddress('o://analytics'),
+  {
+    method: 'intent',
+    params: { intent: `Generate daily sales summary for ${today}` }
+  }
+);
+
+if (result.result.success) {
+  console.log('Report generated:', result.result.data);
+} else {
+  console.error('Report generation failed:', result.result.error);
+}
 ```
 
-### CLI best practices
+### Usage best practices
 
 <Check>
   **Use intents for complex operations**: Let the tool node figure out the steps
 </Check>
 
 <Check>
-  **Use direct calls for simple lookups**: Faster when you know the exact tool
+  **Use direct method calls for simple lookups**: Faster when you know the exact tool method
 </Check>
 
 <Check>
@@ -270,7 +235,7 @@ fi
 </Check>
 
 <Check>
-  **Save frequently used commands as scripts**: Automate repetitive tasks
+  **Wrap frequently used calls in scripts**: Automate repetitive tasks
 </Check>
 
 ## Web Interface (Browser-Based)
@@ -375,10 +340,13 @@ app.post('/api/tools/:node/:tool', async (req, res) => {
   }
 });
 
-// Discovery endpoint
+// Discovery endpoint (queries the leader-hosted registry)
 app.get('/api/nodes', async (req, res) => {
-  const nodes = await os.discoverNodes();
-  res.json({ nodes });
+  const nodes = await os.use(
+    new oAddress('o://leader/registry'),
+    { method: 'find_all', params: {} }
+  );
+  res.json({ nodes: nodes.result.data });
 });
 
 app.listen(3000, () => {
@@ -826,7 +794,7 @@ Integrate Olane OS tool nodes directly in your applications using the JavaScript
 ### Installation
 
 ```bash
-npm install @olane/os @olane/o-core
+pnpm add @olane/os @olane/o-core
 ```
 
 ### Basic usage
@@ -1034,26 +1002,31 @@ console.log('Combined results:', {
 
 #### Dynamic node discovery
 
-Find and use nodes at runtime:
+Find and use nodes at runtime by querying the leader-hosted registry (`o://leader/registry`). Capability and address lookup is served from the leader's in-memory registry:
 
 ```typescript
-// Discover nodes with specific capability
-const nodes = await os.discoverNodes({
-  capability: 'financial_analysis'
-});
+// Search the registry for matching nodes
+const response = await os.use(
+  new oAddress('o://leader/registry'),
+  {
+    method: 'search',
+    params: { staticAddress: 'o://company/finance/analyst' }
+  }
+);
 
-console.log(`Found ${nodes.length} financial analysis nodes`);
+const nodes = response.result.data;
+console.log(`Found ${nodes.length} matching nodes`);
 
 // Use discovered nodes
 for (const node of nodes) {
   const result = await os.use(
-    node.address,
+    new oAddress(node.address),
     {
       method: 'intent',
       params: { intent: 'Generate monthly report' }
     }
   );
-  
+
   console.log(`Report from ${node.address}:`, result);
 }
 ```
@@ -1380,35 +1353,45 @@ await processor.scheduleJob('report', {
 
 ## Real-world examples
 
-### Example 1: Support rep using CLI
+### Example 1: Support rep looking up a customer
 
-Support representative quickly looks up customer information:
+A support tool quickly looks up customer information via an intent:
 
-```bash
-# During customer call, rep needs quick info
-$ olane use o://crm/customers --intent "Find customer john@example.com"
+```typescript
+import { oAddress } from '@olane/o-core';
 
-{
-  "customer": {
-    "id": "cust_123",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "status": "active",
-    "lifetimeValue": 15000
-  },
-  "recentTickets": [
-    {
-      "id": "ticket_456",
-      "subject": "Billing question",
-      "status": "resolved",
-      "created": "2024-09-28"
-    }
-  ],
-  "lastPurchase": "2024-09-15"
-}
+// During a customer call, the rep's tool needs quick info
+const lookup = await os.use(
+  new oAddress('o://crm/customers'),
+  {
+    method: 'intent',
+    params: { intent: 'Find customer john@example.com' }
+  }
+);
 
-# Follow up with another intent
-$ olane use o://crm/customers --intent "Show purchase history for cust_123"
+console.log(lookup.result.data);
+// {
+//   customer: {
+//     id: 'cust_123',
+//     name: 'John Doe',
+//     email: 'john@example.com',
+//     status: 'active',
+//     lifetimeValue: 15000
+//   },
+//   recentTickets: [
+//     { id: 'ticket_456', subject: 'Billing question', status: 'resolved', created: '2024-09-28' }
+//   ],
+//   lastPurchase: '2024-09-15'
+// }
+
+// Follow up with another intent
+const history = await os.use(
+  new oAddress('o://crm/customers'),
+  {
+    method: 'intent',
+    params: { intent: 'Show purchase history for cust_123' }
+  }
+);
 ```
 
 ### Example 2: Analyst using web dashboard
@@ -1604,11 +1587,11 @@ console.log('Data pipeline orchestrator started');
 
 **Solution**:
 ```bash
-# Install CLI globally
-npm install -g @olane/cli
+# Install the Olane CLI globally
+pnpm add -g olane
 
-# Or use npx to run without installing
-npx @olane/cli intent "Your goal"
+# Verify it is on your PATH
+olane --version
 ```
 
 ### Error: "Cannot connect to Olane OS"
@@ -1617,43 +1600,48 @@ npx @olane/cli intent "Your goal"
 
 **Solution**:
 ```bash
-# Check if OS is running
-olane status
+# Check if the local OS is running
+olane os status
 
-# Start OS if stopped
-olane start
-
-# Or specify custom address
-olane config set network o://leader:5000
+# Start the OS if stopped
+olane os start
 ```
+
+If you are connecting programmatically, verify the leader address and any
+`network.connect` multiaddrs passed to `oNodeClient`.
 
 ### Error: "Node not found"
 
 **Cause**: Tool node not registered or incorrect address
 
-**Solution**:
-```bash
-# List available nodes
-olane nodes list
+**Solution**: Query the leader-hosted registry to confirm the node is registered and check the exact address spelling:
 
-# Check node status
-olane nodes info o://your/node
+```typescript
+const response = await os.use(
+  new oAddress('o://leader/registry'),
+  { method: 'find_all', params: {} }
+);
 
-# Verify node address spelling
+console.log(response.result.data);
 ```
 
 ### Slow intent processing
 
 **Cause**: Complex intent requiring multiple tool executions
 
-**Solution**:
-```bash
-# Use streaming to see progress
-olane use o://node --intent "Complex task" --stream
+**Solution**: Pass a progress callback to `use()` to observe progress, or break the work into smaller direct method calls:
 
-# Or break into smaller direct tool calls
-olane call o://node tool_1 --params '{...}'
-olane call o://node tool_2 --params '{...}'
+```typescript
+// Observe progress
+await os.use(
+  new oAddress('o://node'),
+  { method: 'intent', params: { intent: 'Complex task', streamTo: 'inline' } },
+  { onProgress: (update) => console.log(update.message) }
+);
+
+// Or break into smaller direct method calls
+await os.use(new oAddress('o://node'), { method: 'tool_1', params: { /* ... */ } });
+await os.use(new oAddress('o://node'), { method: 'tool_2', params: { /* ... */ } });
 ```
 
 ### Web UI not receiving results

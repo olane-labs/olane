@@ -14,12 +14,12 @@ Tools are **agent-agnostic**. They accept natural language intents from ANY agen
 
 ```typescript
 // The SAME tool node serves:
-// ✓ Human via CLI: olane intent "Analyze Q4 sales"
+// ✓ Human via CLI: olane os ... (or the SDK form below)
 // ✓ Human via web UI: User types in form field
 // ✓ AI agent (GPT-4): Programmatic intent from autonomous workflow
 // ✓ AI agent (Claude): Part of multi-agent coordination
 
-await toolNode.use({
+await node.use(toolAddress, {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 sales and identify trends'
@@ -41,7 +41,7 @@ await toolNode.use({
 | Term | Context | Example |
 |------|---------|---------|
 | **Agents (human or AI)** | When referring to Layer 1 users | "Agents express intents in natural language" |
-| **Human agents** | When specifically discussing human users | "Human agents can use the CLI to send intents" |
+| **Human agents** | When specifically discussing human users | "Human agents can send intents to a tool node" |
 | **AI agents** | When specifically discussing AI models | "AI agents can coordinate autonomously" |
 | **Agent-agnostic** | When describing tools | "Tools are agent-agnostic - they serve both humans and AI" |
 | **Users** or **Agents** | General reference to Layer 1 | "Users interact with tools via intents" |
@@ -74,7 +74,7 @@ They can be either **human** or **AI-powered**.
 ### AI Agents
 - Large language models (GPT-4, Claude, etc.)
 - Autonomous reasoning and coordination
-- Learn from execution patterns
+- Coordinate multi-step workflows
 ```
 
 ❌ **Incorrect:**
@@ -93,11 +93,12 @@ Both human and AI agents use the same interface:
 <CodeGroup>
 
 ```bash Human Agent (CLI)
-olane intent "Analyze Q4 sales"
+olane os start
+# then send intents to a tool node via the SDK form below
 ```
 
 ```typescript AI Agent (Programmatic)
-await toolNode.use({
+await node.use(toolAddress, {
   method: 'intent',
   params: { intent: 'Analyze Q4 sales' }
 });
@@ -151,12 +152,13 @@ Include BOTH interaction modes:
 
 ### As a Human Agent
 ```bash
-olane intent "Your test goal"
+olane os start
+# then send the intent to your tool node via the SDK form below
 ```
 
 ### As an AI Agent
 ```typescript
-const result = await toolNode.use({
+const result = await node.use(toolAddress, {
   method: 'intent',
   params: { intent: 'Your test goal' }
 });
@@ -199,12 +201,13 @@ Accepts natural language intents from agents (human or AI).
 
 **Human Invocation:**
 ```bash
-olane intent "Your goal"
+olane os start
+# then send the intent to the tool node via the SDK form below
 ```
 
 **AI Invocation:**
 ```typescript
-await toolNode.use({
+await node.use(toolAddress, {
   method: 'intent',
   params: { intent: 'Your goal' }
 });

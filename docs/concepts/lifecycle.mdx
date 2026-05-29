@@ -1,0 +1,181 @@
+---
+title: "The node lifecycle"
+description: "How start, hooks, register, and stop fit together — and where to put your code."
+---
+
+`start()` is sacred. You never override it. You override the hooks.
+
+The whole lifecycle is defined in `oCore` (`packages/o-core/src/core/o-core.ts:416`). It runs the same way for every node — leader, worker, parent, child, tool, lane tool, bridge. Once you know the order, you know where every piece of your code belongs.
+
+## The start sequence
+
+When you call `await node.start()`, six things happen in order:
+
+<Steps>
+  <Step title="validate()">
+    Cheap config checks. Throws synchronously on bad input. No network, no resources allocated yet.
+  </Step>
+  <Step title="initialize()">
+    Allocates libp2p, the router, the hierarchy manager, the connection manager, the registration manager. After this step the node is internally wired but not yet visible to the network.
+  </Step>
+  <Step title="hookInitializeFinished()">
+    **Your setup code goes here.** Connect to databases. Create child node hooks. Wire up services. The node has its identity and managers, but has not yet registered with anything.
+  </Step>
+  <Step title="register()">
+    Registers with the leader and with the parent (if any). Failures here are logged and swallowed — see below.
+  </Step>
+  <Step title="hookStartFinished()">
+    **Your post-registration code goes here.** Background tasks, readiness logs, anything that should run only once the node is discoverable.
+  </Step>
+  <Step title="state = RUNNING">
+    The node is now serving requests. `node.state` returns `RUNNING`.
+  </Step>
+</Steps>
+
+## Where your code goes
+
+Three hooks, three jobs. Pick by what your code needs.
+
+<ParamField path="hookInitializeFinished()" type="async method">
+  Setup that depends on managers being ready but does **not** depend on registration. Service clients, child node hook injection, internal state. Runs before the node is discoverable.
+</ParamField>
+<ParamField path="hookStartFinished()" type="async method">
+  Setup that should only run once the node is registered and visible. Background timers, periodic jobs, "node ready" log lines. Runs after registration.
+</ParamField>
+<ParamField path="stop()" type="async method">
+  Tear down anything you set up in either hook, then call `await super.stop()`. The base class handles deregistration and libp2p shutdown.
+</ParamField>
+
+## Code example
+
+A node that owns a database client and a heartbeat timer.
+
+```typescript
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+import { Client } from 'pg';
+
+export class AnalyticsNode extends oNodeTool {
+  private db?: Client;
+  private heartbeat?: NodeJS.Timer;
+
+  constructor() {
+    super({ address: new oAddress('o://services/analytics') });
+  }
+
+  // (1) Resources that other parts of this class need
+  async hookInitializeFinished(): Promise<void> {
+    this.db = new Client({ connectionString: process.env.DATABASE_URL });
+    await this.db.connect();
+
+    this.logger.info('Database connected');
+    await super.hookInitializeFinished();
+  }
+
+  // (2) Background work that should only start after registration
+  async hookStartFinished(): Promise<void> {
+    this.heartbeat = setInterval(() => {
+      this.logger.debug('heartbeat', { state: this.state });
+    }, 30_000);
+
+    this.logger.info('Analytics node ready');
+    await super.hookStartFinished();
+  }
+
+  // (3) Cleanup — reverse the setup
+  async stop(): Promise<void> {
+    if (this.heartbeat) clearInterval(this.heartbeat);
+    if (this.db) await this.db.end();
+    await super.stop();
+  }
+
+  async _tool_count_events(request) {
+    const { rows } = await this.db!.query('SELECT count(*) FROM events');
+    return { count: Number(rows[0].count) };
+  }
+}
+```
+
+<Warning>
+  Always `await super.hookX()` at the **end** of your override, never the start. The base hooks assume your work is done before they run their continuation.
+</Warning>
+
+## The wrong way and the right way
+
+The single most common mistake is overriding `start()` itself. It breaks the lifecycle because the base implementation orchestrates managers, registration, and state transitions.
+
+<CodeGroup>
+```typescript Wrong — overrides start()
+class BadNode extends oNodeTool {
+  async start() {
+    // Doing setup before super.start() means managers aren't ready yet.
+    this.db = new Client();
+    await this.db.connect();
+    // Doing it after means you've already missed the right window.
+    await super.start();
+  }
+}
+```
+
+```typescript Right — uses the hook
+class GoodNode extends oNodeTool {
+  async hookInitializeFinished() {
+    this.db = new Client();
+    await this.db.connect();
+    await super.hookInitializeFinished();
+  }
+}
+```
+</CodeGroup>
+
+## The stop sequence
+
+`stop()` reverses initialization.
+
+<Steps>
+  <Step title="state = STOPPING">
+    The node refuses new work.
+  </Step>
+  <Step title="teardown()">
+    Stops the heartbeat, unregisters from the leader and parent, stops libp2p, releases the state.
+  </Step>
+  <Step title="state = STOPPED">
+    The node is gone from the network. Calls to it will fail to resolve.
+  </Step>
+</Steps>
+
+If the node has children, the parent cascades `stop()` to each child first. Children stop, then the parent stops. This avoids dangling registrations.
+
+## What happens if registration fails
+
+Registration is best-effort. If the leader is unreachable or the parent has not started yet, `oCore` **logs the failure and continues** (`packages/o-core/src/core/o-core.ts:430-432`).
+
+That means:
+
+- The node still reaches `RUNNING`.
+- It can still serve requests from peers who already know its address.
+- It is not yet discoverable through the leader registry.
+- Subsequent calls (or a manual `_tool_index_network`) can register it later.
+
+This is intentional. It lets you build offline-first nodes, run isolated tests without a leader, and survive temporary leader outages without taking your nodes down.
+
+<Tip>
+  If you need to fail hard when registration fails (e.g. a strict production deploy), check `node.isRegistered` in `hookStartFinished` and throw.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Hierarchical paths" icon="sitemap" href="/concepts/addressing/hierarchical-paths">
+    Parent-child registration order, how children find their parent.
+  </Card>
+  <Card title="Request and response" icon="exchange" href="/concepts/communication/request-response">
+    What a node actually does while it is RUNNING.
+  </Card>
+  <Card title="What is a node?" icon="server" href="/concepts/nodes/overview">
+    The lower-level pieces — peerId, multiaddrs, listeners.
+  </Card>
+  <Card title="Routing" icon="route" href="/concepts/communication/routing">
+    How requests traverse parent-child relationships.
+  </Card>
+</CardGroup>

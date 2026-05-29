@@ -1,101 +1,105 @@
 # Olane OS
 
-**The network and transport layer for humans, AI agents, and tools — one address space, one interface.**
+**An addressable, peer-to-peer runtime for tools, AI agents, and humans — one address space, one call.**
 
 [![npm version](https://badge.fury.io/js/%40olane%2Fo-core.svg)](https://www.npmjs.com/package/@olane/o-core)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Documentation](https://img.shields.io/badge/docs-olane.com-blue)](https://olane.com/docs)
+[![Status](https://img.shields.io/badge/status-0.9.0%20·%20pre--1.0-orange.svg)](#project-status)
 
 ---
 
 ## TL;DR
 
-Olane is the transport layer that lets **humans, AI agents, and tools talk to each other through a single unified interface**. Every participant — a person, a Claude instance, a database, a browser tab, a Raspberry Pi — becomes an addressable node (`o://...`) reached the same way:
+Olane gives every participant in a system — a tool, an AI model, or a person — an `o://` address, and lets any of them call any other through a single primitive:
 
 ```typescript
 await node.use(address, { method, params });
 ```
 
-That uniformity is the unlock. The caller does not need to know whether the responder is a human approving a request, an AI agent running inference, or a deterministic tool returning data. **Same protocol. Same call pattern. Same address space.**
+The caller never needs to know whether the responder is a deterministic tool returning data, an LLM running inference, or a human approving a request. **Same protocol. Same call shape. Same address space.** It runs over [libp2p](https://libp2p.io/), so nodes live in browsers, servers, and edge devices and reach each other directly.
 
-What this enables:
+What that unlocks:
 
-- 🧑‍🤝‍🤖 **Humans and agents on equal footing** — both are nodes, both can call and be called
-- 🛠️ **Tools that don't care who's calling** — a finance node serves a human, an AI agent, or another tool identically
-- 🔄 **Workflows that emerge instead of being pre-wired** — uniform routing means agents discover paths through execution
-- 🌐 **Runs anywhere** — over libp2p (WebSocket, TCP, WebRTC, QUIC), so nodes live in browsers, servers, mobile, IoT
-- 🧠 **One client, one mental model** — no separate SDKs per participant type
+- 🧩 **One interface for everything** — tools, AI, and humans are all reached with `node.use()`; no separate SDK per participant type
+- 🔎 **Self-describing capabilities** — nodes publish typed method metadata (`oMethod`), so an AI agent can discover and call a node it has never seen before
+- 🗣️ **Two ways to call a node** — by an exact method name, or by a natural-language *intent* that the node resolves itself via an LLM loop ([Lanes](#lanes-intent-driven-execution))
+- 🤖 **Multi-provider intelligence built in** — one node (`o://intelligence`) fronts Anthropic, OpenAI, Gemini, Ollama, Perplexity, and Grok
+- 🌐 **Runs as a peer mesh** — libp2p over WebSocket, TCP, and WebTransport, encrypted by default (Noise)
+
+> **Status:** Olane is **0.9.0 / pre-1.0** and under active development. The core (`o://` addressing, `node.use()`, Lanes, the node runtime) is solid and code-backed; some surfaces noted below are on the [roadmap](#roadmap--not-yet-shipped).
 
 ---
 
 ## Table of Contents
 
-- [The Unified Interface](#the-unified-interface) — one call pattern for humans, AI, and tools
-- [First-Class Peers](#first-class-peers) — how humans, AI, and tools join the same network
-- [The Transport](#the-transport-run-anywhere-reach-anywhere) — libp2p across browser, server, mobile, IoT
-- [What Emerges](#what-emerges-from-a-unified-interface) — Lanes, discovery, adaptive coordination
+- [The Unified Interface](#the-unified-interface) — one call pattern for tools, AI, and humans
+- [First-Class Peers](#first-class-peers) — how tools, AI, and humans join the same network
+- [Lanes: Intent-Driven Execution](#lanes-intent-driven-execution) — the agentic loop, recorded and replayable
+- [Model Access](#model-access) — six LLM providers behind one address
+- [The Transport](#the-transport) — libp2p across browser, server, and edge
 - [Get Started](#get-started) — a working OS in four steps
-- [What Is Olane OS?](#what-is-olane-os) — architecture and core concepts
+- [What Is Olane OS?](#what-is-olane-os) — the three-layer model
+- [Packages](#packages) — the full monorepo, grouped by layer
 - [Framework Comparison](#framework-comparison) — vs LangGraph, n8n, CrewAI
-- [Community](#community--support) — get help and contribute
+- [Roadmap](#roadmap--not-yet-shipped) — what isn't built yet
+- [Community & Contributing](#community--support)
 
 ---
 
 ## The Unified Interface
 
-Most agent frameworks invent a separate protocol per surface: an SDK for AI agents, a webhook system for humans, a tool registry for capabilities, a message bus for inter-agent communication. Olane collapses all four into one.
+Most agent stacks invent a separate mechanism per surface: an SDK for AI agents, a registry for tools, webhooks for humans, a bus for inter-agent messaging. Olane collapses these into one address space and one call shape.
 
-**The same call shape works everywhere:**
+**The same call works everywhere — the difference is only whether you call by *method name* or by *intent*:**
 
 ```typescript
-// Calling a deterministic tool
-await node.use('o://finance/analyst', {
+import { oAddress } from '@olane/o-core';
+
+// 1. A deterministic tool — you know the method, so call it by name
+await node.use(new oAddress('o://finance/analyst'), {
   method: 'analyze',
   params: { quarter: 'Q4' },
 });
 
-// Asking a human (same call shape)
-await node.use('o://human/brendon', {
-  method: 'approve',
-  params: { request: 'release v0.9' },
+// 2. A human — reached at o://human, resolved via natural-language intent
+await node.use(new oAddress('o://human'), {
+  method: 'intent',
+  params: { intent: 'Approve release v0.9' },
 });
 
-// Delegating to an AI agent (same call shape)
-await node.use('o://ai/claude', {
-  method: 'summarize',
-  params: { document: '...' },
-});
-
-// Reaching a tool inside someone's browser (same call shape)
-await node.use('o://browser/analytics', {
-  method: 'track',
-  params: { event: 'pageview' },
+// 3. An AI agent — reached at o://ai, same intent-based call shape
+await node.use(new oAddress('o://ai'), {
+  method: 'intent',
+  params: { intent: 'Summarize the Q4 report' },
 });
 ```
 
 One call pattern. One address scheme. One discovery mechanism. The execution model on the other end — human judgment, AI inference, deterministic code — is opaque to the caller, and that's the point.
 
-**Why this matters:**
+**Why it matters:**
 
 | Without a unified interface | With Olane |
 |---|---|
 | Separate SDK per participant type | One client (`node.use()`) for everything |
 | Humans behind webhooks, agents behind APIs | Both are first-class addressable nodes |
 | Tools must know who's calling them | Tools serve any caller identically |
-| Routing requires custom plumbing | Discovery and routing are uniform |
-| Swapping a human for an AI requires a rewrite | Swapping is a routing decision at runtime |
+| Routing requires custom plumbing | Addressing and routing are uniform |
+| Integrating a new tool means reading its code | Methods are self-describing via `oMethod` metadata |
 
 ---
 
 ## First-Class Peers
 
-Every participant — human, AI, or tool — joins the same network the same way. Each gets an `o://` address and is reached through `node.use()`. There is no asymmetry.
+Every participant joins the same network the same way: each gets an `o://` address and is reached through `node.use()`.
 
-| Participant | How it joins | Address shape |
+| Participant | How it joins | Default address |
 |---|---|---|
-| **Human** | `oHumanLoginTool` (CLI/web) | `o://human/<name>` |
-| **AI agent** | `oAILoginTool` (any model) | `o://ai/<name>` |
-| **Tool / app** | `oNodeTool` (your code) | `o://<your-namespace>` |
+| **Tool / app** | `oNodeTool` or `oLaneTool` (your code) | `o://<your-namespace>` |
+| **Human** | `oHumanLoginTool` (CLI / web) | `o://human` |
+| **AI agent** | `oAILoginTool` (any model) | `o://ai` |
+
+A human and an AI join with identical wiring — you supply `respond` / `answer` / `receiveStream` handlers, and the node exposes them as the callable `intent`, `question`, and `receive_stream` methods:
 
 <table>
 <tr>
@@ -107,21 +111,21 @@ Every participant — human, AI, or tool — joins the same network the same way
 import { oHumanLoginTool } from '@olane/o-login';
 
 const human = new oHumanLoginTool({
+  // Approvals, decisions, judgment calls
   respond: async (intent: string) => {
-    // Approvals, decisions, judgment calls
     return 'Approved with conditions';
   },
   answer: async (question: string) => {
-    return 'Answer from human';
+    return 'Answer from a human';
   },
   receiveStream: async (data: any) => {
     // Process streamed data
-  }
+  },
 });
 
 await human.start();
-// Now reachable at o://human — any node
-// (AI or otherwise) can call this person.
+// Reachable at o://human via
+// node.use(o://human, { method: 'intent', ... })
 ```
 
 </td>
@@ -133,8 +137,8 @@ await human.start();
 import { oAILoginTool } from '@olane/o-login';
 
 const ai = new oAILoginTool({
+  // Autonomous processing
   respond: async (intent: string) => {
-    // Autonomous processing
     return await runModel(intent);
   },
   answer: async (question: string) => {
@@ -142,135 +146,119 @@ const ai = new oAILoginTool({
   },
   receiveStream: async (data: any) => {
     await processStream(data);
-  }
+  },
 });
 
 await ai.start();
-// Now reachable at o://ai — any node
-// (human or otherwise) can call this agent.
+// Reachable at o://ai via
+// node.use(o://ai, { method: 'intent', ... })
 ```
 
 </td>
 </tr>
 </table>
 
-**Same network. Same interface. Different execution models.** Humans bring judgment and oversight. AI agents bring automation and scale. Tools bring deterministic capability. The transport doesn't care which is which — and neither do callers.
+**Same network. Same interface. Different execution models.** Humans bring judgment and oversight; AI agents bring automation and scale; tools bring deterministic capability. Because all three are reached identically, routing a step to a person or to a model is a call to the same address shape — the caller doesn't change.
 
-[**Agent login →**](./packages/o-login/) | [**Agent-agnostic design →**](./docs/agents/agent-agnostic-design.mdx)
+[**Login package →**](./packages/o-login/) · [**Agent-agnostic design →**](./docs/agents/agent-agnostic-design.mdx)
 
 ---
 
-## The Transport: Run Anywhere, Reach Anywhere
+## Lanes: Intent-Driven Execution
 
-Olane nodes use [libp2p](https://libp2p.io/) for transport. Nodes live in browsers, mobile apps, IoT devices, edge servers, or the cloud — and any addressable peer (human, AI, or tool) can reach any other through the same `o://` namespace.
+A plain tool node is **callable by name** — you send `{ method, params }`. An `oLaneTool` is additionally **callable by intent**: you send a natural-language goal and the node runs an LLM loop to accomplish it. We call a single run a **Lane**.
 
-<table>
-<tr>
-<td width="50%">
+A Lane is a real, bounded reason-act loop (`@olane/o-lane`):
 
-**Tool node in a browser**
+1. **Evaluate** — the LLM (`o://intelligence`) is given the intent plus the accumulated cycle history and decides the next step.
+2. **Execute** — for a chosen target address, the loop *handshakes* the tool to discover its methods, asks the LLM to pick a concrete `{ method, params }`, optionally routes it through an [approval gate](./packages/o-approval/), and invokes it via `node.use()`.
+3. **Repeat** — the result feeds back into the next evaluate cycle, bounded by `MAX_CYCLES` (default 20), until the LLM emits a **stop** with a final answer.
 
-```typescript
-import { oWebsocketNode } from '@olane/o-node';
-
-const browserTool = new oWebsocketNode({
-  address: new oAddress('o://browser/analytics'),
-  leader: leaderAddress
-});
-
-await browserTool.start();
-// Reachable from anywhere on the network
-```
-
-</td>
-<td width="50%">
-
-**Tool node on mobile / IoT**
+Every cycle is recorded. When the run finishes, the full sequence (intent + each capability + result) is serialized, **content-addressed as a CID, and persisted** — and it can be **deterministically replayed** by CID, re-running only the state-changing tool calls while skipping the LLM, handshake, and approval steps.
 
 ```typescript
-import { oClientNode } from '@olane/o-node';
-
-const deviceTool = new oClientNode({
-  address: new oAddress('o://device/sensors'),
-  leader: leaderAddress
+// You express the intent; the Lane discovers the path.
+const result = await complianceNode.use(new oAddress('o://compliance'), {
+  method: 'intent',
+  params: { intent: 'Generate a Q4 compliance report and flag anomalies' },
 });
-
-await deviceTool.start();
-// Reachable from anywhere on the network
 ```
 
-</td>
-</tr>
-</table>
+An *illustrative* trace of what a Lane can produce — note that humans and AI are reached through the same interface, so a Lane can route work to either:
 
-**What the transport gives you:**
+```
+Cycle 1:  Evaluate → fetch transactions          (calls o://finance via node.use)
+Cycle 2:  Evaluate → analyze, 3 anomalies flagged
+Cycle 3:  Execute  → request human review         (calls o://human)
+Cycle 4:  Human    → approves 2, asks for detail on 1
+Cycle 5:  Evaluate → deeper analysis on the 1
+Cycle 6:  Execute  → route back to o://human for sign-off
+Cycle 7:  Stop     → format and return the report
+```
 
-| Traditional limitation | Olane |
-|---|---|
-| Browsers can't be servers | **WebRTC and WebSocket transports — browsers participate as full peers** |
-| Mobile and IoT need a backend proxy | **Direct peer discovery via DHT** |
-| Tools require central servers | **P2P, no middleman** |
-| Firewalls and NAT block connections | **Automatic hole-punching** |
-| Connections are insecure by default | **Encrypted by default (Noise protocol)** |
+This coordination wasn't pre-wired as a DAG — it was decided cycle-by-cycle by the model over a uniform interface, and the path is saved as a replayable Lane.
 
-**Supported transports:**
+> **Honest scope:** the loop is a single-LLM, prompt-engineered ReAct loop (JSON parsed from the model response), not provider-native function-calling. The default dispatcher wires the **Evaluate** and **Execute** capabilities; **Search**, **Multiple-step**, and **Configure** capabilities exist in the codebase but are not yet wired into the standard loop. Automatic capability-based *failover* between a human and an AI is **not** implemented — interchangeability today means the call shape is identical, not that the system reroutes on its own.
+
+[**o-lane →**](./packages/o-lane/) · [**Emergent workflows →**](./docs/concepts/emergent-workflows.mdx)
+
+---
+
+## Model Access
+
+LLM access is itself just an addressable node. `o://intelligence` (`@olane/o-intelligence`) is a router that fronts six fully-implemented provider backends, each calling the vendor's HTTP API directly (no vendor SDK lock-in):
+
+| Provider | Address | Notes |
+|---|---|---|
+| **Anthropic** | `o://anthropic` | Messages API, streaming; default `claude-sonnet-4-6` |
+| **OpenAI** | `o://openai` | Chat, embeddings, image generation |
+| **Gemini** | `o://gemini` | `generateContent` + streaming |
+| **Ollama** | `o://ollama` | Local models (`localhost:11434`), pull/delete |
+| **Perplexity** | `o://perplexity` | Includes search; default `sonar` |
+| **Grok (xAI)** | `o://grok` | Chat completions |
+
+Provider and API key are resolved in order: per-request params → environment variables → encrypted secure storage (`o://secure`) → an interactive prompt to `o://human`. Responses can stream. This is the layer the Lane loop calls to make every model decision.
+
+```typescript
+await node.use(new oAddress('o://intelligence'), {
+  method: 'prompt',
+  params: { prompt: 'Summarize this document', provider: 'anthropic' },
+});
+```
+
+[**o-intelligence →**](./packages/o-intelligence/)
+
+---
+
+## The Transport
+
+Olane nodes use [libp2p](https://libp2p.io/). Any addressable peer can reach any other through the same `o://` namespace, with no central server in the call path.
+
+**Configured today** (`@olane/o-config`):
 
 - 🌐 **WebSocket** — browser-compatible
 - 🔌 **TCP** — server-to-server
-- 📡 **WebRTC** — direct browser-to-browser
-- ⚡ **QUIC** — low-latency UDP
-- 📱 **Bluetooth** — coming soon for local devices
+- 🚀 **WebTransport** — HTTP/3 (QUIC-based), browser-compatible
+- 🔒 **Noise** encryption on every connection (default), with Yamux stream multiplexing
+- 🛰️ **Kademlia DHT** for peer routing
+- 🔁 **circuit-relay-v2** to reach peers behind NAT/firewalls via a relay
 
-[**P2P networking →**](./packages/o-node/README.md) | [**Browser nodes guide →**](./docs/guides/browser-nodes.mdx)
+| Traditional limitation | Olane today |
+|---|---|
+| Browsers can't be peers | **WebSocket + WebTransport let browsers participate** |
+| Connections are insecure by default | **Encrypted by default (Noise)** |
+| Peers behind NAT are unreachable | **Relayed connections via circuit-relay-v2** |
+| Peer routing needs central coordination | **Kademlia DHT for routing** |
 
----
+**Capability discovery** is handled by a leader-hosted registry: nodes register their address and protocols with `o://leader`, and address resolution queries that registry (libp2p's DHT handles the lower-level peer routing). Direct **WebRTC** and **raw QUIC** transports, **Bluetooth**, and registry-free DHT capability discovery are on the [roadmap](#roadmap--not-yet-shipped).
 
-## What Emerges from a Unified Interface
-
-When the interface is uniform and addresses are dynamic, you don't pre-build workflows — they **emerge**. We call these **Lanes**.
-
-- 🔍 **Discovery is uniform** — agents find capabilities via DHT, not registries you maintain
-- 🎯 **Routing is dynamic** — the system picks the best responder (human, AI, or tool) at execution time, not at compile time
-- 📊 **Patterns are recorded** — successful execution paths become reusable Lanes, not pre-compiled DAGs
-- 🔄 **Substitution is free** — a human falling offline routes to an AI peer with similar capabilities, and vice versa, because the call shape is the same
-
-**Real-world example: a compliance report needing both AI analysis and human approval.**
-
-```typescript
-// You don't define the workflow. You express the intent.
-const result = await complianceNode.use({
-  method: 'intent',
-  params: {
-    intent: 'Generate Q4 compliance report with appropriate oversight'
-  }
-});
-```
-
-What happens at runtime:
-
-```
-Cycle 1:  AI Agent A   → Fetches data, discovers 127 transactions
-Cycle 2:  AI Agent A   → Analyzes, flags 3 anomalies
-Cycle 3:  AI Agent A   → Decides human review is needed
-Cycle 4:  System       → Discovers available human peers
-Cycle 5:  Human        → Reviews flagged items (system pauses 2 hrs)
-Cycle 6:  Human        → Approves 2, requests deeper analysis on 1
-Cycle 7:  AI Agent B   → Picks up deep analysis (Agent A is busy)
-Cycle 8:  AI Agent B   → Completes, no further issues
-Cycle 9:  AI Agent B   → Routes back to human for final approval
-Cycle 10: Human        → Approves final report
-Cycle 11: AI Agent A   → Formats and delivers
-```
-
-This coordination wasn't programmed. It **emerged** from peers pursuing a shared intent across a uniform interface — humans and AI substituted for each other, work paused for human latency without breaking, and the path is now recorded as a reusable Lane.
-
-[**Emergent workflows →**](./docs/concepts/emergent-workflows.mdx)
+[**o-node →**](./packages/o-node/) · [**Browser nodes →**](./docs/guides/browser-nodes.mdx)
 
 ---
 
 ## Get Started
 
-A working OS instance in four steps. Same interface for tools, humans, and AI from the very first call.
+A working OS instance in four steps.
 
 **1. Install**
 
@@ -280,7 +268,7 @@ pnpm add @olane/os @olane/o-core @olane/o-login
 
 **2. Start an OS instance**
 
-An Olane OS instance needs a leader (the discovery / routing entry point) and at least one node. Both are addressable — `o://leader` and `o://node`.
+An instance needs a leader (the discovery / routing root) and at least one node — both are addressable.
 
 ```typescript
 import { OlaneOS } from '@olane/os';
@@ -308,14 +296,12 @@ await os.start();
 
 **3. Call any address — same shape for everything**
 
-Every node on the network exposes `.use()`. Grab any node and start calling.
-
 ```typescript
 const node = os.entryNode();
 
 const response = await node.use(new oAddress('o://node'), {
-  method: 'some_tool',
-  params: { /* ... */ },
+  method: 'hello_world',
+  params: {},
 });
 
 if (response.result.success) {
@@ -327,7 +313,7 @@ if (response.result.success) {
 
 **4. Bring a human or an AI into the same network**
 
-Each login tool joins as a child of the OS's root leader, so the rest of the network can reach it. Once attached, the same `node.use(...)` call reaches a person or a model — no new SDK, no new protocol.
+Each login tool joins as a child of the OS's root leader, so the rest of the network can reach it. Once attached, the same `node.use(...)` call reaches a person or a model.
 
 ```typescript
 import { oHumanLoginTool, oAILoginTool } from '@olane/o-login';
@@ -354,65 +340,115 @@ const ai = new oAILoginTool({
 });
 leader.addChildNode(ai);
 
-// Reach either through the same call shape
+// Reach either through the same call shape and the same `intent` method
 await node.use(new oAddress('o://human'), {
-  method: 'respond',
+  method: 'intent',
   params: { intent: 'Approve release v0.9' },
 });
 
 await node.use(new oAddress('o://ai'), {
-  method: 'respond',
+  method: 'intent',
   params: { intent: 'Summarize the Q4 report' },
 });
 ```
 
-That's the unified interface in practice. Tools, humans, and AI are all reached through `node.use(address, ...)` — the caller doesn't change shape based on who's on the other end.
+> Note: `respond` / `answer` / `receiveStream` are the *handlers you supply*; the *callable methods* over the network are `intent`, `question`, and `receive_stream`.
 
-[**📚 Full setup guide →**](./packages/o-os/README.md)
+[**📚 Full setup guide →**](./packages/o-os/)
 
 ---
 
 ## What Is Olane OS?
 
-Olane OS is the operating system built on top of the Olane transport layer. Where the transport gives you uniform addressing and routing, the OS gives you the runtime, the discovery, and the conventions for building real systems on top of it.
+Olane models a system in three layers — and crucially, the OS's own services (leader, storage, intelligence) are themselves ordinary addressable nodes. There is no privileged "system" API.
 
 ```
-Participants (humans / AI / tools)
+Agents (humans / AI)  ── send intents & method calls
         ↓
-Unified Interface (o:// + node.use)
+Tool nodes (o:// + node.use)  ── what you build
         ↓
-Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
+Transport (libp2p — WebSocket, TCP, WebTransport)
 ```
 
 | Layer | What it is | Examples |
 |---|---|---|
-| **Participants** | Anything addressable | Humans (CLI/web), AI (Claude/GPT), tool nodes |
-| **Unified interface** | One call pattern, one namespace | `o://...`, `node.use()` |
-| **Transport** | P2P networking | libp2p, DHT discovery, encrypted by default |
+| **Agents** | Whoever sends a call — *not* a class you build | Humans (CLI/web), AI models |
+| **Tool nodes** | The addressable capabilities you build | `o://finance`, `o://crm`, `o://intelligence` |
+| **Transport** | The P2P substrate | libp2p, Noise encryption, DHT routing |
 
-**Core concepts:**
+Tool nodes form a clean inheritance ladder, each rung adding one concern:
 
-- 🌐 **`o://` protocol** — hierarchical addresses, like URLs, for any participant
-- 🛠️ **Tool nodes** — capabilities you build (`o://finance`, `o://crm`)
-- 🤖 **Agents** — humans or AI, both first-class addressable peers
-- 🔄 **Lanes** — emergent, recorded workflows that arise from execution
+```
+oCore         →  identity, lifecycle, the use() primitive, o:// addressing
+oToolBase     →  method discovery (any _tool_<name> is auto-exposed) + validation
+oNodeTool     →  libp2p transport, hierarchy, registration   (callable by name)
+oLaneTool     →  the intent loop + handshake + replay          (callable by intent)
+McpBridgeTool →  exposes an external MCP server's tools as methods
+```
 
-[**Three-layer model →**](./docs/understanding/three-layer-model.mdx)
+The practical distinction is **callable by name vs callable by description**: a plain `oNodeTool` is invoked with a known `{ method, params }`; an `oLaneTool` additionally accepts a natural-language `intent` and runs the LLM loop to pick methods itself.
+
+[**Three-layer model →**](./docs/understanding/three-layer-model.mdx) · [**Tools, nodes & applications →**](./docs/concepts/tools-nodes-applications.mdx)
 
 ---
 
-## Documentation
+## Packages
 
-| Category | Links |
+This monorepo publishes 24 `@olane/*` packages. The ones most people touch first are **`@olane/os`**, **`@olane/o-core`**, **`@olane/o-node`**, **`@olane/o-lane`**, and **`@olane/o-intelligence`**.
+
+### Foundation
+
+| Package | What it does |
 |---|---|
-| 🚀 **Getting Started** | [Introduction](./docs/introduction.mdx) • [Why Olane](./docs/why-olane.mdx) • [Install + Quick Start](./packages/o-os/README.md) |
-| 🎯 **Key Ideas** | [Three-Layer Model](./docs/understanding/three-layer-model.mdx) • [Emergent Workflows](./docs/concepts/emergent-workflows.mdx) • [Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx) |
-| 🧩 **Concepts** | [Tools / Nodes / Applications](./docs/concepts/tools-nodes-applications.mdx) • [Everything is a Node](./docs/concepts/nodes/everything-is-a-node.mdx) • [MCP Integration](./docs/concepts/tools/mcp-integration.mdx) |
-| 🤖 **Agents** | [Overview](./docs/agents/overview.mdx) • [Human-in-the-Loop](./docs/agents/human-in-the-loop.mdx) • [Human Interfaces](./docs/agents/human-interfaces.mdx) |
-| 📖 **Guides** | [Browser Nodes](./docs/guides/browser-nodes.mdx) |
-| 📦 **Packages** | [o-core](./packages/o-core/) • [o-node](./packages/o-node/) • [o-tool](./packages/o-tool/) • [o-lane](./packages/o-lane/) • [o-leader](./packages/o-leader/) • [o-login](./packages/o-login/) • [o-os](./packages/o-os/) • [o-mcp](./packages/o-mcp/) • [o-storage](./packages/o-storage/) |
+| [`@olane/o-core`](./packages/o-core/) | Abstract base node: lifecycle, `o://` addressing, the `use()` primitive, response builder, auth/trace context. |
+| [`@olane/o-protocol`](./packages/o-protocol/) | JSON-RPC 2.0 wire types and the `oMethod` schema (typed params, descriptions, examples) that powers method discovery. |
+| [`@olane/o-config`](./packages/o-config/) | Default libp2p config (transports, Noise, Yamux, DHT) and a `createNode()` factory. |
+| [`@olane/o-context`](./packages/o-context/) | Async context primitive — `AsyncLocalStorage` on Node, variable-swap in the browser. |
 
-[**📚 Browse all documentation →**](https://olane.com/docs)
+### Runtime
+
+| Package | What it does |
+|---|---|
+| [`@olane/o-node`](./packages/o-node/) | The concrete libp2p implementation of `o-core`: server/client/WebSocket nodes, hierarchy, registration, routing. |
+| [`@olane/o-leader`](./packages/o-leader/) | The root node: in-memory registry (`o://leader/registry`) and `join_network` handling. |
+| [`@olane/o-tool`](./packages/o-tool/) | Base tool class: `_tool_<name>` method discovery, parameter validation, built-in protocol methods. |
+| [`@olane/os`](./packages/o-os/) | The top-level runtime that boots and supervises a leader + worker topology and OS services (fs, vector store, agent registry, storage), with config persistence and lane replay. |
+| [`@olane/o-storage`](./packages/o-storage/) | Storage node with disk, in-memory, encrypted, and AI-summary providers over `o://`. |
+| [`@olane/o-client-limited`](./packages/o-client-limited/) | Outbound-only / edge client node preset (no inbound listeners). |
+
+### Agentic
+
+| Package | What it does |
+|---|---|
+| [`@olane/o-lane`](./packages/o-lane/) | The intent loop: turns a natural-language intent into an evaluate→execute LLM cycle; records and replays runs by CID. |
+| [`@olane/o-agent`](./packages/o-agent/) | Per-session agent nodes and a registry with A2A-shaped capability cards and message inboxes. |
+| [`@olane/o-approval`](./packages/o-approval/) | Human-in-the-loop approval gate that pauses risky tool actions for confirmation (allow / review / auto modes). |
+| [`@olane/o-login`](./packages/o-login/) | Entry-point nodes that let a human (`o://human`) or AI (`o://ai`) join and route intents/questions to your handlers. |
+
+### Intelligence
+
+| Package | What it does |
+|---|---|
+| [`@olane/o-intelligence`](./packages/o-intelligence/) | Multi-provider LLM router (`o://intelligence`): Anthropic, OpenAI, Gemini, Ollama, Perplexity, Grok, with key management and streaming. |
+
+### Integration
+
+| Package | What it does |
+|---|---|
+| [`@olane/o-mcp`](./packages/o-mcp/) | Bridges external MCP servers (HTTP or stdio) into the `o://` namespace as callable tool methods. |
+| [`@olane/o-server`](./packages/o-server/) | Express HTTP/REST + JWT edge that exposes a node's `use()` to standard web clients. |
+| [`@olane/o-gateway-registry`](./packages/o-gateway-registry/) | Resolves gateway namespaces to libp2p addresses via a `did:web` + Ed25519-signed public registry. |
+| [`@olane/o-gateway-olane`](./packages/o-gateway-olane/) | Reference resolver routing `olane`-namespace requests to the public leader. |
+| [`@olane/o-gateway-interface`](./packages/o-gateway-interface/) | The `oGateway` type contract gateways implement. |
+
+### Tooling & dev
+
+| Package | What it does |
+|---|---|
+| [`@olane/o-monitor`](./packages/o-monitor/) | Network observability node: health, heartbeats, libp2p metrics, Prometheus + REST. |
+| [`@olane/o-test`](./packages/o-test/) | Test assertions and mock factories that understand the `oResponse` envelope and node lifecycle. |
+| [`@olane/o-tools-common`](./packages/o-tools-common/) | `initCommonTools()` — attaches storage, encryption, vector search, and approval to a node in one call. |
+| [`@olane/o-tool-registry`](./packages/o-tool-registry/) | *(Deprecated)* Bundle of prebuilt tools (OAuth, HF embeddings, vector store, NER); superseded by per-tool packages. |
 
 ---
 
@@ -420,16 +456,49 @@ Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
 
 | | LangGraph | n8n | CrewAI | **Olane** |
 |---|---|---|---|---|
-| **Primary abstraction** | StateGraph | Visual DAG | Crew of agents | **Transport + unified interface** |
+| **Primary abstraction** | StateGraph | Visual DAG | Crew of agents | **Address space + `node.use()`** |
 | **Humans in the loop** | Bolt-on (interrupts) | Webhooks/forms | Limited | **First-class addressable peers** |
 | **AI agents** | First-class | Plugin | First-class | **First-class addressable peers** |
-| **Tools** | Per-graph | Per-workflow | Per-crew | **Network-wide, addressable** |
-| **Discovery** | Manual wiring | Manual config | Manual config | **Automatic, P2P (DHT)** |
-| **Workflows** | Pre-defined graph | Visual canvas | Fixed crews | **Emergent, recorded as Lanes** |
-| **Where it runs** | Server | Server | Server | **Browser, server, mobile, IoT** |
+| **Tools** | Per-graph | Per-workflow | Per-crew | **Network-wide, addressable, self-describing** |
+| **Calling model** | Graph edges | Workflow links | Crew tasks | **By method name *or* by intent (Lanes)** |
+| **Discovery** | Manual wiring | Manual config | Manual config | **Leader registry + libp2p routing** |
+| **Where it runs** | Server | Server | Server | **Browser, server, edge (libp2p)** |
 | **Inter-participant comms** | Custom per edge | Workflow-bound | Crew-bound | **One call pattern (`node.use()`)** |
 
-[**Why Olane →**](./docs/why-olane.mdx) | [**Three-layer model →**](./docs/understanding/three-layer-model.mdx)
+[**Why Olane →**](./docs/why-olane.mdx) · [**Three-layer model →**](./docs/understanding/three-layer-model.mdx)
+
+---
+
+## Roadmap / Not Yet Shipped
+
+To keep this README honest, here is what the codebase **does not** do yet (these are goals, not current behavior):
+
+- **Transports:** direct **WebRTC** (browser-to-browser) and **raw QUIC** are not wired; **Bluetooth** is aspirational. Shipped transports are WebSocket, TCP, and WebTransport.
+- **NAT traversal:** reachability behind NAT uses **circuit-relay-v2** (relayed connections), not direct hole-punching (DCUtR/AutoNAT).
+- **Discovery:** capability/address lookup runs through a **leader-hosted, in-memory registry**, not a fully decentralized DHT lookup (the DHT handles peer routing only). Registry persistence/TTL is in progress.
+- **Lane capabilities:** only **Evaluate** and **Execute** are wired into the default loop. **Search**, **Multiple-step**, and **Configure** exist in the tree but aren't yet part of the standard dispatch.
+- **Human ↔ AI failover:** humans and AI are *interchangeable to call* (same address shape), but the system does **not** automatically reroute a step from an offline human to a similar-capability AI peer.
+- **Maturity:** packages are at **0.9.0** (pre-1.0). Expect breaking changes.
+
+---
+
+## Documentation
+
+| Category | Links |
+|---|---|
+| 🚀 **Getting Started** | [Introduction](./docs/introduction.mdx) · [Installation](./docs/getting-started/installation.mdx) · [Quickstart](./docs/getting-started/quickstart.mdx) · [Your First Network](./docs/getting-started/your-first-network.mdx) |
+| 🎯 **Key Ideas** | [Why Olane](./docs/why-olane.mdx) · [Three-Layer Model](./docs/understanding/three-layer-model.mdx) · [Agent-Agnostic Design](./docs/agents/agent-agnostic-design.mdx) |
+| 🧩 **Concepts** | [Tools / Nodes / Applications](./docs/concepts/tools-nodes-applications.mdx) · [Everything is a Node](./docs/concepts/nodes/everything-is-a-node.mdx) · [Addressing](./docs/concepts/addressing/overview.mdx) · [Communication & Routing](./docs/concepts/communication/routing.mdx) |
+| 🤖 **Agents** | [Overview](./docs/agents/overview.mdx) · [Human-in-the-Loop](./docs/agents/human-in-the-loop.mdx) · [Human Interfaces](./docs/agents/human-interfaces.mdx) |
+| 🛠️ **Tools** | [MCP Integration](./docs/concepts/tools/mcp-integration.mdx) · [Emergent Workflows](./docs/concepts/emergent-workflows.mdx) |
+
+[**📚 Browse all documentation →**](https://olane.com/docs)
+
+---
+
+## Project Status
+
+Olane is **pre-1.0 (0.9.0)** and evolving quickly. The foundational model — `o://` addressing, the `node.use()` primitive, the node runtime, Lanes, and multi-provider intelligence — is implemented and exercised by the OS itself. APIs may change before 1.0, and the [roadmap](#roadmap--not-yet-shipped) items above are not yet available. Feedback and contributions during this phase are especially welcome.
 
 ---
 
@@ -439,21 +508,21 @@ Transport (libp2p — WebSocket, TCP, WebRTC, QUIC)
 - **💬 GitHub Discussions**: [github.com/olane-labs/olane/discussions](https://github.com/olane-labs/olane/discussions)
 - **🐛 GitHub Issues**: [github.com/olane-labs/olane/issues](https://github.com/olane-labs/olane/issues)
 - **💬 Discord**: [discord.gg/olane](https://discord.gg/olane)
-- **📧 Email**: support@olane.io
 
 ---
 
 ## Contributing
 
-We welcome contributions. See the [Contributing Guide](./CONTRIBUTING.md) for details.
+We welcome contributions. See the [Contributing Guide](./CONTRIBUTING.md), [Code of Conduct](./CODE_OF_CONDUCT.md), and [Governance](./GOVERNANCE.md).
 
-**Areas:**
+**Good places to start:**
 
 - Tool nodes and integrations
-- Documentation and tutorials
-- Core package improvements
-- Real-world examples
+- Documentation and real-world examples
+- Roadmap items (transports, Lane capabilities, registry persistence)
 - Bug fixes and performance
+
+This is a `pnpm` + Lerna monorepo. Use `pnpm` (not `npm`), build with `pnpm build`, and test with `pnpm test`.
 
 ---
 

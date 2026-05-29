@@ -107,7 +107,7 @@ const anyNode = new AnyNodeType({
 });
 
 await anyNode.start();          // Always the same
-const result = await anyNode.use({...}); // Always the same
+const result = await anyNode.use(targetAddress, {...}); // Always the same
 await anyNode.stop();           // Always the same
 ```
 
@@ -146,9 +146,9 @@ await anyNode.stop();           // Always the same
     await coordinator.start();
     
     // All communicate the same way
-    await leader.use({...});
-    await worker.use({...});
-    await coordinator.use({...});
+    await leader.use(targetAddress, {...});
+    await worker.use(targetAddress, {...});
+    await coordinator.use(targetAddress, {...});
     ```
   </Accordion>
 </AccordionGroup>
@@ -169,7 +169,7 @@ class CoordinatorNode extends oLaneTool {
     for (const node of nodes) {
       // Don't care if it's a worker, coordinator, or leader
       // They all respond to .use()
-      await node.use({
+      await this.use(node.address, {
         method: 'process',
         params: { data: request.params.data }
       });
@@ -258,20 +258,14 @@ console.log(node.status);      // STOPPED
 ```typescript
 // All nodes communicate via .use()
 interface NodeCommunication {
-  use(request: oRequest): Promise<oResponse>;
-}
-
-interface oRequest {
-  method: string;
-  params?: Record<string, any>;
-  timeout?: number;
+  use(address: oAddress, data: { method: string; params?: Record<string, any> }): Promise<oResponse>;
 }
 ```
 
 **Example**:
 ```typescript
 // Call any node the same way
-const result = await anyNode.use({
+const result = await myNode.use(new oAddress('o://target'), {
   method: 'operation_name',
   params: { key: 'value' }
 });
@@ -290,8 +284,8 @@ interface NodeAddressing {
 **Example**:
 ```typescript
 // Discover and call any node
-const node = await oAddress.resolve('o://company/finance/analyst');
-const result = await node.use({ method: 'analyze', params: {...} });
+const target = new oAddress('o://company/finance/analyst');
+const result = await myNode.use(target, { method: 'analyze', params: {...} });
 ```
 
 ### Discovery
@@ -312,7 +306,7 @@ const analysts = await leader.search({
 
 // Use them all the same way
 for (const analyst of analysts) {
-  await analyst.use({ method: 'analyze', params: {...} });
+  await myNode.use(analyst.address, { method: 'analyze', params: {...} });
 }
 ```
 
@@ -347,7 +341,7 @@ const leader = new oLeaderNode({
 
 // Use as regular node
 await leader.start();
-await leader.use({ method: 'hello_world', params: {} });
+await leader.use(new oAddress('o://leader'), { method: 'hello_world', params: {} });
 
 // ALSO use registry capabilities
 const nodes = await leader.search({ capability: 'analysis' });
@@ -381,10 +375,10 @@ const analyst = new oLaneTool({
 await analyst.start();
 
 // Call tools directly
-await analyst.use({ method: 'calculate_revenue', params: {...} });
+await analyst.use(new oAddress('o://analyst'), { method: 'calculate_revenue', params: {...} });
 
 // OR: Send intents
-await analyst.use({
+await analyst.use(new oAddress('o://analyst'), {
   method: 'intent',
   params: { intent: 'Analyze Q4 revenue and trends' }
 });
@@ -488,7 +482,7 @@ const appNode = new iOSAppNode();
 await appNode.start();
 
 // Now server can send notifications to this specific device:
-// await deviceNode.use({ 
+// await serverNode.use(new oAddress('o://mobile/ios/' + deviceId), { 
 //   method: 'send_notification', 
 //   params: { message: 'Order shipped!' }
 // });
@@ -528,7 +522,7 @@ const leader = new oLeaderNode({
 await leader.start();
 
 // Call leader's tools like any other node
-const registeredNodes = await leader.use({
+const registeredNodes = await leader.use(new oAddress('o://leader'), {
   method: 'find_all',
   params: {}
 });
@@ -551,7 +545,7 @@ class SelfReferentialNode extends oNodeTool {
     }
     
     // Call myself
-    const result = await this.use({
+    const result = await this.use(this.address, {
       method: 'recursive_process',
       params: { depth: depth - 1 }
     });
@@ -571,7 +565,7 @@ const node = new oNodeTool({
 await node.start();
 
 // Initially: Simple worker
-await node.use({ method: 'work', params: {} });
+await node.use(new oAddress('o://flexible-node'), { method: 'work', params: {} });
 
 // Add registry capability
 node.registry = new RegistryMemoryTool();
@@ -609,7 +603,7 @@ for (const node of nodes) {
   // Coordinate directly
   for (const peer of peers) {
     if (peer.address !== node.address) {
-      await peer.use({ method: 'collaborate', params: {...} });
+      await node.use(peer.address, { method: 'collaborate', params: {...} });
     }
   }
 }
@@ -634,7 +628,7 @@ class OrderNode extends oNodeTool {
     
     // Notify ALL customer devices directly
     for (const device of devices) {
-      await device.use({
+      await this.use(device.address, {
         method: 'notify',
         params: { 
           message: `Order ${orderId} has shipped!`,
@@ -706,10 +700,10 @@ Because everything is a node, mocking is trivial:
 ```typescript
 // Mock any node type
 class MockNode extends oNode {
-  async use(request: oRequest) {
+  async use(address: oAddress, data: { method: string; params?: Record<string, any> }) {
     return { 
       result: 'mocked',
-      method: request.method 
+      method: data.method 
     };
   }
 }
@@ -809,9 +803,9 @@ await dataNode.start();
 await queueNode.start();
 
 // All called the same way
-await authNode.use({ method: 'authenticate', params: { user } });
-await dataNode.use({ method: 'query', params: { sql } });
-await queueNode.use({ method: 'enqueue', params: { job } });
+await authNode.use(new oAddress('o://auth'), { method: 'authenticate', params: { user } });
+await dataNode.use(new oAddress('o://data'), { method: 'query', params: { sql } });
+await queueNode.use(new oAddress('o://queue'), { method: 'enqueue', params: { job } });
 
 // One service type, one pattern
 ```
@@ -840,16 +834,16 @@ cat /dev/tcp/google.com/80
 
 ```typescript
 // Regular worker
-await node.use({ method: 'work', params: {} });
+await node.use(new oAddress('o://worker'), { method: 'work', params: {} });
 
 // Leader (registry)
-await leader.use({ method: 'search', params: {} });
+await node.use(new oAddress('o://leader'), { method: 'search', params: {} });
 
 // Coordinator
-await coordinator.use({ method: 'intent', params: {} });
+await node.use(new oAddress('o://coordinator'), { method: 'intent', params: {} });
 
 // External API
-await apiNode.use({ method: 'fetch', params: {} });
+await node.use(new oAddress('o://api'), { method: 'fetch', params: {} });
 
 // Same interface (.use()) works for all
 ```
@@ -865,7 +859,7 @@ Every component follows the same patterns:
 // All nodes: new Constructor({ address })
 
 // No special communication protocols
-// All nodes: await node.use({ method, params })
+// All nodes: await node.use(address, { method, params })
 
 // No special shutdown sequences
 // All nodes: await node.stop()
@@ -896,7 +890,7 @@ Any node can inspect any other node:
 
 ```typescript
 // Get node's capabilities
-const capabilities = await node.use({
+const capabilities = await myNode.use(node.address, {
   method: 'handshake',
   params: {}
 });
@@ -929,8 +923,8 @@ class LeaderCapableNode extends oNodeTool {
 
 // It's both worker and leader
 const node = new LeaderCapableNode({ address });
-await node.use({ method: 'work', params: {} });      // As worker
-await node.use({ method: 'search', params: {} });    // As leader
+await node.use(node.address, { method: 'work', params: {} });      // As worker
+await node.use(node.address, { method: 'search', params: {} });    // As leader
 ```
 
 ### Pattern 2: Leader acting as worker
@@ -947,8 +941,8 @@ class LeaderWithTools extends oLeaderNode {
 
 // It's both leader and worker
 const leader = new LeaderWithTools({ address });
-await leader.use({ method: 'search', params: {} });   // As leader
-await leader.use({ method: 'analyze', params: {} });  // As worker
+await leader.use(leader.address, { method: 'search', params: {} });   // As leader
+await leader.use(leader.address, { method: 'analyze', params: {} });  // As worker
 ```
 
 ### Pattern 3: Coordinator without special status
@@ -962,7 +956,7 @@ class RegularNode extends oLaneTool {
     
     // Coordinate them
     for (const member of team) {
-      await member.use({ method: 'execute', params: {...} });
+      await this.use(member.address, { method: 'execute', params: {...} });
     }
   }
 }
@@ -1014,8 +1008,8 @@ node.addTool('work', async (request) => {
 });
 
 // Now it's both
-await node.use({ method: 'search', params: {} });  // Leader
-await node.use({ method: 'work', params: {} });    // Worker
+await node.use(new oAddress('o://hybrid'), { method: 'search', params: {} });  // Leader
+await node.use(new oAddress('o://hybrid'), { method: 'work', params: {} });    // Worker
 ```
 
 ## Next steps

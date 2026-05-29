@@ -5,7 +5,7 @@ description: "Understand the key benefits and innovations that make Olane OS the
 
 ## Overview
 
-Olane OS is the first **agentic operating system** designed from the ground up for intelligent agents. Whether your users are humans expressing goals in natural language or AI agents coordinating complex workflows, Olane OS provides the infrastructure to build applications that just work.
+Olane OS is an **agentic operating system** designed from the ground up for intelligent agents. Whether your users are humans expressing goals in natural language or AI agents coordinating complex workflows, Olane OS provides the infrastructure to build applications that just work.
 
 **TL;DR**: Olane OS solves the hard problems of building agent-driven applications: intent-based execution, dynamic tool coordination, emergent intelligence, cost-effective AI integration, and fault-tolerant long-running processes. You build tools, agents use them, and Olane OS handles everything in between.
 
@@ -103,8 +103,8 @@ Olane OS fundamentally rethinks how agent-driven applications work:
   <Card title="Intent-Driven" icon="bullseye" color="#0D9373">
     Agents express **what** they want, tools figure out **how** to do it
   </Card>
-  <Card title="Emergent Intelligence" icon="brain" color="#0D9373">
-    Tools discover optimal workflows through exploration, not hardcoding
+  <Card title="Emergent Coordination" icon="brain" color="#0D9373">
+    The lane loop chooses each next step from results, not hardcoded paths
   </Card>
   <Card title="Generalist-Specialist" icon="users-gear" color="#0D9373">
     Single LLM serves all tools
@@ -161,17 +161,16 @@ class CustomerHealthNode extends oLaneTool {
 ```
 
 ```typescript Agent Uses It (Human or AI)
-// Human agent via CLI
-// → Just express the goal
-$ olane intent "Analyze health for customer #1234 and suggest retention actions"
-
-// AI agent programmatically
-const result = await customerHealthNode.use({
-  method: 'intent',
-  params: {
-    intent: 'Analyze health for customer #1234 and suggest retention actions'
+// Express the goal as an intent — same interface for humans and AI
+const result = await node.use(
+  new oAddress('o://crm/customer-health'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze health for customer #1234 and suggest retention actions'
+    }
   }
-});
+);
 
 // Node autonomously:
 // 1. Determines it needs LTV → calls _tool_calculate_ltv
@@ -181,14 +180,14 @@ const result = await customerHealthNode.use({
 
 // New requirement? Tool adapts autonomously.
 // New data source? Add a tool, no workflow changes.
-// Error? Automatic retry and alternative approaches.
+// The loop re-evaluates after each step until the intent is satisfied.
 ```
 </CodeGroup>
 
 **Benefits**:
 - ✅ **Intent-driven**: No hardcoded workflows
-- ✅ **Adaptive**: Tools discover optimal execution paths
-- ✅ **Resilient**: Automatic error handling and recovery
+- ✅ **Adaptive**: The lane loop picks each next step from results
+- ✅ **Replayable**: Runs are content-addressed and can be replayed
 - ✅ **Composable**: Tools coordinate dynamically
 - ✅ **Cost-effective**: One LLM serves all tools
 - ✅ **Agent-agnostic**: Serves both humans and AI
@@ -219,7 +218,7 @@ const result = await customerHealthNode.use({
   <Tab title="Solution">
     ```typescript
     // Olane OS: Agent expresses intent
-    await node.use({
+    await node.use(new oAddress('o://crm/customer-health'), {
       method: 'intent',
       params: { 
         intent: 'Assess customer health and provide retention recommendations'
@@ -247,18 +246,18 @@ const result = await customerHealthNode.use({
   <Card title="Traditional Approach" icon="money-bill-wave" color="#DC2626">
     **Per-Domain Models**
     
-    - Fine-tune GPT-4 for finance: $50K
-    - Fine-tune for CRM: $50K
-    - Fine-tune for support: $50K
-    - Total: **$150K + ongoing training**
+    - Fine-tune a separate model for finance
+    - Fine-tune another for CRM
+    - Fine-tune another for support
+    - Cost and effort grow with each new domain
   </Card>
   
   <Card title="Olane OS Approach" icon="piggy-bank" color="#0D9373">
     **Single Generalist LLM**
     
-    - One GPT-4 instance: $0/month flat
+    - One LLM instance shared across tools
     - Context injection for specialization
-    - Knowledge accumulation across domains
+    - Can be cheaper than per-domain model stacks
   </Card>
 </CardGroup>
 
@@ -336,41 +335,41 @@ class FinancialAnalystNode extends oLaneTool {
       async _tool_generate_insights(request) { /* ... */ }
     }
     
-    // Agent explores and discovers optimal paths
-    // → First run: load → clean → analyze → insights
-    // → Later: discovers clean → load is faster for pre-validated data
-    // → Later: learns analyze can skip cleaning for specific data types
-    
-    // Adaptive: Discovers better approaches over time
-    // Autonomous: Agent learns optimal sequences
-    // Flexible: Works for scenarios you didn't anticipate
+    // The lane loop evaluates the intent, executes a step,
+    // then re-evaluates based on the result:
+    // → evaluate → execute (load) → re-evaluate
+    // → execute (clean) → re-evaluate → execute (analyze) ...
+    // → bounded by MAX_CYCLES so runs always terminate
+
+    // Autonomous: the loop chooses the next step from the result
+    // Flexible: works for scenarios you didn't hardcode
+    // Replayable: each run is content-addressed (CID) and persisted
     ```
   </Tab>
 </Tabs>
 
-#### Knowledge Accumulation ("Rooms with Tips")
+#### Content-Addressed, Replayable Runs
 
-Tools leave knowledge artifacts that other agents discover and use:
+Every lane run is captured as a content-addressed artifact (CID), persisted, and can be deterministically replayed:
 
 ```typescript
-// After completing analysis, tool leaves insight
-await this.saveKnowledge({
-  context: 'When analyzing Q4 data',
-  insight: 'Holiday seasonality requires 3-year comparison for accuracy',
-  confidence: 0.92
+// Run an intent — the full sequence of steps is recorded
+const result = await node.use(new oAddress('o://analysis/data'), {
+  method: 'intent',
+  params: { intent: 'Analyze Q4 data with seasonality adjustments' }
 });
 
-// Later, different agent discovers this knowledge
-// → Automatically applies 3-year comparison
-// → Faster execution, better results
-// → No manual programming needed
+// The run is stored under a content-addressed ID (CID).
+// → Inspect exactly which steps the lane took
+// → Replay the same run deterministically by its CID
+// → Reuse a prior run as the starting point for new work
 ```
 
 **Benefits**:
-- Learning compounds across agents and tools
-- Best practices emerge organically
-- No manual knowledge management
-- Intelligence accumulates over time
+- Every run is auditable and reproducible
+- Runs can be replayed deterministically by CID
+- Persisted state means work isn't lost between sessions
+- No manual bookkeeping of intermediate steps
 
 ### 4. Agent-Agnostic Design 
 
@@ -378,31 +377,27 @@ await this.saveKnowledge({
 
 <CardGroup cols={2}>
   <Card title="Human Agent" icon="user" color="#0D9373">
-    ```bash
-    # Via CLI
-    $ olane intent "Generate Q4 revenue report"
-    
-    # Via Web UI
-    [User types in natural language form]
-    
-    # Via API
-    POST /intent
-    { "intent": "Generate Q4 revenue report" }
+    ```typescript
+    // A human's goal, expressed as an intent
+    // (typed into a UI, then passed to a node)
+    await node.use(new oAddress('o://finance/reports'), {
+      method: 'intent',
+      params: {
+        intent: 'Generate Q4 revenue report'
+      }
+    });
     ```
   </Card>
   
   <Card title="AI Agent" icon="robot" color="#0D9373">
     ```typescript
-    // GPT-4 autonomous agent
-    await node.use({
+    // An AI agent's goal — same interface
+    await node.use(new oAddress('o://finance/reports'), {
       method: 'intent',
       params: { 
         intent: 'Generate Q4 revenue report' 
       }
     });
-    
-    // Claude coordinating multi-tool workflow
-    const report = await coordinateAnalysis();
     ```
   </Card>
 </CardGroup>
@@ -427,44 +422,40 @@ await this.saveKnowledge({
   </Accordion>
 </AccordionGroup>
 
-### 5. Fault-Tolerant Long-Running Processes 
+### 5. Persisted, Replayable Long-Running Processes 
 
-**The Innovation**: Built-in checkpointing, recovery, and state management for tasks that run hours or days.
+**The Innovation**: Lane runs are content-addressed (CID) and persisted, so long-running work is recorded and can be replayed deterministically.
 
 ```typescript
-// Long-running analysis
+// Long-running analysis as a lane
 class MarketResearchNode extends oLaneTool {
   async _tool_research_competitors(request) {
-    // Automatic checkpointing every N steps
     const competitors = await this.fetchCompetitors();
-    await this.checkpoint({ competitors }); // ← State saved
-    
-    // Process can crash and resume from here
     const analysis = await this.analyzeCompetitors(competitors);
-    await this.checkpoint({ competitors, analysis }); // ← State saved
-    
     return { competitors, analysis };
   }
 }
 
-// Agent starts task
-await node.use({
-  method: 'intent',
-  params: { intent: 'Research top 20 competitors' }
-});
+// Agent starts the task as an intent
+const result = await node.use(
+  new oAddress('o://research/market'),
+  {
+    method: 'intent',
+    params: { intent: 'Research top 20 competitors' }
+  }
+);
 
-// If process crashes after 10 competitors analyzed:
-// → Automatic recovery from last checkpoint
-// → Resumes with 11th competitor
-// → No manual intervention needed
-// → No wasted work
+// The lane loop records each step of the run:
+// → The full run is persisted under a content-addressed ID (CID)
+// → A run can be replayed deterministically by its CID
+// → Completed steps don't have to be recomputed on replay
 ```
 
-**Reliability Metrics**:
-- ✅ 99.8% reliability for multi-hour tasks
-- ✅ Automatic recovery in < 30 seconds
-- ✅ Zero data loss with checkpointing
-- ✅ No manual intervention required
+**Reliability characteristics**:
+- ✅ Designed for long-running, multi-step work
+- ✅ Runs are persisted and replayable by CID
+- ✅ The lane loop is bounded by MAX_CYCLES so runs terminate
+- ✅ Steps are recorded for auditing and reproducibility
 
 ## When to use Olane OS 
 
@@ -534,10 +525,10 @@ await node.use({
 ## Real-world impact 
 
 <CardGroup cols={3}>
-  <Card title="75% Faster Development" icon="rocket" color="#0D9373">
+  <Card title="Faster Development" icon="rocket" color="#0D9373">
     Build tools, not workflows. Reuse intelligence across domains.
   </Card>
-  <Card title="50% Lower Maintenance" icon="wrench" color="#0D9373">
+  <Card title="Lower Maintenance" icon="wrench" color="#0D9373">
     No hardcoded workflows to update when requirements change
   </Card>
 </CardGroup>
@@ -546,10 +537,10 @@ await node.use({
 
 | Metric | Traditional Approach | Olane OS |
 |--------|---------------------|----------|
-| **Long-running task success** | 85-90% | 99.8% |
-| **Recovery time after failure** | 5-30 minutes (manual) | < 30 seconds (automatic) |
-| **Workflow adaptation time** | 1-2 weeks (recoding) | Minutes (intent-driven) |
-| **Cross-domain learning** | None | Automatic |
+| **Long-running tasks** | Hardcoded, restart on failure | Persisted, replayable lane runs |
+| **Recovery after failure** | Manual re-runs | Replay a run by its CID |
+| **Workflow adaptation** | Recoding | Intent-driven |
+| **Auditability** | Ad hoc logging | Content-addressed run history |
 
 ### Developer Experience
 
@@ -591,10 +582,10 @@ await node.use({
 | Aspect | LangGraph/Temporal | Olane OS |
 |--------|-------------------|----------|
 | **Workflow Definition** | Explicit graphs, hardcoded | Intent-driven, emergent |
-| **Adaptation** | Manual recoding | Autonomous learning |
-| **AI Integration** | Per-workflow LLM calls (expensive) | Single generalist LLM (70-90% cheaper) |
-| **Learning** | None | Knowledge accumulation across tools |
-| **Maintenance** | Update every workflow manually | Tools adapt autonomously |
+| **Adaptation** | Manual recoding | Intent-driven re-evaluation |
+| **AI Integration** | Per-workflow LLM calls | Single generalist LLM (can be cheaper) |
+| **Run History** | Ad hoc | Content-addressed, replayable runs |
+| **Maintenance** | Update every workflow manually | Add or update tools, no workflow rewrite |
 
 ### vs Multi-Agent Frameworks (CrewAI, AutoGen)
 
@@ -610,14 +601,13 @@ await node.use({
 
 | Aspect | Custom Code | Olane OS |
 |--------|-------------|----------|
-| **Time to Build** | Months | Days |
 | **Flexibility** | Hardcoded workflows | Intent-driven adaptation |
-| **Fault Tolerance** | Manual implementation | Built-in checkpointing |
+| **Run Persistence** | Manual implementation | Content-addressed, replayable runs |
 | **AI Integration** | Per-integration custom code | Native support |
-| **Scaling** | Manual coordination code | Automatic discovery & routing |
+| **Discovery** | Manual wiring | Address-based discovery and routing |
 
 <Note>
-  **Key Differentiation**: Olane OS is the only solution that combines intent-driven execution, emergent intelligence, agent-agnostic design, and cost-effective AI in one platform.
+  **Key Differentiation**: Olane OS combines intent-driven execution, emergent coordination, agent-agnostic design, and cost-effective AI in one platform.
 </Note>
 
 ## Getting started 
@@ -627,7 +617,7 @@ Ready to build on Olane OS? Here's your path:
 <Steps>
   <Step title="Install Olane OS">
     ```bash
-    npm install @olane/os @olane/o-lane @olane/o-node @olane/o-core
+    pnpm add @olane/os @olane/o-lane @olane/o-node @olane/o-core
     ```
   </Step>
   
@@ -685,8 +675,8 @@ Ready to build on Olane OS? Here's your path:
     Perfect! Wrap them in Olane tool nodes. Your existing APIs, databases, and services become agent-accessible through natural language intents.
   </Accordion>
   
-  <Accordion title="How does this scale?">
-    Horizontally. Add more tool node instances, and Olane OS automatically load balances and routes requests. No central bottleneck.
+  <Accordion title="How do nodes find each other?">
+    Nodes register their address with a leader-hosted registry (`o://leader/registry`), and requests are routed to nodes by address. You can run additional tool node instances to spread work across them.
   </Accordion>
   
   <Accordion title="Can I migrate from LangGraph/CrewAI?">

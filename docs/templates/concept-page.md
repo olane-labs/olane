@@ -23,10 +23,10 @@ Traditional AI agent systems require separate fine-tuned models for each domain:
 
 <CardGroup cols={2}>
   <Card title="High Cost" icon="dollar-sign" color="#ef4444">
-    $10K-$100K per fine-tuned model
+    Expensive to train a model per domain
   </Card>
   <Card title="Slow Updates" icon="clock" color="#ef4444">
-    Weeks to retrain for changes
+    Retraining is slow when requirements change
   </Card>
   <Card title="Static Knowledge" icon="lock" color="#ef4444">
     Locked-in at training time
@@ -110,17 +110,17 @@ o://company/finance/analyst
 
 | Metric | Fine-Tuned Models | Generalist-Specialist |
 |--------|-------------------|----------------------|
-| Initial setup | $10K-$100K per model | $100-$1K per agent |
-| Time to deploy | 2-4 weeks | 1-2 days |
-| Update cost | Retrain ($10K+) | Update tools ($0) |
-| Scaling cost | Linear per domain | Marginal per agent |
-| **Total (10 agents)** | **$100K-$1M** | **$1K-$10K** |
+| Initial setup | Train a model per domain | Configure an agent per domain |
+| Time to deploy | Slower (training cycle) | Faster (no training) |
+| Update cost | Requires retraining | Update tools and context |
+| Scaling cost | Grows per domain | Marginal per agent |
+| **Total (many agents)** | **Cost grows per model** | **Reuses one reasoning model** |
 
 
 ## When to use each approach
 
 ### Use Fine-Tuning When:
-- Ultra-low latency required (< 100ms)
+- Ultra-low latency is required
 - Very specific domain language/jargon
 - Complete air-gapping needed
 - You have massive training budgets
@@ -137,24 +137,24 @@ o://company/finance/analyst
 
 ### Traditional Approach (Fine-Tuned)
 ```
-Financial Analysis Model: $50K + 3 weeks
-Risk Assessment Model:    $50K + 3 weeks
-Customer Service Model:   $50K + 3 weeks
-Fraud Detection Model:    $50K + 3 weeks
-Reporting Model:          $50K + 3 weeks
+Financial Analysis Model: train + deploy a separate model
+Risk Assessment Model:    train + deploy a separate model
+Customer Service Model:   train + deploy a separate model
+Fraud Detection Model:    train + deploy a separate model
+Reporting Model:          train + deploy a separate model
 ─────────────────────────────────────────
-Total: $250K + 15 weeks
+Total: five training cycles, one model per domain
 ```
 
 ### Generalist-Specialist Approach
 ```
-1 Generalist Model (GPT-4): $0 (API-based)
-5 Specialist Agents:        $500 each
+1 Generalist Model (API-based): shared across all agents
+5 Specialist Agents:            tools + context per agent
 ─────────────────────────────────────────
-Total: $2.5K + 1 week
+Total: no training, one reasoning model reused
 ```
 
-<Check>**Savings: $247.5K and 14 weeks**</Check>
+<Check>**Reuses a single reasoning model and avoids per-domain training**</Check>
 
 ## Architecture benefits
 
@@ -239,7 +239,7 @@ const agent = new FinancialSpecialist();
 await agent.start();
 
 // Natural language intent → specialized behavior
-await agent.use({
+await agent.use(new oAddress('o://company/finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 revenue and forecast Q1'
@@ -299,13 +299,13 @@ await agent.use({
 
 ### Comparison
 - **Table format** showing tradeoffs
-- Include metrics and numbers
+- Include metrics only when they are real and defensible
 - Be objective about when NOT to use this approach
 
 ### Real-world example
-- **Concrete scenario** with actual numbers
+- **Concrete scenario** showing the tradeoffs
 - Show before/after comparison
-- Calculate savings/benefits
+- Describe the benefits qualitatively (avoid invented figures)
 
 ### Implementation
 - **Complete code example** showing the concept in action
@@ -332,11 +332,14 @@ Start with the problem being solved:
 - Cards for multiple related points
 
 ### Be Concrete
-✅ "$10K-$100K per model"  
-❌ "Expensive"
+Use specific, verifiable details rather than vague adjectives. When you cite a
+number, make sure it is real and defensible — never invent figures.
 
-✅ "2-4 weeks to deploy"  
-❌ "Slow"
+✅ "Reuses one reasoning model across many agents"  
+❌ "Better"
+
+✅ "No retraining required to add a domain"  
+❌ "Fast"
 
 ### Show Tradeoffs
 Don't oversell. Include when NOT to use:
@@ -347,10 +350,10 @@ Don't oversell. Include when NOT to use:
 ```
 
 ### Real Examples
-Include actual scenarios with calculations:
+Include concrete, defensible scenarios that compare approaches:
 ```markdown
-Traditional: $250K + 15 weeks
-Olane: $2.5K + 1 week
-Savings: $247.5K and 14 weeks
+Traditional: a separate trained model per domain
+Olane: one reasoning model reused across specialist agents
+Benefit: no per-domain training, faster iteration
 ```
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "o-core: Agentic Operating System",
+  "name": "Olane",
   "logo": {
     "dark": "/assets/logo-white.png",
     "light": "/assets/logo-white.png"
@@ -25,21 +25,11 @@
     "name": "Dashboard",
     "url": "https://olane.com"
   },
-  "tabs": [
-    {
-      "name": "Runtime Reference", 
-      "url": "api"
-    },
-    {
-      "name": "Examples",
-      "url": "examples"
-    }
-  ],
   "anchors": [
     {
-      "name": "Documentation",
-      "icon": "book-open-cover",
-      "url": "https://olane.com/docs"
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/olane-labs"
     },
     {
       "name": "Community",
@@ -54,194 +44,71 @@
   ],
   "navigation": [
     {
-      "group": "Get Started",
+      "group": "Get started",
       "pages": [
         "introduction",
         "why-olane",
-        "quickstart",
-        "installation"
+        "getting-started/quickstart",
+        "getting-started/installation",
+        "getting-started/your-first-tool-node",
+        "getting-started/your-first-network"
       ]
     },
     {
-      "group": "Understanding Olane OS",
+      "group": "Core concepts",
       "pages": [
-        "understanding/what-is-olane",
-        "understanding/three-layer-model",
-        "understanding/terminology",
-        "understanding/what-olane-is-not",
-        "understanding/when-to-use"
+        "concepts/overview",
+        "concepts/tools-nodes-applications",
+        "concepts/lifecycle",
+        "concepts/nodes/overview",
+        "concepts/nodes/everything-is-a-node",
+        "understanding/three-layer-model"
       ]
     },
     {
-      "group": "Use Cases",
+      "group": "Addressing",
       "pages": [
-        "use-cases/overview",
-        "use-cases/autonomous-workflows",
-        "use-cases/multi-tool-networks",
-        "use-cases/long-running-processes",
-        "use-cases/cost-optimization"
+        "concepts/addressing/overview",
+        "concepts/addressing/address-spaces",
+        "concepts/addressing/tool-address-vs-node-address",
+        "concepts/addressing/hierarchical-paths"
       ]
     },
     {
-      "group": "Working with Agents",
+      "group": "Communication",
+      "pages": [
+        "concepts/communication/request-response",
+        "concepts/communication/routing",
+        "concepts/communication/transports"
+      ]
+    },
+    {
+      "group": "Tools and capabilities",
+      "pages": [
+        "concepts/tools/overview",
+        "concepts/tools/mcp-integration",
+        "concepts/emergent-workflows"
+      ]
+    },
+    {
+      "group": "Working with agents",
       "pages": [
         "agents/overview",
         "agents/human-interfaces",
-        "agents/ai-integration",
         "agents/human-in-the-loop",
-        "agents/hybrid-workflows",
         "agents/agent-agnostic-design"
       ]
     },
     {
-      "group": "Core Concepts",
+      "group": "Guides",
       "pages": [
-        "concepts/architecture-overview",
-        "concepts/tools-nodes-applications",
-        "concepts/generalist-vs-specialist",
-        "concepts/emergent-vs-explicit"
+        "guides/browser-nodes"
       ]
     },
     {
-      "group": "Building Nodes",
+      "group": "Use cases",
       "pages": [
-        "concepts/nodes/overview",
-        "concepts/nodes/simple-nodes",
-        "concepts/nodes/complex-nodes",
-        "concepts/nodes/everything-is-a-node",
-        "concepts/nodes/lifecycle",
-        "concepts/nodes/hierarchies",
-        "concepts/nodes/specialization"
-      ]
-    },
-    {
-      "group": "Tools & Capabilities",
-      "pages": [
-        "concepts/tools/overview",
-        "concepts/tools/mcp-integration",
-        "concepts/tools/creating-tools",
-        "concepts/tools/conventions",
-        "concepts/tools/parameter-validation",
-        "concepts/tools/discovery",
-        "concepts/tools/built-in-tools"
-      ]
-    },
-    {
-      "group": "Addressing & Communication",
-      "pages": [
-        "concepts/addressing/overview",
-        "concepts/addressing/o-protocol",
-        "concepts/addressing/address-format",
-        "concepts/addressing/hierarchical-paths",
-        "concepts/addressing/routing",
-        "concepts/communication/ipc",
-        "concepts/communication/request-response",
-        "concepts/communication/streaming",
-        "concepts/communication/error-handling"
-      ]
-    },
-    {
-      "group": "Execution & Workflows",
-      "pages": [
-        "concepts/lanes/overview",
-        "concepts/lanes/intents",
-        "concepts/lanes/capabilities",
-        "concepts/lanes/capability-loop",
-        "concepts/lanes/execution-sequences",
-        "concepts/lanes/context-injection",
-        "concepts/lanes/checkpointing"
-      ]
-    },
-    {
-      "group": "Networks & Coordination",
-      "pages": [
-        "concepts/networks/overview",
-        "concepts/networks/p2p-networking",
-        "concepts/networks/leader-nodes",
-        "concepts/networks/peer-discovery",
-        "concepts/networks/registries",
-        "concepts/networks/joining-networks",
-        "concepts/networks/network-patterns"
-      ]
-    },
-    {
-      "group": "Packages",
-      "pages": [
-        "packages/overview",
-        "packages/choosing-packages",
-        "packages/package-combinations",
-        "packages/o-os",
-        "packages/o-core",
-        "packages/o-node",
-        "packages/o-tool",
-        "packages/o-lane",
-        "packages/o-leader",
-        "packages/o-login",
-        "packages/o-protocol",
-        "packages/o-config"
-      ]
-    },
-    {
-      "group": "Development",
-      "pages": [
-        "dev/development-workflow",
-        "dev/testing-overview",
-        "dev/testing-simple-nodes",
-        "dev/testing-complex-nodes",
-        "dev/testing-multi-node-apps",
-        "dev/debugging",
-        "dev/error-handling",
-        "dev/performance-profiling",
-        "dev/production-deployment"
-      ]
-    },
-    {
-      "group": "Advanced Guides",
-      "pages": [
-        "guides/knowledge-accumulation",
-        "guides/hierarchical-organization",
-        "guides/fault-tolerance",
-        "guides/cost-optimization",
-        "guides/multi-leader-federation",
-        "guides/custom-capabilities",
-        "guides/security-best-practices",
-        "guides/observability-monitoring"
-      ]
-    },
-    {
-      "group": "API Reference",
-      "pages": [
-        "api/overview",
-        "api/tool-nodes",
-        "api/tools",
-        "api/lanes",
-        "api/addressing",
-        "api/communication",
-        "api/networks",
-        "api/error-codes"
-      ]
-    },
-    {
-      "group": "Migration & Comparison",
-      "pages": [
-        "migration/overview",
-        "migration/from-langgraph",
-        "migration/from-crewai",
-        "migration/from-autogen",
-        "migration/monolithic-to-specialist-tool-nodes",
-        "comparison/vs-langgraph",
-        "comparison/vs-crewai",
-        "comparison/vs-autogen"
-      ]
-    },
-    {
-      "group": "Support",
-      "pages": [
-        "support/troubleshooting",
-        "support/common-issues",
-        "support/error-reference",
-        "support/faq",
-        "support/community"
+        "use-cases/overview"
       ]
     }
   ],

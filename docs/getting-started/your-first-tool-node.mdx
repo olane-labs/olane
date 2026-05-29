@@ -1,0 +1,196 @@
+---
+title: 'Build your first tool node'
+description: 'A walkthrough covering methods, validation, lifecycle hooks, and parent-child wiring.'
+---
+
+By the end of this guide you will have a `CurrencyConverter` tool node with two methods, input validation that throws on bad data, an HTTP rate-fetch client set up via a lifecycle hook, and a clean shutdown. You will also understand how to read responses correctly from `node.use()`.
+
+## Prerequisites
+
+- The [Installation](/getting-started/installation) steps complete
+- The [Quickstart](/getting-started/quickstart) example running locally (we will extend it here)
+
+## Declare two methods
+
+Methods live in a separate file. The runtime uses this map to publish method metadata and validate inbound requests.
+
+```ts methods/currency.methods.ts
+import { oMethod } from '@olane/o-protocol';
+
+export const CURRENCY_METHODS: { [key: string]: oMethod } = {
+  convert: {
+    name: 'convert',
+    description: 'Convert an amount between currencies',
+    dependencies: [],
+    parameters: [
+      { name: 'amount', type: 'number', value: 'number', description: 'Amount to convert',     required: true },
+      { name: 'from',   type: 'string', value: 'string', description: 'Source currency code',  required: true },
+      { name: 'to',     type: 'string', value: 'string', description: 'Target currency code',  required: true },
+    ],
+  },
+  list_supported_currencies: {
+    name: 'list_supported_currencies',
+    description: 'Return the set of currency codes this node can convert',
+    dependencies: [],
+    parameters: [
+      { name: 'region', type: 'string', value: 'string', description: 'Optional region filter (e.g. "EU")', required: false },
+    ],
+  },
+};
+```
+
+<Note>
+Parameter `required: true` is what the runtime checks before your handler runs. Mark a parameter `required: false` when you want a sensible default in the handler body.
+</Note>
+
+## Implement the tool node
+
+Handler names must start with `_tool_`. That prefix is the discovery contract — anything else is invisible to the runtime.
+
+```ts currency.ts
+import { oNodeTool } from '@olane/o-tool';
+import { oNodeAddress } from '@olane/o-node';
+import { oRequest } from '@olane/o-core';
+import { CURRENCY_METHODS } from './methods/currency.methods.js';
+
+class CurrencyConverter extends oNodeTool {
+  private rateClient!: { get(from: string, to: string): Promise<number> };
+
+  constructor() {
+    super({
+      address: new oNodeAddress('o://currency'),
+      leader: null,
+      parent: null,
+      description: 'FX conversion utility',
+      methods: CURRENCY_METHODS,
+    });
+  }
+
+  // Runs after the framework's own initialize step but before the node registers
+  // on the network. The right place to set up clients and warm caches.
+  async hookInitializeFinished() {
+    this.rateClient = {
+      async get(from: string, to: string) {
+        // Replace with a real FX API call.
+        return 1.08;
+      },
+    };
+    await super.hookInitializeFinished();
+  }
+
+  // Called when the node is shutting down. Close clients you opened in
+  // hookInitializeFinished here.
+  async stop() {
+    // If your client had a .close(), you would call it here.
+    await super.stop();
+  }
+
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params as {
+      amount: number; from: string; to: string;
+    };
+
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error(`Invalid amount: ${amount}`);
+    }
+
+    const rate = await this.rateClient.get(from.toUpperCase(), to.toUpperCase());
+    return { converted: amount * rate, rate, from, to };
+  }
+
+  async _tool_list_supported_currencies(request: oRequest) {
+    const { region } = (request.params ?? {}) as { region?: string };
+    const all = ['USD', 'EUR', 'GBP', 'JPY', 'AUD'];
+    const eu = ['EUR', 'GBP'];
+    return { currencies: region === 'EU' ? eu : all };
+  }
+}
+
+const node = new CurrencyConverter();
+await node.start();
+console.log('o://currency is up.');
+```
+
+<Warning>
+**Never override `start()`.** The framework runs `validate()` → `initialize()` → `hookInitializeFinished()` → `register()` → `hookStartFinished()` in a specific order. Override the hooks, not `start()` itself. Always end your override with `await super.hookX()`.
+</Warning>
+
+## Throw on bad input — do not return errors
+
+The base class converts thrown errors into `response.result.error` for the caller. Returning an error object instead breaks this contract and yields confusing call sites.
+
+<Warning>
+**Anti-pattern**: `return { success: false, error: 'bad amount' }`. The caller will see `response.result.success === true` and `response.result.data === { success: false, error: ... }` — the opposite of what you want.
+
+**Correct**: `throw new Error('Invalid amount: ' + amount)`. The caller sees `response.result.success === false` and `response.result.error === 'Invalid amount: ...'`.
+</Warning>
+
+## Call it and read the response correctly
+
+Every call goes through `node.use()`. Three fields live under `response.result`: `success`, `data`, `error`.
+
+```ts
+const response = await caller.use(new oNodeAddress('o://currency'), {
+  method: 'convert',
+  params: { amount: 250, from: 'USD', to: 'EUR' },
+});
+
+if (response.result.success) {
+  console.log(response.result.data); // { converted: 270, rate: 1.08, ... }
+} else {
+  console.error(response.result.error);
+}
+```
+
+<Warning>
+**Anti-pattern**: `response.success` or `response.data`. The fields are nested one level deeper. Read `response.result.success`, `response.result.data`, `response.result.error`.
+</Warning>
+
+## Parent-child wiring (when you outgrow a single node)
+
+Once a node accumulates state per-conversation, per-tenant, or per-resource, the parent-child pattern keeps state isolated. The parent does **not** call `new Child('o://parent/child')` — that throws at validation.
+
+```ts
+// CORRECT — flat address. The system creates o://parent/child during registration.
+const child = new ChildNode({
+  address: new oNodeAddress('o://child'),
+  leader: this.leader,
+  parent: this.address,
+  // ...
+});
+
+// Inject a hook so the parent learns about the child once it finishes initializing.
+(child as any).onInitFinished(() => this.addChildNode(child));
+await child.start();
+```
+
+<Warning>
+Never write `new oNodeAddress('o://parent/child')` in a constructor. Addresses go in flat, and the system composes the nested form (`o://parent/child`) once the parent registers the child. Constructing nested addresses up-front throws at `validate()`.
+</Warning>
+
+## Verify
+
+Run the node:
+
+```bash
+pnpm tsx currency.ts
+```
+
+Then call it with the caller from the [Quickstart](/getting-started/quickstart). You should see the converted amount, and a deliberately invalid amount should produce `response.result.success === false`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card icon="network-wired" title="Run your first network" href="/getting-started/your-first-network">
+    Bring up a leader and a worker through `OlaneOS`.
+  </Card>
+  <Card icon="recycle" title="Node lifecycle" href="/concepts/lifecycle">
+    The full hook order from validate through stop.
+  </Card>
+  <Card icon="link" title="Tool address vs node address" href="/concepts/addressing/tool-address-vs-node-address">
+    Why constructors take flat addresses and how nested addresses are resolved.
+  </Card>
+  <Card icon="message" title="Request/response" href="/concepts/communication/request-response">
+    The full shape of `oRequest` and the `response.result` envelope.
+  </Card>
+</CardGroup>

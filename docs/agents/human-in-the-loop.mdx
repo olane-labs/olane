@@ -166,12 +166,15 @@ class AutomatedPurchasing extends oLaneTool {
     
     ```typescript
     // AI sends intent to human
-    const result = await humanNode.use({
-      method: 'intent',
-      params: {
-        intent: 'Review this contract and approve if terms are acceptable'
+    const result = await node.use(
+      new oAddress('o://human/approver'),
+      {
+        method: 'intent',
+        params: {
+          intent: 'Review this contract and approve if terms are acceptable'
+        }
       }
-    });
+    );
     
     // Human receives intent, reviews, decides
     // Returns: { success: true, resolution: "Approved with modifications" }
@@ -185,12 +188,15 @@ class AutomatedPurchasing extends oLaneTool {
     
     ```typescript
     // AI asks human a specific question
-    const result = await humanNode.use({
-      method: 'question',
-      params: {
-        question: 'What is the approved budget for Q4 marketing campaigns?'
+    const result = await node.use(
+      new oAddress('o://human/approver'),
+      {
+        method: 'question',
+        params: {
+          question: 'What is the approved budget for Q4 marketing campaigns?'
+        }
       }
-    });
+    );
     
     // Human provides answer
     // Returns: { success: true, answer: "$50,000" }
@@ -204,17 +210,20 @@ class AutomatedPurchasing extends oLaneTool {
     
     ```typescript
     // AI streams progress to human dashboard
-    await humanNode.use({
-      method: 'receive_stream',
-      params: {
-        data: {
-          type: 'progress',
-          stage: 'Processing customer orders',
-          progress: 45,
-          message: '450/1000 orders processed'
+    await node.use(
+      new oAddress('o://human/approver'),
+      {
+        method: 'receive_stream',
+        params: {
+          data: {
+            type: 'progress',
+            stage: 'Processing customer orders',
+            progress: 45,
+            message: '450/1000 orders processed'
+          }
         }
       }
-    });
+    );
     
     // Human sees update in real-time dashboard
     ```
@@ -415,14 +424,17 @@ main();
 // In production, the AI agent would be triggered by events
 // Example: New purchase request from procurement system
 
-const result = await purchasingAgent.use({
-  method: 'create_purchase_order',
-  params: {
-    vendor: 'Cloud Services LLC',
-    amount: 25000,
-    description: 'Annual cloud infrastructure costs'
+const result = await node.use(
+  new oNodeAddress('o://purchasing/agent'),
+  {
+    method: 'create_purchase_order',
+    params: {
+      vendor: 'Cloud Services LLC',
+      amount: 25000,
+      description: 'Annual cloud infrastructure costs'
+    }
   }
-});
+);
 
 if (result.success) {
   console.log('Purchase approved:', result.purchaseOrder.id);
@@ -870,21 +882,27 @@ if (riskScore < 0.3) {
   return { approved: true, reviewer: 'AI' };
 } else if (riskScore < 0.7) {
   // Medium risk - team lead review
-  const review = await humanNode.use({
-    method: 'intent',
-    params: {
-      intent: `Review loan application: ${applicationSummary}`
+  const review = await node.use(
+    new oAddress('o://approvals/team-lead'),
+    {
+      method: 'intent',
+      params: {
+        intent: `Review loan application: ${applicationSummary}`
+      }
     }
-  });
+  );
   return parseReview(review);
 } else {
   // High risk - senior underwriter
-  const review = await seniorUnderwriter.use({
-    method: 'intent',
-    params: {
-      intent: `High-risk loan review required: ${detailedAnalysis}`
+  const review = await node.use(
+    new oAddress('o://underwriting/senior'),
+    {
+      method: 'intent',
+      params: {
+        intent: `High-risk loan review required: ${detailedAnalysis}`
+      }
     }
-  });
+  );
   return parseReview(review);
 }
 ```
@@ -922,12 +940,15 @@ if (diagnosis.confidence > 0.9 && diagnosis.complexity === 'routine') {
   return diagnosis.recommendedTreatment;
 } else {
   // Physician review required
-  const physicianReview = await physicianNode.use({
-    method: 'intent',
-    params: {
-      intent: `Review AI diagnosis:\n${JSON.stringify(diagnosis, null, 2)}\n\nConfirm diagnosis and treatment plan?`
+  const physicianReview = await node.use(
+    new oAddress('o://physician/reviewer'),
+    {
+      method: 'intent',
+      params: {
+        intent: `Review AI diagnosis:\n${JSON.stringify(diagnosis, null, 2)}\n\nConfirm diagnosis and treatment plan?`
+      }
     }
-  });
+  );
   
   return parsePhysicianDecision(physicianReview);
 }
@@ -953,8 +974,8 @@ if (diagnosis.confidence > 0.9 && diagnosis.complexity === 'routine') {
     Human reviewer sees content, AI analysis, and community guidelines
   </Step>
   
-  <Step title="Action and learning">
-    Decision executed, AI learns from human decisions to improve future accuracy
+  <Step title="Action and record-keeping">
+    Decision executed and recorded for audit, with human decisions available for later analysis
   </Step>
 </Steps>
 
@@ -965,15 +986,18 @@ const moderation = await aiModerator.analyze(content);
 if (moderation.violationConfidence > 0.95) {
   return { action: 'remove', reason: moderation.violationType };
 } else if (moderation.violationConfidence > 0.7) {
-  const review = await humanModerator.use({
-    method: 'intent',
-    params: {
-      intent: `Content review:\n${content.preview}\n\nAI flagged as: ${moderation.violationType} (${moderation.violationConfidence}%)\n\nAction?`
+  const review = await node.use(
+    new oAddress('o://moderation/reviewer'),
+    {
+      method: 'intent',
+      params: {
+        intent: `Content review:\n${content.preview}\n\nAI flagged as: ${moderation.violationType} (${moderation.violationConfidence}%)\n\nAction?`
+      }
     }
-  });
+  );
   
-  // Learn from human decision
-  await aiModerator.learn({
+  // Persist the decision for audit and later analysis
+  await recordModerationDecision({
     content: content,
     aiPrediction: moderation,
     humanDecision: review.resolution
@@ -1322,7 +1346,7 @@ const auditedHumanAgent = new Proxy(humanAgent, {
         await auditLogger.logHumanInteraction({
           requestId: generateId(),
           humanNode: target.address.toString(),
-          intent: args[0]?.params?.intent,
+          intent: args[1]?.params?.intent,
           response: result.resolution,
           duration,
           outcome: result.success ? 'approved' : 'rejected'
@@ -1397,10 +1421,10 @@ const auditedHumanAgent = new Proxy(humanAgent, {
 <Steps>
   <Step title="Verify node is running">
     ```bash
-    # Check node status
-    olane nodes list
+    # Check OS and node status
+    olane os status
     
-    # Should show: o://human [RUNNING]
+    # Should report the running OS and registered nodes
     ```
   </Step>
   
@@ -1491,13 +1515,13 @@ if (!result) {
     ```
   </Tab>
   
-  <Tab title="Load balancing">
+  <Tab title="Distribute across reviewers">
     ```typescript
     // Multiple human agents in rotation
     const humanAgents = [
-      new oHumanLoginTool({ address: 'o://human/alice' }),
-      new oHumanLoginTool({ address: 'o://human/bob' }),
-      new oHumanLoginTool({ address: 'o://human/charlie' })
+      new oHumanLoginTool({ address: new oNodeAddress('o://human/alice') }),
+      new oHumanLoginTool({ address: new oNodeAddress('o://human/bob') }),
+      new oHumanLoginTool({ address: new oNodeAddress('o://human/charlie') })
     ];
     
     // Route to least-busy human
@@ -1508,10 +1532,13 @@ if (!result) {
       
       const leastBusy = humanAgents[loads.indexOf(Math.min(...loads))];
       
-      return await leastBusy.use({
-        method: 'intent',
-        params: { intent }
-      });
+      return await node.use(
+        leastBusy.address,
+        {
+          method: 'intent',
+          params: { intent }
+        }
+      );
     }
     ```
   </Tab>
@@ -1587,10 +1614,10 @@ class HITLMonitor {
 ```
 
 **Key metrics to watch**:
-- **Response time**: How quickly humans respond (target: <5 minutes for critical, <1 hour for normal)
-- **Approval rate**: % of requests approved (should be 60-80%; too high or low indicates poor routing)
-- **AI-human agreement**: % where AI and human agree (target: >80%; improve AI if lower)
-- **Override rate**: % where human overrides high-confidence AI (target: <10%; investigate if higher)
+- **Response time**: How quickly humans respond; set tighter targets for critical requests than for routine ones
+- **Approval rate**: % of requests approved; an unusually high or low rate can indicate poor routing
+- **AI-human agreement**: % where AI and human agree; a low rate is a signal to improve AI routing or analysis
+- **Override rate**: % where a human overrides a high-confidence AI recommendation; a rising rate is worth investigating
 
 ## Next steps
 

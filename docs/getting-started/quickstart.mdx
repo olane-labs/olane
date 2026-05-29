@@ -1,0 +1,179 @@
+---
+title: 'Quickstart'
+description: 'Build, run, and call your first Olane tool node in under five minutes.'
+---
+
+By the end of this guide you will have a running tool node, call one of its methods from a second process, and see the response — all in two short TypeScript files.
+
+## Prerequisites
+
+- Node.js 20 or newer
+- pnpm 8 or newer
+- A scratch directory for the project
+
+<Note>
+Olane uses `pnpm` across the monorepo. The commands below assume the same.
+</Note>
+
+<Steps>
+  <Step title="Install the packages">
+    Create a new project and install the minimum stack.
+
+    ```bash
+    mkdir olane-quickstart && cd olane-quickstart
+    pnpm init
+    pnpm add @olane/o-core @olane/o-node @olane/o-tool @olane/o-protocol
+    pnpm add -D tsx typescript
+    ```
+
+    Set `"type": "module"` in your `package.json` so the `.ts` files load as ES modules under `tsx`.
+  </Step>
+
+  <Step title="Declare your methods">
+    Methods are described in a separate file so the runtime can advertise them for discovery. Create `methods/currency.methods.ts`:
+
+    ```ts
+    import { oMethod } from '@olane/o-protocol';
+
+    export const CURRENCY_METHODS: { [key: string]: oMethod } = {
+      convert: {
+        name: 'convert',
+        description: 'Convert an amount between currencies',
+        dependencies: [],
+        parameters: [
+          { name: 'amount', type: 'number', value: 'number', description: 'Amount to convert', required: true },
+          { name: 'from',   type: 'string', value: 'string', description: 'Source currency (USD, EUR, ...)', required: true },
+          { name: 'to',     type: 'string', value: 'string', description: 'Target currency', required: true },
+        ],
+      },
+    };
+    ```
+  </Step>
+
+  <Step title="Create the tool node">
+    Create `currency.ts`. The handler name must start with `_tool_` — that prefix is how the runtime discovers callable methods.
+
+    ```ts
+    import { oNodeTool } from '@olane/o-tool';
+    import { oNodeAddress } from '@olane/o-node';
+    import { oRequest } from '@olane/o-core';
+    import { CURRENCY_METHODS } from './methods/currency.methods.js';
+
+    class CurrencyConverter extends oNodeTool {
+      constructor() {
+        super({
+          address: new oNodeAddress('o://currency'),
+          leader: null,
+          parent: null,
+          description: 'FX conversion utility',
+          methods: CURRENCY_METHODS,
+        });
+      }
+
+      async _tool_convert(request: oRequest) {
+        const { amount, from, to } = request.params as {
+          amount: number; from: string; to: string;
+        };
+        const rate = await this.fetchRate(from, to);
+        return { converted: amount * rate, rate };
+      }
+
+      private async fetchRate(from: string, to: string) {
+        // Replace with a real FX API in production.
+        return 1.08;
+      }
+    }
+
+    const node = new CurrencyConverter();
+    await node.start();
+    console.log('o://currency is up. Press Ctrl-C to stop.');
+    ```
+
+    <Warning>
+    Always return raw data and **throw** on failure. Do not return `{ success: false, error: ... }` and do not wrap successful returns in `{ success: true, data: ... }` — the base class wraps your value for you.
+    </Warning>
+  </Step>
+
+  <Step title="Run the node">
+    In one terminal:
+
+    ```bash
+    pnpm tsx currency.ts
+    ```
+
+    You should see the "o://currency is up" line. Leave it running.
+  </Step>
+
+  <Step title="Call it from a second node">
+    Create `caller.ts`. Every interaction with an Olane address goes through `node.use()` — there is no other way.
+
+    ```ts
+    import { oNodeTool } from '@olane/o-tool';
+    import { oNodeAddress } from '@olane/o-node';
+
+    class Caller extends oNodeTool {
+      constructor() {
+        super({
+          address: new oNodeAddress('o://caller'),
+          leader: null,
+          parent: null,
+          description: 'one-shot client',
+        });
+      }
+    }
+
+    const caller = new Caller();
+    await caller.start();
+
+    const response = await caller.use(new oNodeAddress('o://currency'), {
+      method: 'convert',
+      params: { amount: 100, from: 'USD', to: 'EUR' },
+    });
+
+    if (response.result.success) {
+      console.log('Converted:', response.result.data);
+    } else {
+      console.error('Failed:', response.result.error);
+    }
+
+    await caller.stop();
+    ```
+
+    In a **second** terminal:
+
+    ```bash
+    pnpm tsx caller.ts
+    ```
+  </Step>
+
+  <Step title="Verify the output">
+    The caller terminal should print:
+
+    ```
+    Converted: { converted: 108, rate: 1.08 }
+    ```
+
+    The `response.result` envelope has three fields: `success` (boolean), `data` (payload on success), `error` (message on failure).
+  </Step>
+</Steps>
+
+<Warning>
+This works in a single host because both processes auto-discover via libp2p. For separate hosts, a fixed port, or stable peer IDs across restarts, you need an `OlaneOS` with a leader — see [Run your first network](/getting-started/your-first-network).
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card icon="arrow-right" title="Build your first tool node" href="/getting-started/your-first-tool-node">
+    Add validation, multiple methods, and lifecycle hooks.
+  </Card>
+  <Card icon="network-wired" title="Run your first network" href="/getting-started/your-first-network">
+    Start an `OlaneOS` with a leader and one worker.
+  </Card>
+  <Card icon="link" title="Addressing overview" href="/concepts/addressing/overview">
+    Learn how `o://` addresses are resolved and routed.
+  </Card>
+  <Card icon="download" title="Installation" href="/getting-started/installation">
+    Full requirements and project setup.
+  </Card>
+</CardGroup>

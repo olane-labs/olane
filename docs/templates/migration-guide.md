@@ -143,16 +143,16 @@ class AnalysisAgent extends oLaneTool {
 const agent = new AnalysisAgent();
 await agent.start();
 
-const result = await agent.use({
+const result = await agent.use(new oAddress('o://company/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 revenue'
   }
 });
 
-// Agent autonomously:
+// Agent runs the lane loop:
 // 1. EVALUATE → Understand intent
-// 2. TASK → Execute analysis tool
+// 2. EXECUTE → Run analysis tool
 // 3. EVALUATE → Check if complete
 // 4. STOP → Return results
 ```
@@ -171,14 +171,14 @@ const result = await agent.use({
   <Tab title="Olane">
     ```typescript
     // Emergent sequence through intent
-    await agent.use({
+    await agent.use(new oAddress('o://company/analyst'), {
       method: 'intent',
       params: {
         intent: 'Complete multi-step analysis'
       }
     });
     
-    // Agent discovers optimal sequence
+    // Agent evaluates and executes steps through the lane loop
     ```
   </Tab>
 </Tabs>
@@ -228,19 +228,19 @@ const result = await agent.use({
   </Tab>
   <Tab title="Olane">
     ```typescript
-    // Automatic discovery and routing
-    await coordinator.use({
+    // Discovery via the registry and routing through the lane loop
+    await coordinator.use(new oAddress('o://company/coordinator'), {
       method: 'intent',
       params: {
         intent: 'Analyze data and create report'
       }
     });
     
-    // Capability loop:
-    // 1. SEARCH → Finds analyst agent
-    // 2. TASK → Calls analyst
-    // 3. SEARCH → Finds reporter agent
-    // 4. TASK → Calls reporter
+    // Lane loop:
+    // 1. EVALUATE → Look up the analyst (o://leader/registry)
+    // 2. EXECUTE → Call analyst via node.use()
+    // 3. EVALUATE → Look up the reporter
+    // 4. EXECUTE → Call reporter via node.use()
     ```
   </Tab>
 </Tabs>
@@ -286,13 +286,13 @@ console.log(lane.sequence); // All execution steps
   <Tab title="Olane Testing">
     ```typescript
     it('should complete analysis', async () => {
-      const result = await agent.use({
+      const response = await agent.use(new oAddress('o://company/analyst'), {
         method: 'intent',
         params: { intent: 'Analyze test data' }
       });
       
-      expect(result.success).toBe(true);
-      expect(result.sequence.length).toBeGreaterThan(0);
+      expect(response.result.success).toBe(true);
+      expect(response.result.data.sequence.length).toBeGreaterThan(0);
     });
     ```
   </Tab>
@@ -382,8 +382,8 @@ console.log(lane.sequence); // All execution steps
 ## Benefits after migration
 
 <CardGroup cols={2}>
-  <Card title="Adaptable Workflows" icon="shuffle">
-    Workflows improve and adapt without code changes
+  <Card title="Intent-Driven Workflows" icon="shuffle">
+    Describe goals as intents instead of wiring explicit graphs
   </Card>
   <Card title="Reduced Maintenance" icon="wrench">
     No explicit state graphs to maintain
@@ -391,8 +391,8 @@ console.log(lane.sequence); // All execution steps
   <Card title="Faster Development" icon="rocket">
     Describe intent instead of programming flow
   </Card>
-  <Card title="Knowledge Reuse" icon="lightbulb">
-    Agents learn from each other's executions
+  <Card title="Replayable Runs" icon="lightbulb">
+    Each lane run is content-addressed (CID), persisted, and replayable
   </Card>
 </CardGroup>
 

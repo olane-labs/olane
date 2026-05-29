@@ -60,6 +60,7 @@ const result = await os.use(
     }
   }
 );
+// Note: node.use() always takes two args — node.use(address, { method, params })
 
 // Stop gracefully
 await os.stop();
@@ -110,14 +111,17 @@ Olane OS is organized into three distinct layers:
 
 **Example - Same Tool, Different Agents**:
 
-```bash
-# Human agent via CLI
-olane intent "Analyze customer churn in Q4"
+```typescript
+// Human agent — routed through the SDK
+await os.use(new oAddress('o://my-tool-node'), {
+  method: 'intent',
+  params: { intent: 'Analyze customer churn in Q4' }
+});
 ```
 
 ```typescript
 // AI agent via programmatic call
-await toolNode.use({
+await node.use(new oAddress('o://my-tool-node'), {
   method: 'intent',
   params: { intent: 'Analyze customer churn in Q4' }
 });
@@ -212,7 +216,7 @@ class FinancialAnalystNode extends oLaneTool {
 }
 
 // Agents send INTENTS, not direct tool calls
-const result = await analystNode.use({
+const result = await node.use(new oAddress('o://company/finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 financial performance'
@@ -307,10 +311,9 @@ console.log(os.status); // STOPPED
 Provide discovery, registry, and coordination services.
 
 **Responsibilities**:
-- Maintain registry of all nodes in the network
+- Maintain a leader-hosted in-memory registry of nodes in the network (o://leader/registry)
 - Provide node discovery via search and query
 - Route messages between nodes
-- Load balance requests across node instances
 - Maintain network topology
 
 **Example**:
@@ -364,7 +367,7 @@ class ComplexNode extends oLaneTool {
 }
 
 // Agent sends intent
-const result = await node.use({
+const result = await node.use(new oAddress('o://complex-node'), {
   method: 'intent',
   params: { intent: 'Complete complex workflow' }
 });
@@ -376,9 +379,9 @@ Peer-to-peer communication using **libp2p**.
 
 **Features**:
 - Decentralized node discovery
-- Secure encrypted connections
-- Multiple transport protocols (TCP, WebSocket, WebRTC)
-- NAT traversal and relay
+- Secure encrypted connections (Noise encryption, Yamux stream multiplexing)
+- Multiple transport protocols (TCP, WebSocket, WebTransport over HTTP/3)
+- Relayed connections via circuit-relay-v2 (RelayNode at o://relay)
 - Pubsub messaging
 
 **Addressing Scheme**:
@@ -392,8 +395,8 @@ const addresses = [
 ];
 
 // Resolve and use
-const node = await oAddress.resolve('o://company/finance/analyst');
-const result = await node.use({ method: 'intent', params: {...} });
+const target = new oAddress('o://company/finance/analyst');
+const result = await node.use(target, { method: 'intent', params: {...} });
 ```
 
 ### Configuration Management {#configuration-management}
@@ -585,9 +588,9 @@ Agent Request
     ⬇
 OlaneOS.use()
     ⬇
-Entry Point Router (round-robin)
+Address Resolution (leader-hosted registry)
     ⬇
-Selected Node Instance
+Target Node
     ⬇
 Node Processes Intent
     ⬇
@@ -609,7 +612,7 @@ class CoordinatorNode extends oLaneTool {
     
     // Call discovered nodes
     for (const node of nodes) {
-      await node.use({ method: 'process', params: {...} });
+      await this.use(node.address, { method: 'process', params: {...} });
     }
   }
 }
@@ -621,20 +624,23 @@ Complex nodes process intents autonomously using the capability loop:
 
 ```typescript
 // Agent sends intent
-await node.use({
+await node.use(new oAddress('o://finance/analyst'), {
   method: 'intent',
   params: { intent: 'Generate Q4 financial report' }
 });
 
-// Node's internal capability loop:
+// Node's internal lane loop (evaluate -> execute -> re-evaluate -> stop,
+// bounded by MAX_CYCLES, default 20):
 // 1. EVALUATE: "What do I need to do?"
-// 2. TASK: Call _tool_calculate_revenue
-// 3. TASK: Call _tool_calculate_expenses
+// 2. EXECUTE: Call _tool_calculate_revenue
+// 3. EXECUTE: Call _tool_calculate_expenses
 // 4. EVALUATE: "Do I have enough data?"
-// 5. TASK: Call _tool_calculate_margin
+// 5. EXECUTE: Call _tool_calculate_margin
 // 6. EVALUATE: "Ready to generate report?"
-// 7. TASK: Call _tool_generate_report
+// 7. EXECUTE: Call _tool_generate_report
 // 8. STOP: Return completed report
+//
+// Each run is content-addressed (CID), persisted, and can be replayed by CID.
 ```
 
 ### 5. Graceful Shutdown {#graceful-shutdown}
@@ -684,9 +690,9 @@ o://
 libp2p provides:
 
 - **Peer-to-peer** architecture (no central server required)
-- **Multiple transports** (TCP, WebSocket, WebRTC)
-- **NAT traversal** for real-world networks
-- **Encrypted connections** by default
+- **Multiple transports** (TCP, WebSocket, WebTransport over HTTP/3)
+- **Relayed connections** via circuit-relay-v2 for real-world networks
+- **Encrypted connections** by default (Noise)
 - **Pubsub** for event broadcasting
 - **Battle-tested** (used by IPFS, Ethereum)
 
@@ -701,11 +707,11 @@ async _tool_analyze_revenue(request: oRequest) {
   return { revenue: 150000, trends: [...] };
 }
 
-// Human invokes via CLI
-// → olane intent "Analyze Q4 revenue"
+// Human invokes through the SDK
+// → await os.use(new oAddress('o://...'), { method: 'intent', params: {...} })
 
 // AI agent invokes programmatically
-// → await node.use({ method: 'intent', params: {...} })
+// → await node.use(new oAddress('o://...'), { method: 'intent', params: {...} })
 ```
 
 **Benefits**:
@@ -730,7 +736,7 @@ await node.generateReport({ margin, revenue, expenses });
 **Intent-Driven**:
 ```typescript
 // Agent expresses goal, tool figures out steps
-await node.use({
+await node.use(new oAddress('o://finance/analyst'), {
   method: 'intent',
   params: { intent: 'Generate Q1 2024 financial report' }
 });
@@ -841,7 +847,7 @@ if (cpuUsage > 80) {
   });
   
   await os.addNode(additionalWorker);
-  console.log('Added worker for load balancing');
+  console.log('Added an additional worker node');
 }
 ```
 
@@ -849,9 +855,12 @@ if (cpuUsage > 80) {
 
 Human initiates, AI executes, human reviews.
 
-```bash
-# Human agent via CLI
-olane intent "Analyze customer churn and suggest retention strategies"
+```typescript
+// Human agent — routed through the SDK
+await os.use(new oAddress('o://crm/analytics'), {
+  method: 'intent',
+  params: { intent: 'Analyze customer churn and suggest retention strategies' }
+});
 ```
 
 Internally:

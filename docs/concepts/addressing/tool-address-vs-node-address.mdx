@@ -1,0 +1,133 @@
+---
+title: "Tool address vs node address"
+description: "When to use oAddress (a name) versus oNodeAddress (a name with dialable transports)."
+---
+
+Olane has two address classes. One is just a name. The other is a name with a contact card. Knowing which to use is the most common confusion when starting out.
+
+This page covers the rule for picking between them, the design reason for the split, and the one footgun that catches people every time.
+
+## The conceptual difference
+
+|                         | `oAddress`                                  | `oNodeAddress`                                |
+| ----------------------- | ------------------------------------------- | --------------------------------------------- |
+| Package                 | `@olane/o-core`                             | `@olane/o-node`                               |
+| Carries transports?     | No                                          | Yes (libp2p multiaddrs)                       |
+| Use for                 | Dispatching: `node.use(new oAddress(...))`  | Identity and contact: this node, leader, parent |
+| Resolution              | Routing layer attaches transports at call time | Already dialable                            |
+
+The rule is simple. If you're naming a target so the routing layer can find it, use `oAddress`. If you're giving libp2p a contact card it can dial right now, use `oNodeAddress`.
+
+## When to use `oAddress`
+
+At the call site. Any time you're dispatching a request through `node.use()`, the routing layer will resolve transports for you — you don't have to look them up.
+
+```ts
+import { oAddress } from '@olane/o-core';
+
+const response = await node.use(new oAddress('o://analytics'), {
+  method: 'count',
+  params: { event: 'login' },
+});
+
+console.log(response.result.data);
+```
+
+If `o://analytics` is unknown, the resolver chain queries `o://leader/registry`, attaches transports, and dispatches the call. Your code does not need to know whether the target is local, remote, or behind a parent.
+
+## When to use `oNodeAddress`
+
+In three places, all in your node's configuration:
+
+**1. The node's own `address` field.** libp2p needs to know what to listen on. After `start()` completes, transports populate automatically.
+
+```ts
+import { oNodeAddress } from '@olane/o-node';
+
+const node = new MyTool({
+  address: new oNodeAddress('o://my-tool'),
+  // ...
+});
+```
+
+**2. The `leader` field.** You're telling your node where to find the leader of this OS. You must provide reachable multiaddrs.
+
+```ts
+import { oNodeAddress, oNodeTransport } from '@olane/o-node';
+
+const config = {
+  address: new oNodeAddress('o://my-tool'),
+  leader: new oNodeAddress('o://leader', [
+    new oNodeTransport('/ip4/192.168.1.10/tcp/4001/p2p/Qm...peerId'),
+  ]),
+};
+```
+
+**3. The `parent` field.** Same reason as the leader — your child needs a way to reach its parent during registration.
+
+```ts
+const child = new SessionNode({
+  address: new oNodeAddress('o://session-42'),
+  parent: this.address, // already an oNodeAddress with transports
+  leader: this.leader,
+});
+```
+
+When a manager creates children, it passes its own `this.address` as the parent. That address is already an `oNodeAddress` with transports filled in, because the parent has already started.
+
+## Why both exist
+
+The split is intentional and falls out of one design goal: **configs should stay flat and portable; transports should be attached at runtime.**
+
+When you write code that calls `o://analytics`, you don't want to bake in an IP address or peer ID. The target might move. The network might restart. The address is the stable name; the transports are the volatile contact info.
+
+So `oAddress` carries only the stable part. The `oSearchResolver` queries `o://leader/registry` to find the current transports for any unfamiliar name. The leader is the source of truth.
+
+`oNodeAddress` exists because there's a chicken-and-egg problem at startup: before your node can ask the leader for anything, it needs to *reach* the leader. That's why the leader pointer in your config must carry transports. After bootstrap, every other lookup can fall back to the registry.
+
+## Coercion and conversion
+
+You generally don't need to convert between the two. The constructors handle the common cases:
+
+```ts
+import { oAddress } from '@olane/o-core';
+import { oNodeAddress, oNodeTransport } from '@olane/o-node';
+
+// String → oNodeAddress with transports:
+const leader = new oNodeAddress('o://leader', [
+  new oNodeTransport('/ip4/192.168.1.10/tcp/4001/p2p/Qm...peerId'),
+]);
+
+// oAddress → oNodeAddress (when you've learned the transports):
+const known = new oAddress('o://analytics');
+const dialable = new oNodeAddress(known.toString(), [
+  new oNodeTransport('/ip4/10.0.0.5/tcp/4001/p2p/Qm...peerId'),
+]);
+```
+
+Going the other way — using an `oNodeAddress` as an `oAddress` — works without conversion. `oNodeAddress extends oAddress`, so anywhere the type system expects the parent class, the subclass fits.
+
+<Tip>
+  If you're not sure which to use, reach for `oAddress`. The routing layer handles the rest. The only places `oNodeAddress` is strictly required are the three config fields above.
+</Tip>
+
+<Warning>
+  **The most common mistake:** using an `oAddress` (no transports) for the `leader` field in your node config. The node has no way to reach the leader, registration silently fails, and your tool appears to start but is invisible to the rest of the network. Always use `oNodeAddress` with real multiaddrs for `leader` and `parent`.
+</Warning>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Addressing overview" icon="signpost" href="/concepts/addressing/overview">
+    The o:// scheme and how names get resolved.
+  </Card>
+  <Card title="Address spaces and containment" icon="box" href="/concepts/addressing/address-spaces">
+    How parent nodes contain their children's address space.
+  </Card>
+  <Card title="Hierarchical paths" icon="folder-tree" href="/concepts/addressing/hierarchical-paths">
+    How flat addresses become nested at registration.
+  </Card>
+  <Card title="Routing" icon="route" href="/concepts/communication/routing">
+    How the resolver chain dispatches a call.
+  </Card>
+</CardGroup>

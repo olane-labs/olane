@@ -17,7 +17,7 @@ Olane OS is designed for building **intent-driven, agent-accessible applications
     Coordinate 5-50+ specialized tools through dynamic discovery
   </Card>
   <Card title="Long-Running Processes" icon="clock" color="#0D9373" href="/use-cases/long-running-processes">
-    Fault-tolerant tasks that run hours or days with automatic recovery
+    Long-running tasks with content-addressed, replayable execution runs
   </Card>
 </CardGroup>
 
@@ -57,7 +57,7 @@ Does your application involve multiple tools or steps?
 **Key Benefits**:
 - No hardcoded workflows
 - Adapts to changing requirements
-- Learns optimal paths over time
+- Each run is content-addressed (CID), persisted, and deterministically replayable
 - Works for both human and AI agents
 
 **Example Scenario**: Customer Health Analysis
@@ -123,22 +123,25 @@ Does your application involve multiple tools or steps?
     }
     
     // Agent (human or AI) sends intent
-    const result = await node.use({
-      method: 'intent',
-      params: {
-        intent: 'Analyze health for customer #1234 and suggest retention strategies'
+    const result = await node.use(
+      new oAddress('o://crm/customer-health'),
+      {
+        method: 'intent',
+        params: {
+          intent: 'Analyze health for customer #1234 and suggest retention strategies'
+        }
       }
-    });
+    );
     
     // Tool autonomously:
-    // - Determines optimal sequence
+    // - Determines a sequence via the lane loop (evaluate -> execute -> re-evaluate)
     // - Adapts based on customer type
     // - Handles errors and retries
     // - Returns comprehensive analysis
     
     // New requirement? Tool adapts autonomously.
     // Different customer type? Tool adjusts approach.
-    // Error? Automatic recovery and alternative paths.
+    // Error? Retries and alternative paths within the lane loop.
     ```
   </Tab>
 </Tabs>
@@ -260,12 +263,12 @@ const report = await crmSystem.use(
 
 ### 3. Long-Running Processes 
 
-**What it is**: Tasks that run hours or days with built-in fault tolerance, checkpointing, and automatic recovery.
+**What it is**: Tasks that run hours or days, where each lane run is content-addressed (CID), persisted, and deterministically replayable.
 
 **Key Benefits**:
-- Automatic checkpointing every N steps
-- Recover from crashes without losing work
-- 99.8% reliability for multi-hour tasks
+- Each lane run is persisted as a content-addressed (CID) record
+- Replay a previous run deterministically by CID
+- Designed for long-running reliability
 - Real-time streaming of progress
 
 **Example Scenario**: Comprehensive Market Research
@@ -289,80 +292,70 @@ class MarketResearchNode extends oLaneTool {
     const competitors = [];
     
     for (let i = 0; i < count; i++) {
-      // Research each competitor (takes 15-30 min each)
+      // Research each competitor
       const competitor = await this.researchCompetitor(industry, i);
       competitors.push(competitor);
-      
-      // Automatic checkpoint after each competitor
-      await this.checkpoint({ 
-        progress: `${i+1}/${count} competitors analyzed`,
-        competitors 
-      });
-      
-      // If process crashes here, it resumes from this checkpoint
-      // No need to re-analyze previous competitors
     }
     
     return { competitors };
   }
   
   async _tool_analyze_market_trends(request) {
-    // Long-running trend analysis (2-4 hours)
+    // Long-running trend analysis
     const trends = await this.analyzeTrends(request.params);
-    
-    // Checkpoint after major operations
-    await this.checkpoint({ trends });
     
     return { trends };
   }
   
   async _tool_generate_report(request) {
-    // Generate comprehensive report (30-60 min)
+    // Generate comprehensive report
     return await this.generateReport(request.params);
   }
 }
 
 // Agent initiates long-running task
-const research = await researchNode.use({
-  method: 'intent',
-  params: {
-    intent: 'Research top 20 competitors in fintech and analyze market trends',
-    streamTo: 'o://notifications/progress'  // Real-time updates
+const research = await researchNode.use(
+  new oAddress('o://research/market-analysis'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Research top 20 competitors in fintech and analyze market trends',
+      streamTo: 'o://notifications/progress'  // Real-time updates
+    }
   }
-});
+);
 
-// Process runs for 8+ hours:
-// - Automatic checkpoints every competitor
-// - If crash after 12 competitors → resumes with #13
-// - Progress streamed to notification system
-// - No manual intervention needed
+// As the lane loop runs (evaluate -> execute -> re-evaluate):
+// - Each run is persisted as a content-addressed (CID) record
+// - A completed run can be deterministically replayed by its CID
+// - Progress streamed to the notification system
 ```
 
 **Reliability Features**:
 
 <AccordionGroup>
-  <Accordion title="Automatic Checkpointing">
-    State saved after each significant operation. Resume from last checkpoint on crash without losing work.
+  <Accordion title="Content-Addressed Runs">
+    Each lane run is persisted as a content-addressed (CID) record. A completed run can be deterministically replayed by its CID.
   </Accordion>
   
-  <Accordion title="Content-Addressed Storage">
-    All execution history stored in content-addressed format. Replay, audit, or analyze any previous execution.
+  <Accordion title="Replayable Execution History">
+    Execution history is stored in content-addressed format. Replay, audit, or analyze any previous run by CID.
   </Accordion>
   
   <Accordion title="Real-Time Streaming">
     Stream progress updates to monitoring systems or user interfaces. Know exactly what's happening at any moment.
   </Accordion>
   
-  <Accordion title="Error Recovery">
-    Automatic retry with exponential backoff. Alternative approaches if primary path fails.
+  <Accordion title="Bounded Lane Loop">
+    The lane loop iterates evaluate -> execute -> re-evaluate -> stop, bounded by a maximum number of cycles to keep runs predictable.
   </Accordion>
 </AccordionGroup>
 
 **When to use**:
 - ✅ Tasks take 1+ hours to complete
-- ✅ Expensive operations (can't afford to restart from scratch)
+- ✅ Expensive operations where replayable, auditable runs matter
 - ✅ Need real-time progress monitoring
-- ✅ Reliability is critical (99.8%+ uptime required)
+- ✅ Reliability is critical (designed for long-running reliability)
 
 [Learn more about Long-Running Processes →](/use-cases/long-running-processes)
 
@@ -380,45 +373,46 @@ const research = await researchNode.use({
 
 Humans initiate tasks, AI coordinates execution, humans review results.
 
-```bash
-# Human starts the process
-$ olane intent "Analyze customer churn risk for enterprise accounts"
+```typescript
+// Human starts the process
+const result = await node.use(
+  new oAddress('o://crm/analytics'),
+  {
+    method: 'intent',
+    params: { intent: 'Analyze customer churn risk for enterprise accounts' }
+  }
+);
 
-# AI agent coordinates:
-# → Discovers o://crm/customers tool
-# → Discovers o://analytics/churn tool
-# → Discovers o://finance/ltv tool
-# → Coordinates multi-tool analysis
-# → Generates comprehensive report
+// AI agent coordinates:
+// → Discovers o://crm/customers tool (via leader registry)
+// → Discovers o://analytics/churn tool (via leader registry)
+// → Discovers o://finance/ltv tool (via leader registry)
+// → Coordinates multi-tool analysis
+// → Generates comprehensive report
 
-# Human reviews results and takes action
+// Human reviews results and takes action
 ```
 
 **Best for**: Business analysis, research, compliance reporting
 
-### Knowledge Accumulation 
+### Replayable Runs 
 
-Tools learn from each execution and share knowledge across the network.
+Each lane run is persisted as a content-addressed (CID) record that can be deterministically replayed.
 
 ```typescript
-// First execution discovers optimal approach
-await node.use({ 
-  method: 'intent', 
-  params: { intent: 'Analyze Q4 sales trends' } 
-});
-// → Takes 30 minutes, explores multiple paths
-// → Leaves knowledge artifact: "Best approach for Q4 analysis"
+// First execution runs the lane loop end to end
+const first = await node.use(
+  new oAddress('o://analytics/sales'),
+  { method: 'intent', params: { intent: 'Analyze Q4 sales trends' } }
+);
+// → Runs the lane loop (evaluate -> execute -> re-evaluate)
+// → Persists the run as a content-addressed (CID) record
 
-// Second execution learns from first
-await node.use({ 
-  method: 'intent', 
-  params: { intent: 'Analyze Q4 sales trends' } 
-});
-// → Takes 8 minutes, uses proven path
-// → 75% faster due to accumulated knowledge
+// The same run can be deterministically replayed by its CID
+// for audit, debugging, or reproducing the result
 ```
 
-**Best for**: Repeated workflows, team collaboration, continuous improvement
+**Best for**: Repeated workflows, auditing, reproducible analysis
 
 ### Dynamic Scaling 
 
@@ -441,7 +435,8 @@ if (queueDepth > 100) {
   });
   
   await os.addNode(additionalProcessor);
-  // Leader automatically load balances across both processors
+  // Both processors register with the leader and become
+  // discoverable via the leader-hosted registry
 }
 ```
 
@@ -577,9 +572,9 @@ Follow these steps to implement your use case:
   </Card>
   
   <Card title="Market Research Platform" icon="chart-line">
-    Long-running research tasks (8+ hours) with fault tolerance. Analyzes competitors, trends, and market sizing.
+    Long-running research tasks with content-addressed, replayable runs. Analyzes competitors, trends, and market sizing.
     
-    **Patterns**: Long-running processes, knowledge accumulation
+    **Patterns**: Long-running processes, replayable runs
   </Card>
   
   <Card title="Financial Analytics" icon="dollar-sign">
@@ -589,9 +584,9 @@ Follow these steps to implement your use case:
   </Card>
   
   <Card title="Customer Support Automation" icon="headset">
-    AI-powered ticket triage and resolution with human escalation. Learns optimal resolution paths over time.
+    AI-powered ticket triage and resolution with human escalation. Runs are content-addressed and replayable for audit.
     
-    **Patterns**: Hybrid workflows, knowledge accumulation, cost optimization
+    **Patterns**: Hybrid workflows, replayable runs, cost optimization
   </Card>
 </CardGroup>
 
@@ -600,11 +595,11 @@ Follow these steps to implement your use case:
 | Your Scenario | Traditional Approach | Olane OS Advantage |
 |--------------|---------------------|-------------------|
 | **Complex multi-step workflow** | LangGraph (hardcoded) | Emergent, adapts autonomously |
-| **Multiple AI agents** | CrewAI ($$$) | Single LLM (70-90% cheaper) |
-| **Long-running task** | Manual checkpointing | Built-in fault tolerance |
+| **Multiple AI agents** | CrewAI ($$$) | Single LLM (can be cheaper than per-agent stacks) |
+| **Long-running task** | Manual checkpointing | Content-addressed, replayable runs |
 | **Serve humans + AI** | Separate APIs | Agent-agnostic design |
 | **Evolving requirements** | Rewrite workflows | Intent-driven adaptation |
-| **Cross-domain AI** | Fine-tune per domain ($$$) | Context injection ($0) |
+| **Cross-domain AI** | Fine-tune per domain ($$$) | Context injection (no per-domain training) |
 
 ## Next steps 
 

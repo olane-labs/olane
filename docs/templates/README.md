@@ -54,7 +54,7 @@ This directory contains templates for creating high-quality documentation pages 
 ### 1. Business Value First
 Lead with outcomes, not features. Answer "Why should I care?" before "How does it work?"
 
-✅ **Good**: "Create AI agents specialized for specific domains, reducing costs by X-Y%"  
+✅ **Good**: "Create AI agents specialized for specific domains, which can be cheaper than per-agent LLM stacks"  
 ❌ **Bad**: "The oLaneTool class extends oNodeTool and adds capability loop functionality"
 
 ### 2. Progressive Disclosure
@@ -74,7 +74,7 @@ async _tool_analyze_revenue(request) {
 }
 
 // Validate Step 3
-const result = await agent.use({
+const result = await agent.use(new oAddress('o://financial-agent'), {
   method: 'analyze_revenue',
   params: { /* test data */ }
 });

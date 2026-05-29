@@ -127,7 +127,7 @@ class FinancialNode extends oNodeTool {
 **Agent Interaction**:
 ```typescript
 // Agent calls tool directly
-const result = await financialNode.use({
+const result = await financialNode.use(new oAddress('o://financial'), {
   method: 'calculate_revenue',
   params: {
     startDate: '2024-01-01',
@@ -152,7 +152,7 @@ A process running on Olane OS that contains one or more related tools.
 - Stateless or simple state management
 - Direct tool invocation
 - No intent processing (agents call tools directly)
-- Quick responses (< 30 seconds typically)
+- Quick, short-lived responses
 
 **Example**:
 ```typescript
@@ -236,22 +236,22 @@ class FinancialAnalystNode extends oLaneTool {
 }
 
 // Agent sends INTENT (not direct tool call)
-const result = await analystNode.use({
+const result = await analystNode.use(new oAddress('o://company/finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 financial performance and generate executive summary'
   }
 });
 
-// Node AUTONOMOUSLY:
+// Node AUTONOMOUSLY (evaluate -> execute -> re-evaluate -> stop):
 // 1. EVALUATE: "I need revenue, expenses, and trends"
-// 2. TASK: Call _tool_calculate_revenue
-// 3. TASK: Call _tool_calculate_expenses
-// 4. TASK: Call _tool_identify_trends
+// 2. EXECUTE: Call _tool_calculate_revenue
+// 3. EXECUTE: Call _tool_calculate_expenses
+// 4. EXECUTE: Call _tool_identify_trends
 // 5. EVALUATE: "I have data, need to calculate margins"
-// 6. TASK: Call _tool_calculate_margin
+// 6. EXECUTE: Call _tool_calculate_margin
 // 7. EVALUATE: "Ready to generate report"
-// 8. TASK: Call _tool_generate_report
+// 8. EXECUTE: Call _tool_generate_report
 // 9. STOP: Return report to agent
 ```
 
@@ -330,13 +330,13 @@ class CRMCoordinatorNode extends oLaneTool {
 // Agent discovers and coordinates nodes directly
 
 // Step 1: Search for customer
-const customer = await customerDataNode.use({
+const customer = await customerDataNode.use(new oAddress('o://crm/customers'), {
   method: 'get_customer',
   params: { id: 'cust_123' }
 });
 
 // Step 2: Create support ticket
-const ticket = await supportTicketNode.use({
+const ticket = await supportTicketNode.use(new oAddress('o://crm/support'), {
   method: 'create_ticket',
   params: {
     customerId: customer.id,
@@ -345,7 +345,7 @@ const ticket = await supportTicketNode.use({
 });
 
 // Step 3: Analyze customer value
-const analysis = await analyticsNode.use({
+const analysis = await analyticsNode.use(new oAddress('o://crm/analytics'), {
   method: 'intent',
   params: {
     intent: `Analyze lifetime value and support history for customer ${customer.id}`
@@ -358,7 +358,7 @@ const analysis = await analyticsNode.use({
 // Agent sends intent to coordinator node
 // Coordinator handles inter-tool-node communication
 
-const result = await crmCoordinator.use({
+const result = await crmCoordinator.use(new oAddress('o://crm/coordinator'), {
   method: 'intent',
   params: {
     intent: 'Customer cust_123 has billing issue. Create ticket and provide context on their value and history.'
@@ -596,15 +596,15 @@ Start: What are you building?
 
 **Example**:
 ```typescript
-// Agent discovers nodes dynamically
+// Agent discovers nodes dynamically (leader-hosted registry lookup)
 const dataNode = await leader.search({ capability: 'data_collection' });
 const analysisNode = await leader.search({ capability: 'analysis' });
 const reportNode = await leader.search({ capability: 'reporting' });
 
 // Agent coordinates directly
-const data = await dataNode.use({ method: 'collect', params: {...} });
-const insights = await analysisNode.use({ method: 'analyze', params: { data } });
-const report = await reportNode.use({ method: 'generate', params: { insights } });
+const data = await dataNode.use(dataNode.address, { method: 'collect', params: {...} });
+const insights = await analysisNode.use(analysisNode.address, { method: 'analyze', params: { data } });
+const report = await reportNode.use(reportNode.address, { method: 'generate', params: { insights } });
 ```
 
 ---
@@ -682,7 +682,7 @@ class WorkerNode extends oNodeTool {
 }
 
 // Agent interaction
-const result = await coordinator.use({
+const result = await coordinator.use(new oAddress('o://coordinator'), {
   method: 'intent',
   params: {
     intent: 'Complete complex workflow across multiple workers'
@@ -725,7 +725,7 @@ class AutonomousNode extends oLaneTool {
     
     // Call peer nodes directly
     const results = await Promise.all(
-      peers.map(peer => peer.use({ method: 'collaborate', params: {...} }))
+      peers.map(peer => peer.use(peer.address, { method: 'collaborate', params: {...} }))
     );
   }
 }
@@ -760,7 +760,7 @@ class AutonomousNode extends oLaneTool {
 
 **Example**:
 ```typescript
-await node.use({
+await node.use(new oAddress('o://path/to/node'), {
   method: 'method_name',
   params: { param1: 'value' }
 });
@@ -809,7 +809,7 @@ const node = new Node({
 await node.start();
 
 // Call a tool
-const result = await node.use({
+const result = await node.use(new oAddress('o://path/to/node'), {
   method: 'tool_name',
   params: { /* ... */ }
 });
@@ -885,7 +885,7 @@ const node = new ComplexNode({
 await node.start();
 
 // Send intent
-const result = await node.use({
+const result = await node.use(new oAddress('o://path/to/node'), {
   method: 'intent',
   params: {
     intent: 'Natural language goal',
@@ -902,7 +902,7 @@ Explain the capability loop and autonomous decision-making.
 
 ### Example 1: [Use Case]
 ```typescript
-const result = await node.use({
+const result = await node.use(new oAddress('o://path/to/node'), {
   method: 'intent',
   params: {
     intent: 'Specific goal description'
@@ -1008,7 +1008,7 @@ const nodes = await startApplication({
 
 #### Via Coordinator
 ```typescript
-const result = await coordinator.use({
+const result = await coordinator.use(new oAddress('o://path/coordinator'), {
   method: 'intent',
   params: {
     intent: 'High-level business goal'
@@ -1022,7 +1022,7 @@ const result = await coordinator.use({
 const node = await leader.search({ address: 'o://path/to/node' });
 
 // Call directly
-const result = await node.use({
+const result = await node.use(new oAddress('o://path/to/node'), {
   method: 'tool_name',
   params: { /* ... */ }
 });

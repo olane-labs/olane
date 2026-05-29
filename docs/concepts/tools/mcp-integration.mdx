@@ -91,7 +91,7 @@ npm install @olane/o-mcp
   <Step title="Add an MCP server">
     ```typescript
     // Add local MCP server (stdio)
-    await bridge.use({
+    await bridge.use(new oAddress('o://mcp'), {
       method: 'add_local_server',
       params: {
         name: 'filesystem',
@@ -107,14 +107,12 @@ npm install @olane/o-mcp
   <Step title="Use MCP tools">
     ```typescript
     // Discover and call MCP tools
-    const filesystem = await oAddress.resolve('o://filesystem');
-    
-    const result = await filesystem.use({
+    const result = await node.use(new oAddress('o://filesystem'), {
       method: 'read_file',
       params: { path: '/workspace/data.json' }
     });
     
-    console.log(result);
+    console.log(result.result.data);
     ```
   </Step>
 </Steps>
@@ -129,7 +127,7 @@ Use for MCP servers that run as command-line processes:
 
 <CodeGroup>
 ```typescript Filesystem Server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'filesystem',
@@ -145,7 +143,7 @@ await bridge.use({
 ```
 
 ```typescript Custom Server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'database',
@@ -160,7 +158,7 @@ await bridge.use({
 ```
 
 ```typescript Python Server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'data-analysis',
@@ -186,7 +184,7 @@ Use for MCP servers exposed via HTTP:
 
 <CodeGroup>
 ```typescript Basic HTTP
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: 'https://mcp.example.com'
@@ -196,7 +194,7 @@ await bridge.use({
 ```
 
 ```typescript With Authentication
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: 'https://api.example.com/mcp',
@@ -209,7 +207,7 @@ await bridge.use({
 ```
 
 ```typescript Internal Service
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: 'http://internal-mcp-server:8080',
@@ -311,15 +309,19 @@ MCP tools work identically to native Olane tools:
 ### Discovery by agents
 
 ```typescript
-// Find all MCP nodes
-const nodes = await leader.search({ type: 'TOOL' });
-const mcpNodes = nodes.filter(n => n.address.startsWith('o://filesystem'));
+// Find all MCP nodes via the leader-hosted registry
+const nodes = await node.use(new oAddress('o://leader/registry'), {
+  method: 'search',
+  params: { type: 'TOOL' }
+});
+const mcpNodes = nodes.result.data.filter(n => n.address.startsWith('o://filesystem'));
 
 // Get tools from MCP node
-const filesystem = await oAddress.resolve('o://filesystem');
-const tools = await filesystem.use({ method: 'get_tools' });
+const tools = await node.use(new oAddress('o://filesystem'), {
+  method: 'get_tools'
+});
 
-console.log(tools);
+console.log(tools.result.data);
 // ['read_file', 'write_file', 'list_directory', ...]
 ```
 
@@ -327,7 +329,7 @@ console.log(tools);
 
 ```typescript
 // Call MCP tool directly
-const result = await filesystem.use({
+const result = await node.use(new oAddress('o://filesystem'), {
   method: 'read_file',
   params: { path: '/workspace/config.json' }
 });
@@ -341,7 +343,7 @@ const agent = new oLaneTool({
   address: new oAddress('o://assistant')
 });
 
-await agent.use({
+await agent.use(new oAddress('o://assistant'), {
   method: 'intent',
   params: {
     intent: 'Read all JSON files in /workspace/data and summarize their contents'
@@ -357,19 +359,24 @@ await agent.use({
 
 ### Human workflows
 
-```bash
-# CLI access to MCP tools
-$ olane discover o://filesystem
+Humans access the same MCP tools through the SDK. List a node's tools, then
+invoke one - every interaction goes through `node.use()`:
 
-# Available tools:
-# - read_file (path)
-# - write_file (path, content)
-# - list_directory (path)
+```typescript
+// List the tools a node exposes
+const tools = await node.use(new oAddress('o://filesystem'), {
+  method: 'get_tools'
+});
+console.log(tools.result.data);
+// ['read_file', 'write_file', 'list_directory', ...]
 
-$ olane call o://filesystem read_file --path "/workspace/data.json"
-
-# Result:
-# { "users": [...], "config": {...} }
+// Call an MCP tool
+const result = await node.use(new oAddress('o://filesystem'), {
+  method: 'read_file',
+  params: { path: '/workspace/data.json' }
+});
+console.log(result.result.data);
+// { "users": [...], "config": {...} }
 ```
 
 ## Advanced patterns
@@ -382,7 +389,7 @@ const bridge = new McpBridgeTool({ /* ... */ });
 await bridge.start();
 
 // Add filesystem access
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'filesystem',
@@ -392,7 +399,7 @@ await bridge.use({
 });
 
 // Add database access
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'postgres',
@@ -402,7 +409,7 @@ await bridge.use({
 });
 
 // Add web search
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: 'https://search-mcp.example.com',
@@ -411,8 +418,8 @@ await bridge.use({
 });
 
 // Now agents can coordinate across all three
-const agent = new oLaneTool({ /* ... */ });
-await agent.use({
+const agent = new oLaneTool({ address: new oAddress('o://coordinator') });
+await agent.use(new oAddress('o://coordinator'), {
   method: 'intent',
   params: {
     intent: 'Search for research papers, download PDFs to workspace, and store metadata in database'
@@ -433,9 +440,10 @@ const mcpBridge = new McpBridgeTool({
 // o://integrations/mcp/database
 // o://integrations/mcp/search
 
-// Discover all MCP integrations
-const mcpTools = await leader.search({
-  addressPrefix: 'o://integrations/mcp'
+// Discover all MCP integrations via the leader-hosted registry
+const mcpTools = await node.use(new oAddress('o://leader/registry'), {
+  method: 'search',
+  params: { addressPrefix: 'o://integrations/mcp' }
 });
 ```
 
@@ -443,7 +451,7 @@ const mcpTools = await leader.search({
 
 ```typescript
 // Search for MCP servers by functionality
-const searchResult = await bridge.use({
+const searchResult = await bridge.use(new oAddress('o://mcp'), {
   method: 'search',
   params: {
     functionality: 'web scraping and HTML parsing'
@@ -451,11 +459,11 @@ const searchResult = await bridge.use({
 });
 
 // Returns information about relevant MCP servers
-console.log(searchResult.result);
+console.log(searchResult.result.data);
 // "Found @modelcontextprotocol/server-puppeteer..."
 
 // Validate a URL before adding
-const validation = await bridge.use({
+const validation = await bridge.use(new oAddress('o://mcp'), {
   method: 'validate_url',
   params: {
     mcpServerUrl: 'https://github.com/user/custom-mcp-server'
@@ -463,8 +471,8 @@ const validation = await bridge.use({
 });
 
 // Add if valid
-if (validation.result.includes('valid')) {
-  await bridge.use({
+if (validation.result.data.includes('valid')) {
+  await bridge.use(new oAddress('o://mcp'), {
     method: 'add_remote_server',
     params: { mcpServerUrl: 'https://custom-mcp-server.com' }
   });
@@ -504,7 +512,7 @@ const bridge = new McpBridgeTool({
 await bridge.start();
 
 // 2. Add filesystem MCP server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'filesystem',
@@ -514,7 +522,7 @@ await bridge.use({
 });
 
 // 3. Add database MCP server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'database',
@@ -524,7 +532,7 @@ await bridge.use({
 });
 
 // 4. Add web research MCP server
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: 'https://research-mcp.example.com',
@@ -547,7 +555,7 @@ const analyst = new oLaneTool({
 await analyst.start();
 
 // Agent discovers and uses MCP tools autonomously
-const result = await analyst.use({
+const result = await analyst.use(new oAddress('o://analyst'), {
   method: 'intent',
   params: {
     intent: `
@@ -571,26 +579,36 @@ const result = await analyst.use({
 console.log(result);
 ```
 
-```typescript Usage: Human via CLI
-# Humans access the same MCP tools
-$ olane discover
+```typescript Usage: Human via SDK
+// Humans access the same MCP tools through node.use()
 
-# Available nodes:
-# - o://filesystem (MCP: filesystem operations)
-# - o://database (MCP: postgres queries)
-# - o://research-mcp (MCP: web research)
+// List available nodes via the leader-hosted registry
+const nodes = await node.use(new oAddress('o://leader/registry'), {
+  method: 'search',
+  params: { type: 'TOOL' }
+});
+console.log(nodes.result.data);
+// o://filesystem  (MCP: filesystem operations)
+// o://database    (MCP: postgres queries)
+// o://research-mcp (MCP: web research)
 
-# Read a file through MCP
-$ olane call o://filesystem read_file \
-  --path "./data/research/paper1.pdf"
+// Read a file through MCP
+await node.use(new oAddress('o://filesystem'), {
+  method: 'read_file',
+  params: { path: './data/research/paper1.pdf' }
+});
 
-# Query database through MCP
-$ olane call o://database query \
-  --sql "SELECT * FROM findings WHERE topic='agents'"
+// Query database through MCP
+await node.use(new oAddress('o://database'), {
+  method: 'query',
+  params: { sql: "SELECT * FROM findings WHERE topic='agents'" }
+});
 
-# Search for research through MCP
-$ olane call o://research-mcp search_papers \
-  --query "agentic operating systems"
+// Search for research through MCP
+await node.use(new oAddress('o://research-mcp'), {
+  method: 'search_papers',
+  params: { query: 'agentic operating systems' }
+});
 ```
 </CodeGroup>
 
@@ -600,7 +618,7 @@ The bridge handles MCP-specific errors and translates them to Olane errors:
 
 ```typescript
 try {
-  await filesystem.use({
+  await node.use(new oAddress('o://filesystem'), {
     method: 'read_file',
     params: { path: '/nonexistent/file.txt' }
   });
@@ -655,7 +673,7 @@ const bridge = new McpBridgeTool({
 });
 
 // Add MCP server with restricted access
-await bridge.use({
+await bridge.use(new oAddress('o://company/integrations/mcp'), {
   method: 'add_local_server',
   params: {
     name: 'filesystem-readonly',
@@ -674,7 +692,7 @@ await bridge.use({
 
 ```typescript
 // Never hardcode credentials
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: process.env.MCP_SERVER_URL,
@@ -687,7 +705,7 @@ await bridge.use({
 // Use secrets management
 import { getSecret } from './secrets';
 
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_remote_server',
   params: {
     mcpServerUrl: await getSecret('MCP_URL'),
@@ -730,7 +748,7 @@ $ npx -y @modelcontextprotocol/server-filesystem /workspace
 # Should start without errors
 
 // Check server output
-await bridge.use({
+await bridge.use(new oAddress('o://mcp'), {
   method: 'add_local_server',
   params: {
     name: 'filesystem',
@@ -748,9 +766,10 @@ await bridge.use({
 
 ```typescript
 // Verify MCP server exposes tools
-const filesystem = await oAddress.resolve('o://filesystem');
-const whoami = await filesystem.use({ method: 'whoami' });
-console.log(whoami.tools);
+const whoami = await node.use(new oAddress('o://filesystem'), {
+  method: 'whoami'
+});
+console.log(whoami.result.data.tools);
 // Should show MCP tool definitions
 
 // If empty, MCP server may not be advertising tools correctly
@@ -762,9 +781,9 @@ console.log(whoami.tools);
 # Monitor MCP server processes
 $ ps aux | grep mcp
 
-# Check Olane metrics
-$ olane metrics o://filesystem
-# Look for high latency or error rates
+# Check node status
+$ olane status
+# Look for unreachable nodes or connection errors
 ```
 
 ## Migration guide
@@ -799,10 +818,13 @@ $ olane metrics o://filesystem
     // Bridge MCP into Olane network
     import { McpBridgeTool } from '@olane/o-mcp';
 
-    const bridge = new McpBridgeTool({ /* ... */ });
+    const bridge = new McpBridgeTool({
+      address: new oAddress('o://mcp'),
+      leader: new oAddress('o://leader')
+    });
     await bridge.start();
 
-    await bridge.use({
+    await bridge.use(new oAddress('o://mcp'), {
       method: 'add_local_server',
       params: {
         name: 'filesystem',
@@ -812,8 +834,7 @@ $ olane metrics o://filesystem
     });
 
     // Now any agent can use it
-    const filesystem = await oAddress.resolve('o://filesystem');
-    const result = await filesystem.use({
+    const result = await node.use(new oAddress('o://filesystem'), {
       method: 'read_file',
       params: { path: '/workspace/data.json' }
     });

@@ -61,33 +61,30 @@ Agents are intelligent users that interact with tools using natural language. Th
 People who interact with Olane OS through various interfaces:
 
 <CodeGroup>
-```bash CLI Interface
-# Human uses command-line interface
-$ olane intent "Analyze Q4 2024 revenue trends"
+```typescript SDK (programmatic)
+import { oAddress } from '@olane/o-core';
 
-# Result streamed to terminal
-Analyzing revenue data...
-Q4 Revenue: $2.5M (+15% vs Q3)
-Key trends:
-- Holiday surge in December
-- B2B deals closed in November
-- Subscription MRR grew 8%
+// Human-facing app sends an intent to a node
+const result = await os.use(
+  new oAddress('o://company/finance/analyst'),
+  {
+    method: 'intent',
+    params: { intent: 'Analyze Q4 2024 revenue trends' },
+  }
+);
+
+// Structured result returned to the caller
+console.log(result.result.data);
+// {
+//   revenue: { total: 2500000, growth: 0.15 },
+//   trends: ['Holiday surge in December', 'B2B deals closed in November']
+// }
 ```
 
 ```bash Web UI
 # Human uses web interface
 # → Enter: "Generate monthly sales report"
 # → System executes and displays results in browser
-```
-
-```bash REST API
-# Human application calls API
-curl -X POST https://api.olane.com/intent \
-  -H "Content-Type: application/json" \
-  -d '{
-    "intent": "Analyze customer churn",
-    "context": "Q4 2024"
-  }'
 ```
 </CodeGroup>
 
@@ -100,16 +97,19 @@ Large language models that autonomously reason and coordinate tools:
 import { oAddress } from '@olane/o-core';
 
 // AI agent (GPT-4) calls tool programmatically
-const result = await financialNode.use({
-  method: 'intent',
-  params: {
-    intent: 'Analyze Q4 2024 revenue trends',
-    context: 'Focus on subscription vs one-time sales'
+const result = await node.use(
+  new oAddress('o://company/finance/analyst'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze Q4 2024 revenue trends',
+      context: 'Focus on subscription vs one-time sales'
+    }
   }
-});
+);
 
 // AI agent receives structured data
-console.log(result);
+console.log(result.result.data);
 // {
 //   revenue: { total: 2500000, growth: 0.15 },
 //   breakdown: { subscriptions: 1800000, oneTime: 700000 },
@@ -120,25 +120,32 @@ console.log(result);
 ```typescript Claude Integration
 // Claude autonomous agent coordinates multiple tools
 async function analyzeBusinessHealth() {
-  // Discover available tools
-  const revenueNode = await leader.search({ 
-    capability: 'revenue_analysis' 
-  });
-  const churnNode = await leader.search({ 
-    capability: 'churn_analysis' 
-  });
-  
+  // Discover available nodes via the leader-hosted registry
+  const matches = await node.use(
+    new oAddress('o://leader/registry'),
+    {
+      method: 'search',
+      params: { capability: 'revenue_analysis' }
+    }
+  );
+
   // Coordinate multi-tool workflow
-  const revenue = await revenueNode.use({
-    method: 'intent',
-    params: { intent: 'Analyze revenue trends' }
-  });
-  
-  const churn = await churnNode.use({
-    method: 'intent',
-    params: { intent: 'Calculate churn rate' }
-  });
-  
+  const revenue = await node.use(
+    new oAddress('o://company/finance/analyst'),
+    {
+      method: 'intent',
+      params: { intent: 'Analyze revenue trends' }
+    }
+  );
+
+  const churn = await node.use(
+    new oAddress('o://company/finance/churn'),
+    {
+      method: 'intent',
+      params: { intent: 'Calculate churn rate' }
+    }
+  );
+
   // Synthesize insights
   return synthesizeReport(revenue, churn);
 }
@@ -225,21 +232,31 @@ class FinancialAnalyst extends oNodeTool {
 ```
 
 ```typescript Human Calls Tool
-# Via CLI
-$ olane call o://finance/analyst calculate_revenue \
-  --startDate "2024-01-01" \
-  --endDate "2024-03-31"
+// Via SDK (human-facing app)
+const result = await node.use(
+  new oAddress('o://finance/analyst'),
+  {
+    method: 'calculate_revenue',
+    params: {
+      startDate: '2024-01-01',
+      endDate: '2024-03-31'
+    }
+  }
+);
 ```
 
 ```typescript AI Calls Tool
 // Via SDK
-const result = await node.use({
-  method: 'calculate_revenue',
-  params: {
-    startDate: '2024-01-01',
-    endDate: '2024-03-31'
+const result = await node.use(
+  new oAddress('o://finance/analyst'),
+  {
+    method: 'calculate_revenue',
+    params: {
+      startDate: '2024-01-01',
+      endDate: '2024-03-31'
+    }
   }
-});
+);
 ```
 </CodeGroup>
 
@@ -300,10 +317,13 @@ class FinancialAnalystNode extends oLaneTool {
 }
 
 // Agent sends INTENT (not direct tool call)
-await analystNode.use({
-  method: 'intent',
-  params: { intent: 'Generate Q4 financial summary' }
-});
+await node.use(
+  new oAddress('o://company/finance/analyst'),
+  {
+    method: 'intent',
+    params: { intent: 'Generate Q4 financial summary' }
+  }
+);
 // Node autonomously decides which tools to use
 ```
 </CodeGroup>
@@ -366,7 +386,7 @@ The runtime system that manages tool execution, discovery, and coordination.
     **OlaneOS** - Manages lifecycle, startup, shutdown, and orchestration
   </Card>
   <Card title="Discovery & Registry" icon="magnifying-glass" color="#0D9373">
-    **Leaders** - Node registry, search, routing, and load balancing
+    **Leaders** - Leader-hosted registry, capability search, and routing
   </Card>
   <Card title="Network Layer" icon="network-wired" color="#0D9373">
     **P2P Networking** - libp2p-based communication, discovery, and messaging
@@ -459,7 +479,6 @@ class oLeaderNode {
   
   async route(address, request) {
     // Route request to appropriate node
-    // Load balance across instances
     return response;
   }
 }
@@ -517,16 +536,19 @@ Here's a complete flow showing all three layers in action:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  LAYER 1: Agent (Human via CLI)                         │
+│  LAYER 1: Agent (Human-facing app)                      │
 │                                                          │
-│  $ olane intent "Analyze Q4 2024 revenue trends"        │
+│  node.use(o://.../analyst, {                            │
+│    method: 'intent',                                     │
+│    params: { intent: 'Analyze Q4 2024 revenue trends' } │
+│  })                                                      │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
                           ⬇
 ┌─────────────────────────────────────────────────────────┐
 │  LAYER 3: Olane OS Infrastructure                       │
 │                                                          │
-│  1. CLI sends request to OlaneOS runtime                │
+│  1. Request enters the OlaneOS runtime                  │
 │  2. Runtime routes to entry point (leader)              │
 │  3. Leader searches registry for "revenue analysis"     │
 │  4. Leader finds: o://company/finance/analyst           │
@@ -539,13 +561,13 @@ Here's a complete flow showing all three layers in action:
 │                                                          │
 │  Node receives intent: "Analyze Q4 2024 revenue trends" │
 │                                                          │
-│  Autonomous execution (capability loop):                │
+│  Autonomous execution (lane loop):                      │
 │  1. EVALUATE: "I need revenue data"                     │
-│  2. TASK: Call _tool_calculate_revenue                  │
+│  2. EXECUTE: Call _tool_calculate_revenue               │
 │  3. EVALUATE: "I need trend analysis"                   │
-│  4. TASK: Call _tool_identify_trends                    │
+│  4. EXECUTE: Call _tool_identify_trends                 │
 │  5. EVALUATE: "Ready to generate summary"               │
-│  6. TASK: Call _tool_generate_report                    │
+│  6. EXECUTE: Call _tool_generate_report                 │
 │  7. STOP: Return results                                │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
@@ -627,10 +649,7 @@ await os.start();
 
 // ===== LAYER 1: AGENT USES SYSTEM =====
 
-// Human agent (via CLI)
-// $ olane intent "Analyze Q4 2024 revenue trends"
-
-// AI agent (programmatic)
+// Both human-facing apps and AI agents use the same SDK call
 const result = await os.use(
   new oAddress('o://company/finance/analyst'),
   {
@@ -689,11 +708,11 @@ async _tool_analyze_data(request: oRequest) {
   return analyzeData(request.params);
 }
 
-// Layer 1: Human agent
-// → CLI: olane intent "Analyze data"
+// Layer 1: Human-facing app
+// → SDK: await node.use(new oAddress('o://...'), { method: 'intent', params: {...} })
 
-// Layer 1: AI agent  
-// → SDK: await node.use({ method: 'intent', params: {...} })
+// Layer 1: AI agent
+// → SDK: await node.use(new oAddress('o://...'), { method: 'intent', params: {...} })
 
 // Both get same result from Layer 2
 ```

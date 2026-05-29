@@ -1,0 +1,222 @@
+---
+title: "Transports and discovery"
+description: "What libp2p stack Olane ships, how peers find each other, and when to customize."
+---
+
+Every Olane node boots with four libp2p transports, noise encryption, yamux muxing, and a server-mode Kademlia DHT.
+
+The default stack lives in `@olane/o-config` (`packages/o-config/src/config/config.ts:20`). It is opinionated: a single muxer, a single encryption layer, no mDNS, no bootstrap list. Discovery flows through hierarchical config and the leader registry. This page covers what the defaults do, how peers actually find each other, and the three ways to swap pieces out.
+
+## The default stack
+
+| Layer | Default | Notes |
+| --- | --- | --- |
+| Transport | `tcp()` | Plain TCP. The default for LAN and server-to-server. |
+| Transport | `webSockets()` | WS over TCP. Browsers can dial nodes that have `/ws` listeners. |
+| Transport | `webTransport()` | UDP-based, browser-friendly, no TLS termination needed on each hop. |
+| Transport | `memory()` | In-process. Used by tests so peers can dial each other without a network. |
+| Encryption | `noise()` from `@chainsafe/libp2p-noise` | The only encryption layer. Always on, no plaintext fallback. |
+| Muxer | `yamux()` from `@chainsafe/libp2p-yamux` | The only muxer. Multiplexes ~1000 streams per Connection. |
+| DHT | `kadDHT` in server mode | `clientMode: false`. Every node participates as a full server peer. |
+| Connection limits | `maxConnections: 200` | Dialed down from `Infinity` to prevent OOMs through relays. |
+| Dial limits | `maxParallelDials: 100`, `maxDialQueueLength: 100`, `maxPeerAddrsToDial: 25` | Same reason. |
+
+All four transports are enabled at once. The receiver advertises every multiaddr it can listen on; the dialer picks one its own transport stack supports.
+
+## Default listen addresses
+
+`oServerNode` (`packages/o-node/src/nodes/server.node.ts:10`) listens on four addresses by default:
+
+```typescript
+listeners: config.network?.listeners || [
+  '/ip4/0.0.0.0/tcp/0',     // plain TCP, OS-assigned port
+  '/ip4/0.0.0.0/tcp/0/ws',  // WebSocket over TCP
+  '/ip6/::/tcp/0',
+  '/ip6/::/tcp/0/ws',
+]
+```
+
+`tcp/0` means "let the OS pick a free port." Good for tests and ephemeral workers. For anything cached by callers (the leader, long-lived gateways), pin a port — see [Production guidance](#production-guidance).
+
+Other node classes ship different defaults:
+
+<ParamField path="oServerNode" type="class">
+  TCP + WS on IPv4 and IPv6. The default for server-side workers.
+</ParamField>
+<ParamField path="oClientNode" type="class">
+  No listeners. Dials out but cannot be dialed. Use when a node only initiates requests.
+</ParamField>
+<ParamField path="oWebsocketNode" type="class">
+  WebSocket only. Use behind a TLS-terminating reverse proxy (`/wss`).
+</ParamField>
+<ParamField path="oLimitedTool" type="class">
+  No listeners, `runOnLimitedConnection: true`. The browser / strict-NAT default. Reaches the network through a circuit-relay-v2 reservation on a `RelayNode`.
+</ParamField>
+
+## Encryption and muxing
+
+There is one choice, not a list.
+
+- **Encryption: noise.** Always on. Every byte on every transport is encrypted at the libp2p layer, even on the plain `tcp` transport. WebSocket-over-TLS (`/wss`) adds TLS on top — useful for traversing TLS-only middleboxes, redundant for confidentiality.
+- **Muxer: yamux.** Every libp2p Connection carries up to ~1000 concurrent yamux streams. The request-response layer (`/o/route`) opens a new stream per request.
+
+You generally do not change either. They are listed for completeness.
+
+## Peer discovery
+
+This part is counter-intuitive if you're coming from generic libp2p.
+
+<ParamField path="No mDNS" type="omission">
+  Olane does not configure mDNS. Two nodes on the same LAN do not discover each other automatically. They find each other through the leader registry.
+</ParamField>
+<ParamField path="No bootstrap list" type="omission">
+  The bootstrap list code is commented out (`packages/o-node/src/o-node.ts:325`). Nodes do not connect to a hardcoded set of well-known peers.
+</ParamField>
+<ParamField path="Hierarchical pointers" type="config">
+  Every node knows its leader (and parent, if any) by address in its config. These are the *only* peers it dials at startup.
+</ParamField>
+<ParamField path="DHT in server mode" type="participation">
+  `kadDHT` runs in `clientMode: false` even in browsers. Nodes participate fully in the DHT.
+</ParamField>
+<ParamField path="Leader registry as routing table" type="lookup">
+  Every node registers itself with `o://leader/registry` on start. Lookups go through that registry via `oSearchResolver`.
+</ParamField>
+
+The model: hierarchical pointers bootstrap connectivity, the DHT carries libp2p-level traffic, and the leader registry is the application-level routing table.
+
+### Connection gating
+
+Non-leader nodes apply a strict gater (`packages/o-node/src/o-node.ts:335-366`). A worker will only dial:
+
+- Its leader
+- Its parent (if any)
+- Its children (if any)
+
+All other peer dials are denied. This means a compromised peer cannot pull connections out of an unrelated worker, and that random DHT traffic does not turn into application-level chatter.
+
+The leader has no such restriction. It is the hub.
+
+## Browser and NAT clients
+
+A browser cannot bind a TCP listener. A worker behind strict NAT may not be reachable on its public IP. Both use the same pattern: connect through a relay.
+
+<Steps>
+  <Step title="Run a RelayNode somewhere reachable">
+    A `RelayNode` accepts circuit-relay-v2 reservations from limited peers. Deploy at least one in your network.
+  </Step>
+  <Step title="Use oLimitedTool from @olane/o-client-limited">
+    The limited node makes a reservation with the relay on start. It advertises its address as `/p2p/<relay>/p2p-circuit/p2p/<self>`.
+  </Step>
+  <Step title="Dial it through the relay">
+    Other peers dial the relayed multiaddr directly. libp2p handles circuit setup transparently.
+  </Step>
+</Steps>
+
+A relayed multiaddr looks like this:
+
+```
+/ip4/203.0.113.10/tcp/4001/ws/p2p/Qm-relay/p2p-circuit/p2p/Qm-browser
+```
+
+That tells libp2p: "dial the relay at `203.0.113.10:4001` over WebSocket, ask it to relay to peer `Qm-browser`."
+
+<Note>
+  Limited connections set `runOnLimitedConnection: true`. The `/o/route` protocol handler honors this and accepts streams from limited peers. Some libp2p protocols refuse limited streams by default; Olane opts in.
+</Note>
+
+## Customizing the stack
+
+Three ways, in increasing order of override.
+
+### Listen addresses only
+
+Use when the defaults are fine but you need specific ports.
+
+```typescript
+import { oNodeTool } from '@olane/o-node';
+import { oAddress } from '@olane/o-core';
+
+const node = new MyTool({
+  address: new oAddress('o://services/api'),
+  network: {
+    listeners: [
+      '/ip4/0.0.0.0/tcp/4001',
+      '/ip4/0.0.0.0/tcp/4001/ws',
+    ],
+  },
+});
+```
+
+### Replace the transport list
+
+Use when you want fewer transports — e.g. a server-only worker that does not need WebTransport.
+
+```typescript
+import { tcp } from '@libp2p/tcp';
+import { webSockets } from '@libp2p/websockets';
+
+const node = new MyTool({
+  address: new oAddress('o://services/api'),
+  network: {
+    transports: [tcp(), webSockets()],
+  },
+});
+```
+
+### Subclass
+
+Use when you need to make transport choices conditional on environment, or when you want to add a custom transport.
+
+```typescript
+import { oServerNode } from '@olane/o-node';
+import { tcp } from '@libp2p/tcp';
+
+class StrictTcp extends oServerNode {
+  configureTransports() {
+    return [tcp()];
+  }
+}
+```
+
+`configureTransports()` is called once during `initialize()`. The return value replaces the default transport array entirely.
+
+## Production guidance
+
+Three callouts, one per role.
+
+<Note>
+  **Leader on a public host.** Pin a TCP port and a WebSocket port (e.g. `/ip4/PUBLIC_IP/tcp/4001` and `/ip4/PUBLIC_IP/tcp/4001/ws`). Pass a `seed` in the node config so the peerId is stable across restarts — every other node caches the leader's peerId and will fail to redial a rotated one.
+</Note>
+
+<Note>
+  **Worker on a LAN.** The defaults are fine. OS-assigned ports (`tcp/0`) are reachable inside the LAN, and the worker registers itself with the leader on start, so callers learn the port through the registry.
+</Note>
+
+<Note>
+  **Browser client.** Use `oLimitedTool` from `@olane/o-client-limited`. Make sure at least one `RelayNode` is reachable in your network. The browser does not listen, so it depends on circuit-relay-v2 reservations for inbound connectivity.
+</Note>
+
+<Warning>
+  Do not change `clientMode: false` on the DHT. The comment in `defaultLibp2pConfig` says it directly: "DO NOT CHANGE THIS, it will break the network." Olane assumes every peer is a full DHT server.
+</Warning>
+
+<Tip>
+  Always pass `seed` for any node whose multiaddrs will be cached by callers. Without a seed, peerIds rotate on every restart and every cached `/p2p/<peerId>` entry — in the leader registry, in resolver caches, in test fixtures — points at a peer that no longer exists.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="How requests are routed" icon="route" href="/concepts/communication/routing">
+    The resolver chain that turns an address into a peer.
+  </Card>
+  <Card title="Your first network" icon="rocket" href="/getting-started/your-first-network">
+    Stand up a leader and two workers, watch them register and route.
+  </Card>
+  <Card title="Request and response" icon="exchange" href="/concepts/communication/request-response">
+    The shape of `oRequest` and `oResponse`, and how streaming works.
+  </Card>
+  <Card title="Addresses" icon="at" href="/concepts/addressing/overview">
+    The `o://` scheme, address spaces, hierarchical paths.
+  </Card>
+</CardGroup>

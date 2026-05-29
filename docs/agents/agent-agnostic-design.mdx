@@ -69,17 +69,22 @@ Tool nodes accept intents in plain language, not rigid API calls.
 
 <CodeGroup>
 
-```typescript Human Agent (CLI)
-# Human expresses goal naturally
-$ olane intent "Find all customers who haven't purchased in 90 days"
+```typescript Human Agent (via SDK)
+// Human expresses goal naturally (e.g. from a CLI wrapper or web UI)
+const result = await node.use(new oAddress('o://crm'), {
+  method: 'intent',
+  params: {
+    intent: "Find all customers who haven't purchased in 90 days"
+  }
+});
 
-# Tool node processes the intent
-# Returns structured results
+// Tool node processes the intent
+// Returns structured results
 ```
 
 ```typescript AI Agent (Programmatic)
 // AI agent sends same intent programmatically
-const result = await toolNode.use({
+const result = await node.use(new oAddress('o://crm'), {
   method: 'intent',
   params: {
     intent: 'Find all customers who haven\'t purchased in 90 days'
@@ -169,21 +174,30 @@ class SalesAnalytics extends oLaneTool {
 
 <CodeGroup>
 
-```bash Human - Simple Usage
-# Direct tool call for simple operations
-$ olane call o://analytics get_revenue \
-  --startDate "2024-01-01" \
-  --endDate "2024-03-31"
+```typescript Human - Simple Usage
+// Direct tool call for simple operations
+await node.use(new oAddress('o://analytics'), {
+  method: 'get_revenue',
+  params: {
+    startDate: '2024-01-01',
+    endDate: '2024-03-31'
+  }
+});
 ```
 
-```bash Human - Complex Usage
-# Intent for complex analysis
-$ olane intent "Compare Q1 vs Q4 revenue and identify growth opportunities"
+```typescript Human - Complex Usage
+// Intent for complex analysis
+await node.use(new oAddress('o://analytics'), {
+  method: 'intent',
+  params: {
+    intent: 'Compare Q1 vs Q4 revenue and identify growth opportunities'
+  }
+});
 ```
 
 ```typescript AI - Simple Usage
 // Direct tool call
-await toolNode.use({
+await node.use(new oAddress('o://analytics'), {
   method: 'get_revenue',
   params: { 
     startDate: '2024-01-01', 
@@ -194,7 +208,7 @@ await toolNode.use({
 
 ```typescript AI - Complex Usage
 // Intent for complex coordination
-await toolNode.use({
+await node.use(new oAddress('o://analytics'), {
   method: 'intent',
   params: {
     intent: 'Compare Q1 vs Q4 revenue and identify growth opportunities'
@@ -279,25 +293,29 @@ class CurrencyConverter extends oNodeTool {
 
 <CodeGroup>
 
-```bash Human Agent (CLI)
-# Direct tool invocation
-$ olane call o://utilities/currency convert \
-  --amount 100 \
-  --from "USD" \
-  --to "EUR"
+```typescript Human Agent (via SDK)
+// Direct tool invocation (e.g. from a CLI wrapper or web UI)
+const result = await node.use(new oAddress('o://utilities/currency'), {
+  method: 'convert',
+  params: {
+    amount: 100,
+    from: 'USD',
+    to: 'EUR'
+  }
+});
 
-# Result
-{
-  "original": { "amount": 100, "currency": "USD" },
-  "converted": { "amount": 85, "currency": "EUR" },
-  "rate": 0.85,
-  "timestamp": 1696118400000
-}
+// Result
+// {
+//   "original": { "amount": 100, "currency": "USD" },
+//   "converted": { "amount": 85, "currency": "EUR" },
+//   "rate": 0.85,
+//   "timestamp": 1696118400000
+// }
 ```
 
 ```typescript AI Agent (Programmatic)
 // Same tool, programmatic invocation
-const result = await currencyConverter.use({
+const result = await node.use(new oAddress('o://utilities/currency'), {
   method: 'convert',
   params: {
     amount: 100,
@@ -416,39 +434,44 @@ class CustomerAnalytics extends oLaneTool {
 
 <CodeGroup>
 
-```bash Human Agent (CLI)
-# Human sends high-level intent
-$ olane intent "Identify high-value customers at risk of churning"
+```typescript Human Agent (via SDK)
+// Human sends high-level intent (e.g. from a CLI wrapper or web UI)
+const result = await node.use(new oAddress('o://analytics/customers'), {
+  method: 'intent',
+  params: {
+    intent: 'Identify high-value customers at risk of churning'
+  }
+});
 
-# Tool node autonomously:
-# 1. EVALUATE: "Need customer data with purchase history"
-# 2. TASK: Call _tool_get_customers
-# 3. EVALUATE: "Need to calculate LTV for each"
-# 4. TASK: Call _tool_calculate_ltv for top customers
-# 5. EVALUATE: "Need churn predictions"
-# 6. TASK: Call _tool_predict_churn
-# 7. EVALUATE: "Have all data, generate insights"
-# 8. STOP: Return results
+// Tool node autonomously runs the lane loop:
+// 1. EVALUATE: "Need customer data with purchase history"
+// 2. EXECUTE: Call _tool_get_customers
+// 3. EVALUATE: "Need to calculate LTV for each"
+// 4. EXECUTE: Call _tool_calculate_ltv for top customers
+// 5. EVALUATE: "Need churn predictions"
+// 6. EXECUTE: Call _tool_predict_churn
+// 7. EVALUATE: "Have all data, generate insights"
+// 8. STOP: Return results
 
-# Human receives structured results
-{
-  "atRiskCustomers": [
-    {
-      "id": "cust_123",
-      "name": "Acme Corp",
-      "ltv": 50000,
-      "churnRisk": 0.75,
-      "recommendation": "Immediate outreach"
-    }
-  ],
-  "totalValue": 200000,
-  "avgChurnRisk": 0.45
-}
+// Human receives structured results
+// {
+//   "atRiskCustomers": [
+//     {
+//       "id": "cust_123",
+//       "name": "Acme Corp",
+//       "ltv": 50000,
+//       "churnRisk": 0.75,
+//       "recommendation": "Immediate outreach"
+//     }
+//   ],
+//   "totalValue": 200000,
+//   "avgChurnRisk": 0.45
+// }
 ```
 
 ```typescript AI Agent (Programmatic)
 // AI agent sends same high-level intent
-const result = await customerAnalytics.use({
+const result = await node.use(new oAddress('o://analytics/customers'), {
   method: 'intent',
   params: {
     intent: 'Identify high-value customers at risk of churning',
@@ -467,7 +490,7 @@ console.log(result);
 
 // AI agent can use results for further coordination
 for (const customer of result.atRiskCustomers) {
-  await crmTool.use({
+  await node.use(new oAddress('o://crm'), {
     method: 'create_task',
     params: {
       customerId: customer.id,
@@ -480,7 +503,7 @@ for (const customer of result.atRiskCustomers) {
 </CodeGroup>
 
 <Note>
-  The tool node processes intents identically regardless of source. The capability loop (EVALUATE → TASK → EVALUATE) works the same for human and AI agents.
+  The tool node processes intents identically regardless of source. The lane loop (EVALUATE → EXECUTE → re-EVALUATE) works the same for human and AI agents.
 </Note>
 
 ---
@@ -522,19 +545,27 @@ class FinancialAnalyst extends oLaneTool {
 
 <CodeGroup>
 
-```bash Human - Simple
-# Quick lookup of specific metric
-$ olane call o://finance/analyst get_revenue --period "Q4-2024"
+```typescript Human - Simple
+// Quick lookup of specific metric
+await node.use(new oAddress('o://finance/analyst'), {
+  method: 'get_revenue',
+  params: { period: 'Q4-2024' }
+});
 ```
 
-```bash Human - Complex
-# Complex analysis across multiple metrics
-$ olane intent "Compare Q4 profitability vs Q3 and explain changes"
+```typescript Human - Complex
+// Complex analysis across multiple metrics
+await node.use(new oAddress('o://finance/analyst'), {
+  method: 'intent',
+  params: {
+    intent: 'Compare Q4 profitability vs Q3 and explain changes'
+  }
+});
 ```
 
 ```typescript AI - Simple
 // Direct tool call for specific data
-const revenue = await analyst.use({
+const revenue = await node.use(new oAddress('o://finance/analyst'), {
   method: 'get_revenue',
   params: { period: 'Q4-2024' }
 });
@@ -542,7 +573,7 @@ const revenue = await analyst.use({
 
 ```typescript AI - Complex
 // Intent for complex coordination
-const analysis = await analyst.use({
+const analysis = await node.use(new oAddress('o://finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Compare Q4 profitability vs Q3 and explain changes'
@@ -863,17 +894,23 @@ class CustomerSupport extends oLaneTool {
 }
 ```
 
-**Human support rep**:
-```bash
-# Quick customer lookup during call
-$ olane call o://support/customer-service get_customer \
-  --customerId "cust_123"
+**Human support rep** (via SDK from a CLI wrapper or web UI):
+```typescript
+// Quick customer lookup during call
+await node.use(new oAddress('o://support/customer-service'), {
+  method: 'get_customer',
+  params: { customerId: 'cust_123' }
+});
 
-# Create ticket manually
-$ olane call o://support/customer-service create_ticket \
-  --customerId "cust_123" \
-  --issue "Billing inquiry" \
-  --priority "high"
+// Create ticket manually
+await node.use(new oAddress('o://support/customer-service'), {
+  method: 'create_ticket',
+  params: {
+    customerId: 'cust_123',
+    issue: 'Billing inquiry',
+    priority: 'high'
+  }
+});
 ```
 
 **AI triage agent**:
@@ -888,7 +925,7 @@ class EmailTriageAgent {
     const analysis = await this.analyzeSentiment(email.body);
     
     // Create ticket via same tool node
-    await supportTool.use({
+    await node.use(new oAddress('o://support/customer-service'), {
       method: 'create_ticket',
       params: {
         customerId: customer.id,
@@ -944,7 +981,7 @@ class FinancialReporting extends oLaneTool {
 class AnalystDashboard {
   async generateQuarterlyReport() {
     // Human clicks "Generate Q4 Report" button
-    const result = await financialReporting.use({
+    const result = await node.use(new oAddress('o://finance/reporting'), {
       method: 'intent',
       params: {
         intent: 'Generate comprehensive Q4 financial report with YoY comparison'
@@ -963,7 +1000,7 @@ class AnalystDashboard {
 class FinancialMonitor extends AIAgent {
   async dailyCheck() {
     // AI runs automated daily analysis
-    const result = await financialReporting.use({
+    const result = await node.use(new oAddress('o://finance/reporting'), {
       method: 'intent',
       params: {
         intent: 'Analyze yesterday\'s financial performance and flag anomalies'
@@ -1010,13 +1047,15 @@ class DataPipeline extends oLaneTool {
 }
 ```
 
-**Data engineer (manual trigger)**:
-```bash
-# Engineer tests pipeline manually
-$ olane intent "Run customer data ETL for 2024-10-01 with validation"
-
-# Monitor execution in real-time
-$ olane logs o://data/etl-pipeline --follow
+**Data engineer (manual trigger)** (via SDK from a CLI wrapper or web UI):
+```typescript
+// Engineer tests pipeline manually
+await node.use(new oAddress('o://data/etl-pipeline'), {
+  method: 'intent',
+  params: {
+    intent: 'Run customer data ETL for 2024-10-01 with validation'
+  }
+});
 ```
 
 **AI orchestration agent (automated)**:
@@ -1032,7 +1071,7 @@ class PipelineOrchestrator extends AIAgent {
     
     // Execute in dependency order
     for (const pipeline of pipelines) {
-      const result = await pipeline.use({
+      const result = await node.use(pipeline.address, {
         method: 'intent',
         params: {
           intent: 'Execute daily ETL with dependency resolution and validation'
@@ -1048,7 +1087,7 @@ class PipelineOrchestrator extends AIAgent {
   
   async remediateFailed(pipeline: any, result: any) {
     // AI attempts automatic remediation
-    await remediation.use({
+    await node.use(new oAddress('o://remediation'), {
       method: 'intent',
       params: {
         intent: `Fix ETL failure in ${pipeline.address}: ${result.error}`
@@ -1130,7 +1169,7 @@ class OrderApproval extends oLaneTool {
 class SmartOrderProcessor {
   async processOrder(order: Order) {
     // AI analyzes order
-    const analysis = await orderApproval.use({
+    const analysis = await node.use(new oAddress('o://orders/approval'), {
       method: 'analyze_order',
       params: { orderId: order.id }
     });
@@ -1145,7 +1184,7 @@ class SmartOrderProcessor {
       
       if (humanDecision.approved) {
         // Human approved via web UI
-        await orderApproval.use({
+        await node.use(new oAddress('o://orders/approval'), {
           method: 'approve_order',
           params: { 
             orderId: order.id, 
@@ -1177,7 +1216,7 @@ const humanStrategy = {
 };
 
 // AI coordinates within human-defined constraints
-const result = await procurementTool.use({
+const result = await node.use(new oAddress('o://procurement'), {
   method: 'intent',
   params: {
     intent: 'Optimize procurement across vendors',
@@ -1197,7 +1236,7 @@ console.log(result.proposal);
 // Human makes final decision
 const humanDecision = await human.review(result.proposal);
 if (humanDecision.approved) {
-  await procurementTool.use({
+  await node.use(new oAddress('o://procurement'), {
     method: 'execute_procurement',
     params: { proposalId: result.proposal.id }
   });
@@ -1223,48 +1262,48 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
 
   // Test 1: Direct tool call (human or AI agent)
   it('should handle direct tool calls from any agent', async () => {
-    const result = await toolNode.use({
+    const response = await toolNode.use(toolNode.address, {
       method: 'get_customers',
       params: {
         filters: { status: 'active' }
       }
     });
 
-    expect(result.customers).toBeDefined();
-    expect(Array.isArray(result.customers)).toBe(true);
+    expect(response.result.data.customers).toBeDefined();
+    expect(Array.isArray(response.result.data.customers)).toBe(true);
   });
 
   // Test 2: Intent-driven (complex workflow)
   it('should handle intents from any agent', async () => {
-    const result = await toolNode.use({
+    const response = await toolNode.use(toolNode.address, {
       method: 'intent',
       params: {
         intent: 'Find high-value customers at risk of churning'
       }
     });
 
-    expect(result.atRiskCustomers).toBeDefined();
-    expect(result.totalValue).toBeGreaterThan(0);
+    expect(response.result.data.atRiskCustomers).toBeDefined();
+    expect(response.result.data.totalValue).toBeGreaterThan(0);
   });
 
   // Test 3: Results are structured and serializable
   it('should return JSON-serializable results', async () => {
-    const result = await toolNode.use({
+    const response = await toolNode.use(toolNode.address, {
       method: 'get_customers',
       params: { filters: { status: 'active' } }
     });
 
     // Should be JSON-serializable (important for both agent types)
-    const serialized = JSON.stringify(result);
+    const serialized = JSON.stringify(response.result.data);
     const deserialized = JSON.parse(serialized);
     
-    expect(deserialized).toEqual(result);
+    expect(deserialized).toEqual(response.result.data);
   });
 
   // Test 4: Parameter validation works for all agents
   it('should validate parameters consistently', async () => {
     await expect(
-      toolNode.use({
+      toolNode.use(toolNode.address, {
         method: 'get_customers',
         params: {} // Missing required filters
       })
@@ -1273,15 +1312,13 @@ describe('CustomerAnalytics - Agent-Agnostic', () => {
 
   // Test 5: Errors are structured
   it('should return structured errors', async () => {
-    const result = await toolNode.use({
+    const response = await toolNode.use(toolNode.address, {
       method: 'get_customers',
       params: { filters: { invalidField: 'test' } }
     });
 
-    if (!result.success) {
-      expect(result.error).toBeDefined();
-      expect(result.error.code).toBeDefined();
-      expect(result.error.message).toBeDefined();
+    if (!response.result.success) {
+      expect(response.result.error).toBeDefined();
     }
   });
 });

@@ -329,25 +329,30 @@ Tools are **agent-agnostic** - they work identically for human and AI agents.
 ### Human Agent (CLI)
 
 ```bash
-# Discover tools on a node
-$ olane discover o://finance/analyst
+# Inspect a running node and its tools
+$ olane os status
 
-# Available tools:
-# - calculate_revenue (quarter, year)
-# - generate_report (reportType)
-# - forecast_growth (periods)
+# Address book / known nodes
+$ olane os address
+```
 
-# Call a tool
-$ olane call o://finance/analyst calculate_revenue \
-  --quarter 4 \
-  --year 2024
+To call a tool, send an intent through the node via the SDK:
 
-# Result:
-# {
-#   "revenue": 150000,
-#   "currency": "USD",
-#   "period": { "quarter": 4, "year": 2024 }
-# }
+```typescript
+import { oAddress } from '@olane/o-core';
+
+// Call a tool via an intent
+const result = await node.use(new oAddress('o://finance/analyst'), {
+  method: 'intent',
+  params: { intent: 'Calculate revenue for Q4 2024' },
+});
+
+// result.result.data:
+// {
+//   "revenue": 150000,
+//   "currency": "USD",
+//   "period": { "quarter": 4, "year": 2024 }
+// }
 ```
 
 ### AI Agent (Programmatic)
@@ -368,7 +373,7 @@ const schema = await financeNode.getToolParams('calculate_revenue');
 // Returns: { quarter: { type: 'number', required: true }, ... }
 
 // Call the tool
-const result = await financeNode.use({
+const result = await node.use(new oAddress('o://finance/analyst'), {
   method: 'calculate_revenue',
   params: {
     quarter: 4,
@@ -376,7 +381,7 @@ const result = await financeNode.use({
   }
 });
 
-console.log(result);
+console.log(result.result.data);
 // { revenue: 150000, currency: 'USD', ... }
 ```
 
@@ -403,7 +408,7 @@ const response = await openai.chat.completions.create({
 
 // Execute tool calls
 for (const toolCall of response.choices[0].message.tool_calls) {
-  const result = await financeNode.use({
+  const result = await node.use(new oAddress('o://finance/analyst'), {
     method: toolCall.function.name,
     params: JSON.parse(toolCall.function.arguments)
   });
@@ -521,7 +526,9 @@ Every node has built-in system tools for basic operations:
   <Accordion title="handshake - Node information">
     ```typescript
     // Returns node metadata
-    const info = await node.use({ method: 'handshake' });
+    const info = await node.use(new oAddress('o://company/finance/analyst'), {
+      method: 'handshake',
+    });
     
     // Result:
     {
@@ -538,7 +545,9 @@ Every node has built-in system tools for basic operations:
   <Accordion title="get_tools - Tool discovery">
     ```typescript
     // Returns available tools
-    const tools = await node.use({ method: 'get_tools' });
+    const tools = await node.use(new oAddress('o://company/finance/analyst'), {
+      method: 'get_tools',
+    });
     
     // Result:
     [
@@ -556,7 +565,7 @@ Every node has built-in system tools for basic operations:
   <Accordion title="get_params - Parameter schema">
     ```typescript
     // Get schema for specific tool
-    const schema = await node.use({ 
+    const schema = await node.use(new oAddress('o://company/finance/analyst'), {
       method: 'get_params',
       params: { toolName: 'calculate_revenue' }
     });
@@ -572,7 +581,7 @@ Every node has built-in system tools for basic operations:
   <Accordion title="register - Network registration">
     ```typescript
     // Register with leader node (automatic)
-    await node.use({
+    await node.use(new oAddress('o://leader'), {
       method: 'register',
       params: {
         leaderAddress: 'o://leader'
@@ -631,14 +640,14 @@ Parameters are automatically validated before execution:
     }
     
     // ❌ This will fail validation
-    await node.use({
+    await node.use(new oAddress('o://my-node'), {
       method: 'calculate',
       params: { amount: "100" }  // Wrong type (string instead of number)
     });
     // Error: Parameter 'amount' must be of type 'number'
     
     // ❌ This will fail validation
-    await node.use({
+    await node.use(new oAddress('o://my-node'), {
       method: 'calculate',
       params: { amount: 100 }  // Missing 'currency'
     });
@@ -687,7 +696,7 @@ Parameters are automatically validated before execution:
     }
     
     // ❌ This will fail validation
-    await node.use({
+    await node.use(new oAddress('o://my-node'), {
       method: 'set_temperature',
       params: { value: -300 }  // Below minimum
     });
@@ -737,7 +746,7 @@ Parameters are automatically validated before execution:
     }
     
     // ❌ This will fail validation
-    await node.use({
+    await node.use(new oAddress('o://my-node'), {
       method: 'generate_report',
       params: { format: 'xml' }  // Not in enum
     });
@@ -754,8 +763,9 @@ Agents discover tools through three mechanisms:
 
 ```typescript
 // Get all tools from a known node
-const node = await oAddress.resolve('o://finance/analyst');
-const tools = await node.use({ method: 'get_tools' });
+const tools = await node.use(new oAddress('o://finance/analyst'), {
+  method: 'get_tools',
+});
 ```
 
 ### 2. Registry Search
@@ -928,42 +938,46 @@ console.log('Available tools:', await node.getTools());
 ```
 
 ```typescript Human Agent Usage
-# Get current weather
-$ olane call o://services/weather get_current --location "San Francisco"
+// Get current weather via an intent
+const current = await node.use(new oAddress('o://services/weather'), {
+  method: 'intent',
+  params: { intent: 'Get the current weather for San Francisco' },
+});
 
-# Result:
-{
-  "location": "San Francisco",
-  "temperature": 68,
-  "conditions": "Partly cloudy",
-  "humidity": 65,
-  "timestamp": 1696185600000
-}
+// current.result.data:
+// {
+//   "location": "San Francisco",
+//   "temperature": 68,
+//   "conditions": "Partly cloudy",
+//   "humidity": 65,
+//   "timestamp": 1696185600000
+// }
 
-# Get 7-day forecast
-$ olane call o://services/weather get_forecast \
-  --location "San Francisco" \
-  --days 7
+// Get 7-day forecast via an intent
+const forecast = await node.use(new oAddress('o://services/weather'), {
+  method: 'intent',
+  params: { intent: 'Get a 7-day forecast for San Francisco' },
+});
 ```
 
 ```typescript AI Agent Usage
 // AI agent discovers and uses weather tools
-const weather = await oAddress.resolve('o://services/weather');
+const weatherAddress = new oAddress('o://services/weather');
 
 // Get current weather
-const current = await weather.use({
+const current = await node.use(weatherAddress, {
   method: 'get_current',
   params: { location: 'San Francisco' }
 });
 
 // Get forecast
-const forecast = await weather.use({
+const forecast = await node.use(weatherAddress, {
   method: 'get_forecast',
   params: { location: 'San Francisco', days: 7 }
 });
 
 // Check for alerts
-const alerts = await weather.use({
+const alerts = await node.use(weatherAddress, {
   method: 'get_alerts',
   params: { location: 'San Francisco' }
 });

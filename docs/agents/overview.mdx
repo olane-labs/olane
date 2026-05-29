@@ -36,26 +36,40 @@ Unlike traditional software where you write code to explicitly call APIs, agents
 Humans who interact with tools through various interfaces:
 
 **Command-Line Interface (CLI)**:
-```bash
-# Express goals in natural language
-olane intent "Analyze Q4 sales and identify top products"
+```typescript
+import { oAddress } from '@olane/o-core';
 
-# Get structured results back
-# {
-#   "totalSales": 1500000,
-#   "topProducts": ["Product A", "Product B"],
-#   "trends": "15% growth YoY"
-# }
+// Express goals in natural language via the SDK
+const result = await olaneClient.use(
+  new oAddress('o://company/analytics'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Analyze Q4 sales and identify top products',
+    },
+  }
+);
+
+// Get structured results back
+// {
+//   "totalSales": 1500000,
+//   "topProducts": ["Product A", "Product B"],
+//   "trends": "15% growth YoY"
+// }
 ```
 
 **Web Interface**:
 ```typescript
-// Form submission from web UI
-POST /api/intent
-{
-  "toolNode": "o://company/analytics",
-  "intent": "Generate monthly customer retention report"
-}
+// A web backend forwards the form submission through node.use()
+const result = await olaneClient.use(
+  new oAddress('o://company/analytics'),
+  {
+    method: 'intent',
+    params: {
+      intent: 'Generate monthly customer retention report',
+    },
+  }
+);
 ```
 
 **Programmatic API**:
@@ -143,7 +157,7 @@ Agents send **intents** (natural language descriptions of goals) rather than dir
 
 ```typescript AI Agent
 // AI agent sends intent
-const result = await toolNode.use({
+const result = await node.use(new oAddress('o://company/crm'), {
   method: 'intent',
   params: {
     intent: 'Find customers at risk of churning this month'
@@ -157,21 +171,26 @@ const result = await toolNode.use({
 // 4. Returns results
 ```
 
-```bash Human Agent (CLI)
-# Human sends same intent via CLI
-olane use o://company/crm --intent "Find customers at risk of churning this month"
+```typescript Human Agent (SDK)
+// Human-initiated call sends the same intent
+const result = await node.use(new oAddress('o://company/crm'), {
+  method: 'intent',
+  params: {
+    intent: 'Find customers at risk of churning this month'
+  }
+});
 
-# Same autonomous processing
-# Same structured results
+// Same autonomous processing
+// Same structured results
 ```
 
 ```javascript Human Agent (Web)
-// Human sends intent via web interface
-fetch('/api/tool-nodes/o://company/crm/intent', {
-  method: 'POST',
-  body: JSON.stringify({
+// A web backend forwards the intent through node.use()
+const result = await node.use(new oAddress('o://company/crm'), {
+  method: 'intent',
+  params: {
     intent: 'Find customers at risk of churning this month'
-  })
+  }
 });
 ```
 
@@ -185,7 +204,7 @@ For simple tool nodes (1-5 tools), agents can directly invoke specific tools:
 
 ```typescript AI Agent
 // Direct tool call from AI
-const result = await toolNode.use({
+const result = await node.use(new oAddress('o://utilities/currency'), {
   method: 'convert_currency',
   params: {
     amount: 100,
@@ -195,10 +214,16 @@ const result = await toolNode.use({
 });
 ```
 
-```bash Human Agent (CLI)
-# Direct tool call from human
-olane use o://utilities/currency --method convert_currency \
-  --params '{"amount": 100, "from": "USD", "to": "EUR"}'
+```typescript Human Agent (SDK)
+// Direct tool call from a human-initiated process
+const result = await node.use(new oAddress('o://utilities/currency'), {
+  method: 'convert_currency',
+  params: {
+    amount: 100,
+    from: 'USD',
+    to: 'EUR'
+  }
+});
 ```
 
 </CodeGroup>
@@ -270,12 +295,14 @@ class MonitoringAgent extends AIAgent {
 
 Human directly uses tools without AI coordination:
 
-```bash
-# Simple, direct tool usage
-olane use o://utilities/currency --method convert \
-  --params '{"amount": 100, "from": "USD", "to": "EUR"}'
+```typescript
+// Simple, direct tool usage
+const result = await node.use(new oAddress('o://utilities/currency'), {
+  method: 'convert',
+  params: { amount: 100, from: 'USD', to: 'EUR' },
+});
 
-# Result: { "amount": 85.50, "currency": "EUR" }
+// Result: { "amount": 85.50, "currency": "EUR" }
 ```
 
 **Use Cases**:
@@ -379,32 +406,32 @@ const plan = await aiAgent.plan({
 const result = await aiAgent.execute(plan);
 ```
 
-### Learning
+### Persistence & Replay
 
-Agents (especially AI) can learn from execution patterns:
+Each Lane run is content-addressed (assigned a CID), persisted, and can be
+deterministically replayed by its CID. This gives you an auditable record of
+how an intent was accomplished, rather than an opaque one-off execution:
 
 ```typescript
-// Track successful workflows
-const workflow = {
-  intent: "Generate sales forecast",
-  toolsUsed: [
-    'o://data/sales/historical',
-    'o://analytics/forecasting',
-    'o://reporting/visualizer'
-  ],
-  sequence: [
-    { tool: 'get_historical_data', duration: 500 },
-    { tool: 'forecast', duration: 2000 },
-    { tool: 'visualize', duration: 300 }
-  ],
-  success: true,
-  userSatisfaction: 0.95
-};
+// Run an intent — the resulting Lane execution is persisted under a CID
+const result = await node.use(new oAddress('o://analytics/forecasting'), {
+  method: 'intent',
+  params: { intent: 'Generate sales forecast' },
+});
 
-// Agent learns optimal patterns
-await agent.learnFromExecution(workflow);
+// The run is recorded as a content-addressed sequence, for example:
+// {
+//   cid: 'bafy...',
+//   intent: 'Generate sales forecast',
+//   sequence: [
+//     { tool: 'get_historical_data' },
+//     { tool: 'forecast' },
+//     { tool: 'visualize' }
+//   ]
+// }
 
-// Future similar intents use learned patterns
+// Because runs are content-addressed, a prior run can be replayed
+// deterministically by its CID.
 ```
 
 ## Benefits of Agent-Agnostic Design
@@ -493,12 +520,16 @@ class SalesAnalytics extends oLaneTool {
 ### Example 1: Customer Support System
 
 **Human Agent (Support Rep)**:
-```bash
-# Support rep uses CLI to find customer info
-olane use o://crm/customers \
-  --intent "Find customer with email john@example.com and show recent tickets"
+```typescript
+// Support rep tooling sends an intent to find customer info
+const result = await node.use(new oAddress('o://crm/customers'), {
+  method: 'intent',
+  params: {
+    intent: 'Find customer with email john@example.com and show recent tickets',
+  },
+});
 
-# Quick lookup during support call
+// Quick lookup during support call
 ```
 
 **AI Agent (Automated Triage)**:
@@ -573,13 +604,14 @@ class FinancialMonitor extends AIAgent {
 ### Example 3: Data Pipeline Orchestration
 
 **Human Agent (Data Engineer)**:
-```bash
-# Manual pipeline trigger for testing
-olane use o://data/pipeline/etl \
-  --intent "Run customer data ETL for 2024-10-01 with validation"
-
-# Monitor execution
-olane logs o://data/pipeline/etl --follow
+```typescript
+// Manual pipeline trigger for testing
+const result = await node.use(new oAddress('o://data/pipeline/etl'), {
+  method: 'intent',
+  params: {
+    intent: 'Run customer data ETL for 2024-10-01 with validation',
+  },
+});
 ```
 
 **AI Agent (Autonomous Orchestration)**:

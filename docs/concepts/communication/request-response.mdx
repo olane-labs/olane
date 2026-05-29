@@ -1,0 +1,272 @@
+---
+title: "Request and response"
+description: "How node.use() works, what's on the wire, and how to read the response envelope."
+---
+
+Every interaction in Olane is a `node.use()` call. One primitive in. One envelope out.
+
+There is no other communication primitive. Agent-to-node, node-to-node, parent-to-child, leader-to-worker — every call goes through `use()`. Once you understand its signature, its request body, and its response envelope, you can call anything in the network.
+
+## The use() primitive
+
+The signature lives in `oCore` (`packages/o-core/src/core/o-core.ts:150`):
+
+```typescript
+async use(
+  address: oAddress,
+  data?: UseDataConfig,
+  options?: UseOptions,
+): Promise<oResponse>
+```
+
+<ParamField path="address" type="oAddress" required>
+  The target address. An `oAddress` instance built from a URI like `o://analytics/customers`. The router resolves this to a peer.
+</ParamField>
+<ParamField path="data" type="UseDataConfig">
+  The request body — `{ method, params }`. `method` is the name of the `_tool_*` handler on the receiver, without the prefix. `params` is a plain object passed to the handler.
+</ParamField>
+<ParamField path="options" type="UseOptions">
+  Optional dial hints, timeout overrides, and stream flags. Most callers omit this.
+</ParamField>
+
+A typical call looks like:
+
+```typescript
+import { oAddress } from '@olane/o-core';
+
+const response = await node.use(
+  new oAddress('o://analytics/customers'),
+  {
+    method: 'query',
+    params: { since: '2026-01-01', limit: 100 },
+  },
+);
+```
+
+`use()` returns a `Promise<oResponse>`. You always `await` it. There is no fire-and-forget — every request yields exactly one response (or one stream that terminates).
+
+### Variants
+
+Four convenience methods sit on top of `use()` for common patterns.
+
+<ParamField path="useSelf()" type="method">
+  Execute a method on the calling node without going over the wire. Useful inside one tool that needs to invoke another method on itself.
+</ParamField>
+<ParamField path="useChild()" type="method">
+  Hierarchical helper for parents calling their own children. Routes through the local hierarchy manager.
+</ParamField>
+<ParamField path="useStream()" type="method">
+  Opt into chunked responses. Pass `onChunk` to receive each yielded value as it arrives. See [Streaming](#streaming) below.
+</ParamField>
+<ParamField path="useTool()" type="method">
+  Syntactic sugar for method invocation when you have an `oToolAddress` that already encodes the method name.
+</ParamField>
+
+## The request body
+
+What you put in `data` becomes the JSON-RPC payload on the wire:
+
+```typescript
+{
+  method: string,
+  params: { [key: string]: any },
+}
+```
+
+`params` may include `_isStreaming: true` to opt into chunked responses (or just call `useStream()` instead).
+
+The base class injects two extra fields before sending:
+
+- `_auth` — captured from `AsyncLocalStorage` or the tokenManager. Lets downstream nodes know who is calling.
+- `_trace` — a request ID for distributed tracing. Propagates through nested `use()` calls so a single request's path through the network is observable.
+
+You do not set these yourself. They flow automatically.
+
+## The response envelope
+
+This is the single most important shape in Olane. Every response has it:
+
+```typescript
+{
+  jsonrpc: "2.0",
+  id: "request-uuid",
+  result: {
+    success: boolean,
+    data: any,            // raw return value of the _tool_* handler
+    error?: string,       // present only when success === false
+    _connectionId: string,
+    _requestMethod: string,
+    _isStreaming: boolean,
+    _last: boolean        // true on the only / final chunk
+  }
+}
+```
+
+Read the three fields you actually care about:
+
+```typescript
+if (response.result.success) {
+  const data = response.result.data;
+  // ...
+} else {
+  const message = response.result.error;
+  // ...
+}
+```
+
+<Warning>
+  Always read `response.result.success`, `response.result.data`, `response.result.error`. Reading `response.success` or `response.data` directly will be `undefined` — the result is one level deeper. This is the single most common bug in test suites against Olane nodes.
+</Warning>
+
+The `_connectionId`, `_requestMethod`, `_isStreaming`, and `_last` fields are protocol metadata. You rarely read them by hand, but `useStream` uses `_last` to know when a response stream is done.
+
+## Throw, don't return errors
+
+Inside a `_tool_*` method, signal failure by throwing. The base class catches the throw and builds the envelope with `success: false` and the error message.
+
+<CodeGroup>
+```typescript Wrong — returns an error envelope
+async _tool_query(request: oRequest) {
+  const { since } = request.params;
+  if (!since) {
+    // Don't do this. The base class will treat your literal object as the
+    // raw success value and wrap it in success: true.
+    return { success: false, error: 'since is required' };
+  }
+  // ...
+}
+```
+
+```typescript Right — throws
+async _tool_query(request: oRequest) {
+  const { since } = request.params;
+  if (!since) {
+    throw new Error('since is required');
+  }
+  // ...
+}
+```
+</CodeGroup>
+
+On the caller side, the response looks like:
+
+```typescript
+{
+  result: {
+    success: false,
+    error: 'since is required',
+    // ...
+  }
+}
+```
+
+No exception crosses the wire. The thrown error becomes the `error` field on the receiver, and the caller observes a normal (rejected-shape) response.
+
+## Return raw data, not wrappers
+
+The base class builds the envelope. Trust it. Your handler returns the raw payload; the framework wraps it in `result.data`.
+
+<CodeGroup>
+```typescript Wrong — double-wraps the response
+async _tool_count(request: oRequest) {
+  const total = await this.db.count();
+  // The framework will put this whole object into result.data.
+  // Callers would have to read response.result.data.data — wrong shape.
+  return { success: true, data: { total } };
+}
+```
+
+```typescript Right — returns raw data
+async _tool_count(request: oRequest) {
+  const total = await this.db.count();
+  return { total };
+}
+```
+</CodeGroup>
+
+The caller reads it cleanly:
+
+```typescript
+const response = await node.use(addr, { method: 'count', params: {} });
+const { total } = response.result.data;
+```
+
+## Trace and auth propagation
+
+When your `_tool_*` method calls another node with `node.use()`, the base class automatically forwards the current request's `_auth` and `_trace` context. The downstream node sees the original caller's identity and the same trace ID.
+
+This means a single agent request that fans out across five nodes produces five log entries with the same `_trace.requestId`. You do not have to thread context manually.
+
+<Tip>
+  If you spawn background work (a `setInterval`, a worker thread) that calls `use()`, the `AsyncLocalStorage` context is lost. Pass the trace ID explicitly via `params` and reconstruct it in the receiver if you need lineage on background calls.
+</Tip>
+
+## Streaming
+
+For long-running queries or large result sets, switch from unary to streaming. The server yields chunks; the caller consumes them as they arrive.
+
+On the server, write an `AsyncGenerator`:
+
+```typescript
+async *_tool_long_query(request: oRequest) {
+  yield { progress: 0.1, partial: 'starting' };
+  yield { progress: 0.5, partial: 'halfway' };
+  return { progress: 1.0, final: 'done' };   // becomes the last chunk
+}
+```
+
+On the caller, use `useStream`:
+
+```typescript
+await callerNode.useStream(
+  targetAddress,
+  { method: 'long_query', params: {} },
+  {
+    onChunk: (chunk) => {
+      console.log(chunk.result.data);
+      if (chunk.result._last) {
+        console.log('stream complete');
+      }
+    },
+  },
+);
+```
+
+The `ResponseBuilder` detects the `AsyncGenerator` and chunks each yield. The final yield (or the value the generator returns) has `_last: true`. The same libp2p stream stays open for the whole sequence and closes after the last chunk.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can I fire-and-forget?" icon="circle-question">
+    No. Every request yields exactly one response, or one stream that terminates. The receiver always sends something back, even if it's just an acknowledgment. If you want one-way semantics, model it as a request whose response you `await` but ignore, or expose a method that returns immediately.
+  </Accordion>
+  <Accordion title="Do I need to await?" icon="circle-question">
+    Yes. `use()` returns a `Promise`. Without `await` you get the promise object, not the response — and the body of your `_tool_*` method may not have started yet.
+  </Accordion>
+  <Accordion title="How big can data be?" icon="circle-question">
+    The wire framing is length-prefixed with a 4-byte big-endian header, so a single request or response can be up to ~500 MB. For anything larger — or anything you want to consume incrementally — use streaming.
+  </Accordion>
+  <Accordion title="What happens to thrown non-Error values?" icon="circle-question">
+    The base class coerces non-Error throws to strings via the value's message or `String(value)`. Throw real `Error` instances so stack traces survive.
+  </Accordion>
+  <Accordion title="Can I return undefined?" icon="circle-question">
+    Yes. `response.result.data` will be `undefined` and `success` will still be `true`. The envelope shape is identical.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="How requests are routed" icon="route" href="/concepts/communication/routing">
+    The resolver chain that turns an address into a peer, and the wire format.
+  </Card>
+  <Card title="Transports and discovery" icon="network-wired" href="/concepts/communication/transports">
+    The libp2p stack, the default listeners, and how peers find each other.
+  </Card>
+  <Card title="Tool address vs node address" icon="at" href="/concepts/addressing/tool-address-vs-node-address">
+    Why `o://x` and `o://x/method` look the same on the wire but behave differently.
+  </Card>
+  <Card title="The node lifecycle" icon="rotate" href="/concepts/lifecycle">
+    Where your `_tool_*` methods live in the start sequence.
+  </Card>
+</CardGroup>

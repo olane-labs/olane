@@ -167,7 +167,7 @@ describe('Intent Execution', () => {
   });
 
   it('should resolve simple revenue analysis intent', async () => {
-    const result = await agent.use({
+    const result = await agent.use(agent.address, {
       method: 'intent',
       params: {
         intent: 'Analyze Q4 2024 revenue',
@@ -175,13 +175,13 @@ describe('Intent Execution', () => {
       }
     });
 
-    expect(result.success).toBe(true);
-    expect(result.data).toContain('$350');
-    expect(result.data).toContain('25%'); // Growth rate
+    expect(result.result.success).toBe(true);
+    expect(result.result.data).toContain('$350');
+    expect(result.result.data).toContain('25%'); // Growth rate
   });
 
   it('should use domain context in responses', async () => {
-    const result = await agent.use({
+    const result = await agent.use(agent.address, {
       method: 'intent',
       params: {
         intent: 'Forecast next quarter revenue'
@@ -189,21 +189,21 @@ describe('Intent Execution', () => {
     });
 
     // Should follow guidelines from laneContext
-    expect(result.data).toContain('confidence'); // Guideline: provide confidence intervals
-    expect(result.data).toMatch(/\d+%.*\d+%/); // Should have range
+    expect(result.result.data).toContain('confidence'); // Guideline: provide confidence intervals
+    expect(result.result.data).toMatch(/\d+%.*\d+%/); // Should have range
   });
 
   it('should handle multi-step intents', async () => {
-    const result = await agent.use({
+    const result = await agent.use(agent.address, {
       method: 'intent',
       params: {
         intent: 'Compare Q3 and Q4 revenue, then forecast Q1 2025'
       }
     });
 
-    expect(result.success).toBe(true);
+    expect(result.result.success).toBe(true);
     // Check that multiple capabilities were executed
-    expect(result.sequence.length).toBeGreaterThan(2);
+    expect(result.result.data.sequence.length).toBeGreaterThan(2);
   });
 });
 ```
@@ -278,7 +278,7 @@ describe('End-to-End: Annual Analysis', () => {
     // Step 1: Analyze each quarter
     const quarters = [];
     for (let q = 1; q <= 4; q++) {
-      const result = await agent.use({
+      const result = await agent.use(agent.address, {
         method: 'analyze_revenue',
         params: mockRevenueData[`q${q}_2024`]
       });
@@ -286,7 +286,7 @@ describe('End-to-End: Annual Analysis', () => {
     }
 
     // Step 2: Generate annual summary
-    const summary = await agent.use({
+    const summary = await agent.use(agent.address, {
       method: 'intent',
       params: {
         intent: 'Summarize 2024 performance and forecast 2025',
@@ -295,9 +295,9 @@ describe('End-to-End: Annual Analysis', () => {
     });
 
     // Validate complete workflow
-    expect(summary.success).toBe(true);
-    expect(summary.data).toContain('2024');
-    expect(summary.data).toContain('2025');
+    expect(summary.result.success).toBe(true);
+    expect(summary.result.data).toContain('2024');
+    expect(summary.result.data).toContain('2025');
     expect(quarters).toHaveLength(4);
   });
 });
@@ -312,7 +312,7 @@ describe('Performance', () => {
   it('should respond to tool calls within 2 seconds', async () => {
     const start = Date.now();
     
-    await agent.use({
+    await agent.use(agent.address, {
       method: 'analyze_revenue',
       params: mockRevenueData.q4_2024
     });
@@ -323,7 +323,7 @@ describe('Performance', () => {
 
   it('should handle concurrent requests', async () => {
     const requests = Array(10).fill(null).map((_, i) =>
-      agent.use({
+      agent.use(agent.address, {
         method: 'analyze_revenue',
         params: mockRevenueData.q4_2024
       })
@@ -332,7 +332,7 @@ describe('Performance', () => {
     const results = await Promise.all(requests);
     
     expect(results).toHaveLength(10);
-    results.forEach(r => expect(r.success).toBe(true));
+    results.forEach(r => expect(r.result.success).toBe(true));
   });
 });
 ```
@@ -372,14 +372,14 @@ describe('Performance', () => {
   <Accordion title="Test context application">
     ```typescript
     it('should apply domain guidelines', async () => {
-      const result = await agent.use({
+      const result = await agent.use(agent.address, {
         method: 'intent',
         params: { intent: 'Analyze revenue' }
       });
 
       // Check that guidelines from laneContext are followed
-      expect(result.data).toContain('confidence interval');
-      expect(result.data).toMatch(/\d+%.*to.*\d+%/);
+      expect(result.result.data).toContain('confidence interval');
+      expect(result.result.data).toMatch(/\d+%.*to.*\d+%/);
     });
     ```
   </Accordion>
@@ -509,7 +509,7 @@ it('should handle missing required params', async () => {
 ### Validate Context
 Ensure agents apply their domain knowledge:
 ```typescript
-expect(result.data).toContain('confidence interval');
+expect(result.result.data).toContain('confidence interval');
 // From laneContext guidelines
 ```
 

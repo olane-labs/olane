@@ -1,0 +1,151 @@
+---
+title: "Address spaces and containment"
+description: "How parent nodes contain their children's address space, and what scoping buys you."
+---
+
+When a node has a parent, its address lives *inside* the parent's address space.
+
+A node named `session-42` running under a parent named `session-manager` is addressable as `o://session-manager/session-42`. The parent contains the child — not just at runtime, but in the namespace itself. Containment is what makes parent-child topology more than a convenient pattern: it shapes routing, lifecycle, and state isolation in a single coherent model.
+
+## Flat vs nested
+
+Every address has two forms during its life:
+
+- **Flat (static).** What the constructor receives: `o://session-42`. This is the name the developer writes and the form used in code that doesn't know about parents.
+- **Nested (full).** What the runtime promotes the address to once a parent is set: `o://session-manager/session-42`.
+
+```ts
+import { oNodeAddress } from '@olane/o-node';
+
+// You always construct flat:
+const child = new SessionNode({
+  address: new oNodeAddress('o://session-42'),
+  parent: this.address, // the manager's address
+  leader: this.leader,
+});
+
+// After registration, the child's runtime address is:
+// o://session-manager/session-42
+```
+
+<Warning>
+  Never pass a nested address to a constructor. `new oNodeAddress('o://parent/child')` throws at validation time. The hierarchy is a runtime property, not a declared one.
+</Warning>
+
+## What containment means
+
+Containment is enforced by three guarantees a parent makes about its children:
+
+- **State isolation.** Each child holds its own state. A bug or memory leak in `session-42` doesn't touch `session-43`. The parent owns the children but does not share their internals.
+- **Lifecycle cascade.** When a parent stops, every child stops with it. This is the Cascade Axiom — there are no orphans. If you tear down `o://session-manager`, every `o://session-manager/session-*` shuts down in turn.
+- **Namespace scoping.** A child is addressable as a sub-path of its parent. The same flat name (`session-42`) can exist under different parents without collision — `o://team-a/session-42` and `o://team-b/session-42` are different nodes.
+
+## Why this matters at the call site
+
+A caller doesn't need to know about the parent-child relationship to reach a specific child. They just address the full path:
+
+```ts
+import { oAddress } from '@olane/o-core';
+
+// External caller reaches a specific child:
+const response = await node.use(
+  new oAddress('o://session-manager/session-42'),
+  {
+    method: 'get_state',
+    params: {},
+  }
+);
+
+console.log(response.result.data);
+```
+
+The routing layer walks the address. It finds `o://session-manager` first, and the manager's resolver chain forwards the call to the child it owns. The child runs the method and returns a result.
+
+A typical manager pattern looks like this:
+
+```ts
+import { oNodeTool } from '@olane/o-node';
+import { oNodeAddress } from '@olane/o-node';
+
+export class SessionManager extends oNodeTool {
+  async _tool_open_session(request: any) {
+    const sessionId = request.params.sessionId;
+
+    const child = new SessionNode({
+      address: new oNodeAddress(`o://${sessionId}`),
+      parent: this.address,
+      leader: this.leader,
+    });
+
+    // Wire child registration BEFORE start():
+    (child as any).onInitFinished(() => this.addChildNode(child));
+    await child.start();
+
+    return { sessionId, address: `o://session-manager/${sessionId}` };
+  }
+}
+```
+
+The child's flat name is `o://session-42`. After it starts under this manager, callers can reach it at `o://session-manager/session-42`.
+
+## Reserved names
+
+A small set of names are reserved for infrastructure. The gateway-registry resolver treats them as non-federated — they always pass through without a registry lookup:
+
+- `olane`
+- `localhost`
+- `local`
+- `leader`
+- `lane`
+- `registry`
+- `internal`
+- Any single-character name
+
+<Warning>
+  Don't use any of these as a tool name. `o://leader` or `o://registry` will collide with the routing layer's reserved namespace, and your node will not be reachable the way you expect.
+</Warning>
+
+## The static address shortcut
+
+Sometimes you need the flat name back — for logging, debugging, or comparing identity across a restart. Every `oAddress` carries one:
+
+```ts
+node.address.toString();        // 'o://session-manager/session-42'
+node.address.toStaticAddress(); // 'o://session-42'
+```
+
+The static form is what the constructor was given. The registry stores both, so a caller can find the node by either form.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Can a node have multiple parents?">
+    No. Each node has exactly one parent, and therefore exactly one position in the address space. If you need a node to be reachable through multiple ancestors, expose it through a routing tool rather than reparenting it.
+  </Accordion>
+  <Accordion title="What if I want to rename a node?">
+    Stop the node, construct a new instance with the new flat address, and restart. Callers using the old name will fail until they update. Names are stable identifiers — treat a rename the same way you'd treat a redeployment.
+  </Accordion>
+  <Accordion title="Are nested addresses ever passed to constructors?">
+    Never. The constructor always receives a flat address. The runtime computes the nested form from the parent pointer during `initialize()`. This rule is enforced at validation — passing a nested address throws.
+  </Accordion>
+  <Accordion title="Can two children of the same parent share a name?">
+    No. Sibling names must be unique. The parent's resolver uses the flat segment to route to a specific child, so duplicates would be ambiguous.
+  </Accordion>
+</AccordionGroup>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Tool address vs node address" icon="arrows-left-right" href="/concepts/addressing/tool-address-vs-node-address">
+    `oAddress` (name only) vs `oNodeAddress` (name plus transports).
+  </Card>
+  <Card title="Hierarchical paths" icon="folder-tree" href="/concepts/addressing/hierarchical-paths">
+    How flat addresses become nested at registration.
+  </Card>
+  <Card title="Lifecycle" icon="circle-play" href="/concepts/lifecycle">
+    Initialize, start, stop, and the cascade.
+  </Card>
+  <Card title="Routing" icon="route" href="/concepts/communication/routing">
+    How the resolver chain dispatches a call.
+  </Card>
+</CardGroup>

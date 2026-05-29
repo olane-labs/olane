@@ -1,0 +1,189 @@
+---
+title: "How requests are routed"
+description: "From node.use() to the receiver: resolvers, the leader registry, and the wire format."
+---
+
+Olane's routing layer turns a name into a peer in three resolver passes.
+
+When you call `node.use(new oAddress('o://analytics/customers'), ...)`, the address is a name, not a network location. The router walks a chain of resolvers, finds a peerId, dials (or reuses) a libp2p connection, opens a stream on the `/o/route` protocol, and writes a length-prefixed JSON-RPC envelope. This page walks through that path.
+
+## The request lifecycle
+
+<Steps>
+  <Step title="Caller invokes use()">
+    `node.use(new oAddress('o://analytics/customers'), { method: 'query', params: {...} })` is called.
+  </Step>
+  <Step title="oCore.use() injects context">
+    Auth (from `AsyncLocalStorage` or the token manager) and a trace ID are attached to the outbound request. If the target address equals the caller's address, `useSelf()` runs locally and the call short-circuits here.
+  </Step>
+  <Step title="requestManager.send() asks the router">
+    The router calls `translate(address)` to resolve the name into transports.
+  </Step>
+  <Step title="Resolver chain runs">
+    See [The resolver chain](#the-resolver-chain) below.
+  </Step>
+  <Step title="oNodeConnectionManager.connect() dials">
+    Looks up a cached libp2p `Connection` by peerId. If none, dials and caches. Concurrent dials to the same peer share an in-flight promise.
+  </Step>
+  <Step title="A new stream opens on /o/route">
+    Length-prefixed JSON-RPC 2.0 framing. One stream per request, multiplexed over one Connection.
+  </Step>
+  <Step title="Receiver invokes the matching _tool_* method">
+    The router unwraps the ROUTE envelope, finds the `_tool_query` handler, and runs it. `ResponseBuilder` wraps the return value.
+  </Step>
+  <Step title="Response travels back on the same stream">
+    Unary calls close the stream. Streaming stays open until a chunk arrives with `_last: true`.
+  </Step>
+</Steps>
+
+## The resolver chain
+
+Four resolvers run in order. The first one to return a transport set wins.
+
+<Steps>
+  <Step title="oNodeResolver — hierarchy lookup">
+    Checks the local node tree. Is the target *this* node? A direct child? The parent? The configured leader? If yes, the resolver returns immediately with no network call. This is how parent-child routing stays cheap.
+  </Step>
+  <Step title="oSearchResolver — leader registry">
+    Sends a request to `o://leader/registry`:
+    ```typescript
+    { method: 'search', params: { address, staticAddress } }
+    ```
+    The leader returns the peerId and transports of the matching node, if any. This is the normal path for any-to-any routing in a single network.
+  </Step>
+  <Step title="oLeaderResolverFallback — let the leader route">
+    If no resolver above returned a hit, the request is forwarded to the leader and the leader does the routing. Used for nodes that exist but were not in the caller's local cache.
+  </Step>
+  <Step title="oGatewayResolver — federation">
+    Handles the special `/olane` custom libp2p transport for cross-network federation. If an address points outside the local network, the gateway resolver hands off to the gateway node.
+  </Step>
+</Steps>
+
+The chain runs synchronously from a caller's perspective — each resolver either returns transports or passes. Once transports are in hand, the connection manager takes over.
+
+## What the leader registry stores
+
+When a node starts, it sends a `commit` to `o://leader/registry`:
+
+```typescript
+await node.use(
+  new oAddress('o://leader/registry'),
+  {
+    method: 'commit',
+    params: {
+      peerId: 'Qm...',
+      address: 'o://analytics/customers',
+      transports: [
+        '/ip4/10.0.0.5/tcp/4001',
+        '/ip4/10.0.0.5/tcp/4001/ws',
+      ],
+      protocols: ['/o/route', '/ipfs/id/1.0.0', ...],
+      staticAddress: 'o://services/analytics',
+    },
+  },
+);
+```
+
+That record is what `oSearchResolver` returns. The leader is the routing table — every node publishes itself to it on start and deregisters on stop.
+
+<Note>
+  The leader address (`o://leader`) is resolved from the node's config, not through the resolver chain. That bootstraps the system: every node needs to reach the leader before any other resolution can happen.
+</Note>
+
+## On the wire
+
+Olane uses libp2p with the protocol ID `/o/route`. Each request opens a new stream on that protocol.
+
+The framing is length-prefixed: a 4-byte big-endian length header, then the JSON-RPC 2.0 payload. The maximum frame size is ~500 MB. For larger payloads, use streaming.
+
+The wire payload is a **ROUTE envelope** wrapping the original request:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "route",
+  "id": "request-uuid",
+  "params": {
+    "address": "o://analytics/customers",
+    "payload": {
+      "method": "query",
+      "params": { "since": "2026-01-01", "limit": 100 },
+      "id": "request-uuid"
+    },
+    "_auth": { "...": "..." },
+    "_trace": { "requestId": "trace-uuid" }
+  }
+}
+```
+
+The receiver's router reads the envelope, unwraps `params.payload`, and dispatches the inner `method` to the matching `_tool_*` handler. The response is the envelope shape from [Request and response](/concepts/communication/request-response#the-response-envelope) and travels back on the same stream.
+
+## Connection caching and stream multiplexing
+
+The connection manager runs three optimizations under the hood.
+
+<ParamField path="One Connection per peer" type="cache">
+  Connections are cached by `connection.id` (which maps to peerId). All requests to the same peer reuse the same Connection. The yamux muxer runs many streams over it concurrently.
+</ParamField>
+<ParamField path="Pending-dial deduplication" type="cache">
+  When two requests to the same peer race to dial, both await a single in-flight promise stored in `pendingDialsByAddress`. Only one dial happens; both requests use the resulting Connection.
+</ParamField>
+<ParamField path="Up to ~1000 streams per Connection" type="limit">
+  Each unary request opens a short-lived stream that closes after the response. Streaming requests keep their stream open until the final chunk. The yamux muxer comfortably handles ~1000 concurrent streams per Connection.
+</ParamField>
+
+The practical effect: high-fanout request patterns are cheap. A node calling 100 other nodes opens 100 Connections (one per peer). A node hammering one other node opens 1 Connection and many streams.
+
+## When a route fails
+
+Routing failures land in two places, depending on the cause.
+
+### Dial errors
+
+If the connection manager cannot reach the peer (peer offline, transport refused, all multiaddrs failed), `use()` rejects with a thrown error. Wrap your call in try/catch:
+
+```typescript
+try {
+  const response = await node.use(addr, { method: 'query', params: {} });
+  // ...
+} catch (err) {
+  // dial-level failure: peer unreachable, all transports failed
+}
+```
+
+### Resolver misses
+
+If every resolver returned no result, the call is forwarded to the leader. If the leader has no record either, you get a normal response with `success: false`:
+
+```typescript
+{
+  result: {
+    success: false,
+    error: 'NOT_FOUND: no peer registered for o://does/not/exist',
+    // ...
+  }
+}
+```
+
+The distinction matters when writing retry logic. Dial failures may be transient (try again). Resolver misses mean the address does not exist (do not retry the same address).
+
+<Tip>
+  When debugging routing, set `DEBUG=o-protocol:*` and `DEBUG=o-node:*`. You'll see every resolver pass, every dial, and every stream open / close. It is the fastest way to localize where a route is failing.
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transports and discovery" icon="network-wired" href="/concepts/communication/transports">
+    What libp2p stack Olane ships, how peers find each other, and when to customize.
+  </Card>
+  <Card title="Addresses" icon="at" href="/concepts/addressing/overview">
+    The `o://` scheme, address spaces, hierarchical paths.
+  </Card>
+  <Card title="Request and response" icon="exchange" href="/concepts/communication/request-response">
+    The shape of `oRequest` and `oResponse`, including streaming.
+  </Card>
+  <Card title="Your first network" icon="rocket" href="/getting-started/your-first-network">
+    Stand up a leader plus two workers and watch the resolvers work.
+  </Card>
+</CardGroup>

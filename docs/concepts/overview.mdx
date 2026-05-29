@@ -1,0 +1,104 @@
+---
+title: "Core concepts"
+description: "The mental model behind Olane: addresses, nodes, tools, and the use() primitive."
+---
+
+Olane is a protocol for naming things and a runtime for running them. Five primitives, one communication call.
+
+## The five primitives
+
+Everything in Olane reduces to five things. Once you know them, the rest of the system is mechanics.
+
+<AccordionGroup>
+  <Accordion title="Address — what something is called" icon="at">
+    An `oAddress` (`@olane/o-core`) is a URI in the `o://` scheme that names a node or a method on a node. Addresses are hierarchical: `o://company/finance/analyst` is a child of `o://company/finance`. The scheme is parsed by `oAddress` and resolved to a `peerId` through the leader registry.
+  </Accordion>
+  <Accordion title="Node — what answers to an address" icon="server">
+    A node is a libp2p peer with an address, a lifecycle, and at minimum the ability to receive a request. Defined by `oCore` in `@olane/o-core` and instantiated as `oNode` in `@olane/o-node`. Every leader, worker, and tool is a node.
+  </Accordion>
+  <Accordion title="Request — what one node sends to another" icon="paper-plane">
+    An `oRequest` (`@olane/o-protocol`) carries `{ method, params, _connectionId, ... }`. Every interaction in Olane is one of these. Built and sent by `node.use()`.
+  </Accordion>
+  <Accordion title="Response — what comes back" icon="reply">
+    An `oResponse` wraps `{ result: { success, data, error } }`. Always access via `response.result` — never directly on `response`. Errors are encoded into `result.error`; the call itself does not throw across the wire.
+  </Accordion>
+  <Accordion title="Method — what a node knows how to do" icon="wrench">
+    A method is a function on a tool node, named with the `_tool_` prefix and discovered by `oToolBase` (`@olane/o-tool`). `_tool_calculate_revenue` becomes the callable method `calculate_revenue`.
+  </Accordion>
+</AccordionGroup>
+
+A sixth thing worth knowing: a **parameter**. Method parameter shapes are declared with `oMethod` definitions from `@olane/o-protocol` and used both for validation and for discovery by agents.
+
+## The three layers
+
+Olane is one stack with three distinct audiences.
+
+<Frame>
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 1  Agents                                            │
+│           Humans via CLI/web, or LLMs (Claude, GPT-4)       │
+│           Send intents and method calls.                    │
+└────────────────────────┬────────────────────────────────────┘
+                         │ node.use()
+┌────────────────────────▼────────────────────────────────────┐
+│  Layer 2  Tool nodes                                        │
+│           Instances of oNodeTool / oLaneTool / McpTool      │
+│           Live at o:// addresses. Run your code.            │
+└────────────────────────┬────────────────────────────────────┘
+                         │ libp2p
+┌────────────────────────▼────────────────────────────────────┐
+│  Layer 3  OS runtime                                        │
+│           o-core, o-node, o-lane, o-leader, o-os            │
+│           Addressing, routing, transport, discovery.        │
+└─────────────────────────────────────────────────────────────┘
+```
+</Frame>
+
+The runtime layer is fixed. Your application lives in layer 2: you write tool nodes, register them at addresses, and let agents in layer 1 call them.
+
+## The single communication primitive
+
+Every interaction with an address — node-to-node, agent-to-node, leader-to-worker, parent-to-child — goes through one call:
+
+```typescript
+const response = await node.use(targetAddress, {
+  method: 'calculate_revenue',
+  params: { startDate: '2024-01-01', endDate: '2024-03-31' },
+});
+
+if (response.result.success) {
+  console.log(response.result.data);
+} else {
+  console.error(response.result.error);
+}
+```
+
+There is no direct import, no shared function call, no other channel. If you are talking to an address, you are calling `use()`.
+
+<Warning>
+  Always access return values through `response.result`. Reading `response.success` or `response.data` directly will be `undefined` — the result is one level deeper.
+</Warning>
+
+## What to read next
+
+<CardGroup cols={2}>
+  <Card title="Nodes, tools, and tool nodes" icon="layer-group" href="/concepts/tools-nodes-applications">
+    The class hierarchy from oCore down to McpTool, and how to pick a base class.
+  </Card>
+  <Card title="The node lifecycle" icon="rotate" href="/concepts/lifecycle">
+    Where your code goes between `start()` and `stop()`. Never override `start`.
+  </Card>
+  <Card title="What is a node?" icon="server" href="/concepts/nodes/overview">
+    Addresses, peerIds, multiaddrs, and how nodes find each other.
+  </Card>
+  <Card title="Addresses" icon="at" href="/concepts/addressing/overview">
+    The `o://` scheme, address spaces, hierarchical paths.
+  </Card>
+  <Card title="Request and response" icon="exchange" href="/concepts/communication/request-response">
+    The shape of `oRequest` and `oResponse`, including error semantics.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Build a running node in ten minutes.
+  </Card>
+</CardGroup>

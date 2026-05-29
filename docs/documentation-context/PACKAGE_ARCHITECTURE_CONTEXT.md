@@ -144,11 +144,11 @@ Production-ready implementations and agent augmentation systems.
 **Core Responsibilities**:
 - Peer-to-peer networking via libp2p
 - Automatic peer discovery (DHT, mDNS, bootstrap)
-- NAT traversal and relay protocols
+- Relayed connections via circuit-relay-v2 (RelayNode at o://relay)
 - Network registration with leader nodes
 - Persistent agent identity (seed-based peer IDs)
-- Multiple transport support (TCP, WebSocket, WebRTC, QUIC)
-- Connection security and gating
+- Multiple transport support (WebSocket, TCP, WebTransport; in-memory for tests)
+- Connection security (Noise) and gating
 
 **Key Classes**:
 - `oNode` - Base libp2p implementation
@@ -160,8 +160,8 @@ Production-ready implementations and agent augmentation systems.
 
 **Network Capabilities**:
 - Listens for incoming connections
-- Participates in DHT
-- Advertises services on network
+- Participates in the Kademlia DHT for peer routing
+- Registers its capabilities with the leader-hosted registry (o://leader/registry) for discovery
 - Maintains connection pools
 - Handles automatic reconnection
 
@@ -247,20 +247,26 @@ class MyTool extends oToolBase {
 - `oLaneContext` - Historical/domain context
 
 **Built-in Capabilities**:
+
+Wired into the default loop:
 1. **Evaluate** (`EVALUATE`) - Analyze intent, decide next step
-2. **Task** (`TASK`) - Execute specific tool method
-3. **Search** (`SEARCH`) - Query vector stores/registries
-4. **Configure** (`CONFIGURE`) - Setup tools/environment
-5. **Error** (`ERROR`) - Handle errors and recovery
-6. **Multiple Step** (`MULTIPLE_STEP`) - Coordinate multi-step ops
+2. **Execute** (`EXECUTE`) - Perform the chosen tool method
+
+Defined but NOT part of the standard dispatch (available for custom use):
+- **Search** (`SEARCH`) - Query vector stores/registries
+- **Configure** (`CONFIGURE`) - Setup tools/environment
+- **Multiple Step** (`MULTIPLE_STEP`) - Coordinate multi-step ops
+
+The loop is a prompt-engineered JSON loop (not provider-native function-calling).
 
 **The Capability Loop**:
 ```
-1. EVALUATE → Agent analyzes current state + intent
-2. DECIDE   → Agent picks next capability
-3. EXECUTE  → Capability performs action
-4. RECORD   → Add to sequence history
-5. CHECK    → Done? If no, loop back to EVALUATE
+1. EVALUATE   → Agent analyzes current state + intent
+2. EXECUTE    → Perform the chosen action
+3. RE-EVALUATE→ Add to sequence history, assess progress
+4. CHECK      → Done? If no, loop back to EVALUATE
+                (bounded by MAX_CYCLES, default 20)
+5. STOP       → Resolve the intent
 ```
 
 **Lane Lifecycle**:
@@ -272,7 +278,7 @@ PENDING → PREFLIGHT → RUNNING → POSTFLIGHT → COMPLETED
                      CANCELLED
 ```
 
-**Key Innovation**: Emergent orchestration. The system discovers optimal workflows through execution rather than following pre-defined graphs (LangGraph, etc.). Works for both human-initiated and AI-autonomous workflows.
+**Key Innovation**: Emergent orchestration. The system determines each next step at runtime through the evaluate/execute loop rather than following a pre-defined graph (LangGraph, etc.). Works for both human-initiated and AI-autonomous workflows.
 
 **Use When**: You want tool nodes to accept natural language intents from agents (human or AI) and autonomously accomplish complex, multi-step goals without explicit workflow definition.
 
@@ -316,7 +322,7 @@ PENDING → PREFLIGHT → RUNNING → POSTFLIGHT → COMPLETED
 - **Hub-and-Spoke**: Central leader, all nodes connect to it
 - **Hierarchical**: Department leaders under root leader
 - **Multi-Leader**: Regional leaders for scale/geography
-- **Mesh**: All nodes know each other (via DHT)
+- **Mesh**: Nodes reach each other via DHT peer routing (capability lookup still goes through the leader registry)
 
 **Use When**: Building multi-node systems where tool nodes need to discover and coordinate with each other.
 
@@ -424,7 +430,7 @@ Your Tool Node
 │  - Agent-agnostic interface              │
 │  - Context injection (domain knowledge)  │
 │  - Tool augmentation (capabilities)      │
-│  - Knowledge accumulation (learning)     │
+│  - Content-addressed, replayable runs    │
 └─────────────────────────────────────────┘
 ```
 
@@ -439,9 +445,9 @@ Your Tool Node
 
 ### 2. Emergent Intelligence (vs Explicit Orchestration)
 
-**The Problem**: Pre-defined workflows (LangGraph) can't adapt or learn optimal paths.
+**The Problem**: Pre-defined workflows (LangGraph) require you to wire every step and edge in advance.
 
-**The Solution**: System discovers optimal workflows through execution and shared knowledge. Works for both human-initiated and AI-autonomous workflows.
+**The Solution**: The system determines each next step at runtime through the evaluate/execute loop, rather than following a pre-defined graph. Works for both human-initiated and AI-autonomous workflows.
 
 **How Olane Enables This**:
 
@@ -459,26 +465,22 @@ const workflow = new StateGraph({
 
 **Olane (Emergent)**:
 ```typescript
-// Human agent (CLI):
-// $ olane intent "Analyze Q4 sales and create report"
-
-// AI agent (programmatic):
-const result = await toolNode.use({
+// Agent (human or AI) sends an intent via the SDK:
+const result = await node.use(new oAddress('o://company/finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 sales and create report'
   }
 });
 
-// Tool node discovers optimal path (same for both agent types):
+// Tool node determines each step at runtime (same for both agent types):
 // Cycle 1: EVALUATE → "Need data source"
-// Cycle 2: SEARCH → Found o://analytics
-// Cycle 3: TASK → Fetch data
-// Cycle 4: EVALUATE → "Analyze now"
-// Cycle 5: TASK → Run analysis
-// Cycle 6: EVALUATE → "Create report"
-// Cycle 7: TASK → Generate report
-// Cycle 8: STOP → Done!
+// Cycle 2: EXECUTE  → Fetch data
+// Cycle 3: EVALUATE → "Analyze now"
+// Cycle 4: EXECUTE  → Run analysis
+// Cycle 5: EVALUATE → "Create report"
+// Cycle 6: EXECUTE  → Generate report
+// Cycle 7: STOP     → Done!
 ```
 
 **Packages Involved**:
@@ -486,9 +488,9 @@ const result = await toolNode.use({
 - **o-tool**: Tools are discovered, not pre-wired
 - **o-leader**: Nodes discover each other dynamically
 
-**Key Mechanism**: "Rooms with Tips" - tool nodes leave knowledge artifacts that other executions discover and learn from, benefiting both human-initiated and AI-autonomous workflows.
+**Key Mechanism**: Each Lane run is content-addressed (CID), persisted, and deterministically replayable by CID. A prior run can be inspected or replayed, benefiting both human-initiated and AI-autonomous workflows.
 
-**Result**: Workflows improve over time through collective learning
+**Result**: Runs are auditable and reproducible from their content-addressed history
 
 ### 3. Hierarchical Organization
 
@@ -511,8 +513,7 @@ o://company                        # Root context: company knowledge
 **Benefits**:
 - Tool nodes inherit domain knowledge from position in hierarchy
 - Natural resource organization for agents to discover
-- Intelligent routing through hierarchy
-- Fault tolerance (automatic failover paths)
+- Routing through the hierarchy
 
 **Packages Involved**:
 - **o-core**: Hierarchical addressing (oAddress)
@@ -524,7 +525,7 @@ o://company                        # Root context: company knowledge
 
 **The Problem**: Tool nodes timeout, lose state, or can't handle multi-day workflows when agents make requests.
 
-**The Solution**: Persistent tool node processes with checkpointing and recovery.
+**The Solution**: Persistent tool node processes with content-addressed, replayable run history.
 
 **How Olane Enables This**:
 
@@ -537,44 +538,44 @@ const lane = await manager.createLane({
   streamTo: alertAddress // Real-time updates
 });
 
-// State persisted at each cycle
-// Automatic recovery on failure
-// Content-addressed storage of history
+// Each run is content-addressed (CID) and persisted
+// Runs can be replayed deterministically by CID
+// Streaming progress at each cycle
 ```
 
 **Packages Involved**:
 - **o-lane**: Persistent execution context
-- **o-lane**: Checkpointing via sequence storage
+- **o-lane**: Content-addressed (CID) run persistence and deterministic replay
 - **o-core**: Agent lifecycle management
 - **o-node**: Persistent peer identity (seeds)
 
-**Result**: 99.8% reliability for long-running tasks
+**Result**: Designed for long-running reliability with auditable, replayable run history
 
-### 5. Intelligence Reuse
+### 5. Reproducible Runs
 
-**The Problem**: Each execution learns in isolation, no knowledge sharing.
+**The Problem**: Executions are opaque and hard to audit or reproduce.
 
-**The Solution**: Knowledge artifacts shared across all executions automatically, benefiting both human and AI agent interactions.
+**The Solution**: Each Lane run is content-addressed (CID), persisted, and deterministically replayable, benefiting both human and AI agent interactions.
 
 **How Olane Enables This**:
 
 ```
-First execution (human or AI) discovers: "Best way to analyze Q4 sales"
-    ↓ stores knowledge artifact
-o://knowledge/sales-analysis/q4-best-practices
-    ↓ discovered by
-Second execution: "I need to analyze sales too"
-    ↓ learns from first execution
-Second execution uses proven approach (75% faster)
+A run (human or AI) executes: "Analyze Q4 sales"
+    ↓ persisted as a content-addressed (CID) run
+oLane run CID
+    ↓ referenced later
+A new request: "I need to analyze sales too"
+    ↓ can inspect or replay the prior run by CID
+Replay is deterministic from the stored history
 ```
 
 **Packages Involved**:
-- **o-lane**: Knowledge stored in lane sequences
+- **o-lane**: Runs persisted as content-addressed (CID) sequences
 - **o-tool**: Tool indexing in vector stores
-- **o-leader**: Network-wide knowledge indexing
+- **o-leader**: Network-wide capability indexing (leader-hosted registry)
 - **o-core**: Content-addressed storage
 
-**Result**: 75% reduction in development time through reuse
+**Result**: Runs are auditable and reproducible from their content-addressed history
 
 ---
 
@@ -770,12 +771,9 @@ const toolNode = new FinancialToolNode();
 await toolNode.start(); // Registers with leader, joins network
 
 // Step 4: Agents (human or AI) can use this tool node with natural language (o-lane)
+// All interaction goes through node.use(address, { method, params }):
 
-// Human agent (CLI):
-// $ olane intent "Analyze Q4 2024 revenue and identify growth trends"
-
-// AI agent (programmatic):
-const result = await toolNode.use({
+const result = await node.use(new oAddress('o://company/finance/analyst'), {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 revenue and identify growth trends',
@@ -785,11 +783,10 @@ const result = await toolNode.use({
 
 // Tool node autonomously (same process for both agent types):
 // 1. Evaluates intent (using LLM reasoning)
-// 2. Searches for data sources
-// 3. Calls analyze_revenue tool
-// 4. Processes results
-// 5. Generates insights
-// 6. Returns formatted report to the agent
+// 2. Executes the analyze_revenue tool
+// 3. Processes results
+// 4. Generates insights
+// 5. Returns formatted report to the agent
 ```
 
 **Key Interactions**:
@@ -839,28 +836,24 @@ const coordinator = new oLaneTool({
 await coordinator.start();
 
 // Agent (human or AI) sends intent to coordinator tool node
+// via node.use(address, { method, params }):
 
-// Human: $ olane intent "Coordinate team to analyze customer satisfaction"
-
-// AI agent:
-const result = await coordinator.use({
+const result = await node.use(new oAddress('o://coordinator'), {
   method: 'intent',
   params: {
     intent: 'Coordinate team to analyze customer satisfaction'
   }
 });
 
-// o-lane capability loop autonomously coordinates tool nodes (same for both):
-// Cycle 1: EVALUATE → "Need to collect data"
-// Cycle 2: SEARCH → Discovers o://data-collector via registry
-// Cycle 3: TASK → Calls data-collector tool node
-// Cycle 4: EVALUATE → "Have data, need analysis"
-// Cycle 5: SEARCH → Discovers o://analyst tool node
-// Cycle 6: TASK → Calls analyst tool node
-// Cycle 7: EVALUATE → "Have analysis, need report"
-// Cycle 8: SEARCH → Discovers o://reporter tool node
-// Cycle 9: TASK → Calls reporter tool node
-// Cycle 10: STOP → Report complete, returned to agent
+// o-lane loop autonomously coordinates tool nodes (same for both):
+// Cycle 1: EVALUATE → "Need to collect data" (looks up o://data-collector
+//          in the leader registry)
+// Cycle 2: EXECUTE  → Calls data-collector tool node
+// Cycle 3: EVALUATE → "Have data, need analysis" (looks up o://analyst)
+// Cycle 4: EXECUTE  → Calls analyst tool node
+// Cycle 5: EVALUATE → "Have analysis, need report" (looks up o://reporter)
+// Cycle 6: EXECUTE  → Calls reporter tool node
+// Cycle 7: STOP     → Report complete, returned to agent
 ```
 
 **Key Interactions**:
@@ -869,7 +862,7 @@ const result = await coordinator.use({
 - o-lane: Emergent workflow coordination across tool network
 - o-tool: Tool discovery via vector search
 
-### Workflow 3: Long-Running Tool Node with Checkpointing
+### Workflow 3: Long-Running Tool Node with Replayable Runs
 
 **Scenario**: Build a monitoring tool node that agents (human or AI) can use for continuous health monitoring.
 
@@ -891,11 +884,9 @@ const monitor = new HealthMonitorToolNode();
 await monitor.start();
 
 // Step 2: Agent (human or AI) sends long-running intent to tool node
+// via node.use(address, { method, params }):
 
-// Human: $ olane intent "Monitor API endpoints every 5 minutes and alert on failures"
-
-// AI agent:
-const result = await monitor.use({
+const result = await node.use(new oAddress('o://monitoring/health'), {
   method: 'intent',
   params: {
     intent: 'Monitor API endpoints every 5 minutes and alert on failures',
@@ -905,9 +896,8 @@ const result = await monitor.use({
 
 // o-lane manages:
 // - Persistent execution context for the tool node
-// - State saved after each cycle (checkpointing)
-// - If tool node crashes → restart from last checkpoint
-// - Content-addressed storage of execution history
+// - Each run persisted as a content-addressed (CID) sequence
+// - Runs can be replayed deterministically by CID
 // - Streaming progress to alert system
 
 // o-core provides:
@@ -951,7 +941,7 @@ const result = await monitor.use({
 6. Hierarchical Organization: o:// addressing (o-core)
 7. Context Specialization: Lane context injection (o-lane)
 8. Tool Augmented Nodes: Convention-based tools (o-tool)
-9. Specialization Flywheel: Knowledge accumulation
+9. Reproducible Runs: Content-addressed (CID) persistence and replay (o-lane)
 
 #### Emergent Intelligence Section
 **Purpose**: Explain emergent vs explicit orchestration
@@ -961,9 +951,9 @@ const result = await monitor.use({
 **Content Flow**:
 1. Overview: Emergent coordination
 2. Quickstart: Intent-driven workflow
-3. Rooms with Tips: Knowledge artifacts
-4. Knowledge Artifacts: Storage and discovery
-5. Cross-Agent Learning: Knowledge sharing
+3. The Evaluate/Execute Loop: How steps are chosen at runtime
+4. Content-Addressed Runs: CID persistence and storage
+5. Replaying Runs: Deterministic replay by CID
 6. vs LangGraph: Comparison
 7. Best Practices: Intent design
 
@@ -1003,7 +993,7 @@ const result = await monitor.use({
 4. Tool Integration: o-tool system
 5. Domain Expertise: Combining context + tools
 6. Hierarchical Context Inheritance: o:// benefits
-7. Knowledge Accumulation: Learning
+7. Reproducible Runs: Content-addressed (CID) persistence and replay
 8. Collaborative Specialization: Multi-node coordination
 
 #### Developer Resources Section
@@ -1042,9 +1032,9 @@ const result = await monitor.use({
    - Hierarchical routing
 
 4. **Emergent Intelligence System**: o-lane
-   - Capability loop
-   - Knowledge artifacts
-   - Cross-agent learning
+   - Capability loop (evaluate/execute)
+   - Content-addressed (CID) run persistence
+   - Deterministic replay by CID
 
 5. **System Components**: All
    - Error handling (o-core)
@@ -1137,7 +1127,7 @@ const result = await monitor.use({
 | **Network Indexing** | Crawling node capabilities | o-leader |
 | **Tool Discovery** | Vector search for tools | o-tool |
 | **Context Injection** | Adding domain knowledge to tool nodes | o-lane |
-| **Knowledge Artifacts** | Stored learnings (benefits both human and AI) | o-lane |
+| **Content-Addressed Run** | A persisted Lane run identified by CID, deterministically replayable | o-lane |
 
 ---
 

@@ -300,8 +300,7 @@ All tool-enabled agents include these built-in tools:
     
     **Usage**:
     ```typescript
-    await agent.use({
-      address: 'o://other-agent',
+    await agent.use(new oAddress('o://other-agent'), {
       method: 'handshake'
     });
     ```
@@ -314,8 +313,7 @@ All tool-enabled agents include these built-in tools:
     
     **Usage**:
     ```typescript
-    await agent.use({
-      address: 'o://target',
+    await agent.use(new oAddress('o://target'), {
       method: 'route',
       params: {
         destination: 'o://final-destination',
@@ -330,8 +328,7 @@ All tool-enabled agents include these built-in tools:
     
     **Usage**:
     ```typescript
-    await agent.use({
-      address: 'o://test-agent',
+    await agent.use(new oAddress('o://test-agent'), {
       method: 'hello_world'
     });
     ```
@@ -344,8 +341,7 @@ All tool-enabled agents include these built-in tools:
     
     **Usage**:
     ```typescript
-    await agent.use({
-      address: 'o://agent-to-stop',
+    await agent.use(new oAddress('o://agent-to-stop'), {
       method: 'stop'
     });
     ```
@@ -380,7 +376,7 @@ const tools = await agent.listTools();
 Index tools in vector store for semantic search:
 
 ```typescript
-await agent.use({
+await agent.use(new oAddress('o://leader/registry'), {
   method: 'index_network',
   params: {
     vectorStore: yourVectorStore,
@@ -535,14 +531,14 @@ const calculator = new CalculatorAgent();
 await calculator.start();
 
 // Direct tool call
-const sum = await calculator.use({
+const sum = await calculator.use(new oAddress('o://tools/calculator'), {
   method: 'add',
   params: { a: 5, b: 3 }
 });
 console.log(sum); // { result: 8, operation: 'addition' }
 
 // Intent-driven
-const result = await calculator.use({
+const result = await calculator.use(new oAddress('o://tools/calculator'), {
   method: 'intent',
   params: {
     intent: 'Calculate 10 divided by 2'

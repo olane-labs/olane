@@ -1,0 +1,171 @@
+---
+title: 'Run your first network'
+description: 'Start an OlaneOS instance with a leader and worker, then dispatch a request through the OS entry point.'
+---
+
+By the end of this guide you will have an `OlaneOS` instance running a leader and one worker node, dispatch a request through `os.use()`, and know where to look for the leader's multiaddrs so you can connect from another host later.
+
+## Prerequisites
+
+- [Installation](/getting-started/installation) complete with `@olane/os` added
+- The [Quickstart](/getting-started/quickstart) example understood (`node.use()`, `_tool_` handlers, the `response.result` envelope)
+
+## What an OlaneOS gives you
+
+A standalone `oNodeTool` is great for single-process experiments, but production usage wants:
+
+- A **leader** that handles discovery and registry so workers can find each other across hosts
+- A predictable **port** and **address** to connect to from the outside
+- Lifecycle management (start, stop, restart) for a whole set of nodes at once
+
+`OlaneOS` from `@olane/os` packages all of that. You declare a topology, it brings it up.
+
+## Define a leader and a worker
+
+Create `network.ts`:
+
+```ts
+import { OlaneOS } from '@olane/os';
+import { NodeType, oAddress } from '@olane/o-core';
+
+const os = new OlaneOS({
+  network: {
+    name: 'demo',
+    version: '1.0',
+    port: 4001,
+    description: 'demo network',
+  },
+  nodes: [
+    {
+      type: NodeType.LEADER,
+      address: new oAddress('o://leader'),
+      leader: null,
+      parent: null,
+      network: {
+        listeners: [
+          '/ip4/0.0.0.0/tcp/4001',
+          '/ip4/0.0.0.0/tcp/4001/ws',
+        ],
+      },
+    },
+    {
+      type: NodeType.NODE,
+      address: new oAddress('o://hello'),
+      leader: null,
+      parent: null,
+      description: 'hello service',
+    },
+  ],
+});
+
+const info = await os.start();
+console.log('Leader peerId:', info.peerId);
+console.log('Transports:', info.transports);
+```
+
+<Note>
+Setting `leader: null` and `parent: null` on the worker config is intentional — `OlaneOS` rewrites both before the worker boots, pointing the worker at the leader and clearing its parent. You do not need to wire those by hand.
+</Note>
+
+## Add a handler for `o://hello`
+
+`OlaneOS` accepts node implementations the same way `oNodeTool` does. The simplest path: register a class that responds to `greet`. Put it in `hello.ts`:
+
+```ts hello.ts
+import { oMethod } from '@olane/o-protocol';
+import { oNodeTool } from '@olane/o-tool';
+import { oNodeAddress } from '@olane/o-node';
+import { oRequest } from '@olane/o-core';
+
+export const HELLO_METHODS: { [key: string]: oMethod } = {
+  greet: {
+    name: 'greet',
+    description: 'Greet a caller by name',
+    dependencies: [],
+    parameters: [
+      { name: 'name', type: 'string', value: 'string', description: 'Name to greet', required: true },
+    ],
+  },
+};
+
+export class HelloNode extends oNodeTool {
+  constructor(config: any) {
+    super({ ...config, methods: HELLO_METHODS });
+  }
+
+  async _tool_greet(request: oRequest) {
+    const { name } = request.params as { name: string };
+    return { greeting: `Hello, ${name}!` };
+  }
+}
+```
+
+Reference it from the topology by passing `implementation: HelloNode` on the worker entry. Many setups also accept `class:` aliases — check the `OlaneOS` runtime reference for your exact version.
+
+## Send a request through the OS
+
+The OS itself implements `use()` and picks an entry node to dispatch through, so you do not have to address a specific peer. The target address is then resolved against the leader's registry.
+
+```ts
+import { oAddress } from '@olane/o-core';
+
+const r = await os.use(new oAddress('o://hello'), {
+  method: 'greet',
+  params: { name: 'World' },
+});
+
+console.log(r.result.data); // { greeting: 'Hello, World!' }
+
+await os.stop();
+```
+
+Run it:
+
+```bash
+pnpm tsx network.ts
+```
+
+Expected output:
+
+```
+Leader peerId: 12D3Koo...
+Listeners: [ '/ip4/127.0.0.1/tcp/4001/p2p/12D3Koo...', '/ip4/127.0.0.1/tcp/4001/ws/p2p/12D3Koo...' ]
+{ greeting: 'Hello, World!' }
+```
+
+## Connect from another host
+
+The `info` object returned by `os.start()` contains the leader's `peerId` and its `transports` (the listener multiaddrs) — exactly what a remote host needs to bootstrap into the network. Capture them, paste them into a remote worker's `network.bootstrap` list, and the remote worker will dial in.
+
+<Warning>
+**Multiaddrs are not stable by default.** Each restart generates a new peerId, so the listener strings change. For long-lived deployments:
+
+- Pin the port (`network.port` in the OS config, or `listeners` on the leader) so it doesn't move
+- Pass a `seed` (32-byte hex) on the leader's config to derive a deterministic peerId across restarts
+
+Without both, remote hosts will fail to dial after every redeploy.
+</Warning>
+
+## Anatomy of `os.use()`
+
+- **Lookup**: the OS resolves `o://hello` against the leader's registry.
+- **Selection**: the OS picks an entry node to dispatch the call through, so you do not have to target a specific peer yourself.
+- **Dispatch**: the call is forwarded to the resolved worker over libp2p.
+- **Envelope**: the response is the same `{ result: { success, data, error } }` shape you already know.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card icon="sitemap" title="Parent-child patterns" href="/building/parent-child-patterns">
+    Add per-session children under a manager node.
+  </Card>
+  <Card icon="tower-control" title="Leader and discovery" href="/concepts/leader-and-discovery">
+    How the leader bootstraps the network and serves the registry.
+  </Card>
+  <Card icon="globe" title="HTTP REST surface" href="/external/http-rest-server">
+    Expose `os.use()` over HTTP for external clients.
+  </Card>
+  <Card icon="link" title="Address spaces" href="/concepts/addressing/address-spaces">
+    Naming conventions for multi-network deployments.
+  </Card>
+</CardGroup>

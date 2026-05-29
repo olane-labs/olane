@@ -1,0 +1,137 @@
+---
+title: 'Installation'
+description: 'Install Olane and configure your project for tool-node development.'
+---
+
+By the end of this guide your project will have the Olane runtime installed, TypeScript configured for ES modules, and a one-line import check confirming everything resolves.
+
+## Requirements
+
+| Tool       | Version    | Notes                                                  |
+| ---------- | ---------- | ------------------------------------------------------ |
+| Node.js    | 20 or newer | Required for native ES modules and modern libp2p.     |
+| pnpm       | 8 or newer  | The Olane monorepo and packages are pnpm-first.       |
+| TypeScript | 5 or newer  | `NodeNext` module resolution is the supported target. |
+
+<Note>
+Olane is published, tested, and shipped with `pnpm`. `npm` and `yarn` may work but are not part of CI. Prefer `pnpm` to avoid hoisting surprises with libp2p transitive deps.
+</Note>
+
+## Install the runtime
+
+Pick the install footprint that matches what you are building.
+
+<CodeGroup>
+
+```bash Minimal (one node)
+# Enough to build, run, and call a single tool node.
+pnpm add @olane/o-core @olane/o-node @olane/o-tool @olane/o-protocol
+```
+
+```bash With intent-driven tools
+# Add o-lane for AI reasoning over 5+ methods.
+pnpm add @olane/o-core @olane/o-node @olane/o-tool @olane/o-protocol @olane/o-lane
+```
+
+```bash Full OS bootstrap
+# Use OlaneOS to manage a leader + multiple workers in one process.
+pnpm add @olane/os @olane/o-core @olane/o-node @olane/o-tool @olane/o-protocol
+```
+
+</CodeGroup>
+
+<Tip>
+You can always start with the minimal set and add `@olane/o-lane` or `@olane/os` later — none of them lock you in.
+</Tip>
+
+## Configure TypeScript
+
+Olane packages ship as ES modules and use `NodeNext` resolution. Set your `tsconfig.json` accordingly.
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist"
+  },
+  "include": ["**/*.ts"]
+}
+```
+
+And mark the project as an ES module in `package.json`:
+
+```json package.json
+{
+  "name": "my-olane-app",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx index.ts",
+    "build": "tsc"
+  }
+}
+```
+
+<Warning>
+Forgetting `"type": "module"` is the most common first-day error. You will see `ERR_REQUIRE_ESM` or import-path errors. Add it before you write any code.
+</Warning>
+
+## Add a dev runner
+
+`tsx` is the fastest way to iterate on a single `.ts` file without a build step.
+
+```bash
+pnpm add -D tsx typescript
+```
+
+## Verify the install
+
+Create `verify.ts`:
+
+```ts
+import { oNodeTool, oNodeAddress } from '@olane/o-node';
+
+console.log('oNodeTool resolved:', typeof oNodeTool);
+console.log('Address:', new oNodeAddress('o://hello').toString());
+```
+
+Run it:
+
+```bash
+pnpm tsx verify.ts
+```
+
+Expected output:
+
+```
+oNodeTool resolved: function
+Address: o://hello
+```
+
+If you see both lines, the install is good.
+
+## Common install errors
+
+<Warning>
+**`ERR_MODULE_NOT_FOUND` for relative imports.** With `NodeNext`, you must include the `.js` extension in relative imports even when the source is `.ts`. Write `import './methods/currency.methods.js'`, not `'./methods/currency.methods'`.
+</Warning>
+
+<Warning>
+**`Cannot find module '@olane/o-tool'`.** Re-run `pnpm install` and confirm `"type": "module"` is in `package.json`. Some bundlers caching CommonJS resolution will swallow the dependency on first run.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card icon="rocket" title="Quickstart" href="/getting-started/quickstart">
+    Build, run, and call a tool node in five minutes.
+  </Card>
+  <Card icon="screwdriver-wrench" title="Build your first tool node" href="/getting-started/your-first-tool-node">
+    Methods, validation, and lifecycle hooks.
+  </Card>
+</CardGroup>

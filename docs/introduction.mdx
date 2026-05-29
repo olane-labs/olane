@@ -1,444 +1,150 @@
 ---
-title: 'Introduction to Olane OS'
-description: 'An agentic operating system where agents (human or AI) are the users, tool nodes are the applications, and Olane provides the runtime infrastructure.'
+title: "Introduction"
+description: "Olane is a protocol and runtime for naming, discovering, and calling tool nodes — across processes, machines, and networks."
 ---
 
-# Welcome to Olane OS
+Olane lets you build **tool nodes**: small services with declared methods that any agent — human or AI — can discover and call by name. Every node lives at an `o://` address. Every call is one primitive: `node.use(address, { method, params })`. The runtime handles peer discovery, routing, encryption, and lifecycle.
 
-**Olane OS is an agentic operating system** designed for building intent-driven applications that agents can interact with using natural language. Instead of hardcoded workflows, you build **tools** (capabilities) that agents discover and coordinate dynamically.
+This page gives you the mental model in three minutes. When you're ready to build, jump to the [Quickstart](/getting-started/quickstart).
 
-## What is Olane OS?
+## The shape of an Olane program
 
-Olane OS rethinks how we build applications for an AI-first world. Rather than creating separate systems for humans and AI, Olane provides a unified runtime where:
+```ts
+import { oNodeTool } from '@olane/o-tool';
+import { oNodeAddress } from '@olane/o-node';
+import { oRequest } from '@olane/o-core';
+import { CURRENCY_METHODS } from './methods/currency.methods.js';
 
-- **Agents** (human or AI) express goals in natural language
-- **Tool nodes** provide specialized capabilities that execute those goals
-- **The OS** handles discovery, routing, and coordination automatically
-
-Think of it as an operating system where **agents are the users** and **your tool nodes are the applications**.
-
-<CardGroup cols={3}>
-  <Card title="Agent-Agnostic" icon="users">
-    Build once, serve both human and AI agents through the same interface
-  </Card>
-  <Card title="Intent-Driven" icon="message">
-    Agents use natural language to express goals, not API calls
-  </Card>
-  <Card title="Self-Organizing" icon="network-wired">
-    Tool nodes discover and coordinate automatically
-  </Card>
-</CardGroup>
-
-## The Three-Layer Model
-
-Olane OS is organized into three distinct layers that mirror a traditional operating system:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 1: USERS (Agents)                                │
-│  • Humans via CLI, web UI, API                          │
-│  • AI models (GPT-4, Claude, Gemini)                    │
-│  • Express goals in natural language                    │
-└─────────────────────────────────────────────────────────┘
-                        ⬇ sends intents
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 2: APPLICATIONS (Tool Nodes)                     │
-│  • Tools: Individual executable methods                 │
-│  • Nodes: Processes containing tools                    │
-│  • Applications: Multiple coordinated nodes             │
-│  • Agent-agnostic (serve both humans and AI)            │
-└─────────────────────────────────────────────────────────┘
-                        ⬇ runs on
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 3: INFRASTRUCTURE (Olane OS)                     │
-│  • Runtime system and lifecycle management              │
-│  • Network discovery and routing                        │
-│  • Message passing and coordination                     │
-│  • Configuration and persistence                        │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Layer 1: Agents (Human or AI)
-
-**Agents** are intelligent users that interact with your tool nodes using natural language:
-
-- **Human agents** interact via CLI, web UI, or API
-- **AI agents** are LLMs (GPT-4, Claude, etc.) that use tool nodes programmatically
-- Both types express goals like "Analyze Q4 sales trends" or "Generate monthly report"
-
-### Layer 2: Tool Nodes (Applications)
-
-**Tool nodes** are the applications you build - specialized capabilities that agents invoke:
-
-- **Individual tools**: Single methods that do one thing (e.g., `calculate_revenue`)
-- **Nodes**: Processes containing related tools (e.g., a financial analysis node)
-- **Applications**: Multiple coordinated nodes working together (e.g., a CRM platform)
-
-Tool nodes are **agent-agnostic** - the same tool serves both human and AI agents through a unified natural language interface.
-
-### Layer 3: Olane OS (Infrastructure)
-
-**Olane OS** provides the runtime infrastructure that makes everything work:
-
-- Lifecycle management for tool nodes (start, stop, monitor)
-- Peer-to-peer networking for inter-node communication
-- Discovery services so agents can find tool nodes
-- Intent-driven execution for autonomous workflows
-- Configuration and persistence
-
-## Quick Example
-
-Here's a complete example showing how an agent interacts with a tool node:
-
-```typescript
-// financial.methods.ts - Define method schemas for AI discovery
-import { oMethod } from '@olane/o-protocol';
-
-export const FINANCIAL_METHODS: { [key: string]: oMethod } = {
-  calculate_revenue: {
-    name: 'calculate_revenue',
-    description: 'Calculate revenue for a given time period',
-    dependencies: [],
-    parameters: [
-      {
-        name: 'startDate',
-        type: 'string',
-        value: 'string',
-        description: 'Start date for revenue calculation',
-        required: true,
-      },
-      {
-        name: 'endDate',
-        type: 'string',
-        value: 'string',
-        description: 'End date for revenue calculation',
-        required: true,
-      },
-    ],
-  },
-};
-
-// financial-analyst.node.ts - Implement the tool node
-import { OlaneOS } from '@olane/os';
-import { oLaneTool } from '@olane/o-lane';
-import { oAddress } from '@olane/o-core';
-import { FINANCIAL_METHODS } from './financial.methods';
-
-// Define a tool node with specialized capabilities
-class FinancialAnalystNode extends oLaneTool {
+class CurrencyConverter extends oNodeTool {
   constructor() {
     super({
-      address: new oAddress('o://finance/analyst'),
-      methods: FINANCIAL_METHODS,
+      address: new oNodeAddress('o://currency'),
+      leader: null,
+      parent: null,
+      description: 'FX conversion utility',
+      methods: CURRENCY_METHODS,
     });
   }
 
-  // Individual tool method
-  async _tool_calculate_revenue(request) {
-    const { startDate, endDate } = request.params;
-    // Business logic here
-    return { 
-      revenue: 150000, 
-      currency: 'USD',
-      growth: '15%'
-    };
+  async _tool_convert(request: oRequest) {
+    const { amount, from, to } = request.params;
+    const rate = await this.fetchRate(from, to);
+    return { converted: amount * rate, rate };
   }
 }
 
-// Create and start the OS with your tool node
-const os = new OlaneOS({
-  nodes: [
-    {
-      type: 'LEADER',
-      address: new oAddress('o://leader')
-    },
-    {
-      type: 'NODE',
-      address: new oAddress('o://finance/analyst'),
-      implementation: FinancialAnalystNode
-    }
-  ]
+const node = new CurrencyConverter();
+await node.start();
+```
+
+Any other node — in the same process, the same network, or across a federation boundary — can now call it:
+
+```ts
+const r = await caller.use(new oAddress('o://currency'), {
+  method: 'convert',
+  params: { amount: 100, from: 'USD', to: 'EUR' },
 });
 
-await os.start();
-
-// Human agent via CLI:
-// $ olane intent "Analyze Q4 2024 revenue trends"
-
-// AI agent via programmatic call:
-const result = await os.use(
-  new oAddress('o://finance/analyst'),
-  {
-    method: 'intent',
-    params: {
-      intent: 'Analyze Q4 2024 revenue trends'
-    }
-  }
-);
-
-// Tool node autonomously decides which tools to use
-// Returns results to the agent
-console.log(result);
-
-// Clean shutdown
-await os.stop();
+console.log(r.result.data); // { converted: 92, rate: 0.92 }
 ```
 
-**What's happening here:**
+## The three layers
 
-1. You define a tool node with specialized capabilities (`calculate_revenue`)
-2. The OS starts and registers the tool node
-3. An agent (human or AI) sends a natural language intent
-4. The tool node autonomously determines which tools to use
-5. Results are returned to the agent
-
-## Core Innovations
-
-### 1. Agent-Agnostic Design
-
-Build tool nodes once, serve both human and AI agents through the same interface:
-
-- **Unified Interface**: Same natural language API for all agents
-- **No Duplication**: One implementation serves both agent types
-- **Future-Proof**: Works with any AI model (GPT-4, Claude, Gemini, future models)
-
-### 2. Generalist-Specialist Architecture
-
-- **Generalist Agents**: Single LLM serves as the reasoning brain
-- **Specialist Tool Nodes**: Domain knowledge through context + tool augmentation
-
-### 3. Emergent Intelligence
-
-Tool nodes discover optimal workflows through execution, not pre-defined graphs:
-
-**Traditional frameworks (LangGraph):**
-```typescript
-// Pre-define every step
-const workflow = new StateGraph({
-  nodes: ['fetch', 'analyze', 'report'],
-  edges: [['fetch', 'analyze'], ['analyze', 'report']]
-});
+<Frame>
 ```
-
-**Olane OS:**
-```typescript
-// Agent expresses intent, tool node discovers optimal path
-await toolNode.use({
-  method: 'intent',
-  params: { intent: 'Analyze sales and create report' }
-});
-// Tool node autonomously discovers: fetch → analyze → report
+┌──────────────────────────────────────────────────────┐
+│  Agents          humans (CLI/web)  +  AI (LLMs)      │  ← users
+├──────────────────────────────────────────────────────┤
+│  Tool nodes      oNodeTool · oLaneTool · McpTool     │  ← your code
+├──────────────────────────────────────────────────────┤
+│  OS runtime      o-core · o-node · o-lane · o-os     │  ← infrastructure
+└──────────────────────────────────────────────────────┘
 ```
+</Frame>
 
-Benefits:
-- **Adaptive**: Workflows improve over time through learning
-- **Flexible**: Tool nodes adjust approach based on context
-- **Emergent**: Optimal patterns discovered through execution
+You write the middle layer. Agents — human or AI — talk to your nodes through the same interface, in natural language or programmatic calls. The runtime handles everything below your code: libp2p networking, address resolution, the leader registry, connection pooling.
 
-### 4. Hierarchical Organization
-
-Filesystem-like addressing (`o://`) for intuitive tool node organization:
-
-```
-o://company
-  ├── o://company/finance
-  │   ├── o://company/finance/analyst      # Complex node
-  │   ├── o://company/finance/accounting   # Simple node
-  │   └── o://company/finance/reporting    # Simple node
-  └── o://company/engineering
-      ├── o://company/engineering/backend
-      └── o://company/engineering/frontend
-```
-
-**Benefits:**
-- Context inheritance from hierarchical position
-- Intelligent routing through hierarchy
-- Natural resource organization
-- Automatic fault tolerance
-
-## Key Concepts
-
-<CardGroup cols={2}>
-  <Card title="Agents" icon="user-robot">
-    **Human or AI users** that interact with tool nodes using natural language to accomplish goals
-  </Card>
-  
-  <Card title="Tool Nodes" icon="screwdriver-wrench">
-    **Specialized applications** containing capabilities that agents can discover and invoke
-  </Card>
-  
-  <Card title="Intents" icon="message-lines">
-    **Natural language goals** that agents express (e.g., "Analyze Q4 revenue trends")
-  </Card>
-  
-  <Card title="Tools" icon="hammer">
-    **Individual executable methods** within a node that perform specific operations
-  </Card>
-  
-  <Card title="Leaders" icon="tower-control">
-    **Coordinator nodes** that provide discovery, registry, and network coordination services
-  </Card>
-  
-  <Card title="o:// Protocol" icon="link">
-    **Hierarchical addressing** system for tool node discovery and routing
-  </Card>
-</CardGroup>
-
-## Why Choose Olane OS?
-
-### For AI Agent Developers
-
-- **Faster Development**: Reusable tool nodes and knowledge artifacts
-- **Better Reliability**: 99.8% uptime for long-running tasks
-- **Future-Proof**: Works with any LLM (GPT-4, Claude, Gemini, future models)
-
-### For Enterprise Teams
-
-- **Unified Interface**: One system for human and AI users
-- **Self-Organizing**: No complex infrastructure configuration
-- **Scalable**: Tool nodes coordinate automatically
-- **Maintainable**: Clear separation of concerns (agents vs tools vs infrastructure)
-
-### For Developers Building Applications
-
-- **Simple Programming Model**: Build tool nodes like regular classes
-- **Automatic Discovery**: Tool nodes find each other dynamically
-- **Intent-Driven**: Let agents express goals naturally
-- **Production-Ready**: Built on battle-tested technologies (libp2p, JSON-RPC)
-
-## Common Use Cases
+## The five primitives
 
 <AccordionGroup>
-  <Accordion title="Autonomous Workflows" icon="robot">
-    Build multi-step workflows where AI agents coordinate tool nodes to accomplish complex goals without hardcoded orchestration.
-    
-    **Example**: "Analyze customer churn, identify at-risk customers, and generate retention campaign"
+  <Accordion title="Address — the name of a thing">
+    `oAddress` (and the dialable `oNodeAddress`) is the only way one node refers to another. Addresses live in a namespace shaped like `o://parent/child`. They are names, not locations — the runtime resolves them to peers at call time.
   </Accordion>
-
-  <Accordion title="Multi-Tool Networks" icon="network-wired">
-    Create networks of specialized tool nodes that discover and coordinate with each other dynamically.
-    
-    **Example**: CRM platform with separate customer, sales, and analytics tool nodes
+  <Accordion title="Node — an addressable participant">
+    A Node has an address, a libp2p PeerId, transport multiaddrs, and a lifecycle. Every participant in the network is a Node, including the leader.
   </Accordion>
-
-  <Accordion title="Long-Running Processes" icon="clock">
-    Manage persistent processes that run for hours or days with automatic checkpointing and recovery.
-    
-    **Example**: "Monitor API endpoints every 5 minutes and alert on failures"
+  <Accordion title="Tool — a Node with declared methods">
+    A Tool exposes capabilities through methods named with the `_tool_` prefix. Method metadata makes them discoverable to AI agents without code inspection.
   </Accordion>
-
-  <Accordion title="Hybrid Workflows" icon="users">
-    Combine human and AI agents in the same workflow, each interacting with tool nodes through natural language.
-    
-    **Example**: Human initiates analysis, AI executes, human reviews results
+  <Accordion title="Request and Response — the only message shape">
+    A Request names a method and carries params. A Response carries `result.success`, `result.data`, and `result.error`. Every call yields exactly one response (or one stream that terminates). No fire-and-forget.
+  </Accordion>
+  <Accordion title="Method — a declared capability">
+    `oMethod` describes a method's name, description, parameters (with types and required flags), and dependencies. The base class validates params against this declaration before your handler runs.
   </Accordion>
 </AccordionGroup>
 
-## How It Works
-
-### 1. Build Tool Nodes
-
-Create specialized tool nodes with domain-specific capabilities:
-
-```typescript
-class SalesAnalystNode extends oLaneTool {
-  async _tool_analyze_revenue(request) {
-    // Domain logic
-    return { revenue, trends, insights };
-  }
-}
-```
-
-### 2. Start the OS
-
-The OS handles lifecycle, discovery, and coordination:
-
-```typescript
-const os = new OlaneOS({
-  nodes: [
-    { type: 'LEADER', address: new oAddress('o://leader') },
-    { type: 'NODE', address: new oAddress('o://sales/analyst') }
-  ]
-});
-
-await os.start();
-```
-
-### 3. Agents Interact
-
-Human or AI agents send natural language intents:
-
-```bash
-# Human agent
-$ olane intent "Analyze Q4 sales performance"
-```
-
-```typescript
-// AI agent
-await os.use(
-  new oAddress('o://sales/analyst'),
-  { method: 'intent', params: { intent: 'Analyze Q4 sales performance' } }
-);
-```
-
-### 4. Tool Nodes Execute
-
-Tool nodes autonomously determine which tools to use and coordinate with other nodes as needed, then return results to the agent.
-
-## Getting Started
-
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Build your first tool node in 5 minutes
-  </Card>
-  
-  <Card title="Installation" icon="download" href="/installation">
-    Install Olane OS packages
-  </Card>
-  
-  <Card title="Core Concepts" icon="book" href="/concepts/architecture-overview">
-    Understand the architecture
-  </Card>
-  
-  <Card title="Examples" icon="code" href="/examples">
-    Explore working examples
-  </Card>
-</CardGroup>
-
-## What's Next?
-
-Now that you understand what Olane OS is, here are some recommended next steps:
-
-1. **[Why Olane?](/why-olane)** - Learn about the key innovations and when to use Olane OS
-2. **[Quickstart](/quickstart)** - Build your first tool node in 5 minutes
-3. **[Three-Layer Model](/understanding/three-layer-model)** - Deep dive into the architecture
-4. **[Agent-Agnostic Design](/agents/agent-agnostic-design)** - Learn how to build tool nodes that serve both human and AI agents
-
-<Note>
-**New to agent-based systems?** Start with the [Three-Layer Model](/understanding/three-layer-model) to understand how agents, tool nodes, and infrastructure work together.
-</Note>
-
-<Tip>
-**Coming from LangGraph or CrewAI?** Check out our [Migration Guides](/migration/overview) to see how Olane OS compares and how to transition your existing projects.
-</Tip>
-
-## Community & Support
+## The three iron rules
 
 <CardGroup cols={3}>
-  <Card title="Documentation" icon="book-open-cover" href="https://olane.com/docs">
-    Comprehensive guides and API reference
+  <Card title="Use node.use()" icon="phone">
+    Every interaction with an address goes through `node.use()`. There is no other primitive.
   </Card>
-  
-  <Card title="Community" icon="slack" href="https://olane.com/community">
-    Join the Slack community
+  <Card title="Throw, don't return errors" icon="triangle-exclamation">
+    Throw exceptions on failure. Return raw data on success. The base class builds the response envelope.
   </Card>
-  
-  <Card title="GitHub" icon="github" href="https://github.com/olane-labs">
-    Contribute to the project
+  <Card title="Read response.result.*" icon="magnifying-glass">
+    Three fields nested under `result`: `success`, `data`, `error`. The most common mistake is reading them at the top level.
   </Card>
 </CardGroup>
 
----
+## When to use Olane
 
-**Ready to build?** Head to the [Quickstart](/quickstart) to create your first agent-ready tool node.
+<CardGroup cols={2}>
+  <Card title="You need agent-discoverable services" icon="users">
+    Tool nodes are addressable by name and self-describing — AI agents can discover and call them without prior integration.
+  </Card>
+  <Card title="You need cross-process / cross-host calls" icon="network-wired">
+    libp2p underneath gives you P2P networking with TCP, WebSocket, WebTransport, and circuit relay — no separate API gateway needed.
+  </Card>
+  <Card title="You're building multi-node coordination" icon="diagram-project">
+    Parent-child hierarchies give you state isolation, lifecycle cascade, and namespace scoping for free.
+  </Card>
+  <Card title="You want one interface for humans and AI" icon="message-lines">
+    The same tool node serves a CLI user, an HTTP client, and an LLM through one natural-language-or-method-call surface.
+  </Card>
+</CardGroup>
 
+## Getting started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Build, run, and call your first tool node in five minutes.
+  </Card>
+  <Card title="Installation" icon="download" href="/getting-started/installation">
+    Install Olane and configure your project.
+  </Card>
+  <Card title="Your first tool node" icon="screwdriver-wrench" href="/getting-started/your-first-tool-node">
+    A deeper walkthrough with methods, validation, and lifecycle hooks.
+  </Card>
+  <Card title="Your first network" icon="server" href="/getting-started/your-first-network">
+    Bring up an OlaneOS instance with a leader and worker.
+  </Card>
+</CardGroup>
+
+## Core concepts
+
+<CardGroup cols={2}>
+  <Card title="Concepts overview" icon="compass" href="/concepts/overview">
+    The mental model: addresses, nodes, tools, and `node.use()`.
+  </Card>
+  <Card title="Addressing" icon="signpost" href="/concepts/addressing/overview">
+    The `o://` scheme, address spaces, and the `oAddress` / `oNodeAddress` split.
+  </Card>
+  <Card title="Communication" icon="phone" href="/concepts/communication/request-response">
+    The `use()` primitive, the response envelope, routing, and transports.
+  </Card>
+  <Card title="Lifecycle" icon="rotate" href="/concepts/lifecycle">
+    Start → init → register → run → stop, and where your code goes.
+  </Card>
+</CardGroup>

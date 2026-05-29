@@ -1,0 +1,143 @@
+---
+title: "Hierarchical paths"
+description: "How a flat constructor address becomes a hierarchical o://parent/child address at runtime."
+---
+
+Every Olane address starts flat and acquires hierarchy at registration.
+
+You give a node a single-segment name in its constructor. If the node has a parent, the runtime rewrites the address during initialization to its nested form. Hierarchy is a runtime property — never a declared one. This page covers the axiom, the mechanics, and the hooks you use to participate in the promotion.
+
+## The Address Axiom
+
+From the ontology: **a node's address is always flat at birth and acquires hierarchy only at registration time.**
+
+The constraint exists for portability and late binding. A node's flat name is meaningful in isolation — you can construct it, test it, move it under a different parent — without rewriting the value. The parent pointer determines where it lands; the flat name stays the same.
+
+```ts
+import { oNodeAddress } from '@olane/o-node';
+
+// Always flat in the constructor:
+new oNodeAddress('o://currency');        // OK
+new oNodeAddress('o://utils/currency');  // Throws at validation
+```
+
+The validator rejects any path with more than one segment. Hierarchy is computed, not declared.
+
+## How promotion happens
+
+The flat-to-nested rewrite happens during `initialize()`. The runtime detects a parent pointer in config and rewrites `this.address` before registration completes.
+
+<Steps>
+  <Step title="Construct child with a flat address">
+    The manager creates a child with a flat name and passes its own address as the parent:
+    ```ts
+    const child = new SessionNode({
+      address: new oNodeAddress('o://session-42'),
+      parent: this.address, // o://session-manager
+      leader: this.leader,
+    });
+    ```
+  </Step>
+  <Step title="Wire child registration before start">
+    The manager hooks `onInitFinished` to call `addChildNode`. This must happen *before* `await child.start()`:
+    ```ts
+    (child as any).onInitFinished(() => this.addChildNode(child));
+    await child.start();
+    ```
+  </Step>
+  <Step title="Runtime rewrites the address">
+    During `initialize()`, the child detects the parent pointer and rewrites `this.address` from `o://session-42` to `o://session-manager/session-42`.
+  </Step>
+  <Step title="Registration advertises the full address">
+    During `register()`, the child registers with both the parent and the leader, advertising the full nested address. Callers can now reach it at `o://session-manager/session-42`.
+  </Step>
+</Steps>
+
+## Why hooks matter
+
+`onInitFinished` is the right hook for wiring `addChildNode` because the child has finished initialize (its address is now nested) but hasn't yet registered. That's the precise moment the parent needs to know about it.
+
+**Right way — register the hook before `start()`:**
+
+```ts
+async _tool_open_session(request: any) {
+  const child = new SessionNode({
+    address: new oNodeAddress(`o://${request.params.sessionId}`),
+    parent: this.address,
+    leader: this.leader,
+  });
+
+  // Hook FIRST, then start:
+  (child as any).onInitFinished(() => this.addChildNode(child));
+  await child.start();
+
+  return { address: child.address.toString() };
+}
+```
+
+**Wrong way — calling `addChildNode` after `start()` resolved:**
+
+```ts
+async _tool_open_session(request: any) {
+  const child = new SessionNode({
+    address: new oNodeAddress(`o://${request.params.sessionId}`),
+    parent: this.address,
+    leader: this.leader,
+  });
+
+  await child.start();
+  this.addChildNode(child); // TOO LATE — child already registered as orphan
+  return { address: child.address.toString() };
+}
+```
+
+By the time `start()` resolves, the child has already registered itself. If the parent didn't claim it before then, the registration ran without the parent relationship, and the address didn't get promoted.
+
+## Demotion at stop
+
+When a node stops, its address resets to the flat constructor form. If you restart the node under the same parent, the flat-to-nested cycle runs again:
+
+```ts
+node.address.toString();        // 'o://session-manager/session-42' (running)
+await node.stop();
+node.address.toString();        // 'o://session-42' (back to flat)
+await node.start();             // re-registers, promoted again
+node.address.toString();        // 'o://session-manager/session-42'
+```
+
+This makes restarts predictable. The static identity is the flat name; the runtime identity is whatever the parent pointer makes it.
+
+## What the leader stores
+
+The registry stores both forms. When a node registers, it advertises:
+
+- The **full address** — what the node is currently reachable as (`o://session-manager/session-42`).
+- The **static address** — the unscoped form for log output and identity matching (`o://session-42`).
+
+Callers can look up a node by either form. `address.toStaticAddress()` returns the flat segment for debugging:
+
+```ts
+node.address.toString();        // 'o://session-manager/session-42'
+node.address.toStaticAddress(); // 'o://session-42'
+```
+
+<Warning>
+  Never construct a nested address. `new oNodeAddress('o://parent/child')` throws at validation time. If you find yourself wanting to write a nested address by hand, you're trying to declare what the runtime should compute — re-check the parent pointer in your config.
+</Warning>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Addressing overview" icon="signpost" href="/concepts/addressing/overview">
+    The o:// scheme and how names get resolved.
+  </Card>
+  <Card title="Address spaces and containment" icon="box" href="/concepts/addressing/address-spaces">
+    How parent nodes contain their children's address space.
+  </Card>
+  <Card title="Tool address vs node address" icon="arrows-left-right" href="/concepts/addressing/tool-address-vs-node-address">
+    `oAddress` (name only) vs `oNodeAddress` (name plus transports).
+  </Card>
+  <Card title="Lifecycle" icon="circle-play" href="/concepts/lifecycle">
+    Initialize, start, stop, and the cascade.
+  </Card>
+</CardGroup>

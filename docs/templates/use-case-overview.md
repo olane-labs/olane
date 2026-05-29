@@ -11,7 +11,7 @@
 ```mdx
 ---
 title: "Build Specialist Agents"
-description: "Create domain-expert AI agents without fine-tuning, reducing costs by 70-90%"
+description: "Create domain-expert AI agents without fine-tuning, which can be cheaper than per-agent LLM stacks"
 ---
 
 ## What you'll build
@@ -75,10 +75,10 @@ Create AI agents specialized for specific domains (finance, customer service, da
 | Traditional Approach | Specialist Agents |
 |---------------------|-------------------|
 | Fine-tune model for each domain | One model + domain tools |
-| Weeks of training | Hours to deploy |
-| $10K-$100K per model | $100-$1K per agent |
+| Training-heavy setup | Configure and deploy |
+| Per-model training cost | Can be cheaper than per-agent LLM stacks |
 | Hard to update | Update tools instantly |
-| Static knowledge | Dynamic learning |
+| Static knowledge | Dynamic context injection |
 
 ## Next steps
 
@@ -158,15 +158,15 @@ Create AI agents specialized for specific domains (finance, customer service, da
 ## Best Practices
 
 ### Lead with value
-✅ "Reduce costs by 70-90%"  
+✅ "Can be cheaper than per-agent LLM stacks"  
 ❌ "Uses the oTool system"
 
 ### Be specific
-✅ "Deploy in hours, not weeks"  
+✅ "Configure and deploy, no per-domain training"  
 ❌ "Much faster"
 
-### Use metrics
-✅ "$100-$1K per agent"  
+### Use concrete, defensible claims
+✅ "Update tools without retraining models"  
 ❌ "More affordable"
 
 ### Show, don't tell

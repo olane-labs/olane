@@ -1,0 +1,121 @@
+---
+title: "Addressing in Olane"
+description: "How o:// names identify nodes — and how addresses become dialable at runtime."
+---
+
+An Olane address is a name, not a location. The runtime figures out how to reach it.
+
+Every node, tool, and service in an Olane OS has an address that looks like `o://something`. That string is a name in a global namespace. It tells the system *what* you're talking about, never *where* it lives. Transports, peer IDs, and routing are attached later by the resolver chain — your code stays portable.
+
+## The o:// scheme
+
+An address has two parts: the `o://` protocol prefix and a path. The path is a forward-slash-separated sequence of segments.
+
+```text
+o://intelligence
+o://session-manager/session-42
+o://leader/registry
+```
+
+When a node listens for incoming requests on libp2p, the address string is converted to a protocol ID by replacing the prefix:
+
+```text
+o://my-tool   →   /o/my-tool
+```
+
+That protocol ID is what shows up on the wire during stream negotiation. Length-prefixed JSON-RPC 2.0 frames flow on top, wrapped in a `route` envelope.
+
+## Address vs node address
+
+Olane ships two address classes. The split is the single most important thing to understand before writing config.
+
+- **`oAddress`** (from `@olane/o-core`) — a bare name. No contact info. Use it at the call site when you want the routing layer to figure out where to send the request.
+- **`oNodeAddress`** (from `@olane/o-node`) — a name plus a list of libp2p multiaddrs. Use it when you're configuring identities: your node's own address, the leader pointer, the parent pointer.
+
+```ts
+import { oAddress } from '@olane/o-core';
+import { oNodeAddress, oNodeTransport } from '@olane/o-node';
+
+// Just a name — for dispatching:
+await node.use(new oAddress('o://analytics'), {
+  method: 'count',
+  params: { event: 'login' },
+});
+
+// A name with dialable contact info — for config:
+const leader = new oNodeAddress('o://leader', [
+  new oNodeTransport('/ip4/192.168.1.10/tcp/4001/p2p/Qm...peerId'),
+]);
+```
+
+Detailed comparison and the rules for each on the dedicated page.
+
+<Card title="Tool address vs node address" icon="arrows-left-right" href="/concepts/addressing/tool-address-vs-node-address">
+  When to use `oAddress` versus `oNodeAddress`, and why both exist.
+</Card>
+
+## Flat at birth, hierarchical at registration
+
+Every address starts flat. You construct a node with `new oNodeAddress('o://currency')` — one segment, no slashes in the path. If the node has a parent, the runtime rewrites the address at registration time to its nested form:
+
+```ts
+// Constructor receives the flat address:
+new oNodeAddress('o://currency')
+
+// After registering under a parent named "utils", becomes:
+o://utils/currency
+```
+
+This rule is enforced. Passing a nested address to a constructor throws at validation. The hierarchy is computed during `initialize()` from the parent pointer — it isn't something you write down by hand.
+
+<Card title="Hierarchical paths" icon="folder-tree" href="/concepts/addressing/hierarchical-paths">
+  How flat constructor addresses become hierarchical at runtime, and the rules.
+</Card>
+
+## How addresses get resolved
+
+When you call `node.use(target, ...)`, the target might be a name the routing layer has never seen before. The resolver chain handles it in three passes:
+
+1. **Local hierarchy lookup.** Is this me? My child? My parent? If yes, dispatch locally.
+2. **Search resolver.** Query `o://leader/registry` with `{ method: 'search', params: { address, staticAddress } }`. The registry returns the target with transports attached.
+3. **Leader fallback.** If the registry didn't know, send the request to the leader and let it figure out the rest of the network.
+
+This is why `oAddress` is enough at the call site. The routing layer attaches transports for you.
+
+<Card title="Routing" icon="route" href="/concepts/communication/routing">
+  How the resolver chain turns an o:// name into a live stream.
+</Card>
+
+## Reserved names
+
+A small set of names are non-federated — the gateway-registry resolver always treats them as local and never looks them up in a remote registry:
+
+- `olane`
+- `localhost`
+- `local`
+- `leader`
+- `lane`
+- `registry`
+- `internal`
+- Any single-character name
+
+<Warning>
+  Don't name your tool `o://leader`, `o://registry`, or any of the names above. The runtime will treat it as a reserved infrastructure address and routing will not behave the way you expect.
+</Warning>
+
+## See also
+
+<CardGroup cols={2}>
+  <Card title="Address spaces and containment" icon="box" href="/concepts/addressing/address-spaces">
+    How parent nodes contain their children's address space.
+  </Card>
+  <Card title="Tool address vs node address" icon="arrows-left-right" href="/concepts/addressing/tool-address-vs-node-address">
+    `oAddress` (name only) vs `oNodeAddress` (name plus transports).
+  </Card>
+  <Card title="Hierarchical paths" icon="folder-tree" href="/concepts/addressing/hierarchical-paths">
+    Flat at birth, hierarchical at registration.
+  </Card>
+  <Card title="Routing" icon="route" href="/concepts/communication/routing">
+    How the resolver chain dispatches a call.
+  </Card>
+</CardGroup>

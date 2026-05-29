@@ -43,7 +43,7 @@ Browser tabs can become full-fledged nodes in your Olane network. This enables d
     });
     
     for (const tab of browserTabs) {
-      await tab.use({
+      await leader.use(tab.address, {
         method: 'update_ui',
         params: { message: 'Hello from server!' }
       });
@@ -84,29 +84,30 @@ npm install @olane/o-node @olane/o-core
 
 ### Browser networking
 
-Browsers use **WebRTC** and **WebSocket** transports to join the Olane network:
+Browsers use **WebSocket** and **WebTransport** (HTTP/3) to join the Olane network. Connections to nodes behind a NAT are established via a circuit relay (`o://relay`):
 
 ```
 ┌─────────────────────────────────────────────┐
 │  Browser Tab (Node)                          │
-│  • WebRTC for P2P (browser ↔ browser)       │
 │  • WebSocket for Server (browser ↔ server)  │
+│  • WebTransport (HTTP/3) where available     │
+│  • Circuit relay for browser ↔ browser       │
 │  • Same interface as server nodes           │
 └─────────────────────────────────────────────┘
 ```
 
 ### Transport selection
 
-The node automatically selects the best transport:
+The node automatically selects an available transport:
 
 | Connection Type | Transport | Use Case |
 |----------------|-----------|----------|
 | Browser → Server | WebSocket | API calls, coordination |
-| Browser → Browser (same origin) | WebRTC | P2P collaboration |
-| Browser → Browser (different origin) | WebRTC + TURN | Cross-site coordination |
+| Browser → Server | WebTransport (HTTP/3) | Low-latency calls where supported |
+| Browser → Browser | Circuit relay | P2P coordination via `o://relay` |
 
 <Note>
-  libp2p (the networking layer) handles transport selection automatically based on what's available.
+  libp2p (the networking layer) handles transport selection automatically based on what's available. Connections are encrypted with Noise and multiplexed with Yamux.
 </Note>
 
 ## Basic patterns
@@ -204,7 +205,7 @@ class DataProcessorNode extends oNodeTool {
     
     // Update ALL user's open tabs
     for (const tab of userTabs) {
-      await tab.use({
+      await this.use(tab.address, {
         method: 'update_chart',
         params: {
           chartId: 'analytics-chart',
@@ -270,7 +271,7 @@ class CollaborativeEditorNode extends oNodeTool {
     // Broadcast change to other tabs
     for (const editor of otherEditors) {
       if (editor.address !== this.address) {
-        await editor.use({
+        await this.use(editor.address, {
           method: 'apply_remote_change',
           params: { position, text, userId }
         });
@@ -378,12 +379,12 @@ class BrowserNode extends oNodeTool {
 
 ### 4. Content Security Policy
 
-Add CSP headers to allow WebRTC:
+Add CSP headers to allow WebSocket and WebTransport connections:
 
 ```html
 <meta http-equiv="Content-Security-Policy" 
       content="default-src 'self'; 
-               connect-src 'self' wss://*.your-network.com;
+               connect-src 'self' wss://*.your-network.com https://*.your-network.com;
                worker-src 'self' blob:;">
 ```
 
@@ -424,7 +425,7 @@ class TabCoordinator {
       // Broadcast to all tabs
       for (const [id, tab] of this.tabs) {
         if (id !== this.leaderId) {
-          await tab.use({
+          await leaderTab.use(tab.address, {
             method: 'update_state',
             params: request.params
           });
@@ -598,14 +599,14 @@ Reuse connections across tool calls:
 class OptimizedBrowserNode extends oNodeTool {
   private connectionPool: Map<string, Connection> = new Map();
   
-  async use(request: oRequest) {
+  async use(address: oAddress, request: { method: string; params: any }) {
     // Reuse existing connection if available
-    const targetAddress = this.resolveTarget(request);
-    let connection = this.connectionPool.get(targetAddress);
+    const key = address.toString();
+    let connection = this.connectionPool.get(key);
     
     if (!connection || !connection.isAlive) {
-      connection = await this.createConnection(targetAddress);
-      this.connectionPool.set(targetAddress, connection);
+      connection = await this.createConnection(key);
+      this.connectionPool.set(key, connection);
     }
     
     return await connection.send(request);
@@ -631,15 +632,15 @@ class LazyBrowserNode {
     return this.node;
   }
   
-  async callTool(method: string, params: any) {
+  async callTool(target: oAddress, method: string, params: any) {
     const node = await this.ensureStarted();
-    return await node.use({ method, params });
+    return await node.use(target, { method, params });
   }
 }
 
 // Usage: Node only starts when first tool is called
 const lazyNode = new LazyBrowserNode();
-await lazyNode.callTool('fetch_data', { id: 123 });
+await lazyNode.callTool(new oAddress('o://data'), 'fetch_data', { id: 123 });
 ```
 
 ### 3. Batch operations
@@ -685,11 +686,11 @@ class BatchedBrowserNode extends oNodeTool {
 
 ## Troubleshooting
 
-### Error: "WebRTC connection failed"
+### Error: "Peer not reachable behind NAT"
 
-**Cause**: STUN/TURN servers not configured or firewall blocking WebRTC
+**Cause**: A browser tab behind a NAT cannot accept inbound connections directly
 
-**Solution**: Configure TURN servers for NAT traversal:
+**Solution**: Connections to nodes behind a NAT are established through a circuit relay (`o://relay`). Ensure the relay is reachable from the browser:
 
 ```typescript
 const browserNode = new oNode({
@@ -703,17 +704,6 @@ const browserNode = new oNode({
       ConnectionManager: {
         minConnections: 1
       }
-    },
-    // Add TURN servers
-    rtc: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        {
-          urls: 'turn:turn.your-domain.com:3478',
-          username: 'user',
-          credential: 'password'
-        }
-      ]
     }
   }
 });
@@ -815,7 +805,7 @@ const node = new oNode({
       
       private async gracefulShutdown() {
         // Notify network that tab is closing
-        await this.use({
+        await this.use(new oAddress('o://leader'), {
           method: 'goodbye',
           params: { reason: 'tab_closing' }
         });
@@ -859,7 +849,7 @@ const node = new oNode({
       
       async measureLatency() {
         const start = Date.now();
-        await this.leader.use({ method: 'ping', params: {} });
+        await this.use(new oAddress('o://leader'), { method: 'ping', params: {} });
         const latency = Date.now() - start;
         
         this.latencyHistory.push(latency);
@@ -936,7 +926,7 @@ class DashboardNode extends oNodeTool {
 }
 
 // Server pushes updates
-// await dashboardNode.use({ 
+// await serverNode.use(new oAddress('o://dashboard/' + userId), { 
 //   method: 'update_metric', 
 //   params: { metric: 'sales', value: '$1.2M' } 
 // });
@@ -979,7 +969,7 @@ class WhiteboardNode extends oNodeTool {
     
     for (const peer of peers) {
       if (peer.address !== this.address) {
-        peer.use({
+        this.use(peer.address, {
           method: 'draw_remote',
           params: { x1: this.lastX, y1: this.lastY, x2: x, y2: y }
         });

@@ -197,7 +197,7 @@ const agent = new FinancialAgent();
 await agent.start();
 
 // Direct tool call
-const result = await agent.use({
+const result = await agent.use(agent.address, {
   method: 'analyze_revenue',
   params: {
     quarter: 4,
@@ -263,7 +263,7 @@ const agent = new FinancialAgent();
 await agent.start();
 
 // Intent-driven execution
-const result = await agent.use({
+const result = await agent.use(agent.address, {
   method: 'intent',
   params: {
     intent: 'Analyze Q4 2024 revenue and provide forecast for Q1 2025',
@@ -299,7 +299,7 @@ async function main() {
 
   // Test Case 1: Direct tool call
   console.log('\n=== Test 1: Direct Tool Call ===');
-  const directResult = await agent.use({
+  const directResult = await agent.use(agent.address, {
     method: 'analyze_revenue',
     params: {
       quarter: 4,
@@ -311,7 +311,7 @@ async function main() {
 
   // Test Case 2: Intent-driven execution
   console.log('\n=== Test 2: Intent-Driven ===');
-  const intentResult = await agent.use({
+  const intentResult = await agent.use(agent.address, {
     method: 'intent',
     params: {
       intent: 'Compare Q3 and Q4 revenue and explain differences'
@@ -321,7 +321,7 @@ async function main() {
 
   // Test Case 3: Complex multi-step intent
   console.log('\n=== Test 3: Complex Analysis ===');
-  const complexResult = await agent.use({
+  const complexResult = await agent.use(agent.address, {
     method: 'intent',
     params: {
       intent: 'Analyze full year 2024 revenue trends and forecast 2025 Q1-Q2'
